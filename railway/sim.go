@@ -96,11 +96,11 @@ func (s *Sim) Run() {
 		if !ok {
 			break
 		}
-		train := ev.Data.(*Train)
-		if train.occupation != nil {
+		train, ok := ev.Data.(*Train)
+		if ok && train.occupation != nil {
 			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 			fmt.Printf("[%.2f] %s - %s (Track %s - %dm)\n", ev.Time, ev.Type, train.Name, curTrack.Track.Id, int(curTrack.Track.Length))
-		} else {
+		} else if ok {
 			fmt.Printf("[%.2f] %s - %s\n", ev.Time, ev.Type, train.Name)
 		}
 		switch RailwayEvent(ev.Type) {
@@ -120,7 +120,7 @@ func (s *Sim) Run() {
 			path, ok := s.dispatcher.TryReservePathToEdge(train, platform)
 			if !ok && path == nil {
 				fmt.Println("Path cannot be reserved")
-				return
+				continue
 			}
 			train.reservation = &ReservationData{
 				train:   train,
@@ -165,6 +165,10 @@ func (s *Sim) Run() {
 			time := curTrack.TravelTime(train.MaxSpeed)
 			s.ScheduleEventAfter(time, TrackTravelEnd, train)
 
+		case TrackReleased:
+			track := ev.Data.(*TrackSegment)
+			s.dispatcher.OnTrackReleased(track)
+
 		case TrackTravelEnd:
 			train := ev.Data.(*Train)
 			if len(train.occupation.curPath.Edges) <= train.occupation.curPathIdx+1 {
@@ -176,11 +180,30 @@ func (s *Sim) Run() {
 				if ok {
 					curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 					curTrack.Track.Release(train)
+					s.ScheduleEventNext(TrackReleased, curTrack.Track)
 					train.occupation.curPathIdx++
 				}
 				// s.dispatcher.sim.ScheduleEventNext(TrackExited, train)
 				s.ScheduleEventNext(TrackEntered, train)
 			}
+
+		case RouteGranted:
+			reserv := ev.Data.(*ReservationData)
+			train := reserv.train
+
+			train.reservation = reserv
+			path := reserv.curPath
+
+			// TODO: RouteGrants can also happen from Home Signal Approach
+
+			// TODO: I don't think I like this approach tbh
+			if ok := s.dispatcher.RequestToProceed(train, path); ok {
+				train.curSchedulePoint++
+				s.ScheduleEventNext(TrainDeparted, train)
+			} else {
+				fmt.Println("Request to proceed failed, waiting..")
+			}
+
 		case PathCompleted:
 			// fmt.Println("Path completed")
 			// path complete is always within the station
@@ -211,10 +234,11 @@ func (s *Sim) Run() {
 			nextStn := s.world.stations[nextSchedule.StnCode]
 			nextPf := nextStn.StationPlatform(nextSchedule.SpPfNo)
 
-			fmt.Println("Next PF", nextPf)
+			// fmt.Println("Next PF", nextPf)
 			path, ok := s.dispatcher.TryReservePathToEdge(train, nextPf)
 			if !ok {
-				fmt.Printf("Path to %s cannot be reserved", nextPf.Id)
+				fmt.Printf("Path to %s cannot be reserved, waiting...\n", nextPf.Id)
+				continue
 			}
 			// path.PPrint()
 			train.reservation = &ReservationData{
@@ -236,6 +260,7 @@ func (s *Sim) Run() {
 			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 			if train.reservation == nil {
 				curTrack.Track.Release(train)
+				s.ScheduleEventNext(TrackReleased, curTrack.Track)
 				s.ScheduleEventNext(WorldExited, train)
 				continue
 			}
@@ -250,6 +275,7 @@ func (s *Sim) Run() {
 				return
 			}
 			curTrack.Track.Release(train)
+			s.ScheduleEventNext(TrackReleased, curTrack.Track)
 
 			train.occupation = &OccupationData{
 				train:      train,

@@ -18,9 +18,13 @@ const (
 	// TrackOccupied  RailwayEvent = "TRACK_OCCUPY"
 	TrackTravelEnd RailwayEvent = "TRACK_TRAVEL_END"
 	TrackExited    RailwayEvent = "TRACK_EXITED"
-	// TrackReleased  RailwayEvent = "TRACK_RELEASE"
+
+	TrackReleased RailwayEvent = "TRACK_RELEASE"
 
 	PathCompleted RailwayEvent = "PATH_COMPLETED"
+
+	RouteGranted       RailwayEvent = "ROUTE_GRANTED"
+	MovementAuthorized RailwayEvent = "MOVEMENT_AUTHORIZED"
 
 	// SWT //
 	SwitchSet RailwayEvent = "SWITCH_SET"

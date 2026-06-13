@@ -64,10 +64,10 @@ func buildWorld() *railway.World {
 	})
 
 	pdktPf1S := world.NewTrackPoint("pdktPf1S")
-	pdktPf1E := world.NewTrackPoint("pdktPf1E").WithDeadEnd(true).ConfigureSimBoundary(true)
+	pdktPf1E := world.NewTrackPoint("pdktPf1E")
 
 	pdktPf2S := world.NewTrackPoint("pdktPf2S")
-	pdktPf2E := world.NewTrackPoint("pdktPf2E").WithDeadEnd(true).ConfigureSimBoundary(true)
+	pdktPf2E := world.NewTrackPoint("pdktPf2E")
 
 	pdktPf1 := railway.TrackSegment{
 		Id:     "pdktPf1",
@@ -91,10 +91,10 @@ func buildWorld() *railway.World {
 	})
 
 	kkdiPf1S := world.NewTrackPoint("kkdiPf1S")
-	kkdiPf1E := world.NewTrackPoint("kkdiPf1E")
+	kkdiPf1E := world.NewTrackPoint("kkdiPf1E").WithDeadEnd(true).ConfigureSimBoundary(true)
 
 	kkdiPf2S := world.NewTrackPoint("kkdiPf2S")
-	kkdiPf2E := world.NewTrackPoint("kkdiPf2E")
+	kkdiPf2E := world.NewTrackPoint("kkdiPf2E").WithDeadEnd(true).ConfigureSimBoundary(true)
 
 	kkdiPf1 := railway.TrackSegment{
 		Id:     "kkdiPf1",
@@ -281,30 +281,31 @@ func main() {
 	})
 
 	train2 := railway.Train{
-		Name:     "Train2Up",
-		Number:   "0457U",
+		Name:     "Train2Down",
+		Number:   "0457D",
 		MaxSpeed: units.KMPH(110),
 	}
 	train2.AddSchedule(&railway.SchedulePoint{
-		StnCode:  tpj.Code,
-		ArrTime:  40,
-		DeptTime: 50,
+		StnCode:  kkdi.Code,
+		ArrTime:  30,
+		DeptTime: 40,
 		SpPfNo:   "1",
 	})
 	train2.AddSchedule(&railway.SchedulePoint{
 		StnCode:  pdkt.Code,
 		ArrTime:  70,
 		DeptTime: 80,
-		SpPfNo:   "1",
+		SpPfNo:   "2",
 	})
 	train2.AddSchedule(&railway.SchedulePoint{
-		StnCode:  kkdi.Code,
+		StnCode:  tpj.Code,
 		ArrTime:  90,
 		DeptTime: 100,
+		SpPfNo:   "1",
 	})
 
 	world.AddTrain(&train1)
-	// world.AddTrain(&train2)
+	world.AddTrain(&train2)
 	sim.Init()
 	sim.Run()
 
