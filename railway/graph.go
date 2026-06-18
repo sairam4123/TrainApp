@@ -278,15 +278,3 @@ func (graph *TrackGraph) FindPathToTrack(fromPoint *TrackPoint, toSegment *Track
 		cur = parent
 	}
 }
-
-type Path struct {
-	Edges []*GraphEdge
-
-	IncludesReserved bool
-}
-
-func (path *Path) PPrint() {
-	for _, edge := range path.Edges {
-		fmt.Printf("%s -> %s (%s) --> ", edge.From.Id, edge.To.Id, edge.Track.Id)
-	}
-}

@@ -6,6 +6,19 @@ type Dispatcher struct {
 	waitingReservationRequests []*ReservationRequest
 
 	waitingProceedRequests []*OccupationRequest
+
+	pointControllers map[string]*PointController
+}
+
+func (disp *Dispatcher) Init() {
+	for _, p := range disp.sim.world.TrackGraph.points {
+		disp.pointControllers[p.Id] = &PointController{
+			sim: disp.sim,
+			point: p,
+			activeRoute: nil,
+			isLocked: false,
+		}
+	}
 }
 
 // TODO: this is terrible for large scale simulations but for the time being it is fine.
@@ -102,6 +115,14 @@ func (disp *Dispatcher) TryReservePathToEdge(train *Train, to *TrackSegment) (*P
 
 func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) bool {
 	ok := path.EnsureAllEdgesAreReserved(train)
+	if !ok {
+		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &OccupationRequest{
+			path:  path,
+			train: train,
+		})
+		return ok
+	}
+	ok = path.EnsureAllSwitchesSet(train)
 	if !ok {
 		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &OccupationRequest{
 			path:  path,

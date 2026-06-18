@@ -1,5 +1,7 @@
 package railway
 
+import "fmt"
+
 // import "fmt"
 
 type PathController struct {
@@ -9,6 +11,22 @@ type PathController struct {
 
 	train *Train
 	sim   *Sim
+}
+
+type Path struct {
+	Edges []*GraphEdge
+
+	IncludesReserved bool
+}
+
+func (path *Path) EnsureAllSwitchesSet(train *Train) bool {
+	panic("unimplemented")
+}
+
+func (path *Path) PPrint() {
+	for _, edge := range path.Edges {
+		fmt.Printf("%s -> %s (%s) --> ", edge.From.Id, edge.To.Id, edge.Track.Id)
+	}
 }
 
 func (path *Path) EnsureAllEdgesAreReserved(train *Train) bool {

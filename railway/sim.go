@@ -102,6 +102,8 @@ func (s *Sim) Run() {
 			fmt.Printf("[%.2f] %s - %s (Track %s - %dm)\n", ev.Time, ev.Type, train.Name, curTrack.Track.Id, int(curTrack.Track.Length))
 		} else if ok {
 			fmt.Printf("[%.2f] %s - %s\n", ev.Time, ev.Type, train.Name)
+		} else if track, ok := ev.Data.(*TrackSegment); ok {
+			fmt.Printf("[%.2f] %s - %s\n", ev.Time, ev.Type, track.Id)
 		}
 		switch RailwayEvent(ev.Type) {
 		case WorldEntered:
