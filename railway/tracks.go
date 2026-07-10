@@ -2,6 +2,7 @@ package railway
 
 import (
 	"fmt"
+	"math"
 	"trainapp/units"
 )
 
@@ -23,6 +24,7 @@ type TrackSegment struct {
 	// Track related
 	Direction TrackDirection
 	Length    units.Meters
+	MaxSpeed  units.MetersPerMin
 }
 
 func (t *TrackSegment) Reserve(train *Train) bool {
@@ -69,5 +71,12 @@ func (t *TrackSegment) Release(train *Train) (bool, error) {
 }
 
 func (t *TrackSegment) TravelTime(trainMaxSpeed units.MetersPerMin) units.Minutes {
-	return units.Min(float64(t.Length) / float64(trainMaxSpeed))
+	maxSpeed := math.Min(float64(trainMaxSpeed), float64(t.MaxSpeed))
+	return units.Min(float64(t.Length) / maxSpeed)
+}
+
+func (t *TrackSegment) SetTrackAttributes(length units.Meters, speed units.MetersPerMin) *TrackSegment {
+	t.Length = length
+	t.MaxSpeed = speed
+	return t
 }

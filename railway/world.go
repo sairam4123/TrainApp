@@ -1,6 +1,18 @@
 package railway
 
-import "fmt"
+import (
+	"fmt"
+	"trainapp/units"
+)
+
+type WorldData struct {
+	DefaultSwMaxSpeed units.MetersPerMin
+	DefaultSwLength   units.Meters
+	DefaultPfMaxSpeed units.MetersPerMin
+	DefaultPfLength   units.Meters
+
+	DefaultRouteSpeed units.MetersPerMin
+}
 
 type World struct {
 	stations map[string]*Station
@@ -9,6 +21,7 @@ type World struct {
 	bsections map[string]*BlockSection
 
 	TrackGraph *TrackGraph
+	data       WorldData
 }
 
 func (w *World) FindBlockBwStns(aStnCode string, bStnCode string) (*BlockSection, error) {
@@ -46,11 +59,12 @@ func (w *World) AddBlockSection(bsec *BlockSection) {
 	w.bsections[bsec.Id] = bsec
 }
 
-func (w *World) Init() {
+func (w *World) Init(data WorldData) {
 	w.stations = make(map[string]*Station)
 	w.trains = make(map[string]*Train)
 	w.bsections = make(map[string]*BlockSection)
 
+	w.data = data
 	w.TrackGraph = &TrackGraph{}
 	w.TrackGraph.Init()
 }
@@ -72,6 +86,27 @@ func (w *World) NewStation(stnCode string, stnName string) *Station {
 	stn.Init()
 	w.AddStation(stn)
 	return stn
+}
+
+func (w *World) NewTrackSegment(id string, length units.Meters) *TrackSegment {
+	ts := &TrackSegment{
+		Id:       id,
+		MaxSpeed: w.data.DefaultRouteSpeed,
+		Length:   length,
+	}
+	return ts
+}
+
+func (w *World) NewSwitchTrack(id string) *TrackSegment {
+	ts := w.NewTrackSegment(id, w.data.DefaultSwLength)
+	ts.SetTrackAttributes(w.data.DefaultSwLength, w.data.DefaultSwMaxSpeed)
+	return ts
+}
+
+func (w *World) NewPlatformTrack(id string) *TrackSegment {
+	ts := w.NewTrackSegment(id, w.data.DefaultPfLength)
+	ts.SetTrackAttributes(w.data.DefaultPfLength, w.data.DefaultPfMaxSpeed)
+	return ts
 }
 
 func (w *World) NewBlockSection(id string) *BlockSection {

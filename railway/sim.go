@@ -31,6 +31,7 @@ func (s *Sim) Init() {
 	s.dispatcher = &Dispatcher{
 		sim: s,
 	}
+	s.dispatcher.Init()
 	// s.blockSecControllers = make(map[string]*BlockSectionController)
 	// s.stnControllers = make(map[string]*StationController)
 
@@ -119,7 +120,7 @@ func (s *Sim) Run() {
 			facingPoint := s.world.TrackGraph.FindWorldBoundaryPoint(platform)
 			train.FacingToward = facingPoint
 			// try to reserve the track to first station
-			path, ok := s.dispatcher.TryReservePathToEdge(train, platform)
+			path, ok := s.dispatcher.TryReservePathToTrack(train, platform)
 			if !ok && path == nil {
 				fmt.Println("Path cannot be reserved")
 				continue
@@ -166,15 +167,17 @@ func (s *Sim) Run() {
 			train.FacingToward = s.world.TrackGraph.OtherEnd(curTrack, train.FacingToward.Id)
 			time := curTrack.TravelTime(train.MaxSpeed)
 			s.ScheduleEventAfter(time, TrackTravelEnd, train)
+			// train := ev.Data.()
 
-		case TrackReleased:
-			track := ev.Data.(*TrackSegment)
-			s.dispatcher.OnTrackReleased(track)
+			// track := ev.Data.(*TrackSegment)
+			// s.dispatcher.OnTrackReleased(track, train)
 
 		case TrackTravelEnd:
 			train := ev.Data.(*Train)
 			if len(train.occupation.curPath.Edges) <= train.occupation.curPathIdx+1 {
 				s.ScheduleEventNext(PathCompleted, train)
+				curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
+				s.dispatcher.ReleasePoints(curTrack, train)
 			} else {
 				// acquire next track
 				nextTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx+1]
@@ -183,6 +186,7 @@ func (s *Sim) Run() {
 					curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 					curTrack.Track.Release(train)
 					s.ScheduleEventNext(TrackReleased, curTrack.Track)
+					s.dispatcher.OnTrackReleased(curTrack.Track, train)
 					train.occupation.curPathIdx++
 				}
 				// s.dispatcher.sim.ScheduleEventNext(TrackExited, train)
@@ -237,7 +241,7 @@ func (s *Sim) Run() {
 			nextPf := nextStn.StationPlatform(nextSchedule.SpPfNo)
 
 			// fmt.Println("Next PF", nextPf)
-			path, ok := s.dispatcher.TryReservePathToEdge(train, nextPf)
+			path, ok := s.dispatcher.TryReservePathToTrack(train, nextPf)
 			if !ok {
 				fmt.Printf("Path to %s cannot be reserved, waiting...\n", nextPf.Id)
 				continue

@@ -19,10 +19,6 @@ type Path struct {
 	IncludesReserved bool
 }
 
-func (path *Path) EnsureAllSwitchesSet(train *Train) bool {
-	panic("unimplemented")
-}
-
 func (path *Path) PPrint() {
 	for _, edge := range path.Edges {
 		fmt.Printf("%s -> %s (%s) --> ", edge.From.Id, edge.To.Id, edge.Track.Id)

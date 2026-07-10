@@ -35,6 +35,16 @@ func (stn *Station) AddPlatform(pfData *Platform) {
 	stn.Platforms = append(stn.Platforms, pfData)
 }
 
+func (stn *Station) NewStationPlatform(track *TrackSegment, pfNo string, length units.Meters) {
+	pf := &Platform{
+		Id:     track.Id,
+		PfNo:   pfNo,
+		Length: length,
+		Track:  track,
+	}
+	stn.Platforms = append(stn.Platforms, pf)
+}
+
 func (stn *Station) StationPlatform(pfNo string) *TrackSegment {
 	for _, pf := range stn.Platforms {
 		if pf.PfNo == pfNo {

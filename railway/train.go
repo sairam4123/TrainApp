@@ -17,6 +17,10 @@ type Train struct {
 	reservation *ReservationData
 }
 
+func (t *Train) GetFullName() string {
+	return t.Number + " - " + t.Name
+}
+
 type SchedulePoint struct {
 	TrainNumber string
 	StnCode     string
