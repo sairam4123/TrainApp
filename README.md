@@ -10,9 +10,10 @@ TrainApp is a discrete event simulation engine for railway systems. It provides 
 
 - **Railway World Simulation**: Create and manage railway networks with stations, tracks, and platforms
 - **Train Management**: Model trains with schedules, speed profiles, and occupancy tracking
-- **Track Control**: Block sections, track points, and signal management
-- **Scheduling**: Schedule points and train routing between stations
-- **Dispatcher System**: Automatic train coordination and conflict resolution
+- **Track Graph & Pathfinding**: Graph-based track network with path finding between stations/platforms
+- **Point Locking & Route Reservation**: Dispatcher reserves paths, sets switch states, and locks track points ahead of a train to prevent conflicting routes
+- **Block Sections**: Safety zones between stations for train separation
+- **Dispatcher System**: Automatic train coordination, route granting, and queuing of waiting reservation/proceed requests
 - **Unit Conversion**: Built-in support for distance and velocity measurements
 
 ## Project Structure
@@ -63,19 +64,21 @@ go run main.go
 ### Core Components
 
 - **World**: The main simulation container that manages all railway entities (trains, stations, tracks)
-- **TrackGraph**: A graph-based representation of the railway network
-- **Train**: Individual train entities with schedules and position tracking
+- **TrackGraph**: A graph-based representation of the railway network, made up of `TrackPoint` nodes and `TrackSegment`/`GraphEdge` links
+- **Train**: Individual train entities with schedules, occupation, and reservation state
 - **Station**: Railway stations with platforms and connections
 - **BlockSection**: Safety zones between stations for train separation
-- **Dispatcher**: Coordinates train movements and manages scheduling
+- **Dispatcher**: Reserves paths for trains, coordinates `PointController`s to lock/unlock track points and set switch states, and queues requests that can't be granted immediately
+- **Sim**: Drives the discrete event simulation loop (`des` package) and reacts to train/track lifecycle events (e.g. `WorldEntered`, `TrackEntered`, `RouteGranted`, `TrainArrived`, `TrainDeparted`)
 
 ### Simulation Flow
 
-1. Build the railway world with stations and tracks
-2. Add trains with schedules
-3. Run the discrete event simulation
-4. Process train movements and events
-5. Resolve conflicts through the dispatcher
+1. Build the railway world with stations, track points, and tracks
+2. Add trains with schedules and build the track graph's cache map
+3. On simulation start, each train requests a path reservation to its first scheduled platform
+4. The dispatcher reserves track segments, sets switch states, and locks the points along the path
+5. As the train moves, it acquires/releases track segments and re-requests reservations for the next leg of its journey
+6. Reservation or proceed requests that fail (due to conflicts) are queued and retried once the blocking track/point is released
 
 ## Development
 
