@@ -27,7 +27,7 @@ func (path *Path) PPrint() {
 
 func (path *Path) EnsureAllEdgesAreReserved(train *Train) bool {
 	for _, edge := range path.Edges {
-		// fmt.Println(edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
+		fmt.Println("Pathing check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
 		if !edge.Track.IsReserved() || edge.Track.ReservedBy.Number != train.Number {
 			return false
 		}

@@ -57,16 +57,29 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 		}
 		elem := oldQueue[0]
 		oldQueue = oldQueue[1:]
-
+		fmt.Printf("Trying to reserve path to %s for %s\n", elem.edge.Id, elem.train.GetFullName())
 		path, ok := disp.TryReservePathToTrack(elem.train, elem.edge)
 		if ok {
+			fmt.Println("Reservation successful", elem.train)
 			disp.sim.ScheduleEventNext(RouteGranted, &ReservationData{
 				curPath: path,
 				train:   elem.train,
 				disp:    disp,
 			})
 		} else {
+			trainExists := false
+			// check if the request already exists
+			for _, req := range disp.waitingReservationRequests {
+				if req.train.Number == elem.train.Number {
+					trainExists = true
+				}
+			}
 
+			fmt.Printf("Adding back the reservation request to the queue\n")
+			// add it back to the queue
+			if !trainExists {
+				disp.waitingReservationRequests = append(disp.waitingReservationRequests, elem)
+			}
 		}
 	}
 }
@@ -185,6 +198,7 @@ func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegmen
 func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) bool {
 	ok := path.EnsureAllEdgesAreReserved(train)
 	if !ok {
+		fmt.Println("Request to Proceed failed. Reason: All Edges are not reserved")
 		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &OccupationRequest{
 			path:  path,
 			train: train,
@@ -193,6 +207,7 @@ func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) bool {
 	}
 	ok = disp.EnsureAllSwitchesSet(train, path)
 	if !ok {
+		fmt.Println("Request to Proceed failed. Reason: All switches are not locked.")
 		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &OccupationRequest{
 			path:  path,
 			train: train,
@@ -204,7 +219,7 @@ func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) bool {
 
 func (disp *Dispatcher) EnsureAllSwitchesSet(train *Train, path *Path) bool {
 	for _, edge := range path.Edges {
-		// fmt.Println(edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
+		fmt.Println("Switching check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
 		if !disp.pointControllers[edge.From.Id].isLocked || !disp.pointControllers[edge.To.Id].isLocked {
 			fmt.Println(disp.pointControllers[edge.From.Id].isLocked, disp.pointControllers[edge.To.Id].isLocked)
 			return false

@@ -46,3 +46,10 @@ type TrainController struct {
 	sim   *Sim
 	train *Train
 }
+
+func (t *Train) String() string {
+	if t == nil {
+		return "<nil>"
+	}
+	return t.GetFullName()
+}

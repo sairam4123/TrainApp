@@ -23,8 +23,11 @@ const (
 
 	PathCompleted RailwayEvent = "PATH_COMPLETED"
 
-	RouteGranted       RailwayEvent = "ROUTE_GRANTED"
-	MovementAuthorized RailwayEvent = "MOVEMENT_AUTHORIZED"
+	RouteGranted           RailwayEvent = "ROUTE_GRANTED"
+	MovementAuthorized     RailwayEvent = "MOVEMENT_AUTHORIZED"
+	MovementAuthorityEnded RailwayEvent = "MOVEMENT_AUTHORITY_END"
+
+	ScheduleEnd RailwayEvent = "SCHEDULE_END"
 
 	// SWT //
 	SwitchSet RailwayEvent = "SWITCH_SET"

@@ -2,6 +2,7 @@ package railway
 
 import (
 	"fmt"
+	"os"
 	"trainapp/des"
 	"trainapp/units"
 )
@@ -14,6 +15,8 @@ type Sim struct {
 	// stnControllers      map[string]*StationController
 
 	dispatcher *Dispatcher
+
+	dCount int // temp dump count
 }
 
 func (s *Sim) SetWorld(world *World) *Sim {
@@ -91,20 +94,52 @@ func (s *Sim) CurTime() float64 {
 
 // }
 
+func (s *Sim) DumpSim() {
+	os.MkdirAll("dumps/", 0755)
+	dump, err := os.OpenFile(fmt.Sprintf("dumps/dump%d.txt", s.dCount), os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		panic("Error opening dump file")
+	}
+	defer dump.Close()
+
+	for _, train := range s.world.trains {
+		fmt.Fprintf(dump, "Train %s", train)
+		if train.occupation != nil {
+			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
+			fmt.Fprintf(dump, " - Track %s", curTrack.Track.Id)
+		}
+		fmt.Fprintln(dump)
+	}
+	fmt.Fprintln(dump)
+
+	for _, track := range s.world.TrackGraph.tracks {
+		fmt.Fprintf(dump, "Track %s - Reserved %s - Occupied %s\n", track.Id, track.ReservedBy, track.OccupiedBy)
+	}
+	fmt.Fprintln(dump)
+	s.dCount++
+
+}
+
 func (s *Sim) Run() {
+	logger, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		panic("Error opening logging files")
+	}
+	defer logger.Close()
 	for {
 		ev, ok := s.NextEvent()
 		if !ok {
 			break
 		}
+		s.DumpSim()
 		train, ok := ev.Data.(*Train)
 		if ok && train.occupation != nil {
 			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-			fmt.Printf("[%.2f] %s - %s (Track %s - %dm)\n", ev.Time, ev.Type, train.Name, curTrack.Track.Id, int(curTrack.Track.Length))
+			fmt.Fprintf(logger, "[%.2f] %s - %s (Track %s - %dm)\n", ev.Time, ev.Type, train.Name, curTrack.Track.Id, int(curTrack.Track.Length))
 		} else if ok {
-			fmt.Printf("[%.2f] %s - %s\n", ev.Time, ev.Type, train.Name)
+			fmt.Fprintf(logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, train.Name)
 		} else if track, ok := ev.Data.(*TrackSegment); ok {
-			fmt.Printf("[%.2f] %s - %s\n", ev.Time, ev.Type, track.Id)
+			fmt.Fprintf(logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, track.Id)
 		}
 		switch RailwayEvent(ev.Type) {
 		case WorldEntered:
@@ -116,13 +151,13 @@ func (s *Sim) Run() {
 				fmt.Println("Something went wrong, cannot find station required for schedule")
 			}
 
-			platform := nextStn.StationPlatform(curSchedule.SpPfNo)
+			platform := nextStn.FindAvailableStnPlatform(curSchedule.SpPfNo)
 			facingPoint := s.world.TrackGraph.FindWorldBoundaryPoint(platform)
 			train.FacingToward = facingPoint
 			// try to reserve the track to first station
 			path, ok := s.dispatcher.TryReservePathToTrack(train, platform)
 			if !ok && path == nil {
-				fmt.Println("Path cannot be reserved")
+				fmt.Println("Path cannot be reserved.. waiting to enter world")
 				continue
 			}
 			train.reservation = &ReservationData{
@@ -188,9 +223,9 @@ func (s *Sim) Run() {
 					s.ScheduleEventNext(TrackReleased, curTrack.Track)
 					s.dispatcher.OnTrackReleased(curTrack.Track, train)
 					train.occupation.curPathIdx++
+					s.ScheduleEventNext(TrackEntered, train)
 				}
 				// s.dispatcher.sim.ScheduleEventNext(TrackExited, train)
-				s.ScheduleEventNext(TrackEntered, train)
 			}
 
 		case RouteGranted:
@@ -204,10 +239,25 @@ func (s *Sim) Run() {
 
 			// TODO: I don't think I like this approach tbh
 			if ok := s.dispatcher.RequestToProceed(train, path); ok {
+				if train.occupation == nil {
+					if ok := path.Edges[0].Track.Acquire(train); !ok {
+						fmt.Println("Edge cannot be acquired")
+						return
+					}
+					// train was waiting to enter the world
+					train.occupation = &OccupationData{
+						train:      train,
+						curPathIdx: 0,
+						curPath:    path,
+						disp:       s.dispatcher,
+					}
+					s.ScheduleEventNext(TrackEntered, train)
+					continue
+				}
 				train.curSchedulePoint++
 				s.ScheduleEventNext(TrainDeparted, train)
 			} else {
-				fmt.Println("Request to proceed failed, waiting..")
+				fmt.Println("Request to proceed failed, waiting..", train.GetFullName(), train.occupation.curPathIdx)
 			}
 
 		case PathCompleted:
@@ -238,12 +288,16 @@ func (s *Sim) Run() {
 			// reserve the track to next station
 			nextSchedule := train.schedule[train.curSchedulePoint+1]
 			nextStn := s.world.stations[nextSchedule.StnCode]
-			nextPf := nextStn.StationPlatform(nextSchedule.SpPfNo)
-
+			nextPf := nextStn.FindAvailableStnPlatform(nextSchedule.SpPfNo)
+			if nextPf == nil {
+				fmt.Printf("Cannot find any available platform (%s)\n", train.GetFullName())
+				continue
+			}
+			fmt.Printf("Trying reserve upto %s (by %s)\n", nextPf.Id, train.GetFullName())
 			// fmt.Println("Next PF", nextPf)
 			path, ok := s.dispatcher.TryReservePathToTrack(train, nextPf)
 			if !ok {
-				fmt.Printf("Path to %s cannot be reserved, waiting...\n", nextPf.Id)
+				fmt.Printf("Path to %s cannot be reserved, waiting... (%s)\n", nextPf.Id, train.GetFullName())
 				continue
 			}
 			// path.PPrint()
@@ -257,7 +311,7 @@ func (s *Sim) Run() {
 				train.curSchedulePoint++
 				s.ScheduleEventNext(TrainDeparted, train)
 			} else {
-				fmt.Println("Request to proceed failed, waiting..")
+				fmt.Println("Request to proceed failed, waiting..", train.GetFullName(), train.occupation.curPathIdx)
 			}
 
 		case TrainDeparted:
@@ -267,7 +321,10 @@ func (s *Sim) Run() {
 			if train.reservation == nil {
 				curTrack.Track.Release(train)
 				s.ScheduleEventNext(TrackReleased, curTrack.Track)
+				s.dispatcher.OnTrackReleased(curTrack.Track, train)
 				s.ScheduleEventNext(WorldExited, train)
+				train.reservation = nil
+				train.occupation = nil
 				continue
 			}
 
@@ -282,6 +339,7 @@ func (s *Sim) Run() {
 			}
 			curTrack.Track.Release(train)
 			s.ScheduleEventNext(TrackReleased, curTrack.Track)
+			s.dispatcher.OnTrackReleased(curTrack.Track, train)
 
 			train.occupation = &OccupationData{
 				train:      train,

@@ -45,11 +45,23 @@ func (stn *Station) NewStationPlatform(track *TrackSegment, pfNo string, length 
 	stn.Platforms = append(stn.Platforms, pf)
 }
 
-func (stn *Station) StationPlatform(pfNo string) *TrackSegment {
+func (stn *Station) FindAvailableStnPlatform(prefPfNo string) *TrackSegment {
 	for _, pf := range stn.Platforms {
-		if pf.PfNo == pfNo {
+		if pf.PfNo == prefPfNo && pf.Track.IsAvailable() {
 			return pf.Track
 		}
+	}
+
+	// find the first Available track
+	for _, pf := range stn.Platforms {
+		if pf.Track.IsAvailable() {
+			return pf.Track
+		}
+	}
+
+	// just route to the random platform for the time being
+	for _, pf := range stn.Platforms {
+		return pf.Track
 	}
 	return nil
 }

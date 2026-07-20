@@ -22,6 +22,10 @@ func Sec(time float64) Minutes {
 	return Minutes(time / 60)
 }
 
+func Hr(time float64) Minutes {
+	return Minutes(time * 60)
+}
+
 func KMPH(speed float64) MetersPerMin {
 	return MetersPerMin(speed * 1000 / 60)
 }
