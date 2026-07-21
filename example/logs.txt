@@ -1,0 +1,200 @@
+[9.99] WORLD_ENTER - Train1Up
+[10.00] TRACK_ENTER - Train1Up (Track tpjPf1 - 800m)
+[10.96] TRACK_TRAVEL_END - Train1Up (Track tpjPf1 - 800m)
+[10.97] PATH_COMPLETED - Train1Up (Track tpjPf1 - 800m)
+[10.98] TRAIN_ARRIVE - Train1Up (Track tpjPf1 - 800m)
+[20.98] TRAIN_DWELL_END - Train1Up (Track tpjPf1 - 800m)
+[20.99] TRAIN_DEPART - Train1Up (Track tpjPf1 - 800m)
+[21.00] TRACK_RELEASE - tpjPf1
+[21.00] TRACK_ENTER - Train1Up (Track tpjPf1ESw1 - 100m)
+[21.20] TRACK_TRAVEL_END - Train1Up (Track tpjPf1ESw1 - 100m)
+[21.21] TRACK_RELEASE - tpjPf1ESw1
+[21.21] TRACK_ENTER - Train1Up (Track bsTpjPdkt0 - 5000m)
+[23.94] TRACK_TRAVEL_END - Train1Up (Track bsTpjPdkt0 - 5000m)
+[23.95] TRACK_RELEASE - bsTpjPdkt0
+[23.95] TRACK_ENTER - Train1Up (Track bsTpjKrur0 - 7000m)
+[24.99] WORLD_ENTER - Train2Up
+[25.00] TRACK_ENTER - Train2Up (Track tpjPf1 - 800m)
+[25.96] TRACK_TRAVEL_END - Train2Up (Track tpjPf1 - 800m)
+[25.97] PATH_COMPLETED - Train2Up (Track tpjPf1 - 800m)
+[25.98] TRAIN_ARRIVE - Train2Up (Track tpjPf1 - 800m)
+[27.77] TRACK_TRAVEL_END - Train1Up (Track bsTpjKrur0 - 7000m)
+[27.78] TRACK_RELEASE - bsTpjKrur0
+[27.78] TRACK_ENTER - Train1Up (Track bsKrurPdkt0 - 7000m)
+[29.99] WORLD_ENTER - Train1Down
+[30.00] TRACK_ENTER - Train1Down (Track kkdiPf1 - 800m)
+[30.96] TRACK_TRAVEL_END - Train1Down (Track kkdiPf1 - 800m)
+[30.97] PATH_COMPLETED - Train1Down (Track kkdiPf1 - 800m)
+[30.98] TRAIN_ARRIVE - Train1Down (Track kkdiPf1 - 800m)
+[31.59] TRACK_TRAVEL_END - Train1Up (Track bsKrurPdkt0 - 7000m)
+[31.60] TRACK_RELEASE - bsKrurPdkt0
+[31.60] TRACK_ENTER - Train1Up (Track bsTpjPdkt2 - 5000m)
+[34.33] TRACK_TRAVEL_END - Train1Up (Track bsTpjPdkt2 - 5000m)
+[34.34] TRACK_RELEASE - bsTpjPdkt2
+[34.34] TRACK_ENTER - Train1Up (Track pdktPf1SSw1 - 100m)
+[34.54] TRACK_TRAVEL_END - Train1Up (Track pdktPf1SSw1 - 100m)
+[34.55] TRACK_RELEASE - pdktPf1SSw1
+[34.55] TRACK_ENTER - Train1Up (Track pdktPf1 - 800m)
+[35.51] TRACK_TRAVEL_END - Train1Up (Track pdktPf1 - 800m)
+[35.52] PATH_COMPLETED - Train1Up (Track pdktPf1 - 800m)
+[35.53] TRAIN_ARRIVE - Train1Up (Track pdktPf1 - 800m)
+[35.98] TRAIN_DWELL_END - Train2Up (Track tpjPf1 - 800m)
+[35.99] TRAIN_DEPART - Train2Up (Track tpjPf1 - 800m)
+[36.00] TRACK_RELEASE - tpjPf1
+[36.00] TRACK_ENTER - Train2Up (Track tpjPf1ESw1 - 100m)
+[36.20] TRACK_TRAVEL_END - Train2Up (Track tpjPf1ESw1 - 100m)
+[36.21] TRACK_RELEASE - tpjPf1ESw1
+[36.21] TRACK_ENTER - Train2Up (Track bsTpjPdkt0 - 5000m)
+[38.94] TRACK_TRAVEL_END - Train2Up (Track bsTpjPdkt0 - 5000m)
+[38.95] TRACK_RELEASE - bsTpjPdkt0
+[38.95] TRACK_ENTER - Train2Up (Track bsTpjKrur0 - 7000m)
+[40.98] TRAIN_DWELL_END - Train1Down (Track kkdiPf1 - 800m)
+[40.99] TRAIN_DEPART - Train1Down (Track kkdiPf1 - 800m)
+[41.00] TRACK_RELEASE - kkdiPf1
+[41.00] TRACK_ENTER - Train1Down (Track kkdiSw1Pf1S - 100m)
+[41.20] TRACK_TRAVEL_END - Train1Down (Track kkdiSw1Pf1S - 100m)
+[41.21] TRACK_RELEASE - kkdiSw1Pf1S
+[41.21] TRACK_ENTER - Train1Down (Track bsPdktKkdi0 - 30000m)
+[42.77] TRACK_TRAVEL_END - Train2Up (Track bsTpjKrur0 - 7000m)
+[42.78] TRACK_RELEASE - bsTpjKrur0
+[42.78] TRACK_ENTER - Train2Up (Track bsKrurPdkt0 - 7000m)
+[44.99] WORLD_ENTER - Train2Down
+[45.00] TRACK_ENTER - Train2Down (Track kkdiPf1 - 800m)
+[45.53] TRAIN_DWELL_END - Train1Up (Track pdktPf1 - 800m)
+[45.96] TRACK_TRAVEL_END - Train2Down (Track kkdiPf1 - 800m)
+[45.97] PATH_COMPLETED - Train2Down (Track kkdiPf1 - 800m)
+[45.98] TRAIN_ARRIVE - Train2Down (Track kkdiPf1 - 800m)
+[46.59] TRACK_TRAVEL_END - Train2Up (Track bsKrurPdkt0 - 7000m)
+[46.60] TRACK_RELEASE - bsKrurPdkt0
+[46.60] TRACK_ENTER - Train2Up (Track bsTpjPdkt2 - 5000m)
+[49.33] TRACK_TRAVEL_END - Train2Up (Track bsTpjPdkt2 - 5000m)
+[49.34] TRACK_RELEASE - bsTpjPdkt2
+[49.34] TRACK_ENTER - Train2Up (Track pdktPf2SSw1 - 100m)
+[49.54] TRACK_TRAVEL_END - Train2Up (Track pdktPf2SSw1 - 100m)
+[49.55] TRACK_RELEASE - pdktPf2SSw1
+[49.55] TRACK_ENTER - Train2Up (Track pdktPf2 - 800m)
+[50.51] TRACK_TRAVEL_END - Train2Up (Track pdktPf2 - 800m)
+[50.52] PATH_COMPLETED - Train2Up (Track pdktPf2 - 800m)
+[50.53] TRAIN_ARRIVE - Train2Up (Track pdktPf2 - 800m)
+[55.98] TRAIN_DWELL_END - Train2Down (Track kkdiPf1 - 800m)
+[57.57] TRACK_TRAVEL_END - Train1Down (Track bsPdktKkdi0 - 30000m)
+[57.58] TRACK_RELEASE - bsPdktKkdi0
+[57.58] TRACK_ENTER - Train1Down (Track pdktPf3ESw2 - 100m)
+[57.59] TRAIN_DEPART - Train1Up (Track pdktPf1 - 800m)
+[57.60] TRACK_RELEASE - pdktPf1
+[57.60] TRACK_ENTER - Train1Up (Track pdktPf1ESw2 - 100m)
+[57.78] TRACK_TRAVEL_END - Train1Down (Track pdktPf3ESw2 - 100m)
+[57.79] TRACK_RELEASE - pdktPf3ESw2
+[57.79] TRACK_ENTER - Train1Down (Track pdktPf3 - 800m)
+[57.80] TRACK_TRAVEL_END - Train1Up (Track pdktPf1ESw2 - 100m)
+[57.81] TRACK_RELEASE - pdktPf1ESw2
+[57.81] TRACK_ENTER - Train1Up (Track bsPdktKkdi0 - 30000m)
+[58.75] TRACK_TRAVEL_END - Train1Down (Track pdktPf3 - 800m)
+[58.76] PATH_COMPLETED - Train1Down (Track pdktPf3 - 800m)
+[58.77] TRAIN_ARRIVE - Train1Down (Track pdktPf3 - 800m)
+[60.53] TRAIN_DWELL_END - Train2Up (Track pdktPf2 - 800m)
+[74.18] TRACK_TRAVEL_END - Train1Up (Track bsPdktKkdi0 - 30000m)
+[74.19] TRACK_RELEASE - bsPdktKkdi0
+[74.19] TRACK_ENTER - Train1Up (Track kkdiSw1Pf2S - 100m)
+[74.20] TRAIN_DEPART - Train2Down (Track kkdiPf1 - 800m)
+[74.21] TRACK_RELEASE - kkdiPf1
+[74.21] TRACK_ENTER - Train2Down (Track kkdiSw1Pf1S - 100m)
+[74.39] TRACK_TRAVEL_END - Train1Up (Track kkdiSw1Pf2S - 100m)
+[74.40] TRACK_RELEASE - kkdiSw1Pf2S
+[74.40] TRACK_ENTER - Train1Up (Track kkdiPf2 - 800m)
+[74.41] TRACK_TRAVEL_END - Train2Down (Track kkdiSw1Pf1S - 100m)
+[74.42] TRACK_RELEASE - kkdiSw1Pf1S
+[74.42] TRACK_ENTER - Train2Down (Track bsPdktKkdi0 - 30000m)
+[75.36] TRACK_TRAVEL_END - Train1Up (Track kkdiPf2 - 800m)
+[75.37] PATH_COMPLETED - Train1Up (Track kkdiPf2 - 800m)
+[75.38] TRAIN_ARRIVE - Train1Up (Track kkdiPf2 - 800m)
+[76.38] TRAIN_DWELL_END - Train1Up (Track kkdiPf2 - 800m)
+[76.39] TRAIN_DEPART - Train1Up (Track kkdiPf2 - 800m)
+[76.40] TRACK_RELEASE - kkdiPf2
+[76.40] WORLD_EXIT - Train1Up
+[80.00] TRAIN_DWELL_END - Train1Down (Track pdktPf3 - 800m)
+[80.01] TRAIN_DEPART - Train1Down (Track pdktPf3 - 800m)
+[80.02] TRACK_RELEASE - pdktPf3
+[80.02] TRACK_ENTER - Train1Down (Track pdktPf3SSw1 - 100m)
+[80.22] TRACK_TRAVEL_END - Train1Down (Track pdktPf3SSw1 - 100m)
+[80.23] TRACK_RELEASE - pdktPf3SSw1
+[80.23] TRACK_ENTER - Train1Down (Track bsTpjPdkt2 - 5000m)
+[82.96] TRACK_TRAVEL_END - Train1Down (Track bsTpjPdkt2 - 5000m)
+[82.97] TRACK_RELEASE - bsTpjPdkt2
+[82.97] TRACK_ENTER - Train1Down (Track bsKrurPdkt0 - 7000m)
+[86.79] TRACK_TRAVEL_END - Train1Down (Track bsKrurPdkt0 - 7000m)
+[86.80] TRACK_RELEASE - bsKrurPdkt0
+[86.80] TRACK_ENTER - Train1Down (Track bsTpjKrur0 - 7000m)
+[90.61] TRACK_TRAVEL_END - Train1Down (Track bsTpjKrur0 - 7000m)
+[90.62] TRACK_RELEASE - bsTpjKrur0
+[90.62] TRACK_ENTER - Train1Down (Track bsTpjPdkt0 - 5000m)
+[90.78] TRACK_TRAVEL_END - Train2Down (Track bsPdktKkdi0 - 30000m)
+[90.79] TRACK_RELEASE - bsPdktKkdi0
+[90.79] TRACK_ENTER - Train2Down (Track pdktPf1ESw2 - 100m)
+[90.80] TRAIN_DEPART - Train2Up (Track pdktPf2 - 800m)
+[90.81] TRACK_RELEASE - pdktPf2
+[90.81] TRACK_ENTER - Train2Up (Track pdktPf2ESw2 - 100m)
+[90.99] TRACK_TRAVEL_END - Train2Down (Track pdktPf1ESw2 - 100m)
+[91.00] TRACK_RELEASE - pdktPf1ESw2
+[91.00] TRACK_ENTER - Train2Down (Track pdktPf1 - 800m)
+[91.01] TRACK_TRAVEL_END - Train2Up (Track pdktPf2ESw2 - 100m)
+[91.02] TRACK_RELEASE - pdktPf2ESw2
+[91.02] TRACK_ENTER - Train2Up (Track bsPdktKkdi0 - 30000m)
+[91.96] TRACK_TRAVEL_END - Train2Down (Track pdktPf1 - 800m)
+[91.97] PATH_COMPLETED - Train2Down (Track pdktPf1 - 800m)
+[91.98] TRAIN_ARRIVE - Train2Down (Track pdktPf1 - 800m)
+[93.35] TRACK_TRAVEL_END - Train1Down (Track bsTpjPdkt0 - 5000m)
+[93.36] TRACK_RELEASE - bsTpjPdkt0
+[93.36] TRACK_ENTER - Train1Down (Track tpjPf1ESw1 - 100m)
+[93.56] TRACK_TRAVEL_END - Train1Down (Track tpjPf1ESw1 - 100m)
+[93.57] TRACK_RELEASE - tpjPf1ESw1
+[93.57] TRACK_ENTER - Train1Down (Track tpjPf1 - 800m)
+[94.53] TRACK_TRAVEL_END - Train1Down (Track tpjPf1 - 800m)
+[94.54] PATH_COMPLETED - Train1Down (Track tpjPf1 - 800m)
+[94.55] TRAIN_ARRIVE - Train1Down (Track tpjPf1 - 800m)
+[101.98] TRAIN_DWELL_END - Train2Down (Track pdktPf1 - 800m)
+[101.99] TRAIN_DEPART - Train2Down (Track pdktPf1 - 800m)
+[102.00] TRACK_RELEASE - pdktPf1
+[102.00] TRACK_ENTER - Train2Down (Track pdktPf1SSw1 - 100m)
+[102.20] TRACK_TRAVEL_END - Train2Down (Track pdktPf1SSw1 - 100m)
+[102.21] TRACK_RELEASE - pdktPf1SSw1
+[102.21] TRACK_ENTER - Train2Down (Track bsTpjPdkt2 - 5000m)
+[104.55] TRAIN_DWELL_END - Train1Down (Track tpjPf1 - 800m)
+[104.56] TRAIN_DEPART - Train1Down (Track tpjPf1 - 800m)
+[104.57] TRACK_RELEASE - tpjPf1
+[104.57] WORLD_EXIT - Train1Down
+[104.94] TRACK_TRAVEL_END - Train2Down (Track bsTpjPdkt2 - 5000m)
+[104.95] TRACK_RELEASE - bsTpjPdkt2
+[104.95] TRACK_ENTER - Train2Down (Track bsKrurPdkt0 - 7000m)
+[107.38] TRACK_TRAVEL_END - Train2Up (Track bsPdktKkdi0 - 30000m)
+[107.39] TRACK_RELEASE - bsPdktKkdi0
+[107.39] TRACK_ENTER - Train2Up (Track kkdiSw1Pf1S - 100m)
+[107.59] TRACK_TRAVEL_END - Train2Up (Track kkdiSw1Pf1S - 100m)
+[107.60] TRACK_RELEASE - kkdiSw1Pf1S
+[107.60] TRACK_ENTER - Train2Up (Track kkdiPf1 - 800m)
+[108.56] TRACK_TRAVEL_END - Train2Up (Track kkdiPf1 - 800m)
+[108.57] PATH_COMPLETED - Train2Up (Track kkdiPf1 - 800m)
+[108.58] TRAIN_ARRIVE - Train2Up (Track kkdiPf1 - 800m)
+[108.77] TRACK_TRAVEL_END - Train2Down (Track bsKrurPdkt0 - 7000m)
+[108.78] TRACK_RELEASE - bsKrurPdkt0
+[108.78] TRACK_ENTER - Train2Down (Track bsTpjKrur0 - 7000m)
+[109.58] TRAIN_DWELL_END - Train2Up (Track kkdiPf1 - 800m)
+[109.59] TRAIN_DEPART - Train2Up (Track kkdiPf1 - 800m)
+[109.60] TRACK_RELEASE - kkdiPf1
+[109.60] WORLD_EXIT - Train2Up
+[112.59] TRACK_TRAVEL_END - Train2Down (Track bsTpjKrur0 - 7000m)
+[112.60] TRACK_RELEASE - bsTpjKrur0
+[112.60] TRACK_ENTER - Train2Down (Track bsTpjPdkt0 - 5000m)
+[115.33] TRACK_TRAVEL_END - Train2Down (Track bsTpjPdkt0 - 5000m)
+[115.34] TRACK_RELEASE - bsTpjPdkt0
+[115.34] TRACK_ENTER - Train2Down (Track tpjPf2ESw1 - 100m)
+[115.54] TRACK_TRAVEL_END - Train2Down (Track tpjPf2ESw1 - 100m)
+[115.55] TRACK_RELEASE - tpjPf2ESw1
+[115.55] TRACK_ENTER - Train2Down (Track tpjPf2 - 800m)
+[116.51] TRACK_TRAVEL_END - Train2Down (Track tpjPf2 - 800m)
+[116.52] PATH_COMPLETED - Train2Down (Track tpjPf2 - 800m)
+[116.53] TRAIN_ARRIVE - Train2Down (Track tpjPf2 - 800m)
+[117.53] TRAIN_DWELL_END - Train2Down (Track tpjPf2 - 800m)
+[117.54] TRAIN_DEPART - Train2Down (Track tpjPf2 - 800m)
+[117.55] TRACK_RELEASE - tpjPf2
+[117.55] WORLD_EXIT - Train2Down

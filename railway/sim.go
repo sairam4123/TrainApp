@@ -96,7 +96,7 @@ func (s *Sim) CurTime() float64 {
 
 func (s *Sim) DumpSim() {
 	os.MkdirAll("dumps/", 0755)
-	dump, err := os.OpenFile(fmt.Sprintf("dumps/dump%d.txt", s.dCount), os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	dump, err := os.OpenFile(fmt.Sprintf("dumps/dump%d.txt", int(s.des.CurTime*100)), os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		panic("Error opening dump file")
 	}
@@ -116,8 +116,6 @@ func (s *Sim) DumpSim() {
 		fmt.Fprintf(dump, "Track %s - Reserved %s - Occupied %s\n", track.Id, track.ReservedBy, track.OccupiedBy)
 	}
 	fmt.Fprintln(dump)
-	s.dCount++
-
 }
 
 func (s *Sim) Run() {
