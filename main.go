@@ -25,7 +25,7 @@ func buildWorld() *railway.World {
 	})
 
 	tpj := world.NewStation("TPJ", "Tiruchy Jn")
-	pdkt := world.NewStation("PDKT", "Pudukkottai")
+	// pdkt := world.NewStation("PDKT", "Pudukkottai")
 	kkdi := world.NewStation("KKDI", "Karaikudi Jn")
 
 	tpjPf1S := world.NewTrackPoint("tpjPf1S").WithDeadEnd(true).WithSimLimit(true)
@@ -58,47 +58,49 @@ func buildWorld() *railway.World {
 	tpj.NewStationPlatform(tpjPf2, "2", PLATFORM_LENGTH)
 	tpj.NewStationPlatform(tpjPf3, "3", PLATFORM_LENGTH)
 
-	pdktPf1S := world.NewTrackPoint("pdktPf1S")
-	pdktPf1E := world.NewTrackPoint("pdktPf1E")
+	// pdktPf1S := world.NewTrackPoint("pdktPf1S")
+	// pdktPf1E := world.NewTrackPoint("pdktPf1E")
 
-	pdktPf2S := world.NewTrackPoint("pdktPf2S")
-	pdktPf2E := world.NewTrackPoint("pdktPf2E")
+	// pdktPf2S := world.NewTrackPoint("pdktPf2S")
+	// pdktPf2E := world.NewTrackPoint("pdktPf2E")
 
-	pdktPf3S := world.NewTrackPoint("pdktPf3S")
-	pdktPf3E := world.NewTrackPoint("pdktPf3E")
+	// pdktPf3S := world.NewTrackPoint("pdktPf3S")
+	// pdktPf3E := world.NewTrackPoint("pdktPf3E")
 
-	pdktPf1 := world.NewPlatformTrack("pdktPf1")
-	pdktPf2 := world.NewPlatformTrack("pdktPf2")
-	pdktPf3 := world.NewPlatformTrack("pdktPf3")
+	// pdktPf1 := world.NewPlatformTrack("pdktPf1")
+	// pdktPf2 := world.NewPlatformTrack("pdktPf2")
+	// pdktPf3 := world.NewPlatformTrack("pdktPf3")
 
-	pdkt.NewStationPlatform(pdktPf1, "1", PLATFORM_LENGTH)
-	pdkt.NewStationPlatform(pdktPf2, "2", PLATFORM_LENGTH)
-	pdkt.NewStationPlatform(pdktPf3, "3", PLATFORM_LENGTH)
+	// pdkt.NewStationPlatform(pdktPf1, "1", PLATFORM_LENGTH)
+	// pdkt.NewStationPlatform(pdktPf2, "2", PLATFORM_LENGTH)
+	// pdkt.NewStationPlatform(pdktPf3, "3", PLATFORM_LENGTH)
 
-	world.TrackGraph.AddTrack(pdktPf1S, pdktPf1E, pdktPf1)
-	world.TrackGraph.AddTrack(pdktPf2S, pdktPf2E, pdktPf2)
-	world.TrackGraph.AddTrack(pdktPf3S, pdktPf3E, pdktPf3)
+	// world.TrackGraph.AddTrack(pdktPf1S, pdktPf1E, pdktPf1)
+	// world.TrackGraph.AddTrack(pdktPf2S, pdktPf2E, pdktPf2)
+	// world.TrackGraph.AddTrack(pdktPf3S, pdktPf3E, pdktPf3)
 
-	pdktSw1 := world.NewTrackPoint("pdktSw1")
-	pdktSw2 := world.NewTrackPoint("pdktSw2")
+	// pdktSw1 := world.NewTrackPoint("pdktSw1")
+	// pdktSw2 := world.NewTrackPoint("pdktSw2")
 
-	pdktPf1SSw1 := world.NewSwitchTrack("pdktPf1SSw1")
-	pdktPf1ESw2 := world.NewSwitchTrack("pdktPf1ESw2")
+	// pdktPf1SSw1 := world.NewSwitchTrack("pdktPf1SSw1")
+	// pdktPf1ESw2 := world.NewSwitchTrack("pdktPf1ESw2")
 
-	pdktPf2SSw1 := world.NewSwitchTrack("pdktPf2SSw1")
-	pdktPf2ESw2 := world.NewSwitchTrack("pdktPf2ESw2")
+	// pdktPf2SSw1 := world.NewSwitchTrack("pdktPf2SSw1")
+	// pdktPf2ESw2 := world.NewSwitchTrack("pdktPf2ESw2")
 
-	pdktPf3SSw1 := world.NewSwitchTrack("pdktPf3SSw1")
-	pdktPf3ESw2 := world.NewSwitchTrack("pdktPf3ESw2")
+	// pdktPf3SSw1 := world.NewSwitchTrack("pdktPf3SSw1")
+	// pdktPf3ESw2 := world.NewSwitchTrack("pdktPf3ESw2")
 
-	world.TrackGraph.AddTrack(pdktPf1S, pdktSw1, pdktPf1SSw1)
-	world.TrackGraph.AddTrack(pdktPf2S, pdktSw1, pdktPf2SSw1)
+	// world.TrackGraph.AddTrack(pdktPf1S, pdktSw1, pdktPf1SSw1)
+	// world.TrackGraph.AddTrack(pdktPf2S, pdktSw1, pdktPf2SSw1)
 
-	world.TrackGraph.AddTrack(pdktPf1E, pdktSw2, pdktPf1ESw2)
-	world.TrackGraph.AddTrack(pdktPf2E, pdktSw2, pdktPf2ESw2)
+	// world.TrackGraph.AddTrack(pdktPf1E, pdktSw2, pdktPf1ESw2)
+	// world.TrackGraph.AddTrack(pdktPf2E, pdktSw2, pdktPf2ESw2)
 
-	world.TrackGraph.AddTrack(pdktPf3S, pdktSw1, pdktPf3SSw1)
-	world.TrackGraph.AddTrack(pdktPf3E, pdktSw2, pdktPf3ESw2)
+	// world.TrackGraph.AddTrack(pdktPf3S, pdktSw1, pdktPf3SSw1)
+	// world.TrackGraph.AddTrack(pdktPf3E, pdktSw2, pdktPf3ESw2)
+
+	pdkt, pdktSw1, pdktSw2 := railway.NewStationClassC(world, "PDKT", "Pudukkottai")
 
 	kkdiPf1S := world.NewTrackPoint("kkdiPf1S")
 	kkdiPf1E := world.NewTrackPoint("kkdiPf1E").WithDeadEnd(true).WithSimLimit(true)
@@ -189,7 +191,7 @@ func main() {
 	if !ok {
 		panic("Something went wrong while fetching stations")
 	}
-	for i := range 2 {
+	for i := range 1 {
 		train1 := railway.Train{
 			Name:     fmt.Sprintf("Train%dUp", i+1),
 			Number:   fmt.Sprintf("045%dU", i+1),
@@ -198,8 +200,8 @@ func main() {
 
 		train1.AddSchedule(&railway.SchedulePoint{
 			StnCode:  tpj.Code,
-			ArrTime:  float64(10 + (i * 15)),
-			DeptTime: float64(20 + (i * 15)),
+			ArrTime:  float64(10 + i*15),
+			DeptTime: float64(20 + i*15),
 			SpPfNo:   "1",
 		})
 
@@ -225,22 +227,22 @@ func main() {
 
 		train2.AddSchedule(&railway.SchedulePoint{
 			StnCode:  kkdi.Code,
-			ArrTime:  float64(30 + (i)*15),
-			DeptTime: float64(40 + (i)*15),
+			ArrTime:  float64(30 + i*15),
+			DeptTime: float64(40 + i*15),
 			SpPfNo:   "1",
 		})
 
 		train2.AddSchedule(&railway.SchedulePoint{
 			StnCode:  pdkt.Code,
-			ArrTime:  float64(70 + (i)*15),
-			DeptTime: float64(80 + (i)*15),
+			ArrTime:  float64(70 + i*15),
+			DeptTime: float64(80 + i*15),
 			SpPfNo:   "2",
 		})
 
 		train2.AddSchedule(&railway.SchedulePoint{
 			StnCode:  tpj.Code,
-			ArrTime:  float64(90 + (i)*15),
-			DeptTime: float64(100 + (i)*15),
+			ArrTime:  float64(90 + i*15),
+			DeptTime: float64(100 + i*15),
 			SpPfNo:   "1",
 		})
 

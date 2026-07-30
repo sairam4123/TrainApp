@@ -118,12 +118,19 @@ func (s *Sim) DumpSim() {
 	fmt.Fprintln(dump)
 }
 
-func (s *Sim) Run() {
-	logger, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+func (s *Sim) InitLogger() *os.File {
+	os.MkdirAll("logs/", 0755)
+	logger, err := os.OpenFile("logs/logs.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		panic("Error opening logging files")
 	}
+	return logger
+}
+
+func (s *Sim) Run() {
+	logger := s.InitLogger()
 	defer logger.Close()
+
 	for {
 		ev, ok := s.NextEvent()
 		if !ok {

@@ -15,6 +15,8 @@ type WorldData struct {
 }
 
 type World struct {
+	switchBlocks map[string]*SwitchBlock
+
 	stations map[string]*Station
 	trains   map[string]*Train
 
@@ -115,4 +117,16 @@ func (w *World) NewBlockSection(id string) *BlockSection {
 	}
 	w.AddBlockSection(bsec)
 	return bsec
+}
+
+func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, activeEdge *GraphEdge) *SwitchBlock {
+	swBlk := &SwitchBlock{
+		Id: id,
+
+		activeEdge:   activeEdge,
+		managedEdges: managedEdges,
+	}
+	w.switchBlocks[swBlk.Id] = swBlk
+
+	return swBlk
 }
