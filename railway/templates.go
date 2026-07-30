@@ -6,17 +6,21 @@ import (
 )
 
 // two PF station with Single line
-func NewStationClassC(world *World, stnCode, stnName string) (*Station, *TrackPoint, *TrackPoint) {
+func NewStationSL2PF(world *World, stnCode, stnName string) (*Station, *TrackPoint, *TrackPoint) {
 	stn := world.NewStation(stnCode, stnName)
 
 	stnCodeLwr := strings.ToLower(stnCode)
-	sw1Id := fmt.Sprintf("%sSw1", stnCodeLwr)
+	bp0Id := fmt.Sprintf("%sBp0", stnCodeLwr)
 
-	stnSw1 := world.NewTrackPoint(sw1Id)
+	stnBp0 := world.NewTrackPoint(bp0Id)
 
-	sw2Id := fmt.Sprintf("%sSw2", stnCodeLwr)
+	bp1Id := fmt.Sprintf("%sBp1", stnCodeLwr)
 
-	stnSw2 := world.NewTrackPoint(sw2Id)
+	stnBp1 := world.NewTrackPoint(bp1Id)
+
+	sw1AId := fmt.Sprintf("%sSw1A", stnCodeLwr)
+
+	sw2AId := fmt.Sprintf("%sSw2A", stnCodeLwr)
 
 	pf1S := fmt.Sprintf("%sPf1S", stnCodeLwr)
 	pf1E := fmt.Sprintf("%sPf1E", stnCodeLwr)
@@ -29,11 +33,14 @@ func NewStationClassC(world *World, stnCode, stnName string) (*Station, *TrackPo
 	stnPf2S := world.NewTrackPoint(pf2S)
 	stnPf2E := world.NewTrackPoint(pf2E)
 
-	stnSw1stnPf1S := world.NewSwitchTrack(NewTrackID(stnSw1, stnPf1S))
-	stnSw1stnPf2S := world.NewSwitchTrack(NewTrackID(stnSw1, stnPf2S))
+	NewSwitch(world, sw1AId, stnBp0, stnPf1S, stnPf2S)
+	NewSwitch(world, sw2AId, stnBp1, stnPf1E, stnPf2E)
+	
+	// stnSw1stnPf1S := world.NewSwitchTrack(NewTrackID(stnBp0, stnPf1S))
+	// stnSw1stnPf2S := world.NewSwitchTrack(NewTrackID(stnBp0, stnPf2S))
 
-	stnSw2stnPf1E := world.NewSwitchTrack(NewTrackID(stnSw2, stnPf1E))
-	stnSw2stnPf2E := world.NewSwitchTrack(NewTrackID(stnSw2, stnPf2E))
+	// stnSw2stnPf1E := world.NewSwitchTrack(NewTrackID(stnBp1, stnPf1E))
+	// stnSw2stnPf2E := world.NewSwitchTrack(NewTrackID(stnBp1, stnPf2E))
 
 	stnPf1 := world.NewPlatformTrack(NewTrackID(stnPf1S, stnPf1E))
 	stnPf2 := world.NewPlatformTrack(NewTrackID(stnPf2S, stnPf2E))
@@ -41,16 +48,16 @@ func NewStationClassC(world *World, stnCode, stnName string) (*Station, *TrackPo
 	stn.NewStationPlatform(stnPf1, "1", 700)
 	stn.NewStationPlatform(stnPf2, "2", 700)
 
-	world.TrackGraph.AddTrack(stnSw1, stnPf1S, stnSw1stnPf1S)
-	world.TrackGraph.AddTrack(stnSw1, stnPf2S, stnSw1stnPf2S)
+	// world.TrackGraph.AddTrack(stnBp0, stnPf1S, stnSw1stnPf1S)
+	// world.TrackGraph.AddTrack(stnBp0, stnPf2S, stnSw1stnPf2S)
 
-	world.TrackGraph.AddTrack(stnSw2, stnPf1E, stnSw2stnPf1E)
-	world.TrackGraph.AddTrack(stnSw2, stnPf2E, stnSw2stnPf2E)
+	// world.TrackGraph.AddTrack(stnBp1, stnPf1E, stnSw2stnPf1E)
+	// world.TrackGraph.AddTrack(stnBp1, stnPf2E, stnSw2stnPf2E)
 
 	world.TrackGraph.AddTrack(stnPf1S, stnPf1E, stnPf1)
 	world.TrackGraph.AddTrack(stnPf2S, stnPf2E, stnPf2)
 
-	return stn, stnSw1, stnSw2
+	return stn, stnBp0, stnBp1
 }
 
 func NewTrackID(from, to *TrackPoint) string {

@@ -41,18 +41,22 @@ func buildWorld() *railway.World {
 	tpjPf2 := world.NewPlatformTrack("tpjPf2")
 	tpjPf3 := world.NewPlatformTrack("tpjPf3")
 
-	tpjSw1 := world.NewTrackPoint("tpjSw1")
-	tpjPf1ESw1 := world.NewSwitchTrack("tpjPf1ESw1")
-	tpjPf2ESw1 := world.NewSwitchTrack("tpjPf2ESw1")
-	tpjPf3ESw1 := world.NewSwitchTrack("tpjPf3ESw1")
+	tpjBp0 := world.NewTrackPoint("tpjBp0")
+
+	railway.NewSwitch(world, "tpjSw1A", tpjBp0, tpjPf1E, tpjPf2E)
+	railway.NewSwitch(world, "tpjSw1B", tpjBp0, tpjPf2E, tpjPf3E)
+
+	// tpjPf1ESw1 := world.NewSwitchTrack("tpjPf1ESw1")
+	// tpjPf2ESw1 := world.NewSwitchTrack("tpjPf2ESw1")
+	// tpjPf3ESw1 := world.NewSwitchTrack("tpjPf3ESw1")
 
 	world.TrackGraph.AddTrack(tpjPf1S, tpjPf1E, tpjPf1)
 	world.TrackGraph.AddTrack(tpjPf2S, tpjPf2E, tpjPf2)
 	world.TrackGraph.AddTrack(tpjPf3S, tpjPf3E, tpjPf3)
 
-	world.TrackGraph.AddTrack(tpjPf1E, tpjSw1, tpjPf1ESw1)
-	world.TrackGraph.AddTrack(tpjPf2E, tpjSw1, tpjPf2ESw1)
-	world.TrackGraph.AddTrack(tpjPf3E, tpjSw1, tpjPf3ESw1)
+	// world.TrackGraph.AddTrack(tpjPf1E, tpjSw1, tpjPf1ESw1)
+	// world.TrackGraph.AddTrack(tpjPf2E, tpjSw1, tpjPf2ESw1)
+	// world.TrackGraph.AddTrack(tpjPf3E, tpjSw1, tpjPf3ESw1)
 
 	tpj.NewStationPlatform(tpjPf1, "1", PLATFORM_LENGTH)
 	tpj.NewStationPlatform(tpjPf2, "2", PLATFORM_LENGTH)
@@ -100,7 +104,7 @@ func buildWorld() *railway.World {
 	// world.TrackGraph.AddTrack(pdktPf3S, pdktSw1, pdktPf3SSw1)
 	// world.TrackGraph.AddTrack(pdktPf3E, pdktSw2, pdktPf3ESw2)
 
-	pdkt, pdktSw1, pdktSw2 := railway.NewStationClassC(world, "PDKT", "Pudukkottai")
+	pdkt, pdktBp0, pdktBp1 := railway.NewStationSL2PF(world, "PDKT", "Pudukkottai")
 
 	kkdiPf1S := world.NewTrackPoint("kkdiPf1S")
 	kkdiPf1E := world.NewTrackPoint("kkdiPf1E").WithDeadEnd(true).WithSimLimit(true)
@@ -117,13 +121,15 @@ func buildWorld() *railway.World {
 	world.TrackGraph.AddTrack(kkdiPf1S, kkdiPf1E, kkdiPf1)
 	world.TrackGraph.AddTrack(kkdiPf2S, kkdiPf2E, kkdiPf2)
 
-	kkdiSw1 := world.NewTrackPoint("kkdiSw1")
+	kkdiBp0 := world.NewTrackPoint("kkdiBp0")
 
-	kkdiSw1Pf1S := world.NewSwitchTrack("kkdiSw1Pf1S")
-	kkdiSw1Pf2S := world.NewSwitchTrack("kkdiSw1Pf2S")
+	railway.NewSwitch(world, "kkdiSw1A", kkdiBp0, kkdiPf1S, kkdiPf2S)
 
-	world.TrackGraph.AddTrack(kkdiSw1, kkdiPf1S, kkdiSw1Pf1S)
-	world.TrackGraph.AddTrack(kkdiSw1, kkdiPf2S, kkdiSw1Pf2S)
+	// kkdiSw1Pf1S := world.NewSwitchTrack("kkdiSw1Pf1S")
+	// kkdiSw1Pf2S := world.NewSwitchTrack("kkdiSw1Pf2S")
+
+	// world.TrackGraph.AddTrack(kkdiBp0, kkdiPf1S, kkdiSw1Pf1S)
+	// world.TrackGraph.AddTrack(kkdiBp0, kkdiPf2S, kkdiSw1Pf2S)
 
 	bsecTpjPdkt := world.NewBlockSection("bsecTpjPdkt")
 	bsecTpjPdkt.Init(tpj, pdkt)
@@ -139,11 +145,11 @@ func buildWorld() *railway.World {
 	bsTpjKrur0 := world.NewTrackSegment("bsTpjKrur0", units.KM(7))
 	bsKrurPdkt0 := world.NewTrackSegment("bsKrurPdkt0", units.KM(7))
 
-	world.TrackGraph.AddTrack(tpjSw1, tpjCp1, bsTpjPdkt0)
+	world.TrackGraph.AddTrack(tpjBp0, tpjCp1, bsTpjPdkt0)
 	world.TrackGraph.AddTrack(tpjCp1, krurCp1, bsTpjKrur0)
 	world.TrackGraph.AddTrack(krurCp1, pdktCp1, bsKrurPdkt0)
 	world.TrackGraph.AddTrack(tpjCp1, pdktCp1, bsTpjPdkt1)
-	world.TrackGraph.AddTrack(pdktCp1, pdktSw1, bsTpjPdkt2)
+	world.TrackGraph.AddTrack(pdktCp1, pdktBp0, bsTpjPdkt2)
 
 	bsecPdktKkdi := world.NewBlockSection("bsecPdktKkdi")
 	bsecPdktKkdi.Init(pdkt, kkdi)
@@ -151,7 +157,7 @@ func buildWorld() *railway.World {
 	bsPdktKkdi0 := world.NewTrackSegment("bsPdktKkdi0", units.KM(30))
 	bsecPdktKkdi.AddTrack(bsPdktKkdi0)
 
-	world.TrackGraph.AddTrack(pdktSw2, kkdiSw1, bsPdktKkdi0)
+	world.TrackGraph.AddTrack(pdktBp1, kkdiBp0, bsPdktKkdi0)
 
 	bsecTpjPdkt.AddTrack(bsTpjPdkt0)
 	bsecTpjPdkt.AddTrack(bsTpjPdkt1)
@@ -168,11 +174,6 @@ func main() {
 	sim.SetWorld(world)
 	// this is a temp call -> TODO: Move it to Graph.FindPath() call instead or something
 	world.TrackGraph.BuildCacheMap()
-
-	// path := world.TrackGraph.FindPathToTrack(tpjPf1E, &pdktPf1)
-	// for i, edge := range path.Edges {
-	// 	fmt.Printf("%d. %s -> %s (%s)\n", i+1, edge.From.Id, edge.To.Id, edge.Track.Id)
-	// }
 
 	tpj, ok := world.GetStation("TPJ")
 
@@ -191,7 +192,8 @@ func main() {
 	if !ok {
 		panic("Something went wrong while fetching stations")
 	}
-	for i := range 1 {
+
+	for i := range 2 {
 		train1 := railway.Train{
 			Name:     fmt.Sprintf("Train%dUp", i+1),
 			Number:   fmt.Sprintf("045%dU", i+1),
@@ -227,22 +229,22 @@ func main() {
 
 		train2.AddSchedule(&railway.SchedulePoint{
 			StnCode:  kkdi.Code,
-			ArrTime:  float64(30 + i*15),
-			DeptTime: float64(40 + i*15),
+			ArrTime:  float64(30 + i*25),
+			DeptTime: float64(40 + i*25),
 			SpPfNo:   "1",
 		})
 
 		train2.AddSchedule(&railway.SchedulePoint{
 			StnCode:  pdkt.Code,
-			ArrTime:  float64(70 + i*15),
-			DeptTime: float64(80 + i*15),
+			ArrTime:  float64(70 + i*25),
+			DeptTime: float64(80 + i*25),
 			SpPfNo:   "2",
 		})
 
 		train2.AddSchedule(&railway.SchedulePoint{
 			StnCode:  tpj.Code,
-			ArrTime:  float64(90 + i*15),
-			DeptTime: float64(100 + i*15),
+			ArrTime:  float64(90 + i*25),
+			DeptTime: float64(100 + i*25),
 			SpPfNo:   "1",
 		})
 

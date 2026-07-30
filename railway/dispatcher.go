@@ -14,17 +14,6 @@ type Dispatcher struct {
 	intlck *Interlocking
 }
 
-func (disp *Dispatcher) ReleasePoints(curTrack *GraphEdge, train *Train) {
-	prevPoint := disp.pointControllers[curTrack.From.Id]
-	if prevPoint.lockedBy != nil && prevPoint.lockedBy.Number == train.Number {
-		prevPoint.UnlockPoint(train)
-	}
-	point := disp.pointControllers[curTrack.To.Id]
-	if point.lockedBy != nil && point.lockedBy.Number == train.Number {
-		point.UnlockPoint(train)
-	}
-}
-
 func (disp *Dispatcher) Init() {
 	disp.pointControllers = make(map[string]*PointController)
 	disp.intlck = NewInterlocking(disp.sim.world)
@@ -43,13 +32,16 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 
 	edge := disp.sim.world.TrackGraph.Edges[track.Id]
 	// TODO: for the time being just unlock the switches here
-	prevPoint := disp.pointControllers[edge.From.Id]
-	if prevPoint.lockedBy != nil && prevPoint.lockedBy.Number == train.Number {
-		prevPoint.UnlockPoint(train)
-	}
-	point := disp.pointControllers[edge.To.Id]
-	if point.lockedBy != nil && point.lockedBy.Number == train.Number {
-		point.UnlockPoint(train)
+	// prevPoint := disp.pointControllers[edge.From.Id]
+	// if prevPoint.lockedBy != nil && prevPoint.lockedBy.Number == train.Number {
+	// 	prevPoint.UnlockPoint(train)
+	// }
+	// point := disp.pointControllers[edge.To.Id]
+	// if point.lockedBy != nil && point.lockedBy.Number == train.Number {
+	// 	point.UnlockPoint(train)
+	// }
+	if err := disp.intlck.ReleaseSwitch(edge, train); err != nil {
+		fmt.Println(err)
 	}
 
 	oldQueue := disp.waitingReservationRequests

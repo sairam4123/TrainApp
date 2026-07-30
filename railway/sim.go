@@ -2,7 +2,10 @@ package railway
 
 import (
 	"fmt"
+	"maps"
 	"os"
+	"slices"
+	"strings"
 	"trainapp/des"
 	"trainapp/units"
 )
@@ -102,7 +105,10 @@ func (s *Sim) DumpSim() {
 	}
 	defer dump.Close()
 
-	for _, train := range s.world.trains {
+	trains := slices.SortedStableFunc(maps.Values(s.world.trains), func(t1, t2 *Train) int {
+		return strings.Compare(t1.Number, t2.Number)
+	})
+	for _, train := range trains {
 		fmt.Fprintf(dump, "Train %s", train)
 		if train.occupation != nil {
 			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
@@ -112,7 +118,11 @@ func (s *Sim) DumpSim() {
 	}
 	fmt.Fprintln(dump)
 
-	for _, track := range s.world.TrackGraph.tracks {
+	tracks := slices.SortedStableFunc(maps.Values(s.world.TrackGraph.tracks), func(trk1, trk2 *TrackSegment) int {
+		return strings.Compare(trk1.Id, trk2.Id)
+	})
+
+	for _, track := range tracks {
 		fmt.Fprintf(dump, "Track %s - Reserved %s - Occupied %s\n", track.Id, track.ReservedBy, track.OccupiedBy)
 	}
 	fmt.Fprintln(dump)
@@ -129,6 +139,7 @@ func (s *Sim) InitLogger() *os.File {
 
 func (s *Sim) Run() {
 	logger := s.InitLogger()
+	os.RemoveAll("dumps/")
 	defer logger.Close()
 
 	for {
@@ -217,7 +228,7 @@ func (s *Sim) Run() {
 			if len(train.occupation.curPath.Edges) <= train.occupation.curPathIdx+1 {
 				s.ScheduleEventNext(PathCompleted, train)
 				curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-				s.dispatcher.ReleasePoints(curTrack, train)
+				s.dispatcher.intlck.ReleaseSwitch(curTrack, train)
 			} else {
 				// acquire next track
 				nextTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx+1]

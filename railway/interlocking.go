@@ -171,3 +171,17 @@ func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *Path) bool
 	}
 	return true
 }
+
+func (ilck *Interlocking) ReleaseSwitch(curTrack *GraphEdge, train *Train) error {
+	swId := ilck.trackSwitchMap[curTrack.Track.Id]
+	if swId == "" {
+		return nil
+	}
+
+	swBlk := ilck.world.switchBlocks[swId]
+	if err := swBlk.UnlockSwitchFor(train); err != nil {
+		return err
+	}
+
+	return nil
+}

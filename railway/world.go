@@ -1,7 +1,6 @@
 package railway
 
 import (
-	"fmt"
 	"trainapp/units"
 )
 
@@ -26,17 +25,17 @@ type World struct {
 	data       WorldData
 }
 
-func (w *World) FindBlockBwStns(aStnCode string, bStnCode string) (*BlockSection, error) {
-	for _, bsec := range w.bsections {
-		if bsec.stnA.Code == aStnCode && bsec.stnB.Code == bStnCode {
-			return bsec, nil
-		}
-		if bsec.stnA.Code == bStnCode && bsec.stnB.Code == aStnCode {
-			return bsec, nil
-		}
-	}
-	return nil, fmt.Errorf("Cannot find any block sections between aStnCode %s <-> bStnCode %s", aStnCode, bStnCode)
-}
+// func (w *World) FindBlockBwStns(aStnCode string, bStnCode string) (*BlockSection, error) {
+// 	for _, bsec := range w.bsections {
+// 		if bsec.stnA.Code == aStnCode && bsec.stnB.Code == bStnCode {
+// 			return bsec, nil
+// 		}
+// 		if bsec.stnA.Code == bStnCode && bsec.stnB.Code == aStnCode {
+// 			return bsec, nil
+// 		}
+// 	}
+// 	return nil, fmt.Errorf("Cannot find any block sections between aStnCode %s <-> bStnCode %s", aStnCode, bStnCode)
+// }
 
 func (w *World) GetStation(code string) (*Station, bool) {
 	stn, ok := w.stations[code]
@@ -46,25 +45,15 @@ func (w *World) GetStation(code string) (*Station, bool) {
 func (w *World) AddTrain(train *Train) {
 	w.trains[train.Number] = train
 }
-func (w *World) RemoveTrain(trainNumber string) {
-	delete(w.trains, trainNumber)
-}
-
 func (w *World) AddStation(stn *Station) {
 	w.stations[stn.Code] = stn
-}
-func (w *World) RemoveStation(stnCode string) {
-	delete(w.stations, stnCode)
-}
-
-func (w *World) AddBlockSection(bsec *BlockSection) {
-	w.bsections[bsec.Id] = bsec
 }
 
 func (w *World) Init(data WorldData) {
 	w.stations = make(map[string]*Station)
 	w.trains = make(map[string]*Train)
 	w.bsections = make(map[string]*BlockSection)
+	w.switchBlocks = make(map[string]*SwitchBlock)
 
 	w.data = data
 	w.TrackGraph = &TrackGraph{}
@@ -115,7 +104,7 @@ func (w *World) NewBlockSection(id string) *BlockSection {
 	bsec := &BlockSection{
 		Id: id,
 	}
-	w.AddBlockSection(bsec)
+	w.bsections[bsec.Id] = bsec
 	return bsec
 }
 

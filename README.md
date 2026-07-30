@@ -1,91 +1,179 @@
 # TrainApp
 
-A railway simulation system written in Go that models train movement, scheduling, and traffic control on railway networks.
+TrainApp is a Go-based railway simulation. It models how trains move through a railway network, how they follow schedules, and how the system reserves track resources to avoid conflicts.
 
-## Overview
+## Purpose
 
-TrainApp is a discrete event simulation engine for railway systems. It provides a framework to model railway infrastructure, train movements, schedules, and automatic traffic control and dispatching.
+This project is a simplified railway operations simulator. The goal is not to build a graphical app, but to model the core logic behind railway movement in a programmable and testable way.
 
-## Features
+The simulator is meant to answer questions such as:
 
-- **Railway World Simulation**: Create and manage railway networks with stations, tracks, and platforms
-- **Train Management**: Model trains with schedules, speed profiles, and occupancy tracking
-- **Track Graph & Pathfinding**: Graph-based track network with path finding between stations/platforms
-- **Point Locking & Route Reservation**: Dispatcher reserves paths, sets switch states, and locks track points ahead of a train to prevent conflicting routes
-- **Block Sections**: Safety zones between stations for train separation
-- **Dispatcher System**: Automatic train coordination, route granting, and queuing of waiting reservation/proceed requests
-- **Unit Conversion**: Built-in support for distance and velocity measurements
+- How is a railway network represented as data?
+- How does a train move through a sequence of connected resources?
+- How can the system reserve a path before allowing movement?
+- How can conflicting movements be avoided safely?
+- How can the system advance through time using discrete events rather than a continuous loop?
 
-## Project Structure
+## What the project shows
 
-```
+The program builds a sample railway world and runs a discrete-event simulation. It demonstrates how a railway system can be represented in code and how trains can be scheduled and coordinated safely.
+
+The emphasis is on modeling the underlying mechanics of railway operation rather than on a polished UI or full operational realism.
+
+## Main concepts
+
+At a high level, the system contains four major parts:
+
+1. Infrastructure
+   - stations and platforms
+   - track segments
+   - points and switches
+   - block sections (modeled, not yet enforced by the dispatcher)
+   - route topology and connectivity
+
+2. Trains
+   - train identity and schedule
+   - current location and movement state
+   - route requests and progress
+   - arrival and departure behavior at stations
+
+3. Control logic
+   - dispatcher decisions
+   - interlocking and safety checks
+   - route allocation for shared resources
+   - queueing and retry behavior when a path is blocked
+
+4. Simulation engine
+   - event scheduling
+   - time advancement
+   - state updates as trains move and arrive
+   - coordination between train activity and infrastructure state
+
+## Project structure
+
+```text
 .
-├── main.go              # Entry point and world setup
-├── railway/             # Core simulation engine
-│   ├── world.go         # Main world/simulation container
-│   ├── train.go         # Train model and scheduling
-│   ├── stations.go      # Station definitions
-│   ├── tracks.go        # Track segments and management
-│   ├── points.go        # Track points (nodes in the network)
-│   ├── blocks.go        # Block sections for train safety
-│   ├── graph.go         # Graph representation of track network
-│   ├── path.go          # Path finding between stations
-│   ├── dispatcher.go    # Train dispatcher/controller
-│   ├── events.go        # Simulation events
-│   └── sim.go           # Simulation engine
-├── units/               # Unit conversion utilities
-│   └── measure.go       # Distance and velocity measurements
-├── des/                 # Discrete event simulation framework
-│   └── des.go           # Event scheduling and processing
-├── go.mod              # Go module definition
-└── README.md           # This file
+├── main.go              # Builds the sample railway world and starts the simulation
+├── railway/             # Core simulation code
+│   ├── world.go         # Main container for stations, tracks, trains, and state
+│   ├── train.go         # Train model, schedule, and movement logic
+│   ├── stations.go      # Station and platform definitions
+│   ├── tracks.go        # Track segments and route pieces
+│   ├── points.go        # Track points and node behavior
+│   ├── switch.go        # Switch handling and route selection
+│   ├── blocks.go        # Block sections and occupancy control
+│   ├── graph.go         # Track graph and pathfinding over the network
+│   ├── path.go          # Path reservation checks for a train's route
+│   ├── signals.go       # Signal type definition (not yet wired into the simulation)
+│   ├── templates.go     # Helpers to build common station layouts
+│   ├── dispatcher.go    # Route granting and conflict handling
+│   ├── interlocking.go  # Safety rules for shared resources
+│   ├── sim.go           # Simulation orchestration
+│   └── events.go        # Event definitions and handlers
+├── des/                 # Discrete-event engine
+├── units/               # Distance and speed helpers
+├── example/             # Example simulation output
+├── dumps/               # Example output files
+├── logs/                # Runtime logs
+├── go.mod               # Go module definition
+└── README.md            # Project documentation
 ```
 
-## Getting Started
+## Architecture
 
-### Prerequisites
+The architecture is organized around a simple idea: model the railway as a set of connected resources, then let trains request access to those resources over time.
 
-- Go 1.26.3 or later
+### 1. World
+The World object is the top-level container. It holds the full railway model, including stations, tracks, points, block sections, and trains. It is the shared context in which all other components operate.
 
-### Building
+### 2. Network model
+The network is built from connected railway elements:
+
+- Track points act as nodes in the topology
+- Track segments connect those nodes and represent physical travel sections
+- Switches change route choices at junctions and influence path selection
+- Block sections are intended to protect track sections so trains do not occupy the same space at the same time, though this is not yet enforced by the dispatcher
+- A `Signal` type exists to represent signals at track points, but it is not yet instantiated or used by the simulation
+- A track graph connects points and segments into a searchable network, used to find a path between two points and to check that every segment on that path is reserved for the train using it
+
+This layer is responsible for representing the physical form of the railway and the possible movement relationships between elements.
+
+### 3. Train model
+Each train has a schedule and a lifecycle that can be understood as a sequence of state transitions. It can:
+
+- enter the network
+- request a route
+- reserve required resources
+- move along track sections
+- arrive at or depart from stations
+- wait when a route is unavailable
+- continue to the next leg of its journey
+
+This layer captures the train as an active participant in the system rather than as a passive record.
+
+### 4. Control layer
+This layer makes the system safe. The dispatcher decides whether a train can proceed, and interlocking logic prevents conflicting access to shared resources. In practice, this is the layer that turns abstract topology into coordinated train operation.
+
+### 5. Simulation engine
+The discrete-event engine drives the system forward. Instead of running a continuous loop, it processes events in time order, such as:
+
+- train arrival
+- train departure
+- route grant
+- route rejection
+- movement update
+- resource release
+
+This separation allows the system to reason about time explicitly and to update state only when meaningful events occur.
+
+Movement authority (`MovementAuthorized` / `MovementAuthorityEnded`) is defined as an event type in [events.go](railway/events.go), but is not yet triggered or handled anywhere in the simulation.
+
+## End-to-end flow
+
+1. The railway world is built in [main.go](main.go) with stations, platforms, tracks, points, and block sections.
+2. Trains are created and assigned schedules that define when they should arrive at or depart from stations.
+3. A train requests a route when it wants to move.
+4. The dispatcher checks whether the required resources are free and whether the route is safe.
+5. If the route is accepted, the train occupies the relevant sections and continues moving.
+6. As each train progresses, the event engine updates the state of the world and triggers the next relevant event.
+7. When a route cannot be granted, the system waits for the blocking resource to be released or for the train to be re-evaluated later.
+8. The process repeats until the trains complete their planned journeys or the simulation reaches its end condition.
+
+## Key design decisions
+
+The main design choices are:
+
+- Event-driven simulation: time is advanced through scheduled events rather than a real-time loop.
+- Explicit resource reservation: trains must reserve shared track resources before using them.
+- Graph-based railway representation: the network is modeled as connected nodes and edges.
+- Separation of responsibilities: infrastructure, train logic, control logic, and the engine are kept distinct.
+- Simplified realism: the project focuses on the core ideas of railway operations instead of full operational detail.
+- Deterministic behavior: the flow of events is organized so the model can be reasoned about and extended predictably.
+
+## Getting started
+
+### Requirements
+
+- Go 1.26.3 or newer
+
+### Run the simulation
+
+From the project root, run:
+
+```bash
+go run .
+```
+
+### Build the program
 
 ```bash
 go build -o trainapp
 ```
 
-### Running
-
-```bash
-go run main.go
-```
-
-## Architecture
-
-### Core Components
-
-- **World**: The main simulation container that manages all railway entities (trains, stations, tracks)
-- **TrackGraph**: A graph-based representation of the railway network, made up of `TrackPoint` nodes and `TrackSegment`/`GraphEdge` links
-- **Train**: Individual train entities with schedules, occupation, and reservation state
-- **Station**: Railway stations with platforms and connections
-- **BlockSection**: Safety zones between stations for train separation
-- **Dispatcher**: Reserves paths for trains, coordinates `PointController`s to lock/unlock track points and set switch states, and queues requests that can't be granted immediately
-- **Sim**: Drives the discrete event simulation loop (`des` package) and reacts to train/track lifecycle events (e.g. `WorldEntered`, `TrackEntered`, `RouteGranted`, `TrainArrived`, `TrainDeparted`)
-
-### Simulation Flow
-
-1. Build the railway world with stations, track points, and tracks
-2. Add trains with schedules and build the track graph's cache map
-3. On simulation start, each train requests a path reservation to its first scheduled platform
-4. The dispatcher reserves track segments, sets switch states, and locks the points along the path
-5. As the train moves, it acquires/releases track segments and re-requests reservations for the next leg of its journey
-6. Reservation or proceed requests that fail (due to conflicts) are queued and retried once the blocking track/point is released
-
 ## Development
 
-### Current Work
-
-See [TODO.md](TODO.md) for planned improvements and features in development.
+See [TODO.md](TODO.md) for planned work and improvements.
 
 ## License
 
-See [LICENSE](LICENSE) file for details.
+See [LICENSE](LICENSE) for the license text.
