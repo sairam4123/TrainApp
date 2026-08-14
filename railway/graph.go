@@ -116,7 +116,7 @@ func (pq *PathQueue) Pop() any {
 	return item
 }
 
-func (graph *TrackGraph) FindPath(fromPoint *TrackPoint, toPoint *TrackPoint) Path {
+func (graph *TrackGraph) FindPath(fromPoint *TrackPoint, toPoint *TrackPoint) *Path {
 	queue := make(PathQueue, 0)
 	nodes := make(map[string]*PathNode, 0)
 	for _, vert := range graph.points {
@@ -144,7 +144,7 @@ func (graph *TrackGraph) FindPath(fromPoint *TrackPoint, toPoint *TrackPoint) Pa
 				parent := cur.Parent
 				if parent == nil {
 					slices.Reverse(seq)
-					path := Path{
+					path := &Path{
 						Edges: seq,
 					}
 					return path
@@ -152,7 +152,7 @@ func (graph *TrackGraph) FindPath(fromPoint *TrackPoint, toPoint *TrackPoint) Pa
 				track, err := graph.TrackBetween(cur.Value, parent.Value)
 				if err != nil {
 					fmt.Println(err)
-					return Path{}
+					return &Path{}
 				}
 
 				seq = append(seq, track)

@@ -26,8 +26,13 @@ func NewInterlocking(world *World) *Interlocking {
 	return &ilk
 }
 
-func (ilck *Interlocking) TryReservePathToTrack(train *Train, toTrack *TrackSegment) (*Path, bool) {
-	path := ilck.world.TrackGraph.FindPathToTrack(train.FacingToward, toTrack)
+func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, toSignal *Signal) (*Path, bool) {
+	var path *Path
+	if toTrack != nil {
+		path = ilck.world.TrackGraph.FindPathToTrack(train.FacingToward, toTrack)
+	} else if toSignal != nil {
+		path = ilck.world.TrackGraph.FindPath(train.FacingToward, toSignal.atPoint)
+	}
 	if path == nil {
 		return nil, false
 	}
