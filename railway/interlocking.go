@@ -36,9 +36,6 @@ func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, 
 	if path == nil {
 		return nil, false
 	}
-	// if len(path.Edges) == 1 && path.Edges[0].Track.Id == to.Id {
-	// 	return path, false
-	// }
 
 	reservationFailed := false
 
@@ -74,29 +71,6 @@ func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, 
 		if err := swBlk.LockSwitchFor(train); err != nil {
 			fmt.Printf("Failed to lock switch %s\n", swBlkId)
 		}
-
-		// prevPoint := ilck.trackSwitchMap[edge.Track.Id]
-		// if prevPoint.lockedBy == nil || prevPoint.lockedBy.Number != train.Number {
-		// 	prevPoint.MoveSwitchState(edge.To.Id)
-		// 	prevPoint.LockPoint(train)
-		// }
-		// point := ilck.switchBlocks[edge.To.Id]
-		// if i+1 == len(path.Edges) {
-		// 	point.MoveSwitchState(edge.From.Id)
-		// 	point.LockPoint(train)
-		// 	continue
-		// }
-		// nextEdge := path.Edges[i+1]
-		// if err1, ok := point.MoveSwitchState(nextEdge.From.Id); !ok {
-		// 	if err2, ok := point.MoveSwitchState(nextEdge.To.Id); !ok {
-		// 		fmt.Printf("Failed to set switches %s - %s\n", err1, err2)
-		// 		reservationFailed = true
-		// 	}
-		// }
-		// if ok := point.LockPoint(train); !ok {
-		// 	fmt.Printf("Err occurred when trying to lock point - point %s\n", point.point.Id)
-		// 	reservationFailed = true
-		// }
 	}
 
 	if reservationFailed {
@@ -124,31 +98,8 @@ func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, 
 				fmt.Printf("Failed to lock switch %s\n", swBlkId)
 			}
 
-			// prevPoint := ilck.pointControllers[edge.From.Id]
-			// if prevPoint.isLocked {
-			// 	prevPoint.UnlockPoint(train)
-			// }
-			// point := ilck.pointControllers[edge.To.Id]
-			// if i+1 == len(path.Edges) {
-			// 	if ok := point.UnlockPoint(train); !ok {
-			// 		fmt.Printf("Err occurred when trying to unlock point - point %s\n", point.point.Id)
-			// 	}
-			// 	continue
-			// }
-			// nextEdge := path.Edges[i+1]
-			// if err1, ok := point.MoveSwitchState(nextEdge.From.Id); !ok {
-			// 	if err2, ok := point.MoveSwitchState(nextEdge.To.Id); !ok {
-			// 		fmt.Printf("Failed to set switches %s - %s\n", err1, err2)
-			// 	}
-			// }
-			// if ok := point.UnlockPoint(train); !ok {
-			// 	fmt.Printf("Err occurred when trying to unlock point - point %s\n", point.point.Id)
-			// }
 		}
-		// ilck.waitingReservationRequests = append(ilck.waitingReservationRequests, &ReservationRequest{
-		// 	uptoTrack: toTrack,
-		// 	train:     train,
-		// })
+
 		return nil, false
 	}
 
