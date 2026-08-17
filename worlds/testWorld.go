@@ -1,0 +1,166 @@
+package worlds
+
+import (
+	"trainapp/railway"
+	"trainapp/units"
+)
+
+func BuildTestWorld() *railway.World {
+
+	PLATFORM_TRACK_LENGTH := units.M(800.0)
+	PLATFORM_LENGTH := units.M(600.0)
+	PF_SPEED := units.KMPH(50.0)
+	ROUTE_SPEED := units.KMPH(110.0)
+	SWITCH_SPEED := units.KMPH(30.0)
+	SWITCH_LENGTH := units.M(100.0)
+
+	world := &railway.World{}
+	world.Init(railway.WorldData{
+		DefaultSwMaxSpeed: SWITCH_SPEED,
+		DefaultPfMaxSpeed: PF_SPEED,
+		DefaultSwLength:   SWITCH_LENGTH,
+		DefaultPfLength:   PLATFORM_TRACK_LENGTH,
+		DefaultRouteSpeed: ROUTE_SPEED,
+	})
+
+	tpj := world.NewStation("TPJ", "Tiruchy Jn")
+	// pdkt := world.NewStation("PDKT", "Pudukkottai")
+	kkdi := world.NewStation("KKDI", "Karaikudi Jn")
+
+	tpjPf1S := world.NewTrackPoint("tpjPf1S").WithDeadEnd(true).WithSimLimit(true)
+	tpjPf1E := world.NewTrackPoint("tpjPf1E")
+
+	tpjPf2S := world.NewTrackPoint("tpjPf2S").WithDeadEnd(true).WithSimLimit(true)
+	tpjPf2E := world.NewTrackPoint("tpjPf2E")
+
+	tpjPf3S := world.NewTrackPoint("tpjPf3S").WithDeadEnd(true).WithSimLimit(true)
+	tpjPf3E := world.NewTrackPoint("tpjPf3E")
+
+	tpjPf1 := world.NewPlatformTrack("tpjPf1")
+	tpjPf2 := world.NewPlatformTrack("tpjPf2")
+	tpjPf3 := world.NewPlatformTrack("tpjPf3")
+
+	tpjBp0 := world.NewTrackPoint("tpjBp0")
+
+	railway.NewSwitch(world, "tpjSw1A", tpjBp0, tpjPf1E, tpjPf2E)
+	railway.NewSwitch(world, "tpjSw1B", tpjBp0, tpjPf2E, tpjPf3E)
+
+	// tpjPf1ESw1 := world.NewSwitchTrack("tpjPf1ESw1")
+	// tpjPf2ESw1 := world.NewSwitchTrack("tpjPf2ESw1")
+	// tpjPf3ESw1 := world.NewSwitchTrack("tpjPf3ESw1")
+
+	world.TrackGraph.AddTrack(tpjPf1S, tpjPf1E, tpjPf1)
+	world.TrackGraph.AddTrack(tpjPf2S, tpjPf2E, tpjPf2)
+	world.TrackGraph.AddTrack(tpjPf3S, tpjPf3E, tpjPf3)
+
+	// world.TrackGraph.AddTrack(tpjPf1E, tpjSw1, tpjPf1ESw1)
+	// world.TrackGraph.AddTrack(tpjPf2E, tpjSw1, tpjPf2ESw1)
+	// world.TrackGraph.AddTrack(tpjPf3E, tpjSw1, tpjPf3ESw1)
+
+	tpj.NewStationPlatform(tpjPf1, "1", PLATFORM_LENGTH)
+	tpj.NewStationPlatform(tpjPf2, "2", PLATFORM_LENGTH)
+	tpj.NewStationPlatform(tpjPf3, "3", PLATFORM_LENGTH)
+
+	// pdktPf1S := world.NewTrackPoint("pdktPf1S")
+	// pdktPf1E := world.NewTrackPoint("pdktPf1E")
+
+	// pdktPf2S := world.NewTrackPoint("pdktPf2S")
+	// pdktPf2E := world.NewTrackPoint("pdktPf2E")
+
+	// pdktPf3S := world.NewTrackPoint("pdktPf3S")
+	// pdktPf3E := world.NewTrackPoint("pdktPf3E")
+
+	// pdktPf1 := world.NewPlatformTrack("pdktPf1")
+	// pdktPf2 := world.NewPlatformTrack("pdktPf2")
+	// pdktPf3 := world.NewPlatformTrack("pdktPf3")
+
+	// pdkt.NewStationPlatform(pdktPf1, "1", PLATFORM_LENGTH)
+	// pdkt.NewStationPlatform(pdktPf2, "2", PLATFORM_LENGTH)
+	// pdkt.NewStationPlatform(pdktPf3, "3", PLATFORM_LENGTH)
+
+	// world.TrackGraph.AddTrack(pdktPf1S, pdktPf1E, pdktPf1)
+	// world.TrackGraph.AddTrack(pdktPf2S, pdktPf2E, pdktPf2)
+	// world.TrackGraph.AddTrack(pdktPf3S, pdktPf3E, pdktPf3)
+
+	// pdktSw1 := world.NewTrackPoint("pdktSw1")
+	// pdktSw2 := world.NewTrackPoint("pdktSw2")
+
+	// pdktPf1SSw1 := world.NewSwitchTrack("pdktPf1SSw1")
+	// pdktPf1ESw2 := world.NewSwitchTrack("pdktPf1ESw2")
+
+	// pdktPf2SSw1 := world.NewSwitchTrack("pdktPf2SSw1")
+	// pdktPf2ESw2 := world.NewSwitchTrack("pdktPf2ESw2")
+
+	// pdktPf3SSw1 := world.NewSwitchTrack("pdktPf3SSw1")
+	// pdktPf3ESw2 := world.NewSwitchTrack("pdktPf3ESw2")
+
+	// world.TrackGraph.AddTrack(pdktPf1S, pdktSw1, pdktPf1SSw1)
+	// world.TrackGraph.AddTrack(pdktPf2S, pdktSw1, pdktPf2SSw1)
+
+	// world.TrackGraph.AddTrack(pdktPf1E, pdktSw2, pdktPf1ESw2)
+	// world.TrackGraph.AddTrack(pdktPf2E, pdktSw2, pdktPf2ESw2)
+
+	// world.TrackGraph.AddTrack(pdktPf3S, pdktSw1, pdktPf3SSw1)
+	// world.TrackGraph.AddTrack(pdktPf3E, pdktSw2, pdktPf3ESw2)
+
+	pdkt, pdktBp0, pdktBp1 := railway.NewStationSL2PF(world, "PDKT", "Pudukkottai")
+
+	kkdiPf1S := world.NewTrackPoint("kkdiPf1S")
+	kkdiPf1E := world.NewTrackPoint("kkdiPf1E").WithDeadEnd(true).WithSimLimit(true)
+
+	kkdiPf2S := world.NewTrackPoint("kkdiPf2S")
+	kkdiPf2E := world.NewTrackPoint("kkdiPf2E").WithDeadEnd(true).WithSimLimit(true)
+
+	kkdiPf1 := world.NewPlatformTrack("kkdiPf1")
+	kkdiPf2 := world.NewPlatformTrack("kkdiPf2")
+
+	kkdi.NewStationPlatform(kkdiPf1, "1", PLATFORM_LENGTH)
+	kkdi.NewStationPlatform(kkdiPf2, "2", PLATFORM_LENGTH)
+
+	world.TrackGraph.AddTrack(kkdiPf1S, kkdiPf1E, kkdiPf1)
+	world.TrackGraph.AddTrack(kkdiPf2S, kkdiPf2E, kkdiPf2)
+
+	kkdiBp0 := world.NewTrackPoint("kkdiBp0")
+
+	railway.NewSwitch(world, "kkdiSw1A", kkdiBp0, kkdiPf1S, kkdiPf2S)
+
+	// kkdiSw1Pf1S := world.NewSwitchTrack("kkdiSw1Pf1S")
+	// kkdiSw1Pf2S := world.NewSwitchTrack("kkdiSw1Pf2S")
+
+	// world.TrackGraph.AddTrack(kkdiBp0, kkdiPf1S, kkdiSw1Pf1S)
+	// world.TrackGraph.AddTrack(kkdiBp0, kkdiPf2S, kkdiSw1Pf2S)
+
+	bsecTpjPdkt := world.NewBlockSection("bsecTpjPdkt")
+	bsecTpjPdkt.Init(tpj, pdkt)
+
+	bsTpjPdkt0 := world.NewTrackSegment("bsTpjPdkt0", units.KM(5))
+	bsTpjPdkt1 := world.NewTrackSegment("bsTpjPdkt1", units.KM(16))
+	bsTpjPdkt2 := world.NewTrackSegment("bsTpjPdkt2", units.KM(5))
+
+	krurCp1 := world.NewTrackPoint("krurCp1")
+	tpjCp1 := world.NewTrackPoint("tpjCp1")
+	pdktCp1 := world.NewTrackPoint("pdktCp1")
+
+	bsTpjKrur0 := world.NewTrackSegment("bsTpjKrur0", units.KM(7))
+	bsKrurPdkt0 := world.NewTrackSegment("bsKrurPdkt0", units.KM(7))
+
+	world.TrackGraph.AddTrack(tpjBp0, tpjCp1, bsTpjPdkt0)
+	world.TrackGraph.AddTrack(tpjCp1, krurCp1, bsTpjKrur0)
+	world.TrackGraph.AddTrack(krurCp1, pdktCp1, bsKrurPdkt0)
+	world.TrackGraph.AddTrack(tpjCp1, pdktCp1, bsTpjPdkt1)
+	world.TrackGraph.AddTrack(pdktCp1, pdktBp0, bsTpjPdkt2)
+
+	bsecPdktKkdi := world.NewBlockSection("bsecPdktKkdi")
+	bsecPdktKkdi.Init(pdkt, kkdi)
+
+	bsPdktKkdi0 := world.NewTrackSegment("bsPdktKkdi0", units.KM(30))
+	bsecPdktKkdi.AddTrack(bsPdktKkdi0)
+
+	world.TrackGraph.AddTrack(pdktBp1, kkdiBp0, bsPdktKkdi0)
+
+	bsecTpjPdkt.AddTrack(bsTpjPdkt0)
+	bsecTpjPdkt.AddTrack(bsTpjPdkt1)
+	bsecTpjPdkt.AddTrack(bsTpjPdkt2)
+
+	return world
+}

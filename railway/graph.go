@@ -116,6 +116,47 @@ func (pq *PathQueue) Pop() any {
 	return item
 }
 
+func (graph *TrackGraph) GenerateCandidatePaths(fromTp *TrackPoint, toTrack *TrackSegment) ([]*Path, error) {
+	queue := make([]*Path, 0)
+	allPaths := make([]*Path, 0)
+
+	queue = append(queue, &Path{Edges: []*GraphEdge{}, curPoint: fromTp, initPoint: fromTp})
+
+	for len(queue) > 0 {
+		path := queue[0]
+		queue = slices.Delete(queue, 0, 1)
+
+		if len(path.Edges) > 0 {
+			cur := path.Edges[len(path.Edges)-1]
+			if cur.Track.Id == toTrack.Id {
+				allPaths = append(allPaths, path)
+				continue
+			}
+		}
+
+		curPoint := path.curPoint
+
+		ends := []*TrackPoint{curPoint}
+
+		for _, endp := range ends {
+			for nextP, edge := range graph.NeighborMap[endp.Id] {
+				if path.Contains(graph.Edges[edge.Id]) {
+					continue
+				}
+				nextPoint := graph.points[nextP]
+
+				newPath := slices.Clone(path.Edges)
+				newPath = append(newPath, graph.Edges[edge.Id])
+				queue = append(queue, &Path{Edges: newPath, curPoint: nextPoint, initPoint: fromTp})
+			}
+		}
+
+	}
+
+	return allPaths, nil
+}
+
+// @Deprecated
 func (graph *TrackGraph) FindPath(fromPoint *TrackPoint, toPoint *TrackPoint) *Path {
 	queue := make(PathQueue, 0)
 	nodes := make(map[string]*PathNode, 0)
@@ -191,6 +232,7 @@ func (graph *TrackGraph) OtherEnd(track *TrackSegment, pointId string) *TrackPoi
 	return nil
 }
 
+// @Deprecated
 func (graph *TrackGraph) FindPathToTrack(fromPoint *TrackPoint, toSegment *TrackSegment) *Path {
 	queue := make(PathQueue, 0)
 	nodes := make(map[string]*PathNode, 0)

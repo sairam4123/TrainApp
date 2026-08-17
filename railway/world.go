@@ -1,6 +1,8 @@
 package railway
 
 import (
+	"maps"
+	"slices"
 	"trainapp/units"
 )
 
@@ -20,9 +22,14 @@ type World struct {
 	trains   map[string]*Train
 
 	bsections map[string]*BlockSection
+	signals   map[string]*Signal
 
 	TrackGraph *TrackGraph
 	data       WorldData
+}
+
+func (w *World) AddSignal(sig *Signal) {
+	w.signals[sig.Id] = sig
 }
 
 // func (w *World) FindBlockBwStns(aStnCode string, bStnCode string) (*BlockSection, error) {
@@ -54,6 +61,7 @@ func (w *World) Init(data WorldData) {
 	w.trains = make(map[string]*Train)
 	w.bsections = make(map[string]*BlockSection)
 	w.switchBlocks = make(map[string]*SwitchBlock)
+	w.signals = make(map[string]*Signal)
 
 	w.data = data
 	w.TrackGraph = &TrackGraph{}
@@ -118,4 +126,13 @@ func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, activeEdge 
 	w.switchBlocks[swBlk.Id] = swBlk
 
 	return swBlk
+}
+
+// TEMP code -> to be removed
+func (w *World) ListSignals() []*Signal {
+	return slices.Collect(maps.Values(w.signals))
+}
+
+func (w *World) GetSignal(signalId string) *Signal {
+	return w.signals[signalId]
 }

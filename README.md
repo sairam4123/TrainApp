@@ -53,17 +53,21 @@ At a high level, the system contains four major parts:
 
 ```text
 .
-├── main.go              # Builds the sample railway world and starts the simulation
+├── main.go              # Entry point (work in progress, see below)
+├── worlds/              # Sample railway worlds used by main.go
+│   ├── testWorld.go     # Older 3-station world (TPJ-PDKT-KKDI) with block sections and trains
+│   └── tpjKkdiWorld.go  # Newer TPJ-KKDI world with crossovers and candidate-path generation
 ├── railway/             # Core simulation code
 │   ├── world.go         # Main container for stations, tracks, trains, and state
 │   ├── train.go         # Train model, schedule, and movement logic
 │   ├── stations.go      # Station and platform definitions
 │   ├── tracks.go        # Track segments and route pieces
 │   ├── points.go        # Track points and node behavior
-│   ├── switch.go        # Switch handling and route selection
+│   ├── switch.go        # Switches, diamond crossings, and slips
 │   ├── blocks.go        # Block sections and occupancy control
 │   ├── graph.go         # Track graph and pathfinding over the network
-│   ├── path.go          # Path reservation checks for a train's route
+│   ├── path.go          # Path representation and reservation checks for a train's route
+│   ├── authority.go     # MovementAuthority type for granting/extending a train's authorized path
 │   ├── signals.go       # Signal type definition (not yet wired into the simulation)
 │   ├── templates.go     # Helpers to build common station layouts
 │   ├── dispatcher.go    # Route granting and conflict handling
@@ -95,6 +99,8 @@ The network is built from connected railway elements:
 - Block sections are intended to protect track sections so trains do not occupy the same space at the same time, though this is not yet enforced by the dispatcher
 - A `Signal` type exists to represent signals at track points, but it is not yet instantiated or used by the simulation
 - A track graph connects points and segments into a searchable network, used to find a path between two points and to check that every segment on that path is reserved for the train using it
+- `TrackGraph.GenerateCandidatePaths` is an in-progress replacement for pathfinding that enumerates every possible path between two tracks instead of just one; the older `FindPath` / `FindPathToTrack` are kept for reference but marked `@Deprecated`
+- A `Path` can be extended track-by-track as a train's route grows
 
 This layer is responsible for representing the physical form of the railway and the possible movement relationships between elements.
 
@@ -126,11 +132,22 @@ The discrete-event engine drives the system forward. Instead of running a contin
 
 This separation allows the system to reason about time explicitly and to update state only when meaningful events occur.
 
-Movement authority (`MovementAuthorized` / `MovementAuthorityEnded`) is defined as an event type in [events.go](railway/events.go), but is not yet triggered or handled anywhere in the simulation.
+Movement authority (`MovementAuthorized` / `MovementAuthorityEnded`) is defined as an event type in [events.go](railway/events.go), and a corresponding `MovementAuthority` type now exists in [authority.go](railway/authority.go) to hold and extend a train's authorized path. Neither is yet triggered or handled by the dispatcher or event engine.
+
+## main.go: work in progress
+
+[main.go](main.go) is being reworked and currently contains two versions of the entry point:
+
+- **Active (`func main`)**: calls `worlds.BuildTpjKkdiWorld()`, which builds a two-station world (TPJ and KKDI, each with four platforms and a crossover) and does some basic ad-hoc testing of `TrackGraph.GenerateCandidatePaths`. No trains are scheduled and the discrete-event simulation is not started.
+- **Commented out, kept for reference**: an earlier `func main` that calls `worlds.BuildTestWorld()`, creates trains with schedules via `Train.AddSchedule`, adds them to the world, and runs the full discrete-event simulation with `sim.Init()` / `sim.Run()`. This reflects the older, more complete end-to-end flow described below and will be reconciled with the candidate-path work above.
+
+The `worlds/` package holds both sample worlds (`testWorld.go`, `tpjKkdiWorld.go`) so `main.go` can switch between them while this is in progress.
 
 ## End-to-end flow
 
-1. The railway world is built in [main.go](main.go) with stations, platforms, tracks, points, and block sections.
+This is the flow the project is built around, and the one exercised by the commented-out simulation path in `main.go` (see above); the currently active `main.go` only builds a world and lists candidate paths, and does not yet run this flow end to end.
+
+1. The railway world is built (see [worlds/](worlds/)) with stations, platforms, tracks, points, and block sections.
 2. Trains are created and assigned schedules that define when they should arrive at or depart from stations.
 3. A train requests a route when it wants to move.
 4. The dispatcher checks whether the required resources are free and whether the route is safe.

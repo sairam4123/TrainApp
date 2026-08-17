@@ -106,7 +106,7 @@ type ReservationData struct {
 }
 
 func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegment) (*Path, bool) {
-	path, ok := disp.intlck.TryReservePathTo(train, toTrack, nil)
+	path, ok := disp.intlck.TryReservePathTo(train, toTrack)
 	if !ok {
 		disp.waitingReservationRequests = append(disp.waitingReservationRequests, &ReservationRequest{
 			uptoTrack: toTrack,

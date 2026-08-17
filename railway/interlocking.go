@@ -1,21 +1,28 @@
 package railway
 
-import "fmt"
+import (
+	"cmp"
+	"fmt"
+	"slices"
+)
 
 type Interlocking struct {
 	world *World
 
 	trackSwitchMap map[string]string // trackId -> switchBlockId / "" (if no sw is present)
+	trackSigMap    map[string]string // trackId -> signalId / "" (if no sig is present)
 }
 
 func NewInterlocking(world *World) *Interlocking {
 	ilk := Interlocking{
 		world:          world,
 		trackSwitchMap: map[string]string{},
+		trackSigMap:    map[string]string{},
 	}
 
 	for _, trk := range world.TrackGraph.tracks {
 		ilk.trackSwitchMap[trk.Id] = ""
+		ilk.trackSigMap[trk.Id] = ""
 	}
 	for _, sb := range world.switchBlocks {
 		for _, trk := range sb.managedEdges {
@@ -23,19 +30,93 @@ func NewInterlocking(world *World) *Interlocking {
 		}
 	}
 
+	for _, sig := range world.signals {
+		atPMap := world.TrackGraph.NeighborMap[sig.AtPoint.Id]
+		if atPMap != nil {
+			trk := atPMap[sig.FacingPoint.Id]
+			ilk.trackSigMap[trk.Id] = sig.Id
+		}
+	}
+
 	return &ilk
 }
 
-func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, toSignal *Signal) (*Path, bool) {
-	var path *Path
-	if toTrack != nil {
-		path = ilck.world.TrackGraph.FindPathToTrack(train.FacingToward, toTrack)
-	} else if toSignal != nil {
-		path = ilck.world.TrackGraph.FindPath(train.FacingToward, toSignal.atPoint)
+func (ilk *Interlocking) NavigatesCorrectly(path *Path) bool {
+	curPoint := path.initPoint
+	curPtIdx := 0
+
+	facesRight := true
+
+	for {
+		if curPtIdx >= len(path.Edges) {
+			break
+		}
+		edge := path.Edges[curPtIdx]
+		prevPoint := curPoint
+		curPoint = ilk.world.TrackGraph.OtherEnd(edge.Track, curPoint.Id)
+		sigId := ilk.trackSigMap[edge.Track.Id]
+		if sigId == "" {
+			curPtIdx++
+			continue
+		}
+		sig := ilk.world.signals[sigId]
+		if sig == nil {
+			curPtIdx++
+			continue
+		}
+		if !sig.FacesMovement(prevPoint, curPoint) {
+			facesRight = false
+		}
+		curPtIdx++
 	}
-	if path == nil {
+	return facesRight
+}
+
+func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment) (*Path, bool) {
+
+	// var path *Path
+	// if toTrack != nil {
+	// 	path = ilck.world.TrackGraph.FindPathToTrack(train.FacingToward, toTrack)
+	// } else if toSignal != nil {
+	// 	path = ilck.world.TrackGraph.FindPath(train.FacingToward, toSignal.AtPoint)
+	// }
+
+	// if path == nil {
+	// 	return nil, false
+	// }
+
+	// generate candidate paths
+	paths, err := ilck.world.TrackGraph.GenerateCandidatePaths(train.FacingToward, toTrack)
+	if err != nil {
 		return nil, false
 	}
+	slices.SortStableFunc(paths, func(a, b *Path) int {
+
+		// check if it's correct way
+		aCorrect := ilck.NavigatesCorrectly(a)
+		bCorrect := ilck.NavigatesCorrectly(b)
+
+		if aCorrect == bCorrect {
+			// check the path distance
+			return cmp.Compare(a.Length(), b.Length())
+		} else {
+			if aCorrect {
+				return -1
+			}
+			return 1
+		}
+	})
+	for _, path := range paths {
+
+		if ilck.TryReservePath(path, train) {
+			return path, true
+		}
+	}
+
+	return nil, false
+}
+
+func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {
 
 	reservationFailed := false
 
@@ -100,10 +181,10 @@ func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, 
 
 		}
 
-		return nil, false
+		return false
 	}
+	return true
 
-	return path, true
 }
 
 func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *Path) bool {

@@ -23,16 +23,16 @@ type SwitchBlock struct {
 	lockedBy *Train
 }
 
-func NewSwitch(world *World, id string, from, a, b *TrackPoint) *SwitchBlock {
+func NewSwitch(world *World, id string, from, to, div *TrackPoint) *SwitchBlock {
 	// create two edges
 	// from -> a
 	// from -> b
 
-	fromA := world.NewSwitchTrack(NewTrackID(from, a))
-	fromB := world.NewSwitchTrack(NewTrackID(from, b))
+	fromA := world.NewSwitchTrack(NewTrackID(from, to))
+	fromB := world.NewSwitchTrack(NewTrackID(from, div))
 
-	world.TrackGraph.AddTrack(from, a, fromA)
-	world.TrackGraph.AddTrack(from, b, fromB)
+	world.TrackGraph.AddTrack(from, to, fromA)
+	world.TrackGraph.AddTrack(from, div, fromB)
 
 	fromAEdge := world.TrackGraph.Edges[fromA.Id]
 	fromBEdge := world.TrackGraph.Edges[fromB.Id]
