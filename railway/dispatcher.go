@@ -40,7 +40,7 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 	// if point.lockedBy != nil && point.lockedBy.Number == train.Number {
 	// 	point.UnlockPoint(train)
 	// }
-	if err := disp.intlck.ReleaseSwitch(edge, train); err != nil {
+	if err := disp.intlck.UnlockSwitchBlocks(edge, train); err != nil {
 		fmt.Println(err)
 	}
 
@@ -224,16 +224,16 @@ func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) bool {
 	return ok
 }
 
-func (disp *Dispatcher) EnsureAllSwitchesSet(train *Train, path *Path) bool {
-	for _, edge := range path.Edges {
-		fmt.Println("Switching check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
-		if !disp.pointControllers[edge.From.Id].isLocked || !disp.pointControllers[edge.To.Id].isLocked {
-			fmt.Println(disp.pointControllers[edge.From.Id].isLocked, disp.pointControllers[edge.To.Id].isLocked)
-			return false
-		}
-		if disp.pointControllers[edge.From.Id].lockedBy.Number != train.Number || disp.pointControllers[edge.To.Id].lockedBy.Number != train.Number {
-			return false
-		}
-	}
-	return true
-}
+// func (disp *Dispatcher) EnsureAllSwitchesSet(train *Train, path *Path) bool {
+// 	for _, edge := range path.Edges {
+// 		fmt.Println("Switching check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
+// 		if !disp.pointControllers[edge.From.Id].isLocked || !disp.pointControllers[edge.To.Id].isLocked {
+// 			fmt.Println(disp.pointControllers[edge.From.Id].isLocked, disp.pointControllers[edge.To.Id].isLocked)
+// 			return false
+// 		}
+// 		if disp.pointControllers[edge.From.Id].lockedBy.Number != train.Number || disp.pointControllers[edge.To.Id].lockedBy.Number != train.Number {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }

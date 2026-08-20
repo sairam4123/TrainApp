@@ -113,6 +113,9 @@ func NewStationSL3PF(world *World, stnCode, stnName string) (*Station, *TrackPoi
 }
 
 func NewTrackID(from, to *TrackPoint) string {
+	if from.Id > to.Id {
+		from, to = to, from
+	}
 	return fmt.Sprintf("%s%s", from.Id, to.Id)
 }
 

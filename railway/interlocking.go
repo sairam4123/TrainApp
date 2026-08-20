@@ -2,6 +2,7 @@ package railway
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"slices"
 )
@@ -9,24 +10,24 @@ import (
 type Interlocking struct {
 	world *World
 
-	trackSwitchMap map[string]string // trackId -> switchBlockId / "" (if no sw is present)
-	trackSigMap    map[string]string // trackId -> signalId / "" (if no sig is present)
+	trackSwitchMap map[string][]string // trackId -> switchBlockId / "" (if no sw is present)
+	trackSigMap    map[string]string   // trackId -> signalId / "" (if no sig is present)
 }
 
 func NewInterlocking(world *World) *Interlocking {
 	ilk := Interlocking{
 		world:          world,
-		trackSwitchMap: map[string]string{},
+		trackSwitchMap: map[string][]string{},
 		trackSigMap:    map[string]string{},
 	}
 
 	for _, trk := range world.TrackGraph.tracks {
-		ilk.trackSwitchMap[trk.Id] = ""
+		ilk.trackSwitchMap[trk.Id] = make([]string, 0)
 		ilk.trackSigMap[trk.Id] = ""
 	}
 	for _, sb := range world.switchBlocks {
 		for _, trk := range sb.managedEdges {
-			ilk.trackSwitchMap[trk.Track.Id] = sb.Id
+			ilk.trackSwitchMap[trk.Track.Id] = append(ilk.trackSwitchMap[trk.Track.Id], sb.Id)
 		}
 	}
 
@@ -135,23 +136,33 @@ func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {
 			break
 		}
 
-		swBlkId := ilck.trackSwitchMap[edge.Track.Id]
-		if swBlkId == "" {
-			continue
-		}
-
-		swBlk := ilck.world.switchBlocks[swBlkId]
-		if swBlk.lockedBy != nil {
-			fmt.Printf("Failed to set switches %s\n", swBlkId)
+		if err := ilck.SetActiveEdgeSw(edge, edge); err != nil {
+			fmt.Printf("Failed to set switches in %s\n", edge.Track.Id)
 			reservationFailed = true
 		}
 
-		if err := swBlk.SetActiveEdge(edge); err != nil {
-			fmt.Printf("Failed to set active edge on switch %s\n", swBlkId)
+		if err := ilck.LockSwitchBlocks(edge, train); err != nil {
+			fmt.Printf("Failed to lock switches in %s\n", edge.Track.Id)
+			reservationFailed = true
 		}
-		if err := swBlk.LockSwitchFor(train); err != nil {
-			fmt.Printf("Failed to lock switch %s\n", swBlkId)
-		}
+
+		// swBlkId := ilck.trackSwitchMap[edge.Track.Id]
+		// if len(swBlkId) == 0 {
+		// 	continue
+		// }
+
+		// swBlk := ilck.world.switchBlocks[swBlkId]
+		// if swBlk.lockedBy != nil {
+		// 	fmt.Printf("Failed to set switches %s\n", swBlkId)
+		// 	reservationFailed = true
+		// }
+
+		// if err := swBlk.SetActiveEdge(edge); err != nil {
+		// 	fmt.Printf("Failed to set active edge on switch %s\n", swBlkId)
+		// }
+		// if err := swBlk.LockSwitchFor(train); err != nil {
+		// 	fmt.Printf("Failed to lock switch %s\n", swBlkId)
+		// }
 	}
 
 	if reservationFailed {
@@ -160,23 +171,27 @@ func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {
 				edge.Track.ReservedBy = nil // clear the reservation
 			}
 
-			swBlkId := ilck.trackSwitchMap[edge.Track.Id]
-			if swBlkId == "" {
-				continue
-			}
+			// swBlkId := ilck.trackSwitchMap[edge.Track.Id]
+			// if swBlkId == "" {
+			// 	continue
+			// }
 
-			swBlk := ilck.world.switchBlocks[swBlkId]
-			if swBlk.lockedBy != nil {
-				fmt.Printf("Failed to set switches %s\n", swBlkId)
-				reservationFailed = true
-			}
+			// swBlk := ilck.world.switchBlocks[swBlkId]
+			// if swBlk.lockedBy != nil {
+			// 	fmt.Printf("Failed to set switches %s\n", swBlkId)
+			// 	reservationFailed = true
+			// }
 
-			if err := swBlk.SetActiveEdge(edge); err != nil {
-				fmt.Printf("Failed to set active edge on switch %s\n", swBlkId)
-			}
+			// if err := swBlk.SetActiveEdge(edge); err != nil {
+			// 	fmt.Printf("Failed to set active edge on switch %s\n", swBlkId)
+			// }
 
-			if err := swBlk.UnlockSwitchFor(train); err != nil {
-				fmt.Printf("Failed to lock switch %s\n", swBlkId)
+			// if err := swBlk.UnlockSwitchFor(train); err != nil {
+			// 	fmt.Printf("Failed to lock switch %s\n", swBlkId)
+			// }
+
+			if err := ilck.UnlockSwitchBlocks(edge, train); err != nil {
+				fmt.Printf("Failed to unlock switches as reservation failed in %s\n", edge.Track.Id)
 			}
 
 		}
@@ -191,34 +206,126 @@ func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *Path) bool
 	for _, edge := range path.Edges {
 		fmt.Println("Switching check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
 
-		swId := ilck.trackSwitchMap[edge.Track.Id]
-		if swId == "" {
-			continue
+		if ok := ilck.AreSwitchesLocked(edge, train); ok != nil {
+			if !*ok {
+				return false
+			}
 		}
 
-		swBlk := ilck.world.switchBlocks[swId]
+		// swId := ilck.trackSwitchMap[edge.Track.Id]
+		// if swId == "" {
+		// 	continue
+		// }
 
-		if !swBlk.isLocked {
-			fmt.Println(swId, swBlk.isLocked)
-			return false
-		}
-		if swBlk.lockedBy.Number != train.Number {
-			return false
-		}
+		// swBlk := ilck.world.switchBlocks[swId]
+
+		// if !swBlk.isLocked {
+		// 	fmt.Println(swId, swBlk.isLocked)
+		// 	return false
+		// }
+		// if swBlk.lockedBy.Number != train.Number {
+		// 	return false
+		// }
 	}
 	return true
 }
 
-func (ilck *Interlocking) ReleaseSwitch(curTrack *GraphEdge, train *Train) error {
-	swId := ilck.trackSwitchMap[curTrack.Track.Id]
-	if swId == "" {
+// func (ilck *Interlocking) ReleaseSwitch(curTrack *GraphEdge, train *Train) error {
+// 	swId := ilck.trackSwitchMap[curTrack.Track.Id]
+// 	if swId == "" {
+// 		return nil
+// 	}
+
+// 	swBlk := ilck.world.switchBlocks[swId]
+// 	if err := swBlk.UnlockSwitchFor(train); err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
+// we need to return three state, so a pointer to bool
+func (ilck *Interlocking) AreSwitchesLocked(curTrack *GraphEdge, train *Train) *bool {
+	swIds := ilck.trackSwitchMap[curTrack.Track.Id]
+	if len(swIds) <= 0 {
+		return nil // actually we have no switches, just return true
+	}
+	locked := true
+	swBlks := ilck.world.ListSwitchBlocks(swIds)
+	for _, sw := range swBlks {
+		if !sw.isLocked || sw.lockedBy.Number != train.Number {
+			locked = false
+		}
+	}
+	return &locked
+}
+
+func (ilck *Interlocking) SetActiveEdgeSw(curTrack *GraphEdge, activeEdge *GraphEdge) error {
+	swIds := ilck.trackSwitchMap[curTrack.Track.Id]
+	if len(swIds) <= 0 {
 		return nil
 	}
 
-	swBlk := ilck.world.switchBlocks[swId]
-	if err := swBlk.UnlockSwitchFor(train); err != nil {
-		return err
+	swBlks := ilck.world.ListSwitchBlocks(swIds)
+	for _, sw := range swBlks {
+		fmt.Println(swIds)
+		if err := sw.SetActiveEdge(activeEdge); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ilck *Interlocking) LockSwitchBlocks(curTrack *GraphEdge, train *Train) error {
+	swIds := ilck.trackSwitchMap[curTrack.Track.Id]
+	if len(swIds) <= 0 {
+		return nil
+	}
+	lockFailed := false
+	swBlks := ilck.world.ListSwitchBlocks(swIds)
+	for _, sw := range swBlks {
+		if err := sw.LockSwitchFor(train); err != nil {
+			lockFailed = true
+		}
 	}
 
+	if lockFailed {
+		for _, sw := range swBlks {
+			if err := sw.UnlockSwitchFor(train); err != nil {
+				fmt.Println("Unlocking switch failed ", sw.Id, ", continuing..")
+				continue
+			}
+		}
+	}
+	return nil
+}
+
+func (ilck *Interlocking) UnlockSwitchBlocks(curTrack *GraphEdge, train *Train) error {
+	swIds := ilck.trackSwitchMap[curTrack.Track.Id]
+	if len(swIds) <= 0 {
+		return nil
+	}
+	unlockFailed := false
+	swBlks := ilck.world.ListSwitchBlocks(swIds)
+	for _, sw := range swBlks {
+		if err := sw.UnlockSwitchFor(train); err != nil {
+			unlockFailed = true
+			fmt.Println("Failed to unlock ", sw.Id, " Error: ", err)
+		}
+	}
+
+	if unlockFailed {
+		return errors.New("Failed to unlock switch blocks, something wrong...")
+	}
+
+	// DECIDE: do we need unlock failed here? -- Sairam, 19-08-2026
+	// if unlockFailed {
+	// 	for _, sw := range swBlks {
+	// 		if err := sw.LockSwitchFor(train); err != nil {
+	// 			fmt.Println("Unlocking switch failed ", sw.Id, ", continuing..")
+	// 			continue
+	// 		}
+	// 	}
+	// }
 	return nil
 }

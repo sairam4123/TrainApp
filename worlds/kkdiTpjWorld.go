@@ -81,7 +81,7 @@ func IsCorrectWay(world *railway.World, path *railway.Path, initPoint *railway.T
 }
 
 func constructCrossover(world *railway.World, stnCode string, a, b, c, d *railway.TrackPoint) {
-	railway.NewDiamondCrossing(world, newTrackPointId(stnCode, "Dp", "0", ""), a, b, c, d)
+	railway.NewDiamondCrossing(world, newTrackPointId(stnCode, "Dp", "0", ""), a, d, b, c)
 	railway.NewSwitch(world, newTrackPointId(stnCode, "Sw", "0", "A"), a, b, d)
 	railway.NewSwitch(world, newTrackPointId(stnCode, "Sw", "0", "B"), d, c, a)
 	railway.NewSwitch(world, newTrackPointId(stnCode, "Sw", "1", "A"), c, d, b)

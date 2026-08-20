@@ -128,6 +128,14 @@ func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, activeEdge 
 	return swBlk
 }
 
+func (w *World) ListSwitchBlocks(ids []string) []*SwitchBlock {
+	swBlcks := make([]*SwitchBlock, 0)
+	for _, id := range ids {
+		swBlcks = append(swBlcks, w.switchBlocks[id])
+	}
+	return swBlcks
+}
+
 // TEMP code -> to be removed
 func (w *World) ListSignals() []*Signal {
 	return slices.Collect(maps.Values(w.signals))

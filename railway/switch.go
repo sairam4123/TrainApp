@@ -127,6 +127,7 @@ func NewDoubleSlip(world *World, id string, fromA, toA, fromB, toB *TrackPoint) 
 }
 
 func (sb *SwitchBlock) SetActiveEdge(edge *GraphEdge) error {
+	fmt.Println("what's wrong?", sb)
 	if sb.isLocked {
 		return errors.New("Switch block is locked")
 	}

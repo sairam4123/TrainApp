@@ -228,7 +228,7 @@ func (s *Sim) Run() {
 			if len(train.occupation.curPath.Edges) <= train.occupation.curPathIdx+1 {
 				s.ScheduleEventNext(PathCompleted, train)
 				curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-				s.dispatcher.intlck.ReleaseSwitch(curTrack, train)
+				s.dispatcher.intlck.UnlockSwitchBlocks(curTrack, train)
 			} else {
 				// acquire next track
 				nextTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx+1]
