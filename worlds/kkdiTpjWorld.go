@@ -2,16 +2,17 @@ package worlds
 
 import (
 	"fmt"
+	"strings"
 	"trainapp/railway"
 	"trainapp/units"
 )
 
 func newTrackPointId(stnCode string, tpType string, tpId string, other string) string {
-	return fmt.Sprintf("%s%s%s%s", stnCode, tpType, tpId, other)
+	return fmt.Sprintf("%s%s%s%s", strings.ToLower(stnCode), tpType, tpId, other)
 }
 
 func newPfTrackId(stnCode string, pfNo string) string {
-	return fmt.Sprintf("%sPf%s", stnCode, pfNo)
+	return fmt.Sprintf("%sPf%s", strings.ToLower(stnCode), pfNo)
 }
 
 func constructPlatform(world *railway.World, stn *railway.Station, pfNo string, pfLen units.Meters) (*railway.TrackPoint, *railway.TrackPoint, *railway.TrackSegment) {
@@ -128,7 +129,24 @@ func BuildTpjKkdiWorld() *railway.World {
 
 	constructCrossover(world, tpj.Code, tpjBp0, tpjBp2, tpjBp1, tpjBp3)
 
-	// pdkt := world.NewStation("PDKT", "Pudukkottai")
+	pdkt := world.NewStation("PDKT", "Pudukkottai")
+	pdktPf1S, pdktPf1E, _ := constructPlatform(world, pdkt, "1", PLATFORM_LENGTH)
+	pdktPf2S, pdktPf2E, _ := constructPlatform(world, pdkt, "2", PLATFORM_LENGTH)
+	pdktPf3S, pdktPf3E, _ := constructPlatform(world, pdkt, "3", PLATFORM_LENGTH)
+	pdktPf4S, pdktPf4E, _ := constructPlatform(world, pdkt, "4", PLATFORM_LENGTH)
+
+	pdktBp0 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "0", ""))
+	pdktBp1 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "1", ""))
+
+	railway.NewSwitch(world, "pdktSw0", pdktBp0, pdktPf2S, pdktPf1S)
+	railway.NewSwitch(world, "pdktSw1", pdktBp1, pdktPf3S, pdktPf4S)
+
+	pdktBp2 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "2", ""))
+	pdktBp3 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "3", ""))
+
+	railway.NewSwitch(world, "pdktSw2", pdktBp2, pdktPf2E, pdktPf1E)
+	railway.NewSwitch(world, "pdktSw3", pdktBp3, pdktPf3E, pdktPf4E)
+
 	kkdi := world.NewStation("KKDI", "Karaikudi Jn")
 
 	kkdiPf1S, kkdiPf1E, _ := constructPlatform(world, kkdi, "1", PLATFORM_LENGTH)
@@ -152,16 +170,33 @@ func BuildTpjKkdiWorld() *railway.World {
 
 	constructCrossover(world, kkdi.Code, kkdiBp0, kkdiBp2, kkdiBp1, kkdiBp3)
 
-	bsTpjKkdi0 := world.NewTrackSegment("bsTpjKkdi0", units.KM(96))
-	bsKkdiTpj0 := world.NewTrackSegment("bsKkdiTpj0", units.KM(96))
+	// bsTpjKkdi0 := world.NewTrackSegment("bsTpjKkdi0", units.KM(96))
+	// bsKkdiTpj0 := world.NewTrackSegment("bsKkdiTpj0", units.KM(96))
 
-	tpjSig0 := railway.NewSignal("tpjSig0", kkdiBp0, tpjBp2)
-	kkdiSig0 := railway.NewSignal("kkdiSig0", tpjBp3, kkdiBp1)
+	bsTpjPdkt0 := world.NewTrackSegment("bsTpjPdkt0", units.KM(55))
+	bsPdktTpj0 := world.NewTrackSegment("bsPdktTpj0", units.KM(55))
+	bsPdktKkdi0 := world.NewTrackSegment("bsPdktKkdi0", units.KM(41))
+	bsKkdiPdkt0 := world.NewTrackSegment("bsKkdiPdkt0", units.KM(41))
+
+	kkdiSig0 := railway.NewSignal("kkdiSig0", kkdiBp0, pdktBp2)
+	tpjSig0 := railway.NewSignal("tpjSig0", tpjBp3, pdktBp1)
 	world.AddSignal(tpjSig0)
 	world.AddSignal(kkdiSig0)
 
-	world.TrackGraph.AddTrack(tpjBp2, kkdiBp0, bsTpjKkdi0)
-	world.TrackGraph.AddTrack(tpjBp3, kkdiBp1, bsKkdiTpj0)
+	pdktSig0 := railway.NewSignal("pdktSig0", pdktBp0, tpjBp2)
+	pdktSig1 := railway.NewSignal("pdktSig1", pdktBp3, kkdiBp1)
+
+	world.AddSignal(pdktSig0)
+	world.AddSignal(pdktSig1)
+
+	// world.TrackGraph.AddTrack(tpjBp2, kkdiBp0, bsTpjKkdi0)
+	// world.TrackGraph.AddTrack(tpjBp3, kkdiBp1, bsKkdiTpj0)
+
+	world.TrackGraph.AddTrack(tpjBp2, pdktBp0, bsTpjPdkt0)
+	world.TrackGraph.AddTrack(tpjBp3, pdktBp1, bsPdktTpj0)
+
+	world.TrackGraph.AddTrack(pdktBp2, kkdiBp0, bsPdktKkdi0)
+	world.TrackGraph.AddTrack(pdktBp3, kkdiBp1, bsKkdiPdkt0)
 
 	fmt.Println("World creation done!")
 	// connectivity check

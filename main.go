@@ -112,11 +112,11 @@ func main() {
 		panic("Something went wrong while fetching stations")
 	}
 
-	// pdkt, ok := world.GetStation("PDKT")
+	pdkt, ok := world.GetStation("PDKT")
 
-	// if !ok {
-	// 	panic("Something went wrong while fetching stations")
-	// }
+	if !ok {
+		panic("Something went wrong while fetching stations")
+	}
 
 	kkdi, ok := world.GetStation("KKDI")
 
@@ -127,7 +127,7 @@ func main() {
 	var upInterval = 40
 	var downInterval = 40
 
-	for i := range 1 {
+	for i := range 6 {
 		train1 := railway.Train{
 			Name:     fmt.Sprintf("Train%dUp", i+1),
 			Number:   fmt.Sprintf("045%dU", i+1),
@@ -141,17 +141,17 @@ func main() {
 			SpPfNo:   "1",
 		})
 
-		// train1.AddSchedule(&railway.SchedulePoint{
-		// 	StnCode:  pdkt.Code,
-		// 	ArrTime:  float64(30 + i*upInterval),
-		// 	DeptTime: float64(40 + i*upInterval),
-		// 	SpPfNo:   "1",
-		// })
+		train1.AddSchedule(&railway.SchedulePoint{
+			StnCode:  pdkt.Code,
+			ArrTime:  float64(60 + i*upInterval),
+			DeptTime: float64(65 + i*upInterval),
+			SpPfNo:   "1",
+		})
 
 		train1.AddSchedule(&railway.SchedulePoint{
 			StnCode:  kkdi.Code,
-			ArrTime:  float64(60 + i*upInterval),
-			DeptTime: float64(70 + i*upInterval),
+			ArrTime:  float64(95 + i*upInterval),
+			DeptTime: float64(100 + i*upInterval),
 			SpPfNo:   "1",
 		})
 
@@ -165,15 +165,15 @@ func main() {
 			StnCode:  kkdi.Code,
 			ArrTime:  float64(10 + i*downInterval),
 			DeptTime: float64(20 + i*downInterval),
-			SpPfNo:   "1",
+			SpPfNo:   "2",
 		})
 
-		// train2.AddSchedule(&railway.SchedulePoint{
-		// 	StnCode:  pdkt.Code,
-		// 	ArrTime:  float64(70 + i*downInterval),
-		// 	DeptTime: float64(80 + i*downInterval),
-		// 	SpPfNo:   "2",
-		// })
+		train2.AddSchedule(&railway.SchedulePoint{
+			StnCode:  pdkt.Code,
+			ArrTime:  float64(45 + i*downInterval),
+			DeptTime: float64(50 + i*downInterval),
+			SpPfNo:   "3",
+		})
 
 		train2.AddSchedule(&railway.SchedulePoint{
 			StnCode:  tpj.Code,

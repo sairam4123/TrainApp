@@ -145,9 +145,9 @@ func (s *Sim) Run() {
 	for {
 		ev, ok := s.NextEvent()
 		if !ok {
+			s.DumpSim()
 			break
 		}
-		s.DumpSim()
 		train, ok := ev.Data.(*Train)
 		if ok && train.occupation != nil {
 			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
@@ -277,7 +277,7 @@ func (s *Sim) Run() {
 			} else {
 				fmt.Println("Request to proceed failed, waiting..", train.GetFullName(), train.occupation.curPathIdx)
 			}
-		
+
 		case MovementAuthorityEnded:
 			// TODO: check if the current track is the station platform
 			// TOOD: if not station platform, then pathfind to the available / preferred station platform
