@@ -107,8 +107,8 @@ func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment) 
 			return 1
 		}
 	})
-	for _, path := range paths {
 
+	for _, path := range paths {
 		if ilck.TryReservePath(path, train) {
 			return path, true
 		}

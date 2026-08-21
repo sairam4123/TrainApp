@@ -5,17 +5,6 @@ import (
 	"slices"
 )
 
-// import "fmt"
-
-type PathController struct {
-	Id string
-
-	path *Path
-
-	train *Train
-	sim   *Sim
-}
-
 type Path struct {
 	initPoint *TrackPoint
 
@@ -24,8 +13,6 @@ type Path struct {
 	length uint64
 
 	curPoint *TrackPoint
-
-	IncludesReserved bool
 }
 
 func (path *Path) Length() uint64 {

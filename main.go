@@ -127,7 +127,7 @@ func main() {
 	var upInterval = 40
 	var downInterval = 40
 
-	for i := range 6 {
+	for i := range 2 {
 		train1 := railway.Train{
 			Name:     fmt.Sprintf("Train%dUp", i+1),
 			Number:   fmt.Sprintf("045%dU", i+1),
