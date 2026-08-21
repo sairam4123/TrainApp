@@ -14,6 +14,8 @@ type Train struct {
 
 	occupation *OccupationData
 
+	ma *MovementAuthority
+
 	reservation *ReservationData
 }
 

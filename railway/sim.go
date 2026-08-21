@@ -196,16 +196,17 @@ func (s *Sim) Run() {
 			// 	return
 			// }
 
-			if ok := s.dispatcher.RequestToProceed(train, path); ok {
-				if ok := path.Edges[0].Track.Acquire(train); !ok {
+			if ma, ok := s.dispatcher.RequestToProceed(train, path); ok {
+				if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
 					fmt.Println("Edge cannot be acquired")
 					return
 				}
+				train.ma = ma
 
 				train.occupation = &OccupationData{
 					train:      train,
 					curPathIdx: 0,
-					curPath:    path,
+					curPath:    ma.path,
 					disp:       s.dispatcher,
 				}
 				s.ScheduleEventNext(TrackEntered, train)
@@ -254,9 +255,10 @@ func (s *Sim) Run() {
 			// TODO: RouteGrants can also happen from Home Signal Approach
 
 			// TODO: I don't think I like this approach tbh
-			if ok := s.dispatcher.RequestToProceed(train, path); ok {
+			if ma, ok := s.dispatcher.RequestToProceed(train, path); ok {
+				train.ma = ma
 				if train.occupation == nil {
-					if ok := path.Edges[0].Track.Acquire(train); !ok {
+					if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
 						fmt.Println("Edge cannot be acquired")
 						return
 					}
@@ -264,7 +266,7 @@ func (s *Sim) Run() {
 					train.occupation = &OccupationData{
 						train:      train,
 						curPathIdx: 0,
-						curPath:    path,
+						curPath:    ma.path,
 						disp:       s.dispatcher,
 					}
 					s.ScheduleEventNext(TrackEntered, train)
@@ -275,6 +277,10 @@ func (s *Sim) Run() {
 			} else {
 				fmt.Println("Request to proceed failed, waiting..", train.GetFullName(), train.occupation.curPathIdx)
 			}
+		
+		case MovementAuthorityEnded:
+			// TODO: check if the current track is the station platform
+			// TOOD: if not station platform, then pathfind to the available / preferred station platform
 
 		case PathCompleted:
 			// fmt.Println("Path completed")
@@ -323,7 +329,8 @@ func (s *Sim) Run() {
 				disp:    s.dispatcher,
 			}
 			// fmt.Println("Dispatching to station")
-			if ok := s.dispatcher.RequestToProceed(train, path); ok {
+			if ma, ok := s.dispatcher.RequestToProceed(train, path); ok {
+				train.ma = ma
 				train.curSchedulePoint++
 				s.ScheduleEventNext(TrainDeparted, train)
 			} else {

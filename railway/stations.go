@@ -65,3 +65,12 @@ func (stn *Station) FindAvailableStnPlatform(prefPfNo string) *TrackSegment {
 	}
 	return nil
 }
+
+func (stn *Station) IsPlatform(trackId string) bool {
+	for _, pf := range stn.Platforms {
+		if pf.Track.Id == trackId {
+			return true
+		}
+	}
+	return false
+}

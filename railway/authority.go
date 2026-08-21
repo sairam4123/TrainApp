@@ -3,6 +3,8 @@ package railway
 type MovementAuthority struct {
 	path *Path
 
+	limit *TrackSegment
+
 	train *Train
 }
 

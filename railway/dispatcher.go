@@ -7,24 +7,13 @@ type Dispatcher struct {
 
 	waitingReservationRequests []*ReservationRequest
 
-	waitingProceedRequests []*OccupationRequest
-
-	pointControllers map[string]*PointController
+	waitingProceedRequests []*MovementAuthorityRequest
 
 	intlck *Interlocking
 }
 
 func (disp *Dispatcher) Init() {
-	disp.pointControllers = make(map[string]*PointController)
 	disp.intlck = NewInterlocking(disp.sim.world)
-	for _, p := range disp.sim.world.TrackGraph.points {
-		disp.pointControllers[p.Id] = &PointController{
-			sim:         disp.sim,
-			point:       p,
-			activeRoute: nil,
-			isLocked:    false,
-		}
-	}
 }
 
 // TODO: this is terrible for large scale simulations but for the time being it is fine.
@@ -84,7 +73,7 @@ type ReservationRequest struct {
 	train     *Train
 }
 
-type OccupationRequest struct {
+type MovementAuthorityRequest struct {
 	path  *Path
 	train *Train
 }
@@ -105,6 +94,15 @@ type ReservationData struct {
 	disp    *Dispatcher
 }
 
+func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pfNo string) (*Path, bool) {
+	
+	// TODO: try reserving upto a last signal if station platform reservation fails
+	// TODO: (only if another pathway exists for trains leaving the platform, or another platform exists)
+	// TODO: if no pathway for exit exists, don't reserve and keep the train waiting..
+	panic("unimplemented")
+}
+
+// TODO: Deprecate try reserve path to track and switch to station instead
 func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegment) (*Path, bool) {
 	path, ok := disp.intlck.TryReservePathTo(train, toTrack)
 	if !ok {
@@ -202,38 +200,29 @@ func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegmen
 // 	return path, true
 // }
 
-func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) bool {
+func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) (*MovementAuthority, bool) {
 	ok := path.EnsureAllEdgesAreReserved(train)
 	if !ok {
 		fmt.Println("Request to Proceed failed. Reason: All Edges are not reserved")
-		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &OccupationRequest{
+		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &MovementAuthorityRequest{
 			path:  path,
 			train: train,
 		})
-		return ok
+		return nil, ok
 	}
 	ok = disp.intlck.EnsureAllSwitchesLocked(train, path)
 	if !ok {
 		fmt.Println("Request to Proceed failed. Reason: All switches are not locked.")
-		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &OccupationRequest{
+		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &MovementAuthorityRequest{
 			path:  path,
 			train: train,
 		})
 	}
 
-	return ok
+	// TODO - Depending on the availability, ma can only include path upto a certain track only (upto the last available signal) -- Sairam, 21-08-2026
+	ma := &MovementAuthority{
+		path:  path,
+		train: train,
+	}
+	return ma, ok
 }
-
-// func (disp *Dispatcher) EnsureAllSwitchesSet(train *Train, path *Path) bool {
-// 	for _, edge := range path.Edges {
-// 		fmt.Println("Switching check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
-// 		if !disp.pointControllers[edge.From.Id].isLocked || !disp.pointControllers[edge.To.Id].isLocked {
-// 			fmt.Println(disp.pointControllers[edge.From.Id].isLocked, disp.pointControllers[edge.To.Id].isLocked)
-// 			return false
-// 		}
-// 		if disp.pointControllers[edge.From.Id].lockedBy.Number != train.Number || disp.pointControllers[edge.To.Id].lockedBy.Number != train.Number {
-// 			return false
-// 		}
-// 	}
-// 	return true
-// }
