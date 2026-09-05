@@ -214,6 +214,7 @@ func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) (*MovementAut
 			path:  path,
 			train: train,
 		})
+		return nil, ok
 	}
 
 	// TODO - Depending on the availability, ma can only include path upto a certain track only (upto the last available signal) -- Sairam, 21-08-2026

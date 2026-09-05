@@ -30,6 +30,9 @@ func (s *Sim) Init() {
 	if s.world == nil {
 		panic("s.world is nil, did you call SetWorld?")
 	}
+
+	s.trainCtrllers = make(map[string]*TrainController)
+
 	s.des = &des.DES[RailwayEvent]{}
 	s.des.Init()
 
@@ -39,6 +42,10 @@ func (s *Sim) Init() {
 	s.dispatcher.Init()
 
 	for _, train := range s.world.trains {
+		s.trainCtrllers[train.Number] = &TrainController{
+			trainId: train.Number,
+			sim:     s,
+		}
 		s.ScheduleEventAt(train.schedule[0].ArrTime-des.MinDeltaTime, WorldEntered, train)
 	}
 }
