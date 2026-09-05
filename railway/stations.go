@@ -59,7 +59,7 @@ func (stn *Station) FindAvailableStnPlatform(prefPfNo string) *TrackSegment {
 		}
 	}
 
-	// just route to the random platform for the time being
+	// we don't have any platform atp -- just route to the first platform for the time being
 	for _, pf := range stn.Platforms {
 		return pf.Track
 	}

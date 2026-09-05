@@ -42,7 +42,7 @@ func NewInterlocking(world *World) *Interlocking {
 	return &ilk
 }
 
-func (ilk *Interlocking) NavigatesCorrectly(path *Path) bool {
+func (ilk *Interlocking) IsNavigatingSignalsRight(path *Path) bool {
 	curPoint := path.initPoint
 	curPtIdx := 0
 
@@ -75,33 +75,23 @@ func (ilk *Interlocking) NavigatesCorrectly(path *Path) bool {
 
 func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment) (*Path, bool) {
 
-	// var path *Path
-	// if toTrack != nil {
-	// 	path = ilck.world.TrackGraph.FindPathToTrack(train.FacingToward, toTrack)
-	// } else if toSignal != nil {
-	// 	path = ilck.world.TrackGraph.FindPath(train.FacingToward, toSignal.AtPoint)
-	// }
-
-	// if path == nil {
-	// 	return nil, false
-	// }
-
 	// generate candidate paths
 	paths, err := ilck.world.TrackGraph.GenerateCandidatePaths(train.FacingToward, toTrack)
 	if err != nil {
 		return nil, false
 	}
+
 	slices.SortStableFunc(paths, func(a, b *Path) int {
 
 		// check if it's correct way
-		aCorrect := ilck.NavigatesCorrectly(a)
-		bCorrect := ilck.NavigatesCorrectly(b)
+		aNavCrt := ilck.IsNavigatingSignalsRight(a)
+		bNavCrt := ilck.IsNavigatingSignalsRight(b)
 
-		if aCorrect == bCorrect {
+		if aNavCrt == bNavCrt {
 			// check the path distance
 			return cmp.Compare(a.Length(), b.Length())
 		} else {
-			if aCorrect {
+			if aNavCrt {
 				return -1
 			}
 			return 1

@@ -20,9 +20,7 @@ type World struct {
 
 	stations map[string]*Station
 	trains   map[string]*Train
-
-	bsections map[string]*BlockSection
-	signals   map[string]*Signal
+	signals  map[string]*Signal
 
 	TrackGraph *TrackGraph
 	data       WorldData
@@ -59,7 +57,6 @@ func (w *World) AddStation(stn *Station) {
 func (w *World) Init(data WorldData) {
 	w.stations = make(map[string]*Station)
 	w.trains = make(map[string]*Train)
-	w.bsections = make(map[string]*BlockSection)
 	w.switchBlocks = make(map[string]*SwitchBlock)
 	w.signals = make(map[string]*Signal)
 
@@ -106,14 +103,6 @@ func (w *World) NewPlatformTrack(id string) *TrackSegment {
 	ts := w.NewTrackSegment(id, w.data.DefaultPfLength)
 	ts.SetTrackAttributes(w.data.DefaultPfLength, w.data.DefaultPfMaxSpeed)
 	return ts
-}
-
-func (w *World) NewBlockSection(id string) *BlockSection {
-	bsec := &BlockSection{
-		Id: id,
-	}
-	w.bsections[bsec.Id] = bsec
-	return bsec
 }
 
 func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, activeEdge *GraphEdge) *SwitchBlock {

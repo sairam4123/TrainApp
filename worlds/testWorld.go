@@ -103,7 +103,7 @@ func BuildTestWorld() *railway.World {
 	// world.TrackGraph.AddTrack(pdktPf3S, pdktSw1, pdktPf3SSw1)
 	// world.TrackGraph.AddTrack(pdktPf3E, pdktSw2, pdktPf3ESw2)
 
-	pdkt, pdktBp0, pdktBp1 := railway.NewStationSL2PF(world, "PDKT", "Pudukkottai")
+	_, pdktBp0, pdktBp1 := railway.NewStationSL2PF(world, "PDKT", "Pudukkottai")
 
 	kkdiPf1S := world.NewTrackPoint("kkdiPf1S")
 	kkdiPf1E := world.NewTrackPoint("kkdiPf1E").WithDeadEnd(true).WithSimLimit(true)
@@ -130,8 +130,8 @@ func BuildTestWorld() *railway.World {
 	// world.TrackGraph.AddTrack(kkdiBp0, kkdiPf1S, kkdiSw1Pf1S)
 	// world.TrackGraph.AddTrack(kkdiBp0, kkdiPf2S, kkdiSw1Pf2S)
 
-	bsecTpjPdkt := world.NewBlockSection("bsecTpjPdkt")
-	bsecTpjPdkt.Init(tpj, pdkt)
+	// bsecTpjPdkt := world.NewBlockSection("bsecTpjPdkt")
+	// bsecTpjPdkt.Init(tpj, pdkt)
 
 	bsTpjPdkt0 := world.NewTrackSegment("bsTpjPdkt0", units.KM(5))
 	bsTpjPdkt1 := world.NewTrackSegment("bsTpjPdkt1", units.KM(16))
@@ -150,17 +150,17 @@ func BuildTestWorld() *railway.World {
 	world.TrackGraph.AddTrack(tpjCp1, pdktCp1, bsTpjPdkt1)
 	world.TrackGraph.AddTrack(pdktCp1, pdktBp0, bsTpjPdkt2)
 
-	bsecPdktKkdi := world.NewBlockSection("bsecPdktKkdi")
-	bsecPdktKkdi.Init(pdkt, kkdi)
+	// bsecPdktKkdi := world.NewBlockSection("bsecPdktKkdi")
+	// bsecPdktKkdi.Init(pdkt, kkdi)
 
 	bsPdktKkdi0 := world.NewTrackSegment("bsPdktKkdi0", units.KM(30))
-	bsecPdktKkdi.AddTrack(bsPdktKkdi0)
+	// bsecPdktKkdi.AddTrack(bsPdktKkdi0)
 
 	world.TrackGraph.AddTrack(pdktBp1, kkdiBp0, bsPdktKkdi0)
 
-	bsecTpjPdkt.AddTrack(bsTpjPdkt0)
-	bsecTpjPdkt.AddTrack(bsTpjPdkt1)
-	bsecTpjPdkt.AddTrack(bsTpjPdkt2)
+	// bsecTpjPdkt.AddTrack(bsTpjPdkt0)
+	// bsecTpjPdkt.AddTrack(bsTpjPdkt1)
+	// bsecTpjPdkt.AddTrack(bsTpjPdkt2)
 
 	return world
 }

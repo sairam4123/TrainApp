@@ -10,7 +10,7 @@ type Path struct {
 
 	Edges []*GraphEdge
 
-	length uint64
+	length uint64 //TODO: do we really need it? Can we compute it before?
 
 	curPoint *TrackPoint
 }

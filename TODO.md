@@ -1,12 +1,6 @@
-Create dispatcher -> move all controllers to dispatcher
-Create train controller
-
-train controller > sim
-dispatcher > sim
-
-1. Implement proper signalling, start with a simplified block section.
+1. Implement signalling, start with a simplified entry-gated signal system.
 ~~2. Implement SwitchBlocks for managing the switch state.~~
-3. Refactor dispatcher into InterlockingManager & ReservationManager (I'm wary of names, feel free to suggest names)
+~~3. Refactor Interlocking code out of Dispatcher.~~
 4. Refactor Simulation into discrete parts, TrainController, Logging and Debug Dumping
 5. Implement movement authority and MOVEMENT_AUTHORITY_END, SCHEDULE_END, etc.
 6. Rework reservation requests with priority requests & train priority.

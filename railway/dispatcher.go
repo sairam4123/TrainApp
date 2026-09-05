@@ -12,6 +12,7 @@ type Dispatcher struct {
 	intlck *Interlocking
 }
 
+// TODO: Move interlocking into World
 func (disp *Dispatcher) Init() {
 	disp.intlck = NewInterlocking(disp.sim.world)
 }
@@ -48,7 +49,6 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 			disp.sim.ScheduleEventNext(RouteGranted, &ReservationData{
 				curPath: path,
 				train:   elem.train,
-				disp:    disp,
 			})
 		} else {
 			trainExists := false
@@ -83,19 +83,16 @@ type OccupationData struct {
 
 	curPathIdx int
 	curPath    *Path
-
-	disp *Dispatcher
 }
 
 type ReservationData struct {
 	train *Train
 
 	curPath *Path
-	disp    *Dispatcher
 }
 
 func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pfNo string) (*Path, bool) {
-	
+
 	// TODO: try reserving upto a last signal if station platform reservation fails
 	// TODO: (only if another pathway exists for trains leaving the platform, or another platform exists)
 	// TODO: if no pathway for exit exists, don't reserve and keep the train waiting..

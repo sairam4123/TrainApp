@@ -76,7 +76,6 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		train.reservation = &ReservationData{
 			train:   train,
 			curPath: path,
-			disp:    tc.sim.dispatcher,
 		}
 
 		if ma, ok := tc.sim.dispatcher.RequestToProceed(train, path); ok {
@@ -90,7 +89,6 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 				train:      train,
 				curPathIdx: 0,
 				curPath:    ma.path,
-				disp:       tc.sim.dispatcher,
 			}
 			tc.sim.ScheduleEventNext(TrackEntered, train)
 		}
@@ -133,6 +131,7 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		// TODO: RouteGrants can also happen from Home Signal Approach
 
 		// TODO: I don't think I like this approach tbh
+		// RouteGrant, grants the route, it must be checked first before proceeding.
 		if ma, ok := tc.sim.dispatcher.RequestToProceed(train, path); ok {
 			train.ma = ma
 			if train.occupation == nil {
@@ -145,7 +144,6 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 					train:      train,
 					curPathIdx: 0,
 					curPath:    ma.path,
-					disp:       tc.sim.dispatcher,
 				}
 				tc.sim.ScheduleEventNext(TrackEntered, train)
 				return
@@ -181,7 +179,6 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		// curSchedule := train.schedule[train.curSchedulePoint]
 		// fmt.Println(len(train.schedule), train.curSchedulePoint+1)
 		if len(train.schedule) <= train.curSchedulePoint+1 {
-			train.reservation = nil
 			tc.sim.ScheduleEventNext(TrainDeparted, train)
 			return
 		}
@@ -204,7 +201,6 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		train.reservation = &ReservationData{
 			curPath: path,
 			train:   train,
-			disp:    tc.sim.dispatcher,
 		}
 		// fmt.Println("Dispatching to station")
 		if ma, ok := tc.sim.dispatcher.RequestToProceed(train, path); ok {
@@ -218,13 +214,8 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 	case TrainDeparted:
 
 		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-		if train.reservation == nil {
-			curTrack.Track.Release(train)
-			tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track)
-			tc.sim.dispatcher.OnTrackReleased(curTrack.Track, train)
-			tc.sim.ScheduleEventNext(WorldExited, train)
-			train.reservation = nil
-			train.occupation = nil
+		if len(train.schedule) <= train.curSchedulePoint+1 {
+			tc.sim.ScheduleEventNext(ScheduleEnd, train)
 			return
 		}
 
@@ -245,9 +236,18 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 			train:      train,
 			curPathIdx: 0,
 			curPath:    path,
-			disp:       tc.sim.dispatcher,
 		}
 		tc.sim.ScheduleEventNext(TrackEntered, train)
+
+	case ScheduleEnd:
+		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
+
+		curTrack.Track.Release(train)
+		tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track)
+		tc.sim.dispatcher.OnTrackReleased(curTrack.Track, train)
+		tc.sim.ScheduleEventNext(WorldExited, train)
+		train.reservation = nil
+		train.occupation = nil
 
 	}
 
