@@ -46,7 +46,7 @@ func (s *Sim) Init() {
 			trainId: train.Number,
 			sim:     s,
 		}
-		s.ScheduleEventAt(train.schedule[0].ArrTime-des.MinDeltaTime, WorldEntered, train)
+		s.ScheduleEventAt(train.schedule[0].ArrTime-des.MinDeltaTime, WorldEntered, train, train.Number)
 	}
 }
 
@@ -57,16 +57,16 @@ func (s *Sim) NextEvent() (des.Event[RailwayEvent], bool) {
 	return s.des.NextEvent()
 }
 
-func (s *Sim) ScheduleEventAfter(delta units.Minutes, evtype RailwayEvent, data any) {
-	s.des.Add(s.CurTime()+float64(delta), evtype, data)
+func (s *Sim) ScheduleEventAfter(delta units.Minutes, evtype RailwayEvent, data any, trainId string) {
+	s.des.Add(s.CurTime()+float64(delta), evtype, data, trainId)
 }
 
-func (s *Sim) ScheduleEventNext(evtype RailwayEvent, data any) {
-	s.des.Add(s.CurTime()+des.MinDeltaTime, evtype, data)
+func (s *Sim) ScheduleEventNext(evtype RailwayEvent, data any, trainId string) {
+	s.des.Add(s.CurTime()+des.MinDeltaTime, evtype, data, trainId)
 }
 
-func (s *Sim) ScheduleEventAt(time float64, evType RailwayEvent, data any) {
-	s.des.Add(time, evType, data)
+func (s *Sim) ScheduleEventAt(time float64, evType RailwayEvent, data any, trainId string) {
+	s.des.Add(time, evType, data, trainId)
 }
 
 func (s *Sim) CurTime() float64 {
@@ -127,15 +127,19 @@ func (s *Sim) Run() {
 		train, ok := ev.Data.(*Train)
 		if ok && train.occupation != nil {
 			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-			fmt.Fprintf(logger, "[%.2f] %s - %s (Track %s - %dm)\n", ev.Time, ev.Type, train.Name, curTrack.Track.Id, int(curTrack.Track.Length))
-		} else if ok {
-			fmt.Fprintf(logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, train.Name)
+			fmt.Fprintf(logger, "[%.2f] %s - %s  (Track %s - %dm)\n", ev.Time, ev.Type, train.Name, curTrack.Track.Id, int(curTrack.Track.Length))
+		} else if train != nil && ok {
+			fmt.Fprintf(logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, train.Name)
 		} else if track, ok := ev.Data.(*TrackSegment); ok {
 			fmt.Fprintf(logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, track.Id)
+		} else if ma, ok := ev.Data.(*MovementAuthority); ok {
+			fmt.Fprintf(logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, ma.train.Name)
+		} else if res, ok := ev.Data.(*ReservationData); ok {
+			fmt.Fprintf(logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, res.train.Name)
 		}
 
-		if ok {
-			tc := s.trainCtrllers[train.Number]
+		if ev.TrainID != "" {
+			tc := s.trainCtrllers[ev.TrainID]
 			tc.OnEvent(ev.Type, ev.Data)
 		}
 

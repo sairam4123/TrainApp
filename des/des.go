@@ -12,6 +12,7 @@ type Event[T comparable] struct {
 	CreatedAt float64
 	Type      T
 	Data      any
+	TrainID   string
 }
 
 type EventQueue[T comparable] []Event[T]
@@ -51,7 +52,7 @@ func (d *DES[T]) Init() {
 	heap.Init(&d.eq)
 }
 
-func (d *DES[T]) Add(eventTime float64, evtype T, data any) {
+func (d *DES[T]) Add(eventTime float64, evtype T, data any, trainId string) {
 	if eventTime < d.CurTime+MinDeltaTime {
 		fmt.Println("Event time is below minimum time")
 		return
@@ -62,6 +63,7 @@ func (d *DES[T]) Add(eventTime float64, evtype T, data any) {
 		CreatedAt: d.CurTime,
 		Type:      evtype,
 		Data:      data,
+		TrainID:   trainId,
 	})
 }
 

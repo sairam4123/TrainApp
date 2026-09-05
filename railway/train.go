@@ -77,20 +77,21 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 			train:   train,
 			curPath: path,
 		}
-
 		if ma, ok := tc.sim.dispatcher.RequestToProceed(train, path); ok {
-			if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
-				fmt.Println("Edge cannot be acquired")
-				return
-			}
-			train.ma = ma
+			fmt.Println("World entering REQUEST PROCEED (WORLD_ENTERED)")
+			tc.sim.ScheduleEventNext(MovementAuthorized, ma, train.Number)
+			// if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
+			// 	fmt.Println("Edge cannot be acquired")
+			// 	return
+			// }
+			// train.ma = ma
 
-			train.occupation = &OccupationData{
-				train:      train,
-				curPathIdx: 0,
-				curPath:    ma.path,
-			}
-			tc.sim.ScheduleEventNext(TrackEntered, train)
+			// train.occupation = &OccupationData{
+			// 	train:      train,
+			// 	curPathIdx: 0,
+			// 	curPath:    ma.path,
+			// }
+			// tc.sim.ScheduleEventNext(TrackEntered, train)
 		}
 
 	case TrackEntered:
@@ -98,12 +99,12 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		// fmt.Println("Track Entered", curTrack.Id)
 		train.FacingToward = tc.sim.world.TrackGraph.OtherEnd(curTrack, train.FacingToward.Id)
 		time := curTrack.TravelTime(train.MaxSpeed)
-		tc.sim.ScheduleEventAfter(time, TrackTravelEnd, train)
+		tc.sim.ScheduleEventAfter(time, TrackTravelEnd, train, train.Number)
 		// train := ev.Data.()
 
 	case TrackTravelEnd:
 		if len(train.occupation.curPath.Edges) <= train.occupation.curPathIdx+1 {
-			tc.sim.ScheduleEventNext(PathCompleted, train)
+			tc.sim.ScheduleEventNext(PathCompleted, train, train.Number)
 			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 			tc.sim.dispatcher.intlck.UnlockSwitchBlocks(curTrack, train)
 		} else {
@@ -113,10 +114,10 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 			if ok {
 				curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 				curTrack.Track.Release(train)
-				tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track)
+				tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track, train.Number)
 				tc.sim.dispatcher.OnTrackReleased(curTrack.Track, train)
 				train.occupation.curPathIdx++
-				tc.sim.ScheduleEventNext(TrackEntered, train)
+				tc.sim.ScheduleEventNext(TrackEntered, train, train.Number)
 			}
 			// s.dispatcher.sim.ScheduleEventNext(TrackExited, train)
 		}
@@ -129,32 +130,32 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		path := reserv.curPath
 
 		// TODO: RouteGrants can also happen from Home Signal Approach
-
-		// TODO: I don't think I like this approach tbh
 		// RouteGrant, grants the route, it must be checked first before proceeding.
 		if ma, ok := tc.sim.dispatcher.RequestToProceed(train, path); ok {
-			train.ma = ma
-			if train.occupation == nil {
-				if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
-					fmt.Println("Edge cannot be acquired")
-					return
-				}
-				// train was waiting to enter the world
-				train.occupation = &OccupationData{
-					train:      train,
-					curPathIdx: 0,
-					curPath:    ma.path,
-				}
-				tc.sim.ScheduleEventNext(TrackEntered, train)
-				return
-			}
-			train.curSchedulePoint++
-			tc.sim.ScheduleEventNext(TrainDeparted, train)
-		} else {
-			fmt.Println("Request to proceed failed, waiting..", train.GetFullName(), train.occupation.curPathIdx)
+			tc.sim.ScheduleEventNext(MovementAuthorized, ma, train.Number)
 		}
 
 	case MovementAuthorized:
+		ma := data.(*MovementAuthority)
+		train.ma = ma
+		// TODO: Rework this slightly well
+		if train.occupation == nil {
+			if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
+				fmt.Println("Edge cannot be acquired")
+				return
+			}
+			// train was waiting to enter the world
+			train.occupation = &OccupationData{
+				train:      train,
+				curPathIdx: 0,
+				curPath:    ma.path,
+			}
+			tc.sim.ScheduleEventNext(TrackEntered, train, train.Number)
+			return
+		}
+		fmt.Println("Incrementing schedule point", train.curSchedulePoint, train.curSchedulePoint+1)
+		train.curSchedulePoint++
+		tc.sim.ScheduleEventNext(TrainDeparted, train, train.Number)
 
 	case MovementAuthorityEnded:
 		// TODO: check if the current track is the station platform
@@ -163,14 +164,14 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 	case PathCompleted:
 		// fmt.Println("Path completed")
 		// path complete is always within the station
-		tc.sim.ScheduleEventNext(TrainArrived, train)
+		tc.sim.ScheduleEventNext(TrainArrived, train, train.Number)
 
 	case TrainArrived:
 		// fmt.Println("Train Arrived")
 		// curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx].Track
 		curSchedule := train.schedule[train.curSchedulePoint]
 
-		tc.sim.ScheduleEventAfter(curSchedule.ExpDwellTime(tc.sim.CurTime()), TrainDwellEnd, train)
+		tc.sim.ScheduleEventAfter(curSchedule.ExpDwellTime(tc.sim.CurTime()), TrainDwellEnd, train, train.Number)
 
 	case TrainDwellEnd:
 		// fmt.Println("Train Dwell End")
@@ -179,14 +180,15 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		// curSchedule := train.schedule[train.curSchedulePoint]
 		// fmt.Println(len(train.schedule), train.curSchedulePoint+1)
 		if len(train.schedule) <= train.curSchedulePoint+1 {
-			tc.sim.ScheduleEventNext(TrainDeparted, train)
+			train.curSchedulePoint++
+			tc.sim.ScheduleEventNext(TrainDeparted, train, train.Number)
 			return
 		}
 		// reserve the track to next station
 		nextSchedule := train.schedule[train.curSchedulePoint+1]
 		nextStn := tc.sim.world.stations[nextSchedule.StnCode]
 		nextPf := nextStn.FindAvailableStnPlatform(nextSchedule.SpPfNo)
-		if nextPf == nil {
+		if nextPf == nil { // it always returns something, stil best to keep tho..
 			fmt.Printf("Cannot find any available platform (%s)\n", train.GetFullName())
 			return
 		}
@@ -204,18 +206,14 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		}
 		// fmt.Println("Dispatching to station")
 		if ma, ok := tc.sim.dispatcher.RequestToProceed(train, path); ok {
-			train.ma = ma
-			train.curSchedulePoint++
-			tc.sim.ScheduleEventNext(TrainDeparted, train)
-		} else {
-			fmt.Println("Request to proceed failed, waiting..", train.GetFullName(), train.occupation.curPathIdx)
+			tc.sim.ScheduleEventNext(MovementAuthorized, ma, train.Number)
 		}
 
 	case TrainDeparted:
 
 		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-		if len(train.schedule) <= train.curSchedulePoint+1 {
-			tc.sim.ScheduleEventNext(ScheduleEnd, train)
+		if train.curSchedulePoint >= len(train.schedule) {
+			tc.sim.ScheduleEventNext(ScheduleEnd, train, train.Number)
 			return
 		}
 
@@ -229,7 +227,7 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 			return
 		}
 		curTrack.Track.Release(train)
-		tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track)
+		tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track, train.Number)
 		tc.sim.dispatcher.OnTrackReleased(curTrack.Track, train)
 
 		train.occupation = &OccupationData{
@@ -237,15 +235,15 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 			curPathIdx: 0,
 			curPath:    path,
 		}
-		tc.sim.ScheduleEventNext(TrackEntered, train)
+		tc.sim.ScheduleEventNext(TrackEntered, train, train.Number)
 
 	case ScheduleEnd:
 		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 
 		curTrack.Track.Release(train)
-		tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track)
+		tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track, train.Number)
 		tc.sim.dispatcher.OnTrackReleased(curTrack.Track, train)
-		tc.sim.ScheduleEventNext(WorldExited, train)
+		tc.sim.ScheduleEventNext(WorldExited, train, train.Number)
 		train.reservation = nil
 		train.occupation = nil
 

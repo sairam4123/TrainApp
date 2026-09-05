@@ -196,10 +196,8 @@ func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *Path) bool
 	for _, edge := range path.Edges {
 		fmt.Println("Switching check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
 
-		if ok := ilck.AreSwitchesLocked(edge, train); ok != nil {
-			if !*ok {
-				return false
-			}
+		if ok := ilck.AreSwitchesLocked(edge, train); ok != nil && !*ok {
+			return false
 		}
 
 		// swId := ilck.trackSwitchMap[edge.Track.Id]
@@ -234,7 +232,7 @@ func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *Path) bool
 // 	return nil
 // }
 
-// we need to return three state, so a pointer to bool
+// Tri-state check to ensure whether we have noswitch, switch locked or switch unlocked
 func (ilck *Interlocking) AreSwitchesLocked(curTrack *GraphEdge, train *Train) *bool {
 	swIds := ilck.trackSwitchMap[curTrack.Track.Id]
 	if len(swIds) <= 0 {

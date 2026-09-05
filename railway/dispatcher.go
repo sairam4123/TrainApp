@@ -7,7 +7,7 @@ type Dispatcher struct {
 
 	waitingReservationRequests []*ReservationRequest
 
-	waitingProceedRequests []*MovementAuthorityRequest
+	waitingMaRequests []*MovementAuthorityRequest
 
 	intlck *Interlocking
 }
@@ -49,7 +49,7 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 			disp.sim.ScheduleEventNext(RouteGranted, &ReservationData{
 				curPath: path,
 				train:   elem.train,
-			})
+			}, train.Number)
 		} else {
 			trainExists := false
 			// check if the request already exists
@@ -63,6 +63,36 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 			// add it back to the queue
 			if !trainExists {
 				disp.waitingReservationRequests = append(disp.waitingReservationRequests, elem)
+			}
+		}
+	}
+
+	oldQueue2 := disp.waitingMaRequests
+	disp.waitingMaRequests = make([]*MovementAuthorityRequest, 0)
+	for {
+		if len(oldQueue2) <= 0 {
+			break
+		}
+		elem := oldQueue2[0]
+		oldQueue2 = oldQueue2[1:]
+		fmt.Printf("Trying to request for proceed for %s\n", elem.train.GetFullName())
+		ma, ok := disp.RequestToProceed(elem.train, elem.path)
+		if ok {
+			fmt.Println("Movement authority granted successful", elem.train)
+			disp.sim.ScheduleEventNext(MovementAuthorized, ma, train.Number)
+		} else {
+			trainExists := false
+			// check if the request already exists
+			for _, req := range disp.waitingMaRequests {
+				if req.train.Number == elem.train.Number {
+					trainExists = true
+				}
+			}
+
+			fmt.Printf("Adding back the movement authority request to the queue\n")
+			// add it back to the queue
+			if !trainExists {
+				disp.waitingMaRequests = append(disp.waitingMaRequests, elem)
 			}
 		}
 	}
@@ -109,6 +139,10 @@ func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegmen
 		})
 		return nil, false
 	}
+	// disp.sim.ScheduleEventNext(RouteGranted, &ReservationData{
+	// 	curPath: path,
+	// 	train:   train,
+	// }, train.Number)
 	return path, true
 }
 
@@ -200,8 +234,8 @@ func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegmen
 func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) (*MovementAuthority, bool) {
 	ok := path.EnsureAllEdgesAreReserved(train)
 	if !ok {
-		fmt.Println("Request to Proceed failed. Reason: All Edges are not reserved")
-		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &MovementAuthorityRequest{
+		fmt.Println("Request to Proceed failed. Reason: All tracks are not reserved")
+		disp.waitingMaRequests = append(disp.waitingMaRequests, &MovementAuthorityRequest{
 			path:  path,
 			train: train,
 		})
@@ -210,7 +244,7 @@ func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) (*MovementAut
 	ok = disp.intlck.EnsureAllSwitchesLocked(train, path)
 	if !ok {
 		fmt.Println("Request to Proceed failed. Reason: All switches are not locked.")
-		disp.waitingProceedRequests = append(disp.waitingProceedRequests, &MovementAuthorityRequest{
+		disp.waitingMaRequests = append(disp.waitingMaRequests, &MovementAuthorityRequest{
 			path:  path,
 			train: train,
 		})
