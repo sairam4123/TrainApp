@@ -30,6 +30,8 @@ func (s *Sim) Init() {
 	if s.world == nil {
 		panic("s.world is nil, did you call SetWorld?")
 	}
+	// TODO: Think about this, this works here? -- Sairam, 05-09-2026
+	s.world.TrackGraph.BuildCacheMap()
 
 	s.trainCtrllers = make(map[string]*TrainController)
 

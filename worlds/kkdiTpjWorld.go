@@ -200,7 +200,6 @@ func BuildTpjKkdiWorld() *railway.World {
 
 	fmt.Println("World creation done!")
 	// connectivity check
-	world.TrackGraph.BuildCacheMap()
 
 	// paths0, _ := world.TrackGraph.GenerateCandidatePaths(tpjPf4E, kkdiPf4)
 
