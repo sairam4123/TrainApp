@@ -130,6 +130,7 @@ func (w *World) ListSignals() []*Signal {
 	return slices.Collect(maps.Values(w.signals))
 }
 
-func (w *World) GetSignal(signalId string) *Signal {
-	return w.signals[signalId]
+func (w *World) GetSignal(signalId string) (*Signal, bool) {
+	sig, ok := w.signals[signalId]
+	return sig, ok
 }

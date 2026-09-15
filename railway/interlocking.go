@@ -73,10 +73,8 @@ func (ilk *Interlocking) IsNavigatingSignalsRight(path *Path) bool {
 	return facesRight
 }
 
-func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment) (*Path, bool) {
-
-	// generate candidate paths
-	paths, err := ilck.world.TrackGraph.GenerateCandidatePaths(train.FacingToward, toTrack)
+func (ilck *Interlocking) GenerateCandidatePaths(curPoint *TrackPoint, toTrack *TrackSegment) ([]*Path, bool) {
+	paths, err := ilck.world.TrackGraph.GenerateCandidatePaths(curPoint, toTrack)
 	if err != nil {
 		return nil, false
 	}
@@ -98,6 +96,18 @@ func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment) 
 		}
 	})
 
+	return paths, true
+}
+
+func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment) (*Path, bool) {
+
+	// generate candidate paths
+
+	paths, ok := ilck.GenerateCandidatePaths(train.FacingToward, toTrack)
+	if !ok {
+		return nil, false
+	}
+
 	for _, path := range paths {
 		if ilck.TryReservePath(path, train) {
 			return path, true
@@ -105,6 +115,19 @@ func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment) 
 	}
 
 	return nil, false
+}
+
+func (ilck *Interlocking) BestPathToTrack(curPoint *TrackPoint, toTrack *TrackSegment) (*Path, bool) {
+	paths, ok := ilck.GenerateCandidatePaths(curPoint, toTrack)
+	if !ok {
+		return nil, false
+	}
+
+	if len(paths) <= 1 {
+		return nil, false
+	}
+
+	return paths[0], true
 }
 
 func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {

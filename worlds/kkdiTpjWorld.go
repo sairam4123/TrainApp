@@ -68,8 +68,8 @@ func IsCorrectWay(world *railway.World, path *railway.Path, initPoint *railway.T
 			curPtIdx++
 			continue
 		}
-		sig := world.GetSignal(sigId)
-		if sig == nil {
+		sig, ok := world.GetSignal(sigId)
+		if !ok {
 			curPtIdx++
 			continue
 		}

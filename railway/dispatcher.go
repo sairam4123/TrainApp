@@ -1,6 +1,9 @@
 package railway
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 type Dispatcher struct {
 	sim *Sim
@@ -121,12 +124,51 @@ type ReservationData struct {
 	curPath *Path
 }
 
-func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pfNo string) (*Path, bool) {
+func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, prefPfNo string) (*Path, bool) {
+	platform := toStn.FindAvailableStnPlatform(prefPfNo)
+	if platform == nil {
+		return nil, false
+	}
+	path, ok := disp.intlck.TryReservePathTo(train, platform)
+	if ok {
+		return path, true
+	}
+
+	// find the best path to station incase we can't find
+	bestPath, ok := disp.intlck.BestPathToTrack(train.FacingToward, platform)
+	if !ok {
+		return nil, false
+	}
+
+	slices.Reverse(bestPath.Edges)
+	var safestEdge *GraphEdge
+	var reservedPath *Path
+	for _, edge := range bestPath.Edges {
+		sigId, ok := disp.intlck.trackSigMap[edge.Track.Id]
+		if !ok {
+			continue
+		}
+		sig, ok := disp.intlck.world.GetSignal(sigId)
+		if !ok {
+			continue
+		}
+		if sig.FacesMovement(edge.From, edge.To) {
+			safestEdge = edge
+			reservedPath, ok = disp.intlck.TryReservePathTo(train, safestEdge.Track)
+			reservedPath.PPrint()
+			if !ok {
+				continue
+			}
+
+		}
+	}
+
+	return reservedPath, true
 
 	// TODO: try reserving upto a last signal if station platform reservation fails
 	// TODO: (only if another pathway exists for trains leaving the platform, or another platform exists)
 	// TODO: if no pathway for exit exists, don't reserve and keep the train waiting..
-	panic("unimplemented")
+
 }
 
 // TODO: Deprecate try reserve path to track and switch to station instead

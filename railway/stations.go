@@ -53,15 +53,24 @@ func (stn *Station) FindAvailableStnPlatform(prefPfNo string) *TrackSegment {
 	}
 
 	// find the first Available track
-	for _, pf := range stn.Platforms {
-		if pf.Track.IsAvailable() {
-			return pf.Track
-		}
-	}
+	// for _, pf := range stn.Platforms {
+	// 	if pf.Track.IsAvailable() {
+	// 		return pf.Track
+	// 	}
+	// }
 
 	// we don't have any platform atp -- just route to the first platform for the time being
+	// for _, pf := range stn.Platforms {
+	// 	return pf.Track
+	// }
+	return nil
+}
+
+func (stn *Station) FindStnPlatform(pfNo string) *TrackSegment {
 	for _, pf := range stn.Platforms {
-		return pf.Track
+		if pf.PfNo == pfNo {
+			return pf.Track
+		}
 	}
 	return nil
 }

@@ -26,6 +26,10 @@ func (s *Sim) SetWorld(world *World) *Sim {
 	return s
 }
 
+func (s *Sim) Dispatcher() *Dispatcher {
+	return s.dispatcher
+}
+
 func (s *Sim) Init() {
 	if s.world == nil {
 		panic("s.world is nil, did you call SetWorld?")
