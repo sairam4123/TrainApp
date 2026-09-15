@@ -124,18 +124,29 @@ type ReservationData struct {
 	curPath *Path
 }
 
-func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, prefPfNo string) (*Path, bool) {
+type PathResponse struct {
+	path   *Path
+	nextPf *TrackSegment // intent of the path finder (exp target)
+}
+
+func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
 	platform := toStn.FindAvailableStnPlatform(prefPfNo)
 	if platform == nil {
 		return nil, false
 	}
 	path, ok := disp.intlck.TryReservePathTo(train, platform)
 	if ok {
-		return path, true
+		return &PathResponse{
+			path:   path,
+			nextPf: platform,
+		}, true
 	}
 
 	// find the preferred platform
 	platform = toStn.FindStnPlatform(prefPfNo)
+	if platform == nil { // platform doesn't even exist
+		return nil, false
+	}
 
 	// find the best path to station incase we can't find
 	bestPath, ok := disp.intlck.BestPathToTrack(train.FacingToward, platform)
@@ -144,7 +155,6 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 	}
 
 	slices.Reverse(bestPath.Edges)
-	var safestEdge *GraphEdge
 	var reservedPath *Path
 	for _, edge := range bestPath.Edges {
 		sigId, ok := disp.intlck.trackSigMap[edge.Track.Id]
@@ -156,17 +166,21 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 			continue
 		}
 		if sig.FacesMovement(edge.From, edge.To) {
-			safestEdge = edge
-			reservedPath, ok = disp.intlck.TryReservePathTo(train, safestEdge.Track)
-			reservedPath.PPrint()
+			reservedPath, ok = disp.intlck.TryReservePathTo(train, edge.Track)
 			if !ok {
 				continue
+			} else {
+				reservedPath.PPrint()
+				break
 			}
 
 		}
 	}
 
-	return reservedPath, true
+	return &PathResponse{
+		path:   reservedPath,
+		nextPf: platform,
+	}, reservedPath != nil
 
 	// TODO: try reserving upto a last signal if station platform reservation fails
 	// TODO: (only if another pathway exists for trains leaving the platform, or another platform exists)

@@ -123,7 +123,7 @@ func (ilck *Interlocking) BestPathToTrack(curPoint *TrackPoint, toTrack *TrackSe
 		return nil, false
 	}
 
-	if len(paths) <= 1 {
+	if len(paths) == 0 {
 		return nil, false
 	}
 
