@@ -134,6 +134,9 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 		return path, true
 	}
 
+	// find the preferred platform
+	platform = toStn.FindStnPlatform(prefPfNo)
+
 	// find the best path to station incase we can't find
 	bestPath, ok := disp.intlck.BestPathToTrack(train.FacingToward, platform)
 	if !ok {
