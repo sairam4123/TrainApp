@@ -99,11 +99,11 @@ func (ilck *Interlocking) GenerateCandidatePaths(curPoint *TrackPoint, toTrack *
 	return paths, true
 }
 
-func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment) (*Path, bool) {
+func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, facingPoint *TrackPoint) (*Path, bool) {
 
 	// generate candidate paths
 
-	paths, ok := ilck.GenerateCandidatePaths(train.FacingToward, toTrack)
+	paths, ok := ilck.GenerateCandidatePaths(facingPoint, toTrack)
 	if !ok {
 		return nil, false
 	}

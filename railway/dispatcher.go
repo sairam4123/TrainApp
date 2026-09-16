@@ -46,13 +46,10 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 		elem := oldQueue[0]
 		oldQueue = oldQueue[1:]
 		fmt.Printf("Trying to reserve path to %s for %s\n", elem.uptoTrack.Id, elem.train.GetFullName())
-		path, ok := disp.TryReservePathToTrack(elem.train, elem.uptoTrack)
-		if ok {
+		pathRes, ok := disp.TryReservePathToStation(elem.train, elem.uptoStation, elem.prefPfNo)
+		if ok && pathRes.path != nil {
 			fmt.Println("Reservation successful", elem.train)
-			disp.sim.ScheduleEventNext(RouteGranted, &ReservationData{
-				curPath: path,
-				train:   elem.train,
-			}, train.Number)
+			disp.sim.ScheduleEventNext(RouteGranted, pathRes, train.Number)
 		} else {
 			trainExists := false
 			// check if the request already exists
@@ -104,6 +101,9 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 type ReservationRequest struct {
 	uptoTrack *TrackSegment
 	train     *Train
+
+	uptoStation *Station
+	prefPfNo    string
 }
 
 type MovementAuthorityRequest struct {
@@ -125,8 +125,40 @@ type ReservationData struct {
 }
 
 type PathResponse struct {
-	path   *Path
-	nextPf *TrackSegment // intent of the path finder (exp target)
+	path        *Path
+	nextPf      *TrackSegment // intent of the path finder (exp target)
+	facingPoint *TrackPoint
+
+	train *Train
+}
+
+func (disp *Dispatcher) TryReserveOnlyPlatform(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
+	platform := toStn.FindAvailableStnPlatform(prefPfNo)
+	if platform == nil {
+		return nil, false
+	}
+	facingPoint := disp.sim.world.TrackGraph.FindWorldBoundaryPoint(platform)
+	if facingPoint == nil {
+		return nil, false
+	}
+	path, ok := disp.intlck.TryReservePathTo(train, platform, facingPoint)
+	if ok {
+		return &PathResponse{
+			path:        path,
+			nextPf:      platform,
+			facingPoint: facingPoint,
+
+			train: train,
+		}, true
+	}
+	disp.waitingReservationRequests = append(disp.waitingReservationRequests,
+		&ReservationRequest{
+			train:       train,
+			uptoStation: toStn,
+			prefPfNo:    prefPfNo,
+		})
+
+	return nil, false
 }
 
 func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
@@ -134,11 +166,14 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 	if platform == nil {
 		return nil, false
 	}
-	path, ok := disp.intlck.TryReservePathTo(train, platform)
+	path, ok := disp.intlck.TryReservePathTo(train, platform, train.FacingToward)
 	if ok {
 		return &PathResponse{
-			path:   path,
-			nextPf: platform,
+			path:        path,
+			nextPf:      platform,
+			facingPoint: train.FacingToward,
+
+			train: train,
 		}, true
 	}
 
@@ -166,20 +201,31 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 			continue
 		}
 		if sig.FacesMovement(edge.From, edge.To) {
-			reservedPath, ok = disp.intlck.TryReservePathTo(train, edge.Track)
+			reservedPath, ok = disp.intlck.TryReservePathTo(train, edge.Track, train.FacingToward)
 			if !ok {
 				continue
 			} else {
 				reservedPath.PPrint()
 				break
 			}
-
 		}
 	}
 
+	if reservedPath == nil {
+		disp.waitingReservationRequests = append(disp.waitingReservationRequests,
+			&ReservationRequest{
+				train:       train,
+				uptoStation: toStn,
+				prefPfNo:    prefPfNo,
+			})
+	}
+
 	return &PathResponse{
-		path:   reservedPath,
-		nextPf: platform,
+		path:        reservedPath,
+		nextPf:      platform,
+		facingPoint: train.FacingToward,
+
+		train: train,
 	}, reservedPath != nil
 
 	// TODO: try reserving upto a last signal if station platform reservation fails
@@ -190,7 +236,7 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 
 // TODO: Deprecate try reserve path to track and switch to station instead
 func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegment) (*Path, bool) {
-	path, ok := disp.intlck.TryReservePathTo(train, toTrack)
+	path, ok := disp.intlck.TryReservePathTo(train, toTrack, train.FacingToward)
 	if !ok {
 		disp.waitingReservationRequests = append(disp.waitingReservationRequests, &ReservationRequest{
 			uptoTrack: toTrack,
