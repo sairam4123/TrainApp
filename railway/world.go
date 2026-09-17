@@ -125,6 +125,18 @@ func (w *World) ListSwitchBlocks(ids []string) []*SwitchBlock {
 	return swBlcks
 }
 
+func (w *World) IsStationPlatform(track *TrackSegment) bool {
+	// Maybe we find a better approach for this?
+	for _, stn := range w.stations {
+		for _, pf := range stn.Platforms {
+			if pf.Track.Id == track.Id {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // TEMP code -> to be removed
 func (w *World) ListSignals() []*Signal {
 	return slices.Collect(maps.Values(w.signals))

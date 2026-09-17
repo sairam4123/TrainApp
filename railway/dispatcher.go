@@ -45,11 +45,11 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 		}
 		elem := oldQueue[0]
 		oldQueue = oldQueue[1:]
-		fmt.Printf("Trying to reserve path to %s for %s\n", elem.uptoTrack.Id, elem.train.GetFullName())
-		pathRes, ok := disp.TryReservePathToStation(elem.train, elem.uptoStation, elem.prefPfNo)
+		// fmt.Printf("Trying to reserve path to %s for %s\n", elem.uptoTrack.Id, elem.train.GetFullName())
+		pathRes, ok := disp.RequestRouteToStation(elem.train, elem.uptoStation, elem.prefPfNo)
 		if ok && pathRes.path != nil {
 			fmt.Println("Reservation successful", elem.train)
-			disp.sim.ScheduleEventNext(RouteGranted, pathRes, train.Number)
+			disp.sim.ScheduleEventNext(RouteGranted, pathRes, elem.train.Number)
 		} else {
 			trainExists := false
 			// check if the request already exists
@@ -128,11 +128,11 @@ type PathResponse struct {
 	path        *Path
 	nextPf      *TrackSegment // intent of the path finder (exp target)
 	facingPoint *TrackPoint
-
-	train *Train
 }
 
-func (disp *Dispatcher) TryReserveOnlyPlatform(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
+// RequestRouteToPlatform is to be used only during World Entry or when MovementAuthority ended and train is not in station platform.
+// See also [[RequestRouteToStation]]
+func (disp *Dispatcher) RequestRouteToPlatform(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
 	platform := toStn.FindAvailableStnPlatform(prefPfNo)
 	if platform == nil {
 		return nil, false
@@ -147,8 +147,6 @@ func (disp *Dispatcher) TryReserveOnlyPlatform(train *Train, toStn *Station, pre
 			path:        path,
 			nextPf:      platform,
 			facingPoint: facingPoint,
-
-			train: train,
 		}, true
 	}
 	disp.waitingReservationRequests = append(disp.waitingReservationRequests,
@@ -161,7 +159,9 @@ func (disp *Dispatcher) TryReserveOnlyPlatform(train *Train, toStn *Station, pre
 	return nil, false
 }
 
-func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
+// RequestRouteToStation is to be used for path finding to next station. Train must be in a station platform for it to work properly.
+// See also [[RequestRouteToPlatform]]
+func (disp *Dispatcher) RequestRouteToStation(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
 	platform := toStn.FindAvailableStnPlatform(prefPfNo)
 	if platform == nil {
 		return nil, false
@@ -172,8 +172,6 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 			path:        path,
 			nextPf:      platform,
 			facingPoint: train.FacingToward,
-
-			train: train,
 		}, true
 	}
 
@@ -224,8 +222,6 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 		path:        reservedPath,
 		nextPf:      platform,
 		facingPoint: train.FacingToward,
-
-		train: train,
 	}, reservedPath != nil
 
 	// TODO: try reserving upto a last signal if station platform reservation fails
@@ -234,7 +230,7 @@ func (disp *Dispatcher) TryReservePathToStation(train *Train, toStn *Station, pr
 
 }
 
-// TODO: Deprecate try reserve path to track and switch to station instead
+// @Deprecated TryReservePathToTrack is deprecated, see [[RequestRouteToStation]]
 func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegment) (*Path, bool) {
 	path, ok := disp.intlck.TryReservePathTo(train, toTrack, train.FacingToward)
 	if !ok {

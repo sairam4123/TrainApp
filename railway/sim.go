@@ -140,8 +140,8 @@ func (s *Sim) Run() {
 			fmt.Fprintf(logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, track.Id)
 		} else if ma, ok := ev.Data.(*MovementAuthority); ok {
 			fmt.Fprintf(logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, ma.train.Name)
-		} else if res, ok := ev.Data.(*ReservationData); ok {
-			fmt.Fprintf(logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, res.train.Name)
+		} else if res, ok := ev.Data.(*PathResponse); ok {
+			fmt.Fprintf(logger, "[%.2f] %s - %s (%s)\n", ev.Time, ev.Type, ev.TrainID, res.nextPf.Id)
 		}
 
 		if ev.TrainID != "" {
