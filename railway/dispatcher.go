@@ -79,7 +79,7 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 		ma, ok := disp.RequestToProceed(elem.train, elem.path)
 		if ok {
 			fmt.Println("Movement authority granted successful", elem.train)
-			disp.sim.ScheduleEventNext(MovementAuthorized, ma, train.Number)
+			disp.sim.ScheduleEventNext(MovementAuthorized, ma, elem.train.Number)
 		} else {
 			trainExists := false
 			// check if the request already exists
@@ -135,6 +135,12 @@ type PathResponse struct {
 func (disp *Dispatcher) RequestRouteToPlatform(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
 	platform := toStn.FindAvailableStnPlatform(prefPfNo)
 	if platform == nil {
+		disp.waitingReservationRequests = append(disp.waitingReservationRequests,
+			&ReservationRequest{
+				train:       train,
+				uptoStation: toStn,
+				prefPfNo:    prefPfNo,
+			})
 		return nil, false
 	}
 	facingPoint := disp.sim.world.TrackGraph.FindWorldBoundaryPoint(platform)
@@ -164,6 +170,12 @@ func (disp *Dispatcher) RequestRouteToPlatform(train *Train, toStn *Station, pre
 func (disp *Dispatcher) RequestRouteToStation(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
 	platform := toStn.FindAvailableStnPlatform(prefPfNo)
 	if platform == nil {
+		disp.waitingReservationRequests = append(disp.waitingReservationRequests,
+			&ReservationRequest{
+				train:       train,
+				uptoStation: toStn,
+				prefPfNo:    prefPfNo,
+			})
 		return nil, false
 	}
 	path, ok := disp.intlck.TryReservePathTo(train, platform, train.FacingToward)

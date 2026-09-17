@@ -128,10 +128,9 @@ func (w *World) ListSwitchBlocks(ids []string) []*SwitchBlock {
 func (w *World) IsStationPlatform(track *TrackSegment) bool {
 	// Maybe we find a better approach for this?
 	for _, stn := range w.stations {
-		for _, pf := range stn.Platforms {
-			if pf.Track.Id == track.Id {
-				return true
-			}
+		// stn ~ O(1)
+		if stn.IsPlatform(track.Id) {
+			return true
 		}
 	}
 	return false

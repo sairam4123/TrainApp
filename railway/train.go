@@ -173,14 +173,14 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 
 		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 		if !tc.sim.world.IsStationPlatform(curTrack.Track) {
+			if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
+				fmt.Println("Edge cannot be acquired")
+				return
+			}
 			train.occupation = &OccupationData{
 				train:      train,
 				curPathIdx: 0,
 				curPath:    ma.path,
-			}
-			if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
-				fmt.Println("Edge cannot be acquired")
-				return
 			}
 			tc.sim.ScheduleEventNext(TrackEntered, train, train.Number)
 			curTrack.Track.Release(train)
