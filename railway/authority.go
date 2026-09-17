@@ -3,8 +3,6 @@ package railway
 type MovementAuthority struct {
 	path *Path
 
-	limit *TrackSegment
-
 	train *Train
 }
 
@@ -15,8 +13,4 @@ func NewMovementAuthority(path *Path, train *Train) *MovementAuthority {
 	}
 
 	return ma
-}
-
-func (ma *MovementAuthority) ExtendByPath(path *Path) {
-	ma.path.Edges = append(ma.path.Edges, path.Edges...)
 }

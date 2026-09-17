@@ -73,7 +73,7 @@ func (stn *Station) FindStnPlatform(pfNo string) *TrackSegment {
 		return nil
 	}
 	pf, ok := stn.platforms[pfTrackId]
-	if ok && pf.Track.IsAvailable() {
+	if ok {
 		return pf.Track
 	}
 	return nil

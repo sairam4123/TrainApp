@@ -48,7 +48,7 @@ func (t *TrackSegment) IsReserved() bool {
 }
 
 func (t *TrackSegment) Acquire(train *Train) bool {
-	fmt.Printf("is avbl: %v, is rsvd: %v, train 1: %s train 2: %s\n", t.IsAvailable(), t.IsReserved(), train.GetFullName(), t.ReservedBy.GetFullName())
+	fmt.Printf("is avbl: %v, is rsvd: %v, train 1: %s train 2: %s\n", t.IsAvailable(), t.IsReserved(), train, t.ReservedBy)
 	if t.IsAvailable() || (t.IsReserved() && train.Number == t.ReservedBy.Number) {
 		t.OccupiedBy = train
 		return true
