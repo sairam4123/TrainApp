@@ -145,3 +145,13 @@ func (w *World) GetSignal(signalId string) (*Signal, bool) {
 	sig, ok := w.signals[signalId]
 	return sig, ok
 }
+
+func (w *World) ListSimPts() []*TrackPoint {
+	pts := make([]*TrackPoint, 0)
+	for _, pt := range w.TrackGraph.points {
+		if pt.IsSimBoundary {
+			pts = append(pts, pt)
+		}
+	}
+	return pts
+}
