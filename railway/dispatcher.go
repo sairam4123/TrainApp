@@ -118,6 +118,19 @@ type OccupationData struct {
 	curPath    *Path
 }
 
+func (o *OccupationData) CurTrack() *TrackSegment {
+	if o.curPath == nil {
+		return nil
+	}
+
+	path := o.curPath
+	if o.curPathIdx < 0 || o.curPathIdx >= len(path.Edges) {
+		return nil
+	}
+
+	return path.Edges[o.curPathIdx].Track
+}
+
 type ReservationData struct {
 	train *Train
 

@@ -34,7 +34,33 @@ type SchedulePoint struct {
 	SpPfNo      string
 }
 
+// type StopPoint struct {
+// 	StnCode   string
+// 	DwellTime float64
+// 	SpPfNo    string
+// }
+
+// type PassPoint struct {
+// 	StnCode  string
+// 	PassTime float64
+// 	SpPfNo   string
+// }
+
+// type StationSchedule interface {
+// 	ArrTime() float64
+// 	DeptTime() float64
+// 	StnCode() string
+// 	SpPfNo() string
+// }
+
+// func (sp *StopPoint) ArrTime() float64 {
+// 	return sp.DwellTime
+// }
+
 func (t *Train) AddSchedule(sp *SchedulePoint) {
+	if sp.TrainNumber == "" {
+		sp.TrainNumber = t.Number
+	}
 	t.schedule = append(t.schedule, sp)
 }
 
