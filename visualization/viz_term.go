@@ -5,15 +5,6 @@ import (
 	"trainapp/railway"
 )
 
-type TrackPointViz struct {
-	x int
-	y int
-}
-
-type TrackSegmentViz struct {
-	length int
-}
-
 func PrintEdge(edge *railway.GraphEdge) {
 	if edge.From.IsSimBoundary {
 		fmt.Print("←")

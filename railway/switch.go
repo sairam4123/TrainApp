@@ -28,7 +28,7 @@ func NewSwitch(world *World, id string, from, to, div *TrackPoint) *SwitchBlock 
 	// from -> a
 	// from -> b
 
-	fromA := world.NewSwitchTrack(NewTrackID(from, to))
+	fromA := world.NewTrackSegment(NewTrackID(from, to), world.data.DefaultSwLength)
 	fromB := world.NewSwitchTrack(NewTrackID(from, div))
 
 	world.TrackGraph.AddTrack(from, to, fromA)
@@ -47,8 +47,8 @@ func NewDiamondCrossing(world *World, id string, fromA, toA, fromB, toB *TrackPo
 	// fromA -> toA
 	// fromB -> toB
 
-	fromATrk := world.NewSwitchTrack(NewTrackID(fromA, toA))
-	fromBTrk := world.NewSwitchTrack(NewTrackID(fromB, toB))
+	fromATrk := world.NewTrackSegment(NewTrackID(fromA, toA), world.data.DefaultSwLength)
+	fromBTrk := world.NewTrackSegment(NewTrackID(fromB, toB), world.data.DefaultSwLength)
 
 	world.TrackGraph.AddTrack(fromA, toA, fromATrk)
 	world.TrackGraph.AddTrack(fromB, toB, fromBTrk)
@@ -73,8 +73,8 @@ func newSlipSwitch(world *World, id string, fromA, toA, fromB, toB *TrackPoint, 
 		return nil, errors.New("Orientation must be 0 for double slips. ")
 	}
 
-	fromATrk := world.NewSwitchTrack(NewTrackID(fromA, toA))
-	fromBTrk := world.NewSwitchTrack(NewTrackID(fromB, toB))
+	fromATrk := world.NewTrackSegment(NewTrackID(fromA, toA), world.data.DefaultSwLength)
+	fromBTrk := world.NewTrackSegment(NewTrackID(fromB, toB), world.data.DefaultSwLength)
 
 	world.TrackGraph.AddTrack(fromA, toA, fromATrk)
 	world.TrackGraph.AddTrack(fromB, toB, fromBTrk)
