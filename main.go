@@ -1,8 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"trainapp/railway"
-	"trainapp/visualization"
+	"trainapp/units"
 	"trainapp/worlds"
 )
 
@@ -100,109 +101,99 @@ import (
 // 	sim.Run()
 // }
 
-// func main() {
-// 	sim := railway.Sim{}
-// 	world := worlds.BuildTpjKkdiWorld()
-// 	sim.SetWorld(world)
-
-// 	tpj, ok := world.GetStation("TPJ")
-
-// 	if !ok {
-// 		panic("Something went wrong while fetching stations")
-// 	}
-
-// 	pdkt, ok := world.GetStation("PDKT")
-
-// 	if !ok {
-// 		panic("Something went wrong while fetching stations")
-// 	}
-
-// 	kkdi, ok := world.GetStation("KKDI")
-
-// 	if !ok {
-// 		panic("Something went wrong while fetching stations")
-// 	}
-
-// 	var upInterval = 20
-// 	var downInterval = 20
-// 	// i := 0
-
-// 	for i := range 6 {
-// 		train1 := railway.Train{
-// 			Name:     fmt.Sprintf("Train%dUp", i+1),
-// 			Number:   fmt.Sprintf("045%dU", i+1),
-// 			MaxSpeed: units.KMPH(110),
-// 		}
-
-// 		train1.AddSchedule(&railway.SchedulePoint{
-// 			StnCode:  tpj.Code,
-// 			ArrTime:  float64(10 + i*upInterval),
-// 			DeptTime: float64(20 + i*upInterval),
-// 			SpPfNo:   "1",
-// 		})
-
-// 		train1.AddSchedule(&railway.SchedulePoint{
-// 			StnCode:  pdkt.Code,
-// 			ArrTime:  float64(60 + i*upInterval),
-// 			DeptTime: float64(65 + i*upInterval),
-// 			SpPfNo:   "1",
-// 		})
-
-// 		train1.AddSchedule(&railway.SchedulePoint{
-// 			StnCode:  kkdi.Code,
-// 			ArrTime:  float64(95 + i*upInterval),
-// 			DeptTime: float64(100 + i*upInterval),
-// 			SpPfNo:   "1",
-// 		})
-
-// 		train2 := railway.Train{
-// 			Name:     fmt.Sprintf("Train%dDown", i+1),
-// 			Number:   fmt.Sprintf("045%dD", i+1),
-// 			MaxSpeed: units.KMPH(110),
-// 		}
-
-// 		train2.AddSchedule(&railway.SchedulePoint{
-// 			StnCode:  kkdi.Code,
-// 			ArrTime:  float64(10 + i*downInterval),
-// 			DeptTime: float64(20 + i*downInterval),
-// 			SpPfNo:   "2",
-// 		})
-
-// 		train2.AddSchedule(&railway.SchedulePoint{
-// 			StnCode:  pdkt.Code,
-// 			ArrTime:  float64(45 + i*downInterval),
-// 			DeptTime: float64(50 + i*downInterval),
-// 			SpPfNo:   "3",
-// 		})
-
-// 		train2.AddSchedule(&railway.SchedulePoint{
-// 			StnCode:  tpj.Code,
-// 			ArrTime:  float64(60 + i*25),
-// 			DeptTime: float64(70 + i*25),
-// 			SpPfNo:   "1",
-// 		})
-
-// 		world.AddTrain(&train1)
-// 		// if i%2 == 0 {
-// 		world.AddTrain(&train2)
-// 		// }
-// 	}
-
-// 	sim.Init()
-// 	sim.Run()
-// 	// disp := sim.Dispatcher()
-// 	// path, ok := disp.TryReservePathToStation(&train1, pdkt, "1")
-// 	// if !ok {
-// 	// 	fmt.Println("Failed to find path")
-// 	// }
-// 	// path.PPrint()
-
-// }
-
 func main() {
 	sim := railway.Sim{}
 	world := worlds.BuildTpjKkdiWorld()
 	sim.SetWorld(world)
+
+	tpj, ok := world.GetStation("TPJ")
+
+	if !ok {
+		panic("Something went wrong while fetching stations")
+	}
+
+	pdkt, ok := world.GetStation("PDKT")
+
+	if !ok {
+		panic("Something went wrong while fetching stations")
+	}
+
+	kkdi, ok := world.GetStation("KKDI")
+
+	if !ok {
+		panic("Something went wrong while fetching stations")
+	}
+
+	var upInterval = 20
+	var downInterval = 20
+	// i := 0
+
+	for i := range 1 {
+		train1 := railway.Train{
+			Name:     fmt.Sprintf("Train%dUp", i+1),
+			Number:   fmt.Sprintf("045%dU", i+1),
+			MaxSpeed: units.KMPH(110),
+		}
+
+		train1.AddSchedule(
+			railway.NewStopPoint(
+				tpj.Code, 10, "1",
+			).SetEntryTime(
+				float64(i*upInterval + 1),
+			),
+		)
+
+		train1.AddSchedule(railway.NewStopPoint(
+			pdkt.Code, 5, "1",
+		))
+
+		train1.AddSchedule(railway.NewStopPoint(
+			kkdi.Code, 10, "1",
+		))
+
+		train2 := railway.Train{
+			Name:     fmt.Sprintf("Train%dDown", i+1),
+			Number:   fmt.Sprintf("045%dD", i+1),
+			MaxSpeed: units.KMPH(110),
+		}
+
+		train2.AddSchedule(
+			railway.NewStopPoint(
+				kkdi.Code, 10, "3",
+			).SetEntryTime(
+				float64(i*downInterval + 1),
+			),
+		)
+
+		train2.AddSchedule(railway.NewStopPoint(
+			pdkt.Code, 5, "3",
+		))
+
+		train2.AddSchedule(railway.NewStopPoint(
+			tpj.Code, 10, "3",
+		))
+
+		world.AddTrain(&train1)
+		// if i%2 == 0 {
+		world.AddTrain(&train2)
+		// }
+	}
+
 	sim.Init()
-	visualization.BuildViz(world)
+	sim.Run()
+	// disp := sim.Dispatcher()
+	// path, ok := disp.TryReservePathToStation(&train1, pdkt, "1")
+	// if !ok {
+	// 	fmt.Println("Failed to find path")
+	// }
+	// path.PPrint()
+
 }
+
+// func main() {
+// 	sim := railway.Sim{}
+// 	world := worlds.BuildTpjKkdiWorld()
+// 	sim.SetWorld(world)
+// 	sim.Init()
+// 	visualization.BuildViz(world)
+// }

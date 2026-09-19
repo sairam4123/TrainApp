@@ -26,51 +26,8 @@ func (t *Train) GetFullName() string {
 	return t.Number + " - " + t.Name
 }
 
-type SchedulePoint struct {
-	TrainNumber string
-	StnCode     string
-	ArrTime     float64
-	DeptTime    float64
-	SpPfNo      string
-}
-
-// type StopPoint struct {
-// 	StnCode   string
-// 	DwellTime float64
-// 	SpPfNo    string
-// }
-
-// type PassPoint struct {
-// 	StnCode  string
-// 	PassTime float64
-// 	SpPfNo   string
-// }
-
-// type StationSchedule interface {
-// 	ArrTime() float64
-// 	DeptTime() float64
-// 	StnCode() string
-// 	SpPfNo() string
-// }
-
-// func (sp *StopPoint) ArrTime() float64 {
-// 	return sp.DwellTime
-// }
-
 func (t *Train) AddSchedule(sp *SchedulePoint) {
-	if sp.TrainNumber == "" {
-		sp.TrainNumber = t.Number
-	}
 	t.schedule = append(t.schedule, sp)
-}
-
-func (s *SchedulePoint) ExpDwellTime(curTime float64) units.Minutes {
-	if curTime < s.ArrTime {
-		return units.Min(s.DeptTime - curTime)
-	} else if curTime > s.DeptTime {
-		return units.Min(1) // one minute stop cuz we're delayed af
-	}
-	return units.Min(s.DeptTime - s.ArrTime)
 }
 
 type TrainController struct {
@@ -94,69 +51,42 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		if !ok {
 			fmt.Println("Path cannot be reserved.. waiting to enter world")
 			return
-		} else {
-			tc.sim.ScheduleEventNext(RouteGranted, pathRes, train.Number)
-			return
 		}
 
-		// platform := nextStn.FindAvailableStnPlatform(curSchedule.SpPfNo)
-		// facingPoint := tc.sim.world.TrackGraph.FindWorldBoundaryPoint(platform)
-		// train.FacingToward = facingPoint
-		// // try to reserve the track to first station
-		// path, ok := tc.sim.dispatcher.TryReservePathToTrack(train, platform)
-		// if !ok && path == nil {
-		// 	fmt.Println("Path cannot be reserved.. waiting to enter world")
-		// 	return
-		// }
-		// if pathRes.facingPoint != nil {
-		// 	train.FacingToward = pathRes.facingPoint
-		// }
-		// train.reservation = &ReservationData{
-		// 	train:   train,
-		// 	curPath: path,
-		// }
-		// if ma, ok := tc.sim.dispatcher.RequestToProceed(train, path); ok {
-		// fmt.Println("World entering REQUEST PROCEED (WORLD_ENTERED)")
-		// tc.sim.ScheduleEventNext(MovementAuthorized, ma, train.Number)
-		// if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
-		// 	fmt.Println("Edge cannot be acquired")
-		// 	return
-		// }
-		// train.ma = ma
-
-		// train.occupation = &OccupationData{
-		// 	train:      train,
-		// 	curPathIdx: 0,
-		// 	curPath:    ma.path,
-		// }
-		// tc.sim.ScheduleEventNext(TrackEntered, train)
-		// }
+		tc.sim.ScheduleEventNext(RouteGranted, pathRes, train.Number)
 
 	case TrackEntered:
-		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx].Track
-		// fmt.Println("Track Entered", curTrack.Id)
+		curTrack := train.occupation.CurTrack()
+		if curTrack == nil {
+			fmt.Println("Cur track is nil")
+			return
+		}
 		train.FacingToward = tc.sim.world.TrackGraph.OtherEnd(curTrack, train.FacingToward.Id)
 		time := curTrack.TravelTime(train.MaxSpeed)
 		tc.sim.ScheduleEventAfter(time, TrackTravelEnd, train, train.Number)
-		// train := ev.Data.()
 
 	case TrackTravelEnd:
-		if len(train.occupation.curPath.Edges) <= train.occupation.curPathIdx+1 {
+		curTrack := train.occupation.CurTrack()
+		if curTrack == nil {
+			fmt.Println("Cur track is nil")
+			return
+		}
+		nextTrack := train.occupation.NextTrack()
+		if nextTrack == nil {
 			tc.sim.ScheduleEventNext(PathCompleted, train, train.Number)
-			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
 			tc.sim.dispatcher.intlck.UnlockSwitchBlocks(curTrack, train)
 		} else {
 			// acquire next track
-			nextTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx+1]
-			ok := nextTrack.Track.Acquire(train)
-			if ok {
-				curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-				curTrack.Track.Release(train)
-				tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track, train.Number)
-				tc.sim.dispatcher.OnTrackReleased(curTrack.Track, train)
-				train.occupation.curPathIdx++
-				tc.sim.ScheduleEventNext(TrackEntered, train, train.Number)
+			ok := nextTrack.Acquire(train)
+			if !ok {
+				fmt.Println("Failed to acquire track, bailing...")
+				return
 			}
+			curTrack.Release(train)
+			tc.sim.ScheduleEventNext(TrackReleased, curTrack, train.Number)
+			tc.sim.dispatcher.OnTrackReleased(curTrack, train)
+			train.occupation.curPathIdx++
+			tc.sim.ScheduleEventNext(TrackEntered, train, train.Number)
 			// s.dispatcher.sim.ScheduleEventNext(TrackExited, train)
 		}
 
@@ -197,8 +127,17 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 			return
 		}
 
-		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-		if !tc.sim.world.IsStationPlatform(curTrack.Track) {
+		curTrack := train.occupation.CurTrack()
+		if curTrack == nil {
+			fmt.Println("Cur Track is nil")
+			return
+		}
+		if tc.sim.world.IsStationPlatform(curTrack) {
+			fmt.Println("Incrementing schedule point", train.curSchedulePoint, train.curSchedulePoint+1)
+			train.curSchedulePoint++
+			train.ma = ma
+			tc.sim.ScheduleEventNext(TrainDeparted, train, train.Number)
+		} else {
 			if ok := ma.path.Edges[0].Track.Acquire(train); !ok {
 				fmt.Println("Edge cannot be acquired")
 				return
@@ -209,17 +148,10 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 				curPath:    ma.path,
 			}
 			tc.sim.ScheduleEventNext(TrackEntered, train, train.Number)
-			curTrack.Track.Release(train)
-			tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track, train.Number)
-			tc.sim.dispatcher.OnTrackReleased(curTrack.Track, train)
-
-			return
+			curTrack.Release(train)
+			tc.sim.ScheduleEventNext(TrackReleased, curTrack, train.Number)
+			tc.sim.dispatcher.OnTrackReleased(curTrack, train)
 		}
-
-		fmt.Println("Incrementing schedule point", train.curSchedulePoint, train.curSchedulePoint+1)
-		train.curSchedulePoint++
-		train.ma = ma
-		tc.sim.ScheduleEventNext(TrainDeparted, train, train.Number)
 
 	case MovementAuthorityEnded:
 		// TODO: check if the current track is the station platform
@@ -227,18 +159,25 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		curSchedule := train.schedule[train.curSchedulePoint]
 		curStn, ok := tc.sim.world.GetStation(curSchedule.StnCode)
 		if !ok {
-			panic("Cannot find station.. impossible")
+			fmt.Println("Cannot find station.. impossible")
+			return
 		}
 
 		path, ok := tc.sim.dispatcher.RequestRouteToStation(train, curStn, curSchedule.SpPfNo)
-		if ok {
-			tc.sim.ScheduleEventNext(RouteGranted, path, train.Number)
+		if !ok {
+			fmt.Println("Reservation failed, ma ended.. waiting for ma")
+			return
 		}
+		tc.sim.ScheduleEventNext(RouteGranted, path, train.Number)
 
 	case PathCompleted:
-		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-		// fmt.Println("Path completed")
-		if tc.sim.world.IsStationPlatform(curTrack.Track) {
+		curTrack := train.occupation.CurTrack()
+		if curTrack == nil {
+			fmt.Println("Cur Track is nil")
+			return
+		}
+
+		if tc.sim.world.IsStationPlatform(curTrack) {
 			tc.sim.ScheduleEventNext(TrainArrived, train, train.Number)
 		} else {
 			tc.sim.ScheduleEventNext(MovementAuthorityEnded, train, train.Number)
@@ -246,7 +185,6 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 
 	case TrainArrived:
 		// fmt.Println("Train Arrived")
-		// curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx].Track
 		curSchedule := train.schedule[train.curSchedulePoint]
 
 		tc.sim.ScheduleEventAfter(curSchedule.ExpDwellTime(tc.sim.CurTime()), TrainDwellEnd, train, train.Number)
@@ -254,9 +192,6 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 	case TrainDwellEnd:
 		// fmt.Println("Train Dwell End")
 
-		// curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx].Track
-		// curSchedule := train.schedule[train.curSchedulePoint]
-		// fmt.Println(len(train.schedule), train.curSchedulePoint+1)
 		if len(train.schedule) <= train.curSchedulePoint+1 {
 			train.curSchedulePoint++
 			tc.sim.ScheduleEventNext(TrainDeparted, train, train.Number)
@@ -265,33 +200,13 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		// reserve the track to next station
 		nextSchedule := train.schedule[train.curSchedulePoint+1]
 		nextStn := tc.sim.world.stations[nextSchedule.StnCode]
-		// nextPf := nextStn.FindAvailableStnPlatform(nextSchedule.SpPfNo)
-		// if nextPf == nil { // it always returns something, stil best to keep tho..
-		// fmt.Printf("Cannot find any available platform (%s)\n", train.GetFullName())
-		// return
-		// }
 		fmt.Printf("Trying reserve upto %s (by %s)\n", nextStn.Code, train.GetFullName())
-		// fmt.Println("Next PF", nextPf)
-		// path, ok := tc.sim.dispatcher.TryReservePathToTrack(train, nextPf)
-		// if !ok {
-		// fmt.Printf("Path to %s cannot be reserved, waiting... (%s)\n", nextPf.Id, train.GetFullName())
-		// return
-		// }
 		path, ok := tc.sim.dispatcher.RequestRouteToStation(train, nextStn, nextSchedule.SpPfNo)
-		if ok {
-			tc.sim.ScheduleEventNext(RouteGranted, path, train.Number)
+		if !ok {
+			fmt.Println("Reservation failed.")
 			return
 		}
-
-		// path.PPrint()
-		// train.reservation = &ReservationData{
-		// 	curPath: path,
-		// 	train:   train,
-		// }
-		// // fmt.Println("Dispatching to station")
-		// if ma, ok := tc.sim.dispatcher.RequestToProceed(train, path); ok {
-		// 	tc.sim.ScheduleEventNext(MovementAuthorized, ma, train.Number)
-		// }
+		tc.sim.ScheduleEventNext(RouteGranted, path, train.Number)
 
 	case TrainDeparted:
 
@@ -302,9 +217,6 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		}
 
 		path := train.ma.path
-
-		// fmt.Printf("Train departed %#v\n", path)
-		// s.ScheduleEventNext(TrackExited, train)
 
 		if ok := path.Edges[0].Track.Acquire(train); !ok {
 			fmt.Println("Edge cannot be acquired")
@@ -322,11 +234,15 @@ func (tc *TrainController) OnEvent(event RailwayEvent, data any) {
 		tc.sim.ScheduleEventNext(TrackEntered, train, train.Number)
 
 	case ScheduleEnd:
-		curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
+		curTrack := train.occupation.CurTrack()
+		if curTrack == nil {
+			fmt.Println("Cur Track is nil")
+			return
+		}
 
-		curTrack.Track.Release(train)
-		tc.sim.ScheduleEventNext(TrackReleased, curTrack.Track, train.Number)
-		tc.sim.dispatcher.OnTrackReleased(curTrack.Track, train)
+		curTrack.Release(train)
+		tc.sim.ScheduleEventNext(TrackReleased, curTrack, train.Number)
+		tc.sim.dispatcher.OnTrackReleased(curTrack, train)
 		tc.sim.ScheduleEventNext(WorldExited, train, train.Number)
 		train.reservation = nil
 		train.occupation = nil

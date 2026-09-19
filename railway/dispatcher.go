@@ -33,7 +33,7 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 	// if point.lockedBy != nil && point.lockedBy.Number == train.Number {
 	// 	point.UnlockPoint(train)
 	// }
-	if err := disp.intlck.UnlockSwitchBlocks(edge, train); err != nil {
+	if err := disp.intlck.UnlockSwitchBlocks(edge.Track, train); err != nil {
 		fmt.Println(err)
 	}
 
@@ -129,6 +129,19 @@ func (o *OccupationData) CurTrack() *TrackSegment {
 	}
 
 	return path.Edges[o.curPathIdx].Track
+}
+
+func (o *OccupationData) NextTrack() *TrackSegment {
+	if o.curPath == nil {
+		return nil
+	}
+
+	path := o.curPath
+	if o.curPathIdx+1 < 0 || o.curPathIdx+1 >= len(path.Edges) {
+		return nil
+	}
+
+	return path.Edges[o.curPathIdx+1].Track
 }
 
 type ReservationData struct {

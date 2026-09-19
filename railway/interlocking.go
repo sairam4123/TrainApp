@@ -203,7 +203,7 @@ func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {
 			// 	fmt.Printf("Failed to lock switch %s\n", swBlkId)
 			// }
 
-			if err := ilck.UnlockSwitchBlocks(edge, train); err != nil {
+			if err := ilck.UnlockSwitchBlocks(edge.Track, train); err != nil {
 				fmt.Printf("Failed to unlock switches as reservation failed in %s\n", edge.Track.Id)
 			}
 
@@ -311,8 +311,8 @@ func (ilck *Interlocking) LockSwitchBlocks(curTrack *GraphEdge, train *Train) er
 	return nil
 }
 
-func (ilck *Interlocking) UnlockSwitchBlocks(curTrack *GraphEdge, train *Train) error {
-	swIds := ilck.trackSwitchMap[curTrack.Track.Id]
+func (ilck *Interlocking) UnlockSwitchBlocks(curTrack *TrackSegment, train *Train) error {
+	swIds := ilck.trackSwitchMap[curTrack.Id]
 	if len(swIds) <= 0 {
 		return nil
 	}
