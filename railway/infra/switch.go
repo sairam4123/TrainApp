@@ -1,4 +1,4 @@
-package railway
+package infra
 
 import (
 	"errors"
@@ -20,7 +20,6 @@ type SwitchBlock struct {
 	managedEdges []*GraphEdge
 
 	isLocked bool
-	lockedBy *Train
 }
 
 func NewSwitch(world *World, id string, from, to, div *TrackPoint) *SwitchBlock {
@@ -134,29 +133,29 @@ func (sb *SwitchBlock) SetActiveEdge(edge *GraphEdge) error {
 	return nil
 }
 
-func (sb *SwitchBlock) LockSwitchFor(train *Train) error {
-	if sb.isLocked && sb.lockedBy.Number != train.Number {
-		return fmt.Errorf("Switch already locked by train %s, cannot lock switch %s", sb.lockedBy, sb.Id)
-	}
-	if sb.activeEdge == nil {
-		return fmt.Errorf("Switch does not have active edge, cannot lock switch %s", sb.Id)
-	}
+// func (sb *SwitchBlock) LockSwitchFor(train *ops.Train) error {
+// 	if sb.isLocked && sb.lockedBy.Number != train.Number {
+// 		return fmt.Errorf("Switch already locked by train %s, cannot lock switch %s", sb.lockedBy, sb.Id)
+// 	}
+// 	if sb.activeEdge == nil {
+// 		return fmt.Errorf("Switch does not have active edge, cannot lock switch %s", sb.Id)
+// 	}
 
-	sb.isLocked = true
-	sb.lockedBy = train
+// 	sb.isLocked = true
+// 	sb.lockedBy = train
 
-	return nil
-}
+// 	return nil
+// }
 
-func (sb *SwitchBlock) UnlockSwitchFor(train *Train) error {
-	if !sb.isLocked {
-		return fmt.Errorf("Switch not locked, cannot unlock switch %s", sb.Id)
-	}
-	if sb.lockedBy != nil && sb.lockedBy.Number != train.Number {
-		return fmt.Errorf("Switch locked by train %s, cannot unlock switch %s", sb.lockedBy, sb.Id)
-	}
+// func (sb *SwitchBlock) UnlockSwitchFor(train *ops.Train) error {
+// 	if !sb.isLocked {
+// 		return fmt.Errorf("Switch not locked, cannot unlock switch %s", sb.Id)
+// 	}
+// 	if sb.lockedBy != nil && sb.lockedBy.Number != train.Number {
+// 		return fmt.Errorf("Switch locked by train %s, cannot unlock switch %s", sb.lockedBy, sb.Id)
+// 	}
 
-	sb.isLocked = false
-	sb.lockedBy = nil
-	return nil
-}
+// 	sb.isLocked = false
+// 	sb.lockedBy = nil
+// 	return nil
+// }

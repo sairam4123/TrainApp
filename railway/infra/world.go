@@ -1,4 +1,4 @@
-package railway
+package infra
 
 import (
 	"maps"
@@ -19,7 +19,6 @@ type World struct {
 	switchBlocks map[string]*SwitchBlock
 
 	stations map[string]*Station
-	trains   map[string]*Train
 	signals  map[string]*Signal
 
 	TrackGraph *TrackGraph
@@ -47,16 +46,12 @@ func (w *World) GetStation(code string) (*Station, bool) {
 	return stn, ok
 }
 
-func (w *World) AddTrain(train *Train) {
-	w.trains[train.Number] = train
-}
 func (w *World) AddStation(stn *Station) {
 	w.stations[stn.Code] = stn
 }
 
 func (w *World) Init(data WorldData) {
 	w.stations = make(map[string]*Station)
-	w.trains = make(map[string]*Train)
 	w.switchBlocks = make(map[string]*SwitchBlock)
 	w.signals = make(map[string]*Signal)
 

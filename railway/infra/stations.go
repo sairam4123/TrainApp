@@ -1,4 +1,4 @@
-package railway
+package infra
 
 import (
 	"trainapp/units"
@@ -38,34 +38,34 @@ func (stn *Station) NewStationPlatform(track *TrackSegment, pfNo string, length 
 	// stn.Platforms = append(stn.Platforms, pf)
 }
 
-func (stn *Station) FindAvailableStnPlatform(prefPfNo string) *TrackSegment {
-	// for _, pf := range stn.Platforms {
-	// 	if pf.PfNo == prefPfNo && pf.Track.IsAvailable() {
-	// 		return pf.Track
-	// 	}
-	// }
-	pfTrackId, ok := stn.pfNoMapCache[prefPfNo]
-	if !ok {
-		return nil
-	}
-	pf, ok := stn.platforms[pfTrackId]
-	if ok && pf.Track.IsAvailable() {
-		return pf.Track
-	}
+// func (stn *Station) FindAvailableStnPlatform(prefPfNo string) *TrackSegment {
+// 	// for _, pf := range stn.Platforms {
+// 	// 	if pf.PfNo == prefPfNo && pf.Track.IsAvailable() {
+// 	// 		return pf.Track
+// 	// 	}
+// 	// }
+// 	pfTrackId, ok := stn.pfNoMapCache[prefPfNo]
+// 	if !ok {
+// 		return nil
+// 	}
+// 	pf, ok := stn.platforms[pfTrackId]
+// 	if ok && pf.Track.IsAvailable() {
+// 		return pf.Track
+// 	}
 
-	// find the first Available track
-	for _, pf := range stn.platforms {
-		if pf.Track.IsAvailable() {
-			return pf.Track
-		}
-	}
+// 	// find the first Available track
+// 	for _, pf := range stn.platforms {
+// 		if pf.Track.IsAvailable() {
+// 			return pf.Track
+// 		}
+// 	}
 
-	// we don't have any platform atp -- just route to the first platform for the time being
-	// for _, pf := range stn.Platforms {
-	// 	return pf.Track
-	// }
-	return nil
-}
+// 	// we don't have any platform atp -- just route to the first platform for the time being
+// 	// for _, pf := range stn.Platforms {
+// 	// 	return pf.Track
+// 	// }
+// 	return nil
+// }
 
 func (stn *Station) FindStnPlatform(pfNo string) *TrackSegment {
 	pfTrackId, ok := stn.pfNoMapCache[pfNo]

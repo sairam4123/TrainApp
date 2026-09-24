@@ -1,4 +1,4 @@
-package railway
+package infra
 
 import (
 	"container/heap"

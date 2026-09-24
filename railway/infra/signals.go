@@ -1,4 +1,4 @@
-package railway
+package infra
 
 type Signal struct {
 	Id string

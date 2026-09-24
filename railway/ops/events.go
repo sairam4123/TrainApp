@@ -1,4 +1,4 @@
-package railway
+package ops
 
 type RailwayEvent string
 

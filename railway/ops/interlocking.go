@@ -1,20 +1,29 @@
-package railway
+package ops
 
 import (
 	"cmp"
 	"errors"
 	"fmt"
 	"slices"
+	"trainapp/railway/infra"
 )
 
 type Interlocking struct {
-	world *World
+	world *infra.World
 
 	trackSwitchMap map[string][]string // trackId -> switchBlockId / "" (if no sw is present)
 	trackSigMap    map[string]string   // trackId -> signalId / "" (if no sig is present)
+
 }
 
-func NewInterlocking(world *World) *Interlocking {
+type Occupation struct {
+	occupiedTrackMap map[string]string // trackId -> trainId / "" (if no train has occupied)
+	reservedTrackMap map[string]string // trackId -> trainId / "" (if no train has reserved)
+
+	lockedSwitchMap map[string]string // switchId -> trainId / "" (if no train has locked)
+}
+
+func NewInterlocking(world *infra.World) *Interlocking {
 	ilk := Interlocking{
 		world:          world,
 		trackSwitchMap: map[string][]string{},
@@ -42,7 +51,7 @@ func NewInterlocking(world *World) *Interlocking {
 	return &ilk
 }
 
-func (ilk *Interlocking) IsNavigatingSignalsRight(path *Path) bool {
+func (ilk *Interlocking) IsNavigatingSignalsRight(path *infra.Path) bool {
 	curPoint := path.initPoint
 	curPtIdx := 0
 
@@ -215,7 +224,7 @@ func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {
 
 }
 
-func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *Path) bool {
+func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *infra.Path) bool {
 	for _, edge := range path.Edges {
 		fmt.Println("Switching check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
 
@@ -238,6 +247,20 @@ func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *Path) bool
 		// 	return false
 		// }
 	}
+	return true
+}
+
+func (ilck *Interlocking) EnsureAllEdgesAreReserved(train *Train, path *infra.Path) bool {
+	for _, edge := range path.Edges {
+		fmt.Println("Pathing check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
+		if !edge.Track.IsReserved() || edge.Track.ReservedBy.Number != train.Number {
+			return false
+		}
+		if edge.Track.IsOccupied() && edge.Track.OccupiedBy.Number != train.Number {
+			return false
+		}
+	}
+
 	return true
 }
 

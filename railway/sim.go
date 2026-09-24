@@ -7,16 +7,20 @@ import (
 	"slices"
 	"strings"
 	"trainapp/des"
+	"trainapp/railway/infra"
+	"trainapp/railway/ops"
 	"trainapp/units"
 )
 
 type Sim struct {
-	des   *des.DES[RailwayEvent]
-	world *World
+	des   *des.DES[ops.RailwayEvent]
+	world *railway.World
 
 	dispatcher *Dispatcher
 
 	trainCtrllers map[string]*TrainController
+
+	trains map[string]*Train
 
 	dCount int // temp dump count
 }
@@ -38,6 +42,7 @@ func (s *Sim) Init() {
 	s.world.TrackGraph.BuildCacheMap()
 
 	s.trainCtrllers = make(map[string]*TrainController)
+	s.trains = make(map[string]*Train)
 
 	s.des = &des.DES[RailwayEvent]{}
 	s.des.Init()

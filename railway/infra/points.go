@@ -1,4 +1,4 @@
-package railway
+package infra
 
 type TrackPoint struct {
 	Id string

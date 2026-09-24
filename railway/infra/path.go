@@ -1,4 +1,4 @@
-package railway
+package infra
 
 import (
 	"fmt"
@@ -42,16 +42,3 @@ func (path *Path) Contains(track *GraphEdge) bool {
 	return slices.Contains(path.Edges, track)
 }
 
-func (path *Path) EnsureAllEdgesAreReserved(train *Train) bool {
-	for _, edge := range path.Edges {
-		fmt.Println("Pathing check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
-		if !edge.Track.IsReserved() || edge.Track.ReservedBy.Number != train.Number {
-			return false
-		}
-		if edge.Track.IsOccupied() && edge.Track.OccupiedBy.Number != train.Number {
-			return false
-		}
-	}
-
-	return true
-}
