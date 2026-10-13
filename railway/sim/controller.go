@@ -68,7 +68,7 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 	case ops.RouteGranted:
 		reserv := data.(*PathResponse)
 
-		train.reservation = &ReservationData{
+		train.reservation = &ops.ReservationData{
 			train:   train,
 			curPath: reserv.path,
 		}

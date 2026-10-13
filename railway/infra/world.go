@@ -1,6 +1,7 @@
 package infra
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"trainapp/units"
@@ -112,9 +113,10 @@ func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, defaultEdge
 	return swBlk
 }
 
-func (w *World) ListSwitchBlocks(ids []string) []*SwitchBlock {
+func (w *World) ListSwitchBlocksById(ids []string) []*SwitchBlock {
 	swBlcks := make([]*SwitchBlock, 0)
 	if len(ids) == 0 {
+		fmt.Println("[Warning] Ids list with 0 length is deprecated.")
 		for _, sb := range w.switchBlocks {
 			swBlcks = append(swBlcks, sb)
 		}
@@ -123,6 +125,14 @@ func (w *World) ListSwitchBlocks(ids []string) []*SwitchBlock {
 
 	for _, id := range ids {
 		swBlcks = append(swBlcks, w.switchBlocks[id])
+	}
+	return swBlcks
+}
+
+func (w *World) ListSwitchBlocks() []*SwitchBlock {
+	swBlcks := make([]*SwitchBlock, 0)
+	for _, sb := range w.switchBlocks {
+		swBlcks = append(swBlcks, sb)
 	}
 	return swBlcks
 }
