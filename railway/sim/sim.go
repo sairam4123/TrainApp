@@ -1,4 +1,4 @@
-package railway
+package sim
 
 import (
 	"fmt"

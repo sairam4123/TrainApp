@@ -100,11 +100,11 @@ func (w *World) NewPlatformTrack(id string) *TrackSegment {
 	return ts
 }
 
-func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, activeEdge *GraphEdge) *SwitchBlock {
+func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, defaultEdge *GraphEdge) *SwitchBlock {
 	swBlk := &SwitchBlock{
 		Id: id,
 
-		activeEdge:   activeEdge,
+		defaultEdge:  defaultEdge,
 		managedEdges: managedEdges,
 	}
 	w.switchBlocks[swBlk.Id] = swBlk
@@ -114,6 +114,13 @@ func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, activeEdge 
 
 func (w *World) ListSwitchBlocks(ids []string) []*SwitchBlock {
 	swBlcks := make([]*SwitchBlock, 0)
+	if len(ids) == 0 {
+		for _, sb := range w.switchBlocks {
+			swBlcks = append(swBlcks, sb)
+		}
+		return swBlcks
+	}
+
 	for _, id := range ids {
 		swBlcks = append(swBlcks, w.switchBlocks[id])
 	}
@@ -131,7 +138,6 @@ func (w *World) IsStationPlatform(track *TrackSegment) bool {
 	return false
 }
 
-// TEMP code -> to be removed
 func (w *World) ListSignals() []*Signal {
 	return slices.Collect(maps.Values(w.signals))
 }

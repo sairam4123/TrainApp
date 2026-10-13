@@ -6,7 +6,7 @@ import (
 )
 
 type Path struct {
-	initPoint *TrackPoint
+	InitPoint *TrackPoint
 
 	Edges []*GraphEdge
 
@@ -41,4 +41,3 @@ func (path *Path) ExtendPath(toTrack *GraphEdge) {
 func (path *Path) Contains(track *GraphEdge) bool {
 	return slices.Contains(path.Edges, track)
 }
-

@@ -22,6 +22,14 @@ type TrackGraph struct {
 	NeighborMap map[string]map[string]*TrackSegment
 }
 
+func (graph *TrackGraph) ListTracks() []*TrackSegment {
+	tracks := make([]*TrackSegment, 0)
+	for _, trk := range graph.tracks {
+		tracks = append(tracks, trk)
+	}
+	return tracks
+}
+
 func (graph *TrackGraph) FindWorldBoundaryPoint(segment *TrackSegment) *TrackPoint {
 	if from := graph.Edges[segment.Id].From; from.IsSimBoundary {
 		return from
@@ -120,7 +128,7 @@ func (graph *TrackGraph) GenerateCandidatePaths(fromTp *TrackPoint, toTrack *Tra
 	queue := make([]*Path, 0)
 	allPaths := make([]*Path, 0)
 
-	queue = append(queue, &Path{Edges: []*GraphEdge{}, curPoint: fromTp, initPoint: fromTp})
+	queue = append(queue, &Path{Edges: []*GraphEdge{}, curPoint: fromTp, InitPoint: fromTp})
 
 	for len(queue) > 0 {
 		path := queue[0]
@@ -147,7 +155,7 @@ func (graph *TrackGraph) GenerateCandidatePaths(fromTp *TrackPoint, toTrack *Tra
 
 				newPath := slices.Clone(path.Edges)
 				newPath = append(newPath, graph.Edges[edge.Id])
-				queue = append(queue, &Path{Edges: newPath, curPoint: nextPoint, initPoint: fromTp})
+				queue = append(queue, &Path{Edges: newPath, curPoint: nextPoint, InitPoint: fromTp})
 			}
 		}
 

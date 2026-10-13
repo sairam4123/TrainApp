@@ -15,11 +15,9 @@ const (
 type SwitchBlock struct {
 	Id string
 
-	activeEdge *GraphEdge
+	defaultEdge *GraphEdge
 
 	managedEdges []*GraphEdge
-
-	isLocked bool
 }
 
 func NewSwitch(world *World, id string, from, to, div *TrackPoint) *SwitchBlock {
@@ -125,12 +123,13 @@ func NewDoubleSlip(world *World, id string, fromA, toA, fromB, toB *TrackPoint) 
 	return newSlipSwitch(world, id, fromA, toA, fromB, toB, true, FromAtoB)
 }
 
-func (sb *SwitchBlock) SetActiveEdge(edge *GraphEdge) error {
-	if sb.isLocked {
-		return errors.New("Switch block is locked")
-	}
-	sb.activeEdge = edge
+func (sb *SwitchBlock) SetDefaultEdge(edge *GraphEdge) error {
+	sb.defaultEdge = edge
 	return nil
+}
+
+func (sb *SwitchBlock) ListManagedEdges() []*GraphEdge {
+	return sb.managedEdges
 }
 
 // func (sb *SwitchBlock) LockSwitchFor(train *ops.Train) error {

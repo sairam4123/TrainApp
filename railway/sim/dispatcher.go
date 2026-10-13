@@ -1,8 +1,10 @@
-package ops
+package sim
 
 import (
 	"fmt"
 	"slices"
+	"trainapp/railway/infra"
+	"trainapp/railway/ops"
 )
 
 type Dispatcher struct {
@@ -12,16 +14,16 @@ type Dispatcher struct {
 
 	waitingMaRequests []*MovementAuthorityRequest
 
-	intlck *Interlocking
+	intlck *ops.Interlocking
 }
 
 // TODO: Move interlocking into World
 func (disp *Dispatcher) Init() {
-	disp.intlck = NewInterlocking(disp.sim.world)
+	disp.intlck = ops.NewInterlocking(disp.sim.world)
 }
 
 // TODO: this is terrible for large scale simulations but for the time being it is fine.
-func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
+func (disp *Dispatcher) OnTrackReleased(track *infra.TrackSegment, train *Train) {
 
 	edge := disp.sim.world.TrackGraph.Edges[track.Id]
 	// TODO: for the time being just unlock the switches here
@@ -99,67 +101,34 @@ func (disp *Dispatcher) OnTrackReleased(track *TrackSegment, train *Train) {
 }
 
 type ReservationRequest struct {
-	uptoTrack *TrackSegment
+	uptoTrack *infra.TrackSegment
 	train     *Train
 
-	uptoStation *Station
+	uptoStation *infra.Station
 	prefPfNo    string
 }
 
 type MovementAuthorityRequest struct {
-	path  *Path
+	path  *infra.Path
 	train *Train
 }
 
-type OccupationData struct {
-	train *Train
-
-	curPathIdx int
-	curPath    *Path
-}
-
-func (o *OccupationData) CurTrack() *TrackSegment {
-	if o.curPath == nil {
-		return nil
-	}
-
-	path := o.curPath
-	if o.curPathIdx < 0 || o.curPathIdx >= len(path.Edges) {
-		return nil
-	}
-
-	return path.Edges[o.curPathIdx].Track
-}
-
-func (o *OccupationData) NextTrack() *TrackSegment {
-	if o.curPath == nil {
-		return nil
-	}
-
-	path := o.curPath
-	if o.curPathIdx+1 < 0 || o.curPathIdx+1 >= len(path.Edges) {
-		return nil
-	}
-
-	return path.Edges[o.curPathIdx+1].Track
-}
-
-type ReservationData struct {
-	train *Train
-
-	curPath *Path
-}
 
 type PathResponse struct {
-	path        *Path
-	nextPf      *TrackSegment // intent of the path finder (exp target)
-	facingPoint *TrackPoint
+	path        *infra.Path
+	nextPf      *infra.TrackSegment // intent of the path finder (exp target)
+	facingPoint *infra.TrackPoint
+}
+
+func (disp *Dispatcher) FindAvailableStnPlatform(toStn *infra.Station, prefPfNo string) *infra.TrackSegment {
+	// TOOD: implement this properly
+	panic("unimplemented")
 }
 
 // RequestRouteToPlatform is to be used only during World Entry or when MovementAuthority ended and train is not in station platform.
 // See also [[RequestRouteToStation]]
-func (disp *Dispatcher) RequestRouteToPlatform(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
-	platform := toStn.FindAvailableStnPlatform(prefPfNo)
+func (disp *Dispatcher) RequestRouteToPlatform(train *Train, toStn *infra.Station, prefPfNo string) (*PathResponse, bool) {
+	platform := disp.FindAvailableStnPlatform(toStn, prefPfNo)
 	if platform == nil {
 		disp.waitingReservationRequests = append(disp.waitingReservationRequests,
 			&ReservationRequest{
@@ -193,8 +162,8 @@ func (disp *Dispatcher) RequestRouteToPlatform(train *Train, toStn *Station, pre
 
 // RequestRouteToStation is to be used for path finding to next station. Train must be in a station platform for it to work properly.
 // See also [[RequestRouteToPlatform]]
-func (disp *Dispatcher) RequestRouteToStation(train *Train, toStn *Station, prefPfNo string) (*PathResponse, bool) {
-	platform := toStn.FindAvailableStnPlatform(prefPfNo)
+func (disp *Dispatcher) RequestRouteToStation(train *Train, toStn *infra.Station, prefPfNo string) (*PathResponse, bool) {
+	platform := disp.FindAvailableStnPlatform(toStn, prefPfNo)
 	if platform == nil {
 		disp.waitingReservationRequests = append(disp.waitingReservationRequests,
 			&ReservationRequest{
@@ -226,7 +195,7 @@ func (disp *Dispatcher) RequestRouteToStation(train *Train, toStn *Station, pref
 	}
 
 	slices.Reverse(bestPath.Edges)
-	var reservedPath *Path
+	var reservedPath *infra.Path
 	for _, edge := range bestPath.Edges {
 		sigId, ok := disp.intlck.trackSigMap[edge.Track.Id]
 		if !ok {
@@ -269,7 +238,7 @@ func (disp *Dispatcher) RequestRouteToStation(train *Train, toStn *Station, pref
 }
 
 // @Deprecated TryReservePathToTrack is deprecated, see [[RequestRouteToStation]]
-func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegment) (*Path, bool) {
+func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *infra.TrackSegment) (*infra.Path, bool) {
 	path, ok := disp.intlck.TryReservePathTo(train, toTrack, train.FacingToward)
 	if !ok {
 		disp.waitingReservationRequests = append(disp.waitingReservationRequests, &ReservationRequest{
@@ -370,8 +339,8 @@ func (disp *Dispatcher) TryReservePathToTrack(train *Train, toTrack *TrackSegmen
 // 	return path, true
 // }
 
-func (disp *Dispatcher) RequestToProceed(train *Train, path *Path) (*MovementAuthority, bool) {
-	ok := path.EnsureAllEdgesAreReserved(train)
+func (disp *Dispatcher) RequestToProceed(train *Train, path *infra.Path) (*MovementAuthority, bool) {
+	ok := disp.intlck.EnsureAllEdgesAreReserved(train, path)
 	if !ok {
 		fmt.Println("Request to Proceed failed. Reason: All tracks are not reserved")
 		disp.waitingMaRequests = append(disp.waitingMaRequests, &MovementAuthorityRequest{

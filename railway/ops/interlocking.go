@@ -14,33 +14,33 @@ type Interlocking struct {
 	trackSwitchMap map[string][]string // trackId -> switchBlockId / "" (if no sw is present)
 	trackSigMap    map[string]string   // trackId -> signalId / "" (if no sig is present)
 
-}
+	activeEdgeMap map[string]*infra.GraphEdge // switchBlockId -> activeEdge
 
-type Occupation struct {
-	occupiedTrackMap map[string]string // trackId -> trainId / "" (if no train has occupied)
-	reservedTrackMap map[string]string // trackId -> trainId / "" (if no train has reserved)
-
-	lockedSwitchMap map[string]string // switchId -> trainId / "" (if no train has locked)
+	reservationBook *ReservationBook
+	occupationMap   *OccupationMap
 }
 
 func NewInterlocking(world *infra.World) *Interlocking {
 	ilk := Interlocking{
-		world:          world,
-		trackSwitchMap: map[string][]string{},
-		trackSigMap:    map[string]string{},
+		world:           world,
+		activeEdgeMap:   map[string]*infra.GraphEdge{},
+		trackSwitchMap:  map[string][]string{},
+		trackSigMap:     map[string]string{},
+		reservationBook: NewReservationBook(),
+		occupationMap:   NewOccupationMap(),
 	}
 
-	for _, trk := range world.TrackGraph.tracks {
+	for _, trk := range world.TrackGraph.ListTracks() {
 		ilk.trackSwitchMap[trk.Id] = make([]string, 0)
 		ilk.trackSigMap[trk.Id] = ""
 	}
-	for _, sb := range world.switchBlocks {
-		for _, trk := range sb.managedEdges {
+	for _, sb := range world.ListSwitchBlocks(make([]string, 0)) {
+		for _, trk := range sb.ListManagedEdges() {
 			ilk.trackSwitchMap[trk.Track.Id] = append(ilk.trackSwitchMap[trk.Track.Id], sb.Id)
 		}
 	}
 
-	for _, sig := range world.signals {
+	for _, sig := range world.ListSignals() {
 		atPMap := world.TrackGraph.NeighborMap[sig.AtPoint.Id]
 		if atPMap != nil {
 			trk := atPMap[sig.FacingPoint.Id]
@@ -52,7 +52,7 @@ func NewInterlocking(world *infra.World) *Interlocking {
 }
 
 func (ilk *Interlocking) IsNavigatingSignalsRight(path *infra.Path) bool {
-	curPoint := path.initPoint
+	curPoint := path.InitPoint
 	curPtIdx := 0
 
 	facesRight := true
@@ -69,8 +69,8 @@ func (ilk *Interlocking) IsNavigatingSignalsRight(path *infra.Path) bool {
 			curPtIdx++
 			continue
 		}
-		sig := ilk.world.signals[sigId]
-		if sig == nil {
+		sig, ok := ilk.world.GetSignal(sigId)
+		if !ok {
 			curPtIdx++
 			continue
 		}
@@ -82,13 +82,13 @@ func (ilk *Interlocking) IsNavigatingSignalsRight(path *infra.Path) bool {
 	return facesRight
 }
 
-func (ilck *Interlocking) GenerateCandidatePaths(curPoint *TrackPoint, toTrack *TrackSegment) ([]*Path, bool) {
+func (ilck *Interlocking) GenerateCandidatePaths(curPoint *infra.TrackPoint, toTrack *infra.TrackSegment) ([]*infra.Path, bool) {
 	paths, err := ilck.world.TrackGraph.GenerateCandidatePaths(curPoint, toTrack)
 	if err != nil {
 		return nil, false
 	}
 
-	slices.SortStableFunc(paths, func(a, b *Path) int {
+	slices.SortStableFunc(paths, func(a, b *infra.Path) int {
 
 		// check if it's correct way
 		aNavCrt := ilck.IsNavigatingSignalsRight(a)
@@ -108,7 +108,7 @@ func (ilck *Interlocking) GenerateCandidatePaths(curPoint *TrackPoint, toTrack *
 	return paths, true
 }
 
-func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, facingPoint *TrackPoint) (*Path, bool) {
+func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *infra.TrackSegment, facingPoint *infra.TrackPoint) (*infra.Path, bool) {
 
 	// generate candidate paths
 
@@ -126,7 +126,7 @@ func (ilck *Interlocking) TryReservePathTo(train *Train, toTrack *TrackSegment, 
 	return nil, false
 }
 
-func (ilck *Interlocking) BestPathToTrack(curPoint *TrackPoint, toTrack *TrackSegment) (*Path, bool) {
+func (ilck *Interlocking) BestPathToTrack(curPoint *infra.TrackPoint, toTrack *infra.TrackSegment) (*infra.Path, bool) {
 	paths, ok := ilck.GenerateCandidatePaths(curPoint, toTrack)
 	if !ok {
 		return nil, false
@@ -139,22 +139,29 @@ func (ilck *Interlocking) BestPathToTrack(curPoint *TrackPoint, toTrack *TrackSe
 	return paths[0], true
 }
 
-func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {
+func (ilck *Interlocking) ReserveTrack(track *infra.TrackSegment, train *Train) bool {
+
+	if ilck.reservationBook.IsTrackReservedByTrain(track, train) {
+		return false
+	}
+
+	if ilck.occupationMap.IsTrackOccupied(track) {
+		return false
+	}
+
+	return ilck.reservationBook.ReserveTrack(track, train)
+}
+
+func (ilck *Interlocking) TryReservePath(path *infra.Path, train *Train) bool {
 
 	reservationFailed := false
 
 	for _, edge := range path.Edges {
 		// fmt.Printf("Edge - %s - %v - %v\n", edge.Track.Id, edge.Track.ReservedBy == nil, edge.Track.OccupiedBy == nil)
-		if edge.Track.ReservedBy == nil && edge.Track.OccupiedBy == nil {
-			edge.Track.Reserve(train)
-		} else {
+		if !ilck.ReserveTrack(edge.Track, train) {
 			reservationFailed = true
 			// TODO: save the edge and use it for resource based queuing
 			// fail the reservation
-			break
-		}
-		if edge.Track.IsReserved() && edge.Track.ReservedBy.Number != train.Number {
-			reservationFailed = true
 			break
 		}
 
@@ -189,9 +196,13 @@ func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {
 
 	if reservationFailed {
 		for _, edge := range path.Edges {
-			if edge.Track.IsReserved() && edge.Track.ReservedBy.Number == train.Number {
-				edge.Track.ReservedBy = nil // clear the reservation
+			if !ilck.reservationBook.ReleaseTrack(edge.Track, train) {
+				fmt.Printf("Failed to release track %s\n", edge.Track.Id)
 			}
+
+			// if edge.Track.IsReserved() && edge.Track.ReservedBy.Number == train.Number {
+			// 	edge.Track.ReservedBy = nil // clear the reservation
+			// }
 
 			// swBlkId := ilck.trackSwitchMap[edge.Track.Id]
 			// if swBlkId == "" {
@@ -226,7 +237,7 @@ func (ilck *Interlocking) TryReservePath(path *Path, train *Train) bool {
 
 func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *infra.Path) bool {
 	for _, edge := range path.Edges {
-		fmt.Println("Switching check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
+		fmt.Println("Switching check", edge.Track.Id, edge.Track, train)
 
 		if ok := ilck.AreSwitchesLocked(edge, train); ok != nil && !*ok {
 			return false
@@ -252,7 +263,7 @@ func (ilck *Interlocking) EnsureAllSwitchesLocked(train *Train, path *infra.Path
 
 func (ilck *Interlocking) EnsureAllEdgesAreReserved(train *Train, path *infra.Path) bool {
 	for _, edge := range path.Edges {
-		fmt.Println("Pathing check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
+		// fmt.Println("Pathing check", edge.Track.Id, edge.Track.IsOccupied(), edge.Track.IsReserved(), edge.Track.OccupiedBy, edge.Track.ReservedBy, train)
 		if !edge.Track.IsReserved() || edge.Track.ReservedBy.Number != train.Number {
 			return false
 		}
