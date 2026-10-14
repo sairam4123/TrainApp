@@ -23,7 +23,29 @@ type SchedulePoint struct {
 	DwellTime float64
 	DeptTime  float64
 
+	// actual times the train arrived and departed, -1 until it has
+	ActArrTime  float64
+	ActDeptTime float64
+
 	SpPfNo string
+}
+
+// RecordArrival notes when the train actually arrived.
+func (s *SchedulePoint) RecordArrival(t float64) {
+	s.ActArrTime = t
+}
+
+// RecordDeparture notes when the train actually departed.
+func (s *SchedulePoint) RecordDeparture(t float64) {
+	s.ActDeptTime = t
+}
+
+func (s *SchedulePoint) Arrived() bool {
+	return s.ActArrTime >= 0
+}
+
+func (s *SchedulePoint) Departed() bool {
+	return s.ActDeptTime >= 0
 }
 
 func (s *SchedulePoint) ExpDwellTime(curTime float64) units.Minutes {
@@ -55,6 +77,9 @@ func NewArrDepPoint(stnCode ids.StnCode, arrTime, deptTime float64, prefPfNo str
 		DeptTime:  deptTime,
 		DwellTime: -1, // we don't know the exact dwell time
 
+		ActArrTime:  -1,
+		ActDeptTime: -1,
+
 		StnCode: stnCode,
 		SpPfNo:  prefPfNo,
 	}
@@ -68,6 +93,9 @@ func NewPassPoint(stnCode ids.StnCode, passTime float64, prefPfNo string) *Sched
 		ArrTime:   passTime,
 		DeptTime:  passTime,
 		DwellTime: 0,
+
+		ActArrTime:  -1,
+		ActDeptTime: -1,
 
 		StnCode: stnCode,
 		SpPfNo:  prefPfNo,
@@ -92,6 +120,9 @@ func NewStopPoint(stnCode ids.StnCode, dwellTime float64, prefPfNo string) *Sche
 		ArrTime:   -1,
 		DwellTime: dwellTime,
 		DeptTime:  -1,
+
+		ActArrTime:  -1,
+		ActDeptTime: -1,
 
 		StnCode: stnCode,
 		SpPfNo:  prefPfNo,

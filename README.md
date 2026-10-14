@@ -42,6 +42,7 @@ At a high level, the system contains five major parts:
    - interlocking and safety checks
    - route allocation for shared resources
    - queueing and retry behavior when a path is blocked
+   - train priorities: waiting trains are served highest priority first, adjusted for delay
 
 4. Simulation engine
    - event scheduling
@@ -60,7 +61,7 @@ At a high level, the system contains five major parts:
 .
 ├── cmd/
 │   ├── trainapp/            # Runs the simulation: builds the TPJ-PDKT-KKDI world and 12 trains
-│   │   └── main.go          # Flags: -log (text|json), -record (write a recording for trainviz)
+│   │   └── main.go          # Flags: -log (text|json), -record (write a recording for trainviz), -priorities
 │   └── trainviz/            # Terminal viewer
 │       ├── main.go          # Flags and the two modes: draw a world, or `replay` a recording
 │       ├── viewer.go        # Interactive Bubble Tea model: pan, zoom, panes, timeline
@@ -69,6 +70,7 @@ At a high level, the system contains five major parts:
 │   ├── testWorld.go         # Older 3-station (TPJ-PDKT-KKDI) world
 │   ├── kkdiTpjWorld.go      # Active double-line TPJ-PDKT-KKDI world with crossovers and signals
 │   └── singleLineWorld.go   # Single-line worlds (passing loops, halts, junction) used by the deadlock tests
+├── profiles/                # Per-railway priority configs (JSON), e.g. ir.json for Indian Railways
 ├── railway/
 │   ├── ids/                 # Typed identifiers: StnCode, PointID, TrackID, TrainID
 │   ├── infra/               # Static infrastructure (no runtime state)
@@ -83,12 +85,13 @@ At a high level, the system contains five major parts:
 │   │   ├── stations.go      # Station and Platform
 │   │   └── templates.go     # Helpers to build common station layouts
 │   ├── interlocking/        # Runtime safety state: track reservations/occupation, switch setting/locking
-│   ├── ops/                 # Train, schedule, MovementAuthority, event types
+│   ├── ops/                 # Train, schedule (planned and actual times, delay), MovementAuthority, event types
 │   └── sim/                 # The run itself:
 │       ├── sim.go           #   Sim: owns the world, interlocking and event loop; Run, Init, state dump
 │       ├── controller.go    #   TrainController state machine
 │       ├── dispatcher.go    #   Dispatcher: entry and route requests, waiting requests
 │       ├── safety.go        #   Deadlock avoidance: the safe-state check
+│       ├── priority.go      #   Train priority: PriorityConfig (classes, delay bands), SetPriorityAt
 │       ├── log.go           #   Structured run log (logfmt or JSON lines), STUCK report
 │       └── observer.go      #   Observer hook that lets the recorder watch a run
 ├── des/                     # Discrete-event engine and WaitList (resource-based waiting)
@@ -122,7 +125,7 @@ The log is structured, one entry per line, with the same keys in either format (
 - **Text (the default)** is logfmt, written to `logs/logs.log`:
 
   ```text
-  t=32 level=INFO event=ROUTE_WAIT train=0452U name=Train2Up station=PDKT pf=1 entry=false reason="0452U cannot use bsTpjPdkt0: track reserved by 0451U" blocked_by=bsTpjPdkt0
+  t=32 level=INFO event=ROUTE_WAIT train=0452U name=Train2Up station=PDKT pf=1 entry=false reason="0452U cannot use bsTpjPdkt0: track reserved by 0451U" blocked_by=bsTpjPdkt0 priority=20 delay=0.01
   ```
 - **JSON lines** are written to `logs/logs.jsonl`, with `go run ./cmd/trainapp -log json`.
 
@@ -157,7 +160,7 @@ The interlocking owns all runtime safety state and exposes it only through opera
 A track is never occupied without being reserved by the occupier, and a switch block can only be locked for one of its edges at a time.
 
 ### 4. Train model (`ops`)
-`Train` is identity, schedule and movement state: the `Route` its front is on and the `MovementAuthority` it runs under. A `MovementAuthority` can only be created from a reserved `Route`, so everything it covers is already held for the train. It never runs past a signal. `NewMovementAuthority` covers the route up to the next signal or platform end ahead of the train, and `Extend` moves it on one signal section at a time.
+`Train` is identity, schedule and movement state: the `Route` its front is on and the `MovementAuthority` it runs under. Each `SchedulePoint` keeps the actual arrival and departure next to the timetabled ones, and `Train.Delay(now)` derives from them how late the train is running (growing while it waits past a timetabled time). A `MovementAuthority` can only be created from a reserved `Route`, so everything it covers is already held for the train. It never runs past a signal. `NewMovementAuthority` covers the route up to the next signal or platform end ahead of the train, and `Extend` moves it on one signal section at a time.
 
 ### 5. Dispatcher and deadlock avoidance (`sim`)
 `TrainController` asks the `Dispatcher` for routes:
@@ -176,7 +179,9 @@ A track is never occupied without being reserved by the occupier, and a switch b
 - every track of a locked switch (the switch unlocks when its holder leaves any of them);
 - for a safety refusal, the tracks held by the trains that couldn't finish.
 
-`OnTrackReleased` wakes only the requests waiting on that track, longest-waiting first.
+`OnTrackReleased` wakes only the requests waiting on that track, highest priority first, then longest-waiting.
+
+**Priority.** A train's priority is a number, higher served first: its base `Priority`, adjusted by the delay band it falls in. Both come from a `sim.PriorityConfig` (`Sim.Priorities`), loaded from JSON: `classes` maps a train's `Class` to its base priority, and `delay_bands` adjust it by lateness (the band with the largest `over_min` below the delay applies). The sim gives classes and thresholds no meaning of their own; `profiles/ir.json` holds Indian Railways' (VB Express highest down to Special Express; up to 15 min late is boosted as recoverable, over an hour is lowered as unrecoverable). Priority is worked out when it is needed, so it follows the delay as it grows, and `Sim.SetPriorityAt` changes a train's base priority during a run (logged as `PRIORITY_CHANGE`).
 
 ### 6. Simulation engine (`sim`, `des`)
 The discrete-event engine processes events in time order; events at the same time run in the order they were scheduled. `Sim.Run()` pulls each event, logs it, and hands it to the train's `TrainController`. The controller is a small state machine (outside, running, held, dwelling, ready, exited):
@@ -195,12 +200,13 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 
 ## cmd/trainapp
 
-[cmd/trainapp/main.go](cmd/trainapp/main.go) builds `worlds.BuildTpjKkdiWorld()`: three stations (TPJ, PDKT, KKDI) with four platforms each, connected by a double line (TPJ↔PDKT ~55km, PDKT↔KKDI ~41km) with crossovers at the termini and a signal at the arrival end of each leg. It adds 12 trains (six each way, 20 minutes apart), runs the simulation, and prints how many trains completed their schedule, e.g. `12/12 trains completed their schedule by t=234.12 (log: logs/logs.log)`.
+[cmd/trainapp/main.go](cmd/trainapp/main.go) builds `worlds.BuildTpjKkdiWorld()`: three stations (TPJ, PDKT, KKDI) with four platforms each, connected by a double line (TPJ↔PDKT ~55km, PDKT↔KKDI ~41km) with crossovers at the termini and a signal at the arrival end of each leg. It adds 12 trains (six each way, 20 minutes apart), runs the simulation, and prints how many trains completed their schedule, e.g. `12/12 trains completed their schedule by t=234.27 (log: logs/logs.log)`.
 
 | Flag | Default | Effect |
 |---|---|---|
 | `-log` | `text` | Log format: `text` (logfmt, `logs/logs.log`) or `json` (`logs/logs.jsonl`) |
 | `-record` | none | Also write the run to this file, for `trainviz replay` |
+| `-priorities` | `profiles/ir.json` | Priority config (classes and delay bands); empty for none, which leaves every train at priority 0 |
 
 The other worlds in `worlds/` are not run by `trainapp`. The single-line and junction worlds are used by the deadlock tests, and all of them can be drawn with `trainviz`.
 
@@ -218,7 +224,7 @@ The other worlds in `worlds/` are not run by `trainapp`. The single-line and jun
 
 - **Sections are only as fine as the signalling.** Each inter-station leg of the TPJ-KKDI world is one `TrackSegment` with a signal at the far end, so a following train still waits for the whole leg. Splitting legs into signalled blocks (as `worlds.BuildSingleLineWorld` does) lets trains follow each other closely.
 - **The safety check costs more as worlds grow.** It runs a reachability search per train per grant, roughly O(trains² × stops × graph) in the worst case. That is fine for tens of trains. Large worlds will want caching of static reachability, or an incremental check.
-- **No priorities.** Waiting requests are served longest-waiting first per resource. There are no train priorities or overtaking decisions (TODO #6).
+- **Priority only orders waiting trains.** When a track frees up, the highest-priority train waiting on it goes first. A lower-priority train is never held back for a faster one still on its way, so there are no planned overtakes or crossings yet (TODO #6).
 - **No reversing.** Trains can't change direction, so a schedule that needs a reversal (e.g. EJN → NJN through the junction) can't be run, and the safety check treats it as impossible.
 
 ## Getting started

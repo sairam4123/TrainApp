@@ -30,6 +30,8 @@ const (
 
 	ScheduleEnd RailwayEvent = "SCHEDULE_END"
 
+	PriorityChanged RailwayEvent = "PRIORITY_CHANGE"
+
 	// SWT //
 	SwitchSet RailwayEvent = "SWITCH_SET"
 )

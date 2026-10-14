@@ -42,6 +42,29 @@ func TestWaitListKeepsPlaceInLine(t *testing.T) {
 	}
 }
 
+func TestWaitListWakesHighestRankFirst(t *testing.T) {
+	rank := map[string]int{"low": 1, "high": 5, "low2": 1}
+	wl := WaitList[string, string]{Rank: func(w string) int { return rank[w] }}
+	wl.Wait("low", "x")
+	wl.Wait("high", "x")
+	wl.Wait("low2", "x")
+	if got := wl.Waiting(); !slices.Equal(got, []string{"high", "low", "low2"}) {
+		t.Fatalf("Waiting = %v, want [high low low2]", got)
+	}
+	if got := wl.Wake("x"); !slices.Equal(got, []string{"high", "low", "low2"}) {
+		t.Fatalf("Wake(x) = %v, want [high low low2]", got)
+	}
+
+	// ranks are read when woken, so a change while waiting counts
+	wl.Wait("low", "y")
+	wl.Wait("high", "y")
+	wl.Wait("low2", "y")
+	rank["low2"] = 9
+	if got := wl.Wake("y"); !slices.Equal(got, []string{"low2", "high", "low"}) {
+		t.Fatalf("Wake(y) after rank change = %v, want [low2 high low]", got)
+	}
+}
+
 func TestWaitListReplacesResources(t *testing.T) {
 	var wl WaitList[string, string]
 	wl.Wait("t", "a", "a", "b")

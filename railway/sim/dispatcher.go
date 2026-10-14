@@ -16,7 +16,7 @@ import (
 // the train stands up to the next signal or platform end. Every grant must
 // leave the railway in a safe state (see safety.go). A request that cannot be
 // met waits on the tracks that stood in its way and is retried only when one
-// of them is released.
+// of them is released, highest train priority first (see priority.go).
 type Dispatcher struct {
 	sim   *Sim
 	world *infra.World
@@ -29,13 +29,15 @@ type Dispatcher struct {
 }
 
 func newDispatcher(s *Sim) *Dispatcher {
-	return &Dispatcher{
+	disp := &Dispatcher{
 		sim:      s,
 		world:    s.world,
 		ilk:      s.ilk,
 		requests: map[ids.TrainID]*RouteRequest{},
 		frontier: map[ids.TrainID]*interlocking.Route{},
 	}
+	disp.waits.Rank = s.Priority
+	return disp
 }
 
 // RouteRequest is a queued request for a route towards a station.
@@ -111,8 +113,9 @@ func (disp *Dispatcher) served(id ids.TrainID, route *interlocking.Route) {
 	disp.frontier[id] = route
 }
 
-// OnTrackReleased retries the requests waiting on the track, longest-waiting
-// first. Each either gets its route or waits again on whatever now blocks it.
+// OnTrackReleased retries the requests waiting on the track, highest priority
+// first, then longest-waiting. Each either gets its route or waits again on
+// whatever now blocks it.
 func (disp *Dispatcher) OnTrackReleased(track *infra.TrackSegment) {
 	for _, id := range disp.waits.Wake(track.Id) {
 		req := disp.requests[id]
@@ -128,7 +131,8 @@ func (disp *Dispatcher) OnTrackReleased(track *infra.TrackSegment) {
 	}
 }
 
-// Waiting returns the queued requests, longest-waiting first.
+// Waiting returns the queued requests in the order they would be served:
+// highest priority first, then longest-waiting.
 func (disp *Dispatcher) Waiting() []*RouteRequest {
 	ids := disp.waits.Waiting()
 	out := make([]*RouteRequest, len(ids))

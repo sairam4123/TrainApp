@@ -19,6 +19,13 @@ type Train struct {
 	FacingToward *infra.TrackPoint
 	MaxSpeed     units.MetersPerMin
 
+	// Class is the train's service class. The sim only uses it to look up a
+	// base priority in its priority config.
+	Class string
+	// Priority is the base priority; trains with higher numbers are served
+	// first. Set from Class when the sim's config knows it.
+	Priority int
+
 	route *interlocking.Route // route the front of the train is on
 	ma    *MovementAuthority  // authority on route
 }
@@ -76,6 +83,32 @@ func (t *Train) NextStop() (*SchedulePoint, bool) {
 		return nil, false
 	}
 	return t.schedule[i], true
+}
+
+// Delay is how late the train is running at now, negative when early. It is
+// the lateness at the last timetabled time the train has met, raised to how
+// far it is past the next one if that is already overdue, so a train kept
+// waiting gets later as it waits. Untimed arrivals and departures are skipped.
+func (t *Train) Delay(now float64) units.Minutes {
+	late := 0.0
+	for _, sp := range t.schedule {
+		for _, ev := range [...][2]float64{{sp.ArrTime, sp.ActArrTime}, {sp.DeptTime, sp.ActDeptTime}} {
+			planned, actual := ev[0], ev[1]
+			switch {
+			case actual >= 0:
+				if planned >= 0 {
+					late = actual - planned
+				}
+			case planned >= 0:
+				// the next timetabled time not met yet
+				if now > planned {
+					late = max(late, now-planned)
+				}
+				return units.Min(late)
+			}
+		}
+	}
+	return units.Min(late)
 }
 
 // AdvanceStop makes the next schedule point the current one.

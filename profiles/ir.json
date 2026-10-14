@@ -1,0 +1,19 @@
+{
+  "classes": {
+    "VB Express": 100,
+    "Rajdhani": 90,
+    "Shatabdi": 80,
+    "Duronto": 70,
+    "Garibrath": 60,
+    "Superfast Express": 50,
+    "Mail/Express": 40,
+    "UR Express": 30,
+    "Passenger": 20,
+    "Special Express": 10
+  },
+  "delay_bands": [
+    { "over_min": 1, "adjust": 5 },
+    { "over_min": 15, "adjust": 0 },
+    { "over_min": 60, "adjust": -5 }
+  ]
+}

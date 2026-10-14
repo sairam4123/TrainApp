@@ -111,10 +111,18 @@ func main() {
 	world := worlds.BuildTpjKkdiWorld()
 	logFormat := flag.String("log", string(sim.LogText), "log format: text (logfmt) or json (one object per line)")
 	recordPath := flag.String("record", "", "also write the run to this file for trainviz replay")
+	prioritiesPath := flag.String("priorities", "profiles/ir.json", "train class priorities and delay bands (JSON); empty for none")
 	flag.Parse()
 
 	s := &sim.Sim{LogFormat: sim.LogFormat(*logFormat)}
 	s.SetWorld(world)
+	if *prioritiesPath != "" {
+		cfg, err := sim.LoadPriorityConfig(*prioritiesPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		s.Priorities = cfg
+	}
 
 	tpj, ok := world.GetStation("TPJ")
 
@@ -136,6 +144,9 @@ func main() {
 
 	var upInterval = 20
 	var downInterval = 20
+
+	// class names must match the priority config's classes
+	classes := []string{"Superfast Express", "Passenger", "Mail/Express"}
 
 	for i := range 6 {
 		train1 := ops.Train{
@@ -182,7 +193,10 @@ func main() {
 			tpj.Code, 10, "3",
 		))
 
-		for _, t := range []*ops.Train{&train1, &train2} {
+		for j, t := range []*ops.Train{&train1, &train2} {
+			if *prioritiesPath != "" {
+				t.Class = classes[(i+j)%len(classes)]
+			}
 			if err := s.AddTrain(t); err != nil {
 				log.Fatal(err)
 			}
@@ -221,7 +235,7 @@ func main() {
 			exited++
 			continue
 		}
-		fmt.Printf("%s did not finish: %s", st.Train, st.Phase)
+		fmt.Printf("%s did not finish: %s, priority %d, %.0f min late", st.Train, st.Phase, st.Priority, st.Delay)
 		if st.Waiting != nil {
 			fmt.Printf(", waiting since %.2f for %s pf%s: %v", st.Waiting.Since, st.Waiting.Station.Code, st.Waiting.PrefPfNo, st.Waiting.LastErr)
 		}

@@ -79,9 +79,17 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 	case ops.MovementAuthorized:
 		ma := data.(*ops.MovementAuthority)
 		switch tc.phase {
-		case phaseOutside, phaseHeld:
+		case phaseOutside:
+			// entering the world is arriving at the first stop, whose
+			// timetabled arrival is the entry time
+			stop, _ := train.CurrentStop()
+			stop.RecordArrival(sim.CurTime())
+			tc.begin(ma)
+		case phaseHeld:
 			tc.begin(ma)
 		case phaseReady:
+			stop, _ := train.CurrentStop()
+			stop.RecordDeparture(sim.CurTime())
 			train.AdvanceStop()
 			tc.phase = phaseRunning
 			sim.ScheduleEventNext(ops.TrainDeparted, ma, train.ID())
@@ -142,6 +150,9 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 	case ops.TrainArrived:
 		tc.phase = phaseDwelling
 		stop, _ := train.CurrentStop()
+		if !stop.Arrived() { // the first stop's arrival is the entry
+			stop.RecordArrival(sim.CurTime())
+		}
 		sim.ScheduleEventAfter(stop.ExpDwellTime(sim.CurTime()), ops.TrainDwellEnd, train, train.ID())
 
 	case ops.TrainDwellEnd:
@@ -161,6 +172,8 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 		}
 
 	case ops.ScheduleEnd:
+		stop, _ := train.CurrentStop()
+		stop.RecordDeparture(sim.CurTime()) // it leaves the world from its last stop
 		route := train.Route()
 		tc.release(route)
 		for route.Left() < route.Entered() {
@@ -170,6 +183,11 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 		disp.Forget(train.ID())
 		tc.phase = phaseExited
 		sim.ScheduleEventNext(ops.WorldExited, train, train.ID())
+
+	case ops.PriorityChanged:
+		// waiting requests are ordered when they are next woken, so nothing
+		// else needs to change
+		train.Priority = data.(priorityChange).to
 
 	case ops.TrackReleased, ops.WorldExited:
 		// logged only

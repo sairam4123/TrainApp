@@ -40,6 +40,8 @@ const (
 //	station, pf, entry    a route request: target station, preferred platform, world entry or not
 //	reason, blocked_by    why a request waits, and the tracks it waits on
 //	released              the track whose release let a waiting request through
+//	priority, delay       a waiting train's priority and minutes late (route waits, retries, stuck trains);
+//	                      on PRIORITY_CHANGE, priority is the new base priority
 //	phase, since          a train that never finished: its phase and when it started waiting
 //	err                   why the run failed
 const (
@@ -144,20 +146,26 @@ func (s *Sim) logEvent(ev des.Event[ops.RailwayEvent]) {
 		attrs = append(attrs, "limit", data.Limit(), "until", data.Route().Step(data.Limit()).Edge.Track.String())
 	case *interlocking.Route:
 		attrs = append(attrs, routeAttrs(data)...)
+	case priorityChange:
+		attrs = append(attrs, "priority", data.to)
 	}
 	s.log.Info(string(ev.Type), attrs...)
+}
+
+func (s *Sim) priorityAttrs(t *ops.Train) []any {
+	return []any{"priority", s.Priority(t.ID()), "delay", roundTime(float64(t.Delay(s.CurTime())))}
 }
 
 func (s *Sim) logRouteWait(req *RouteRequest, blockers []ids.TrackID) {
 	attrs := append(trainAttrs(req.Train),
 		"station", req.Station.Code.String(), "pf", req.PrefPfNo, "entry", req.Entry,
 		"reason", req.LastErr.Error(), "blocked_by", s.joinTrackIDs(blockers))
-	s.log.Info("ROUTE_WAIT", attrs...)
+	s.log.Info("ROUTE_WAIT", append(attrs, s.priorityAttrs(req.Train)...)...)
 }
 
 func (s *Sim) logRouteRetryOK(req *RouteRequest, released *infra.TrackSegment) {
 	attrs := append(trainAttrs(req.Train), "station", req.Station.Code.String(), "released", released.String())
-	s.log.Info("ROUTE_RETRY_OK", attrs...)
+	s.log.Info("ROUTE_RETRY_OK", append(attrs, s.priorityAttrs(req.Train)...)...)
 }
 
 func (s *Sim) logStuck(st TrainStatus) {
@@ -165,5 +173,6 @@ func (s *Sim) logStuck(st TrainStatus) {
 	if w := st.Waiting; w != nil {
 		attrs = append(attrs, "station", w.Station.Code.String(), "pf", w.PrefPfNo, "since", roundTime(w.Since), "reason", w.LastErr.Error())
 	}
+	attrs = append(attrs, "priority", st.Priority, "delay", roundTime(float64(st.Delay)))
 	s.log.Warn("STUCK", attrs...)
 }

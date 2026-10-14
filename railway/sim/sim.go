@@ -30,7 +30,12 @@ type Sim struct {
 	LogFormat LogFormat
 	// Observer, if set, watches Run (e.g. to record it).
 	Observer Observer
+	// Priorities, if set, gives trains their priority by class and adjusts it
+	// by delay; see priority.go. Without it a train's priority is its own
+	// Priority.
+	Priorities *PriorityConfig
 
+	delayBands  []DelayBand // Priorities.DelayBands, smallest OverMin first
 	log         *slog.Logger
 	initialized bool
 	err         error // first fatal error; stops the run
@@ -78,6 +83,9 @@ func (s *Sim) Init() error {
 		if err := s.world.Finalize(); err != nil {
 			return err
 		}
+	}
+	if err := s.initPriorities(); err != nil {
+		return err
 	}
 	ilk, err := interlocking.New(s.world)
 	if err != nil {
@@ -251,18 +259,22 @@ func (s *Sim) handle(ev des.Event[ops.RailwayEvent]) {
 
 // TrainStatus is where a train ended up.
 type TrainStatus struct {
-	Train   *ops.Train
-	Phase   string
-	Waiting *RouteRequest // set if the train is queued for a route
+	Train    *ops.Train
+	Phase    string
+	Waiting  *RouteRequest // set if the train is queued for a route
+	Priority int           // priority now, see Sim.Priority
+	Delay    units.Minutes // how late it is running now
 }
 
 // Status reports every train's phase, in the order the trains were added.
 func (s *Sim) Status() []TrainStatus {
 	out := make([]TrainStatus, 0, len(s.trains))
 	for _, t := range s.trains {
-		st := TrainStatus{Train: t, Phase: phaseOutside.String()}
+		st := TrainStatus{Train: t, Phase: phaseOutside.String(), Priority: t.Priority}
 		if tc, ok := s.trainCtrllers[t.ID()]; ok {
 			st.Phase = tc.phase.String()
+			st.Priority = s.Priority(t.ID())
+			st.Delay = t.Delay(s.CurTime())
 		}
 		if s.dispatcher != nil {
 			st.Waiting = s.dispatcher.waitingFor(t.ID())
