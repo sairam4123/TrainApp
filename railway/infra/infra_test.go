@@ -131,9 +131,9 @@ func TestSlipSwitches(t *testing.T) {
 		var sb *infra.SwitchBlock
 		var err error
 		if double {
-			sb, err = infra.NewDoubleSlip(w, "s", a, ta, b, tb)
+			sb, err = infra.NewDoubleSlip(w, "s", a, ta, b, tb, 1)
 		} else {
-			sb, err = infra.NewSingleSlip(w, "s", a, ta, b, tb, infra.FromAtoB)
+			sb, err = infra.NewSingleSlip(w, "s", a, ta, b, tb, 1, infra.FromAtoB)
 		}
 		if err != nil {
 			t.Fatal(err)
@@ -163,7 +163,7 @@ func TestSlipSwitches(t *testing.T) {
 			t.Errorf("double=%v: transition between two slip routes out of a should be forbidden", double)
 		}
 	}
-	if _, err := infra.NewSingleSlip(newWorld(), "s", nil, nil, nil, nil, infra.SlipOrientation(5)); err == nil {
+	if _, err := infra.NewSingleSlip(newWorld(), "s", nil, nil, nil, nil, 1, infra.SlipOrientation(5)); err == nil {
 		t.Error("bad orientation accepted")
 	}
 }
@@ -198,13 +198,36 @@ func TestAddTrackDuplicates(t *testing.T) {
 	w := newWorld()
 	a, b, c := w.NewTrackPoint(pt("a")), w.NewTrackPoint(pt("b")), w.NewTrackPoint(pt("c"))
 	e1 := w.TrackGraph.AddTrack(a, b, &infra.TrackSegment{Length: 10, MaxSpeed: 100})
-	e2 := w.TrackGraph.AddTrack(b, a, &infra.TrackSegment{Length: 10, MaxSpeed: 40})
+	e2 := w.TrackGraph.AddTrack(a, b, &infra.TrackSegment{Length: 10, MaxSpeed: 40})
 	if e1 != e2 || e1.Track.MaxSpeed != 40 {
 		t.Fatalf("same-endpoint duplicate should reuse the edge with the lower speed, got %v speed %v", e1 == e2, e1.Track.MaxSpeed)
 	}
 
 	mustPanic(t, "adding one segment between two pairs of points", func() { w.TrackGraph.AddTrack(a, c, e1.Track) })
 	mustPanic(t, "two point objects with one id", func() { w.TrackGraph.AddTrack(w.NewTrackPoint(pt("a")), c, &infra.TrackSegment{}) })
+	mustPanic(t, "adding a track again east to west", func() { w.TrackGraph.AddTrack(b, a, &infra.TrackSegment{}) })
+}
+
+func TestEdgeLanes(t *testing.T) {
+	w := newWorld()
+	a, b := w.NewTrackPoint(pt("a")), w.NewTrackPoint(pt("b"))
+	e := w.TrackGraph.AddTrack(a, b, &infra.TrackSegment{}).SetLanes(1)
+	e.SetLanes(1) // agreeing again is fine
+	mustPanic(t, "two templates disagreeing on lanes", func() { e.SetLanes(-1) })
+
+	c, d := w.NewTrackPoint(pt("c")), w.NewTrackPoint(pt("d"))
+	sw := infra.NewSwitch(w, "sw", c, d, a, infra.SwitchLayout{Legs: infra.West, Lanes: 2})
+	for _, edge := range sw.ListManagedEdges() {
+		if edge.To != c {
+			t.Errorf("legs heading west should end at the toe, got %s -> %s", edge.From.Id, edge.To.Id)
+		}
+	}
+	if div := sw.ListManagedEdges()[1]; div.Lanes != -2 {
+		t.Errorf("diverging leg west of the toe 2 lanes down should move -2 lanes west to east, got %d", div.Lanes)
+	}
+	mustPanic(t, "switch whose legs do not diverge", func() {
+		infra.NewSwitch(w, "sw2", b, c, d, infra.SwitchLayout{Legs: infra.East})
+	})
 }
 
 func mustPanic(t *testing.T, what string, f func()) {

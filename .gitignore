@@ -3,3 +3,9 @@ dist/
 dumps/
 
 *.log
+
+docs/
+
+!example/*.ndjson
+
+*.ndjson

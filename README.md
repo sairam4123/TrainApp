@@ -4,7 +4,7 @@ TrainApp is a Go-based railway simulation. It models how trains move through a r
 
 ## Purpose
 
-This project is a simplified railway operations simulator. The goal is not to build a graphical app, but to model the core logic behind railway movement in a programmable and testable way.
+This project is a simplified railway operations simulator. The goal is not to build a polished graphical app, but to model the core logic behind railway movement in a programmable and testable way. A terminal viewer, `trainviz`, draws a world as a line schematic and replays recorded runs, so you can see what the simulation is doing.
 
 The simulator is meant to answer questions such as:
 
@@ -16,13 +16,13 @@ The simulator is meant to answer questions such as:
 
 ## What the project shows
 
-The program builds a sample railway world and runs a discrete-event simulation. It demonstrates how a railway system can be represented in code and how trains can be scheduled and coordinated safely.
+`trainapp` builds a sample railway world and runs a discrete-event simulation. It demonstrates how a railway system can be represented in code and how trains can be scheduled and coordinated safely. `trainviz` draws the world and replays a recorded run.
 
 The emphasis is on modeling the underlying mechanics of railway operation rather than on a polished UI or full operational realism.
 
 ## Main concepts
 
-At a high level, the system contains four major parts:
+At a high level, the system contains five major parts:
 
 1. Infrastructure
    - stations and platforms
@@ -49,11 +49,22 @@ At a high level, the system contains four major parts:
    - state updates as trains move and arrive
    - coordination between train activity and infrastructure state
 
+5. Visualization
+   - a line schematic of any world, drawn in the terminal
+   - a recorder that writes a run as a stream of state changes
+   - a replay viewer with play/pause, stepping, and per-train following
+
 ## Project structure
 
 ```text
 .
-├── main.go                  # Entry point: builds the TPJ-PDKT-KKDI world, 12 trains, runs the sim
+├── cmd/
+│   ├── trainapp/            # Runs the simulation: builds the TPJ-PDKT-KKDI world and 12 trains
+│   │   └── main.go          # Flags: -log (text|json), -record (write a recording for trainviz)
+│   └── trainviz/            # Terminal viewer
+│       ├── main.go          # Flags and the two modes: draw a world, or `replay` a recording
+│       ├── viewer.go        # Interactive Bubble Tea model: pan, zoom, panes, timeline
+│       └── replay.go        # Replays a recording: seeks to a time and rebuilds the state there
 ├── worlds/                  # Sample railway worlds
 │   ├── testWorld.go         # Older 3-station (TPJ-PDKT-KKDI) world
 │   ├── kkdiTpjWorld.go      # Active double-line TPJ-PDKT-KKDI world with crossovers and signals
@@ -73,20 +84,53 @@ At a high level, the system contains four major parts:
 │   │   └── templates.go     # Helpers to build common station layouts
 │   ├── interlocking/        # Runtime safety state: track reservations/occupation, switch setting/locking
 │   ├── ops/                 # Train, schedule, MovementAuthority, event types
-│   └── sim/                 # Discrete-event loop, TrainController state machine, Dispatcher, deadlock avoidance
+│   └── sim/                 # The run itself:
+│       ├── sim.go           #   Sim: owns the world, interlocking and event loop; Run, Init, state dump
+│       ├── controller.go    #   TrainController state machine
+│       ├── dispatcher.go    #   Dispatcher: entry and route requests, waiting requests
+│       ├── safety.go        #   Deadlock avoidance: the safe-state check
+│       ├── log.go           #   Structured run log (logfmt or JSON lines), STUCK report
+│       └── observer.go      #   Observer hook that lets the recorder watch a run
 ├── des/                     # Discrete-event engine and WaitList (resource-based waiting)
 ├── units/                   # Distance, time and speed helpers
-├── visualization/           # Terminal printout of the world's boundary tracks
-├── example/                 # Example simulation output
+├── visualization/
+│   ├── vizproto/            # The stream trainapp writes and trainviz reads (newline-delimited JSON)
+│   ├── record/              # Records a sim run as that stream (a sim.Observer)
+│   ├── schematic/           # Lays a world out as a line schematic and draws it in the terminal
+│   └── viz_term.go          # Older plain-text printout of the track graph; no command uses it
+├── example/                 # Example simulation output (logs.txt, from an earlier log format)
+├── TODO.md                  # Planned work
+├── LICENSE
 ├── go.mod                   # Go module definition
 └── README.md                # Project documentation
 ```
 
-`go run .` writes `logs/logs.log` and a final state dump to `dumps/` in the working directory.
+Tests sit next to the code they cover (`*_test.go`); see [Run the tests](#run-the-tests).
+
+### Output files
+
+`go run ./cmd/trainapp` writes its output under the working directory:
+
+- `logs/` holds the run log.
+- `dumps/` holds the final state dump, `dump<N>.txt`: each train's phase, and who has reserved or occupies every track. Dumps from earlier runs are cleared when a run starts.
+- With `-record <file>`, the recording goes to the path you give.
+
+Git ignores `*.log` and `dumps/`.
+
+The log is structured, one entry per line, with the same keys in either format (see `railway/sim/log.go` for the full list):
+
+- **Text (the default)** is logfmt, written to `logs/logs.log`:
+
+  ```text
+  t=32 level=INFO event=ROUTE_WAIT train=0452U name=Train2Up station=PDKT pf=1 entry=false reason="0452U cannot use bsTpjPdkt0: track reserved by 0451U" blocked_by=bsTpjPdkt0
+  ```
+- **JSON lines** are written to `logs/logs.jsonl`, with `go run ./cmd/trainapp -log json`.
+
+Each entry starts with `t` (sim minutes), `level` and `event`. Times come from the simulation clock, so the same scenario always produces the same log.
 
 ## Architecture
 
-The architecture is organized around a simple idea: model the railway as a set of connected resources, then let trains request access to those resources over time. Packages depend in one direction only: `ids` ← `infra` ← `interlocking` ← `ops` ← `sim`.
+The architecture is organized around a simple idea: model the railway as a set of connected resources, then let trains request access to those resources over time. Packages depend in one direction only: `ids` ← `infra` ← `interlocking` ← `ops` ← `sim`. The visualization packages sit on top: `vizproto` knows only the world (`infra`), `schematic` draws from `vizproto`, and only `record` knows about `sim`.
 
 ### 1. World (`infra`)
 `World` is the static railway: stations, track points, track segments, switch blocks and signals. It holds no runtime state; who has reserved a track or locked a switch lives in the interlocking. Call `World.Finalize()` once the world is built: it builds the graph caches, indexes signals and switch blocks by track, and checks the world is consistent (e.g. every signal stands on a real track).
@@ -95,6 +139,7 @@ Identifiers are typed (`ids.PointID`, `ids.TrackID`, `ids.StnCode`, `ids.TrainID
 
 ### 2. Network model (`infra`)
 - Track points are the nodes of the topology and track segments the edges between them.
+- Edges run west to east: `AddTrack(from, to, ...)` takes the west end first, and adding a track again the other way round panics. This only fixes how the world is drawn; trains run either way. Templates also record the drawing: `NewSwitch` takes a `SwitchLayout` (which way the legs leave the toe, and how many lanes the diverging leg moves), and `NewDiamondCrossing` and the slips take how many lanes the crossing tracks move. A plain track can be moved off its lane with `GraphEdge.SetLanes`.
 - A `SwitchBlock` is a set of edges of which only one can be in use at a time: the two legs of a switch, the two routes over a diamond, the routes through a slip. Creating one also tells the graph which transitions are impossible, e.g. running from one switch leg straight onto the other through the switch's toe.
 - A `Signal` stands at a point and faces trains coming from a neighbouring point. `World.FollowsSignals(path)` is true when every signalled track on the path is run the way one of its signals faces; paths that fail it are wrong-direction running. They are de-prioritized rather than ruled out, because scheduled line blocks (e.g. single-line working during possessions) need them. Signals do not yet have aspects of their own.
 - `TrackGraph.GenerateCandidatePaths` enumerates the paths from a point to a target track breadth-first. A path never visits a point twice and never makes a forbidden transition, and the search is deterministic and capped at `MaxCandidatePaths`. `World.RankedPaths` orders them signal-correct first, then shortest.
@@ -138,11 +183,26 @@ The discrete-event engine processes events in time order; events at the same tim
 
 `WORLD_ENTER` → `ROUTE_GRANTED` → `MOVEMENT_AUTHORIZED` → `TRACK_ENTER` / `TRACK_TRAVEL_END` per edge (`MOVEMENT_AUTHORITY_EXTENDED` at a signal when the route already continues past it) → `PATH_COMPLETED` → `TRAIN_ARRIVE` at the scheduled station, or `MOVEMENT_AUTHORITY_END` at a signal short of it, which requests the next section → `TRAIN_DWELL_END` → next section, `TRAIN_DEPART` … → `SCHEDULE_END` → `WORLD_EXIT`.
 
-A fatal inconsistency (e.g. an unknown station in a schedule) stops the run and is returned from `Run()`. Trains that never finish are reported as `STUCK` at the end of the log, with the reason they are waiting.
+A fatal inconsistency (e.g. an unknown station in a schedule) stops the run and is returned from `Run()`. Trains that never finish are logged as `STUCK` entries (`level=WARN`) at the end of the log, with the reason they are waiting, and a failed run ends with a `SIM_ERROR` entry.
 
-## main.go
+### 7. Visualization (`visualization`, `cmd/trainviz`)
+The simulation never knows it is being drawn. A `sim.Observer` can be set on the `Sim`; it is handed every log entry, and told after each event once the train's controller has run.
 
-[main.go](main.go) builds `worlds.BuildTpjKkdiWorld()`: three stations (TPJ, PDKT, KKDI) with four platforms each, connected by a double line (TPJ↔PDKT ~55km, PDKT↔KKDI ~41km) with crossovers at the termini and a signal at the arrival end of each leg. It adds 12 trains (six each way, 20 minutes apart), runs the simulation, and prints how many trains completed their schedule.
+- **`vizproto`** is the stream between the two programs: newline-delimited JSON, one message per line, each with a type and the sim time. A `hello` describes the world, then `track`, `switch`, `train` and `event` messages report what changed, and the stream ends with `end` (or `error` if the run failed). It reports state changes rather than sim events, so the viewer does not depend on how the sim works inside.
+- **`record`** is the `Observer` that writes that stream. After every event it compares the interlocking and the trains with what it last sent, and sends only the difference. Recording does not change the run or its log.
+- **`schematic`** lays a world out as a line schematic: tracks run west to east along horizontal lanes, and switches and crossovers move between lanes. It uses the lane information the templates recorded (see Network model). Nothing is drawn to scale. It renders at three levels (overview, layout, detail) and can overlay a replayed state.
+- **`trainviz`** is the front end: it draws a world, or opens a recording with `replay`, using [Bubble Tea](https://github.com/charmbracelet/bubbletea). See [Draw a world](#draw-a-world) and [Replay a run](#replay-a-run).
+
+## cmd/trainapp
+
+[cmd/trainapp/main.go](cmd/trainapp/main.go) builds `worlds.BuildTpjKkdiWorld()`: three stations (TPJ, PDKT, KKDI) with four platforms each, connected by a double line (TPJ↔PDKT ~55km, PDKT↔KKDI ~41km) with crossovers at the termini and a signal at the arrival end of each leg. It adds 12 trains (six each way, 20 minutes apart), runs the simulation, and prints how many trains completed their schedule, e.g. `12/12 trains completed their schedule by t=234.12 (log: logs/logs.log)`.
+
+| Flag | Default | Effect |
+|---|---|---|
+| `-log` | `text` | Log format: `text` (logfmt, `logs/logs.log`) or `json` (`logs/logs.jsonl`) |
+| `-record` | none | Also write the run to this file, for `trainviz replay` |
+
+The other worlds in `worlds/` are not run by `trainapp`. The single-line and junction worlds are used by the deadlock tests, and all of them can be drawn with `trainviz`.
 
 ## Key design decisions
 
@@ -167,18 +227,80 @@ A fatal inconsistency (e.g. an unknown station in a schedule) stops the run and 
 
 - Go 1.26.3 or newer
 
+Dependencies (Bubble Tea, Lip Gloss and a few helpers for the viewer) are fetched by Go on first build.
+
 ### Run the simulation
 
 From the project root, run:
 
 ```bash
-go run .
+go run ./cmd/trainapp
+go run ./cmd/trainapp -log json            # JSON-lines log instead of logfmt
+go run ./cmd/trainapp -record run.ndjson   # also record the run for trainviz
 ```
 
-### Build the program
+This prints how many trains completed their schedule, and writes the log and the final state dump (see [Output files](#output-files)).
+
+### Draw a world
 
 ```bash
-go build -o trainapp
+go run ./cmd/trainviz -world tpjkkdi         # full screen: pan and zoom
+go run ./cmd/trainviz -print                 # print once
+go run ./cmd/trainviz -print -zoom 2         # print once, wider
+```
+
+`-world` is one of `tpjkkdi`, `test`, `single` or `junction`. With `-print`, `-zoom 1` is the most compact, `-level` is `overview` (stations collapsed to boxes), `layout` or `detail` (with point, track and switch ids), and `-color` is `auto`, `always` or `never`. The schematic is not to scale: lines between stations are labelled with their length instead.
+
+In the viewer, `+`/`-` or the mouse wheel zoom, `hjkl`, the arrows or a mouse drag pan, `/` then a station code jumps to it, `0` fits the world on screen, and `q` quits.
+
+```text
+  TPJ                    PDKT                   KKDI
+[═Pf1═══               ══Pf1═══               ══Pf1══]
+        ╲             ╱        ╲             ╱
+[═Pf2═══─────(55km)────══Pf2═══───(41km)──────══Pf2══]
+          ╳                                ╳
+[═Pf3═══─────(55km)────══Pf3═══───(41km)──────══Pf3══]
+        ╱             ╲        ╱             ╲
+[═Pf4═══               ══Pf4═══               ══Pf4══]
+```
+
+### Replay a run
+
+```bash
+go run ./cmd/trainapp -record run.ndjson
+go run ./cmd/trainviz replay run.ndjson
+go run ./cmd/trainviz replay -print -at 34.5 run.ndjson   # one frame, as text
+```
+
+The recording is newline-delimited JSON (`visualization/vizproto`): a `hello` with the world, then after each sim event the log entries and every track, switch and train that changed. Recording does not change the run or its log. With `-print`, `-at` picks the sim time to show (the end of the run by default), and the frame is followed by a list of the trains and what each waits for.
+
+Tracks are grey when free, green when reserved and red when occupied. A switch leg that is not set is drawn faint. Trains are labelled at their front, e.g. `0451U▶`. Signals (`▶ ◀`) show green when the track beyond is reserved for the approaching train, and red otherwise. The side pane lists each train's phase and what it waits for, and the events pane shows the latest log entries.
+
+| Key | Action |
+|---|---|
+| `space` | play / pause |
+| `[` `]` | slower / faster (x1, x10, x60, x600 sim minutes per real minute) |
+| `.` `,` | step one event forward / back |
+| `tab`, `shift+tab`, `esc` | select a train / clear the selection |
+| `shift+←` `shift+→` | previous / next event of the selected train |
+| `f` | follow the selected train |
+| `home` `end` | jump to the start / end |
+
+The pan, zoom, `/` and `q` keys work in the replay too. Clicking on the timeline seeks to that time.
+
+### Run the tests
+
+```bash
+go test ./...
+```
+
+The deadlock tests (`railway/sim`) run trains over the single-line and junction worlds, and the other packages test their own pieces (graph search, interlocking, movement authority, the event engine, the recorder, the schematic and the viewer).
+
+### Build the programs
+
+```bash
+go build -o trainapp ./cmd/trainapp
+go build -o trainviz ./cmd/trainviz
 ```
 
 ## Development

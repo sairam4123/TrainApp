@@ -34,12 +34,15 @@ func constructPlatform(world *infra.World, stn *infra.Station, pfNo string, pfLe
 
 }
 
+// constructCrossover builds a scissors crossover between two parallel lines
+// a -> b and c -> d, where a and c are the west ends and c-d is one lane below
+// a-b.
 func constructCrossover(world *infra.World, stnCode ids.StnCode, a, b, c, d *infra.TrackPoint) {
-	infra.NewDiamondCrossing(world, newSwitchId(stnCode, "Dp", "0", ""), a, d, b, c)
-	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "0", "A"), a, b, d)
-	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "0", "B"), d, c, a)
-	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "1", "A"), c, d, b)
-	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "1", "B"), b, a, c)
+	infra.NewDiamondCrossing(world, newSwitchId(stnCode, "Dp", "0", ""), a, d, c, b, 1)
+	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "0", "A"), a, b, d, infra.SwitchLayout{Legs: infra.East, Lanes: 1})
+	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "0", "B"), d, c, a, infra.SwitchLayout{Legs: infra.West, Lanes: -1})
+	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "1", "A"), c, d, b, infra.SwitchLayout{Legs: infra.East, Lanes: -1})
+	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "1", "B"), b, a, c, infra.SwitchLayout{Legs: infra.West, Lanes: 1})
 }
 
 func BuildTpjKkdiWorld() *infra.World {
@@ -74,8 +77,8 @@ func BuildTpjKkdiWorld() *infra.World {
 	tpjBp0 := world.NewTrackPoint(newTrackPointId(tpj.Code, "Bp", "0", ""))
 	tpjBp1 := world.NewTrackPoint(newTrackPointId(tpj.Code, "Bp", "1", ""))
 
-	infra.NewSwitch(world, "tpjSw0", tpjBp0, tpjPf1E, tpjPf2E) // 1 & 2 conn
-	infra.NewSwitch(world, "tpjSw1", tpjBp1, tpjPf3E, tpjPf4E) // 3 & 4 conn
+	infra.NewSwitch(world, "tpjSw0", tpjBp0, tpjPf2E, tpjPf1E, infra.SwitchLayout{Legs: infra.West, Lanes: -1}) // 1 & 2 conn
+	infra.NewSwitch(world, "tpjSw1", tpjBp1, tpjPf3E, tpjPf4E, infra.SwitchLayout{Legs: infra.West, Lanes: 1})  // 3 & 4 conn
 
 	tpjBp2 := world.NewTrackPoint(newTrackPointId(tpj.Code, "Bp", "2", ""))
 	tpjBp3 := world.NewTrackPoint(newTrackPointId(tpj.Code, "Bp", "3", ""))
@@ -91,14 +94,14 @@ func BuildTpjKkdiWorld() *infra.World {
 	pdktBp0 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "0", ""))
 	pdktBp1 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "1", ""))
 
-	infra.NewSwitch(world, "pdktSw0", pdktBp0, pdktPf2S, pdktPf1S)
-	infra.NewSwitch(world, "pdktSw1", pdktBp1, pdktPf3S, pdktPf4S)
+	infra.NewSwitch(world, "pdktSw0", pdktBp0, pdktPf2S, pdktPf1S, infra.SwitchLayout{Legs: infra.East, Lanes: -1})
+	infra.NewSwitch(world, "pdktSw1", pdktBp1, pdktPf3S, pdktPf4S, infra.SwitchLayout{Legs: infra.East, Lanes: 1})
 
 	pdktBp2 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "2", ""))
 	pdktBp3 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "3", ""))
 
-	infra.NewSwitch(world, "pdktSw2", pdktBp2, pdktPf2E, pdktPf1E)
-	infra.NewSwitch(world, "pdktSw3", pdktBp3, pdktPf3E, pdktPf4E)
+	infra.NewSwitch(world, "pdktSw2", pdktBp2, pdktPf2E, pdktPf1E, infra.SwitchLayout{Legs: infra.West, Lanes: -1})
+	infra.NewSwitch(world, "pdktSw3", pdktBp3, pdktPf3E, pdktPf4E, infra.SwitchLayout{Legs: infra.West, Lanes: 1})
 
 	kkdi := world.NewStation("KKDI", "Karaikudi Jn")
 
@@ -115,8 +118,8 @@ func BuildTpjKkdiWorld() *infra.World {
 	kkdiBp2 := world.NewTrackPoint(newTrackPointId(kkdi.Code, "Bp", "2", ""))
 	kkdiBp3 := world.NewTrackPoint(newTrackPointId(kkdi.Code, "Bp", "3", ""))
 
-	infra.NewSwitch(world, "kkdiSw0", kkdiBp2, kkdiPf1S, kkdiPf2S) // 1 & 2 conn
-	infra.NewSwitch(world, "kkdiSw1", kkdiBp3, kkdiPf3S, kkdiPf4S) // 3 & 4 conn
+	infra.NewSwitch(world, "kkdiSw0", kkdiBp2, kkdiPf2S, kkdiPf1S, infra.SwitchLayout{Legs: infra.East, Lanes: -1}) // 1 & 2 conn
+	infra.NewSwitch(world, "kkdiSw1", kkdiBp3, kkdiPf3S, kkdiPf4S, infra.SwitchLayout{Legs: infra.East, Lanes: 1})  // 3 & 4 conn
 
 	kkdiBp0 := world.NewTrackPoint(newTrackPointId(kkdi.Code, "Bp", "0", ""))
 	kkdiBp1 := world.NewTrackPoint(newTrackPointId(kkdi.Code, "Bp", "1", ""))

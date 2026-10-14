@@ -15,8 +15,8 @@ func NewStationSL2PF(world *World, stnCode ids.StnCode, stnName string) (*Statio
 	stnPf2S := world.NewTrackPoint(ids.PointID{StnCode: stnCode, Type: "Pf", Seq: "2", Other: "S"})
 	stnPf2E := world.NewTrackPoint(ids.PointID{StnCode: stnCode, Type: "Pf", Seq: "2", Other: "E"})
 
-	NewSwitch(world, ids.PointID{StnCode: stnCode, Type: "Sw", Seq: "1", Other: "A"}.String(), stnBp0, stnPf1S, stnPf2S)
-	NewSwitch(world, ids.PointID{StnCode: stnCode, Type: "Sw", Seq: "2", Other: "A"}.String(), stnBp1, stnPf1E, stnPf2E)
+	NewSwitch(world, ids.PointID{StnCode: stnCode, Type: "Sw", Seq: "1", Other: "A"}.String(), stnBp0, stnPf1S, stnPf2S, SwitchLayout{Legs: East, Lanes: 1})
+	NewSwitch(world, ids.PointID{StnCode: stnCode, Type: "Sw", Seq: "2", Other: "A"}.String(), stnBp1, stnPf1E, stnPf2E, SwitchLayout{Legs: West, Lanes: 1})
 
 	stnPf1 := world.TrackGraph.AddTrack(stnPf1S, stnPf1E, world.NewPlatformTrack("")).Track
 	stnPf2 := world.TrackGraph.AddTrack(stnPf2S, stnPf2E, world.NewPlatformTrack("")).Track

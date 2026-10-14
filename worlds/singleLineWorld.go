@@ -43,12 +43,18 @@ func platforms(world *infra.World, stn *infra.Station, n int) (west, east *infra
 }
 
 // throat joins the given platform ends into one point through a ladder of
-// switches, returning that point. A single end is its own throat.
+// switches, returning that point. A single end is its own throat. The ladder
+// keeps ends[0] straight through and lays the others out one lane apart below
+// it; side "W" is the west throat, "E" the east one.
 func throat(world *infra.World, code ids.StnCode, side string, ends []*infra.TrackPoint) *infra.TrackPoint {
+	legs := infra.East
+	if side == "E" {
+		legs = infra.West
+	}
 	cur := ends[0]
 	for i, next := range ends[1:] {
 		toe := world.NewTrackPoint(newTrackPointId(code, "Th"+side, fmt.Sprint(i), ""))
-		infra.NewSwitch(world, newSwitchId(code, "Sw"+side, fmt.Sprint(i), ""), toe, cur, next)
+		infra.NewSwitch(world, newSwitchId(code, "Sw"+side, fmt.Sprint(i), ""), toe, cur, next, infra.SwitchLayout{Legs: legs, Lanes: i + 1})
 		cur = toe
 	}
 	return cur
@@ -155,7 +161,8 @@ func BuildJunctionWorld(terminusPlatforms int) *infra.World {
 	toe := world.NewTrackPoint(ids.PointID{StnCode: "JCT", Type: "Tp"})
 	east := world.NewTrackPoint(ids.PointID{StnCode: "JCT", Type: "Ea"})
 	north := world.NewTrackPoint(ids.PointID{StnCode: "JCT", Type: "No"})
-	infra.NewSwitch(world, "jctSw", toe, east, north)
+	// the branch climbs above the EJN platforms, which take lanes 0 and down
+	infra.NewSwitch(world, "jctSw", toe, east, north, infra.SwitchLayout{Legs: infra.East, Lanes: -terminusPlatforms})
 
 	singleLine(world, "jlWM", wjnE, midW, units.KM(10), 2)
 	singleLine(world, "jlMJ", midE, toe, units.KM(5), 1)

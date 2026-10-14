@@ -1,11 +1,15 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
 	"log"
+	"os"
 	"trainapp/railway/ops"
 	"trainapp/railway/sim"
 	"trainapp/units"
+	"trainapp/visualization/record"
 	"trainapp/worlds"
 )
 
@@ -105,7 +109,11 @@ import (
 
 func main() {
 	world := worlds.BuildTpjKkdiWorld()
-	s := &sim.Sim{}
+	logFormat := flag.String("log", string(sim.LogText), "log format: text (logfmt) or json (one object per line)")
+	recordPath := flag.String("record", "", "also write the run to this file for trainviz replay")
+	flag.Parse()
+
+	s := &sim.Sim{LogFormat: sim.LogFormat(*logFormat)}
 	s.SetWorld(world)
 
 	tpj, ok := world.GetStation("TPJ")
@@ -184,7 +192,28 @@ func main() {
 	if err := s.Init(); err != nil {
 		log.Fatal(err)
 	}
+
+	var rec *record.Recorder
+	var recFile *os.File
+	if *recordPath != "" {
+		f, err := os.Create(*recordPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		recFile = f
+		if rec, err = record.New(f, s); err != nil {
+			log.Fatal(err)
+		}
+		s.Observer = rec
+	}
+
 	runErr := s.Run()
+
+	if rec != nil {
+		if err := errors.Join(rec.Close(runErr), recFile.Close()); err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	exited := 0
 	for _, st := range s.Status() {
@@ -198,7 +227,7 @@ func main() {
 		}
 		fmt.Println()
 	}
-	fmt.Printf("%d/%d trains completed their schedule by t=%.2f (log: logs/logs.log)\n", exited, len(s.Status()), s.CurTime())
+	fmt.Printf("%d/%d trains completed their schedule by t=%.2f (log: %s)\n", exited, len(s.Status()), s.CurTime(), s.LogPath())
 	if runErr != nil {
 		log.Fatal(runErr)
 	}

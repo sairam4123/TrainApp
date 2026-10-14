@@ -43,8 +43,8 @@ func BuildTestWorld() *infra.World {
 
 	tpjBp0 := world.NewTrackPoint(newTrackPointId("TPJ", "Bp", "0", ""))
 
-	infra.NewSwitch(world, "tpjSw1A", tpjBp0, tpjPf1E, tpjPf2E)
-	infra.NewSwitch(world, "tpjSw1B", tpjBp0, tpjPf2E, tpjPf3E)
+	infra.NewSwitch(world, "tpjSw1A", tpjBp0, tpjPf1E, tpjPf2E, infra.SwitchLayout{Legs: infra.West, Lanes: 1})
+	infra.NewSwitch(world, "tpjSw1B", tpjBp0, tpjPf2E, tpjPf3E, infra.SwitchLayout{Legs: infra.West, Lanes: 2})
 
 	// tpjPf1ESw1 := world.NewSwitchTrack("tpjPf1ESw1")
 	// tpjPf2ESw1 := world.NewSwitchTrack("tpjPf2ESw1")
@@ -123,7 +123,7 @@ func BuildTestWorld() *infra.World {
 
 	kkdiBp0 := world.NewTrackPoint(newTrackPointId("KKDI", "Bp", "0", ""))
 
-	infra.NewSwitch(world, "kkdiSw1A", kkdiBp0, kkdiPf1S, kkdiPf2S)
+	infra.NewSwitch(world, "kkdiSw1A", kkdiBp0, kkdiPf1S, kkdiPf2S, infra.SwitchLayout{Legs: infra.East, Lanes: 1})
 
 	// kkdiSw1Pf1S := world.NewSwitchTrack("kkdiSw1Pf1S")
 	// kkdiSw1Pf2S := world.NewSwitchTrack("kkdiSw1Pf2S")
@@ -146,8 +146,8 @@ func BuildTestWorld() *infra.World {
 	bsKrurPdkt0 := world.NewTrackSegment("bsKrurPdkt0", units.KM(7))
 
 	world.TrackGraph.AddTrack(tpjBp0, tpjCp1, bsTpjPdkt0)
-	world.TrackGraph.AddTrack(tpjCp1, krurCp1, bsTpjKrur0)
-	world.TrackGraph.AddTrack(krurCp1, pdktCp1, bsKrurPdkt0)
+	world.TrackGraph.AddTrack(tpjCp1, krurCp1, bsTpjKrur0).SetLanes(-1) // via KRUR, drawn above the direct line
+	world.TrackGraph.AddTrack(krurCp1, pdktCp1, bsKrurPdkt0).SetLanes(1)
 	world.TrackGraph.AddTrack(tpjCp1, pdktCp1, bsTpjPdkt1)
 	world.TrackGraph.AddTrack(pdktCp1, pdktBp0, bsTpjPdkt2)
 

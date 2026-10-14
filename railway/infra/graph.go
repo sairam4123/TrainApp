@@ -13,10 +13,28 @@ const MaxCandidatePaths = 256
 
 var ErrCacheNotBuilt = errors.New("track graph cache not built, call World.Finalize (or TrackGraph.BuildCacheMap) first")
 
+// GraphEdge is a track between two points. Edges run west to east: From is
+// the west end and To the east end, which is how the schematic lays the world
+// out. Trains may still run either way; see Step for a direction of travel.
 type GraphEdge struct {
 	Track *TrackSegment
 	From  *TrackPoint
 	To    *TrackPoint
+
+	// Lanes is how many schematic lanes the track moves going from From to To
+	// (positive is down). Only drawing uses it.
+	Lanes int
+}
+
+// SetLanes records how many lanes the track moves west to east. It panics if
+// the track already moves a different, non-zero number of lanes, since two
+// templates then disagree about the layout.
+func (e *GraphEdge) SetLanes(n int) *GraphEdge {
+	if e.Lanes != 0 && e.Lanes != n {
+		panic(fmt.Sprintf("infra: track %s moves %d lanes, cannot also move %d", e.Track, e.Lanes, n))
+	}
+	e.Lanes = n
+	return e
 }
 
 // Other returns the end of the edge opposite to pt, or nil if pt is not an end.
@@ -92,19 +110,24 @@ func (graph *TrackGraph) FindWorldBoundaryPoint(segment *TrackSegment) *TrackPoi
 }
 
 // AddTrack joins two points with a track and returns the resulting edge. The
-// track's id is set from the two points.
+// track's id is set from the two points. fromPoint is the west end and toPoint
+// the east end.
 //
 // Adding a second track between the same two points returns the existing edge,
 // which keeps the lower of the two speed limits. This is how overlapping switch
 // blocks (e.g. a scissors crossover) share edges. Using two different point
-// objects with the same id, or a track already added between other points, is
-// a construction bug and panics.
+// objects with the same id, a track already added between other points, or
+// adding the same track again in the opposite direction is a construction bug
+// and panics.
 func (graph *TrackGraph) AddTrack(fromPoint *TrackPoint, toPoint *TrackPoint, track *TrackSegment) *GraphEdge {
 	id := ids.NewTrackID(fromPoint.Id, toPoint.Id)
 	if !track.Id.IsZero() && track.Id != id {
 		panic(fmt.Sprintf("infra: track %s is already in the graph, cannot add it again between %s and %s", track, fromPoint.Id, toPoint.Id))
 	}
 	if existing, ok := graph.Edges[id]; ok {
+		if existing.From.Id != fromPoint.Id {
+			panic(fmt.Sprintf("infra: track %s runs %s -> %s, cannot add it again as %s -> %s", existing.Track, existing.From.Id, existing.To.Id, fromPoint.Id, toPoint.Id))
+		}
 		existing.Track.MaxSpeed = min(existing.Track.MaxSpeed, track.MaxSpeed)
 		if existing.Track.Name == "" {
 			existing.Track.Name = track.Name

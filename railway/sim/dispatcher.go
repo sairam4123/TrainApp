@@ -101,7 +101,7 @@ func (disp *Dispatcher) request(req *RouteRequest) (*interlocking.Route, bool) {
 	req.LastErr = err
 	disp.requests[id] = req
 	disp.waits.Wait(id, blockers...)
-	disp.sim.logf("ROUTE_WAIT - %s to %s: %v", req.Train.Name, req.Station.Code, err)
+	disp.sim.logRouteWait(req, blockers)
 	return nil, false
 }
 
@@ -123,7 +123,7 @@ func (disp *Dispatcher) OnTrackReleased(track *infra.TrackSegment) {
 			continue
 		}
 		disp.served(id, route)
-		disp.sim.logf("ROUTE_RETRY_OK - %s to %s after %s was released", req.Train.Name, req.Station.Code, track)
+		disp.sim.logRouteRetryOK(req, track)
 		disp.sim.ScheduleEventNext(ops.RouteGranted, route, id)
 	}
 }

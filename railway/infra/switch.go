@@ -24,29 +24,59 @@ type SwitchBlock struct {
 	managedEdges []*GraphEdge
 }
 
-func NewSwitch(world *World, id string, from, to, div *TrackPoint) *SwitchBlock {
-	// create two edges
-	// from -> to  (straight)
-	// from -> div (diverging)
+// Heading is a direction along the schematic: East is left to right.
+type Heading int
 
-	fromAEdge := world.TrackGraph.AddTrack(from, to, world.NewTrackSegment("", world.data.DefaultSwLength))
-	fromBEdge := world.TrackGraph.AddTrack(from, div, world.NewSwitchTrack(""))
+const (
+	East Heading = iota
+	West
+)
+
+// SwitchLayout says how a switch is drawn: which way its legs leave the toe,
+// and how many lanes the diverging leg ends up from the toe (positive is
+// down). The straight leg keeps whatever lanes it already has, 0 if it is new.
+type SwitchLayout struct {
+	Legs  Heading
+	Lanes int
+}
+
+// NewSwitch joins toe to straight and to div; only one of the two legs can be
+// in use at a time.
+func NewSwitch(world *World, id string, toe, straight, div *TrackPoint, layout SwitchLayout) *SwitchBlock {
+	if layout.Lanes == 0 {
+		panic(fmt.Sprintf("infra: switch %s: the diverging leg must move at least one lane", id))
+	}
+	var straightEdge, divEdge *GraphEdge
+	switch layout.Legs {
+	case East:
+		straightEdge = world.TrackGraph.AddTrack(toe, straight, world.NewTrackSegment("", world.data.DefaultSwLength))
+		divEdge = world.TrackGraph.AddTrack(toe, div, world.NewSwitchTrack("")).SetLanes(layout.Lanes)
+	case West:
+		straightEdge = world.TrackGraph.AddTrack(straight, toe, world.NewTrackSegment("", world.data.DefaultSwLength))
+		divEdge = world.TrackGraph.AddTrack(div, toe, world.NewSwitchTrack("")).SetLanes(-layout.Lanes)
+	default:
+		panic(fmt.Sprintf("infra: switch %s: unknown heading %d", id, layout.Legs))
+	}
+
+	return world.newSwitchBlock(id, []*GraphEdge{straightEdge, divEdge}, straightEdge)
+}
+
+// NewDiamondCrossing creates two tracks that cross each other, fromA -> toA
+// and fromB -> toB, with the from points at the west end. A moves lanes lanes
+// and B moves them back, so the two cross on the schematic.
+func NewDiamondCrossing(world *World, id string, fromA, toA, fromB, toB *TrackPoint, lanes int) *SwitchBlock {
+	if lanes == 0 {
+		panic(fmt.Sprintf("infra: diamond %s: the tracks must move at least one lane to cross", id))
+	}
+	fromAEdge := world.TrackGraph.AddTrack(fromA, toA, world.NewSwitchTrack("")).SetLanes(lanes)
+	fromBEdge := world.TrackGraph.AddTrack(fromB, toB, world.NewSwitchTrack("")).SetLanes(-lanes)
 
 	return world.newSwitchBlock(id, []*GraphEdge{fromAEdge, fromBEdge}, fromAEdge)
 }
 
-func NewDiamondCrossing(world *World, id string, fromA, toA, fromB, toB *TrackPoint) *SwitchBlock {
-	// create two edges that cross each other
-	// fromA -> toA
-	// fromB -> toB
-
-	fromAEdge := world.TrackGraph.AddTrack(fromA, toA, world.NewSwitchTrack(""))
-	fromBEdge := world.TrackGraph.AddTrack(fromB, toB, world.NewSwitchTrack(""))
-
-	return world.newSwitchBlock(id, []*GraphEdge{fromAEdge, fromBEdge}, fromAEdge)
-}
-
-func newSlipSwitch(world *World, id string, fromA, toA, fromB, toB *TrackPoint, isDoubleSlip bool, orientation SlipOrientation) (*SwitchBlock, error) {
+// newSlipSwitch is a diamond (fromA -> toA, fromB -> toB, laid out as in
+// NewDiamondCrossing) with slip routes fromA -> toB and/or fromB -> toA.
+func newSlipSwitch(world *World, id string, fromA, toA, fromB, toB *TrackPoint, lanes int, isDoubleSlip bool, orientation SlipOrientation) (*SwitchBlock, error) {
 
 	if orientation != FromAtoB && orientation != FromBtoA {
 		return nil, fmt.Errorf("Orientation possible values: 0, 1, received: %d", orientation)
@@ -54,9 +84,12 @@ func newSlipSwitch(world *World, id string, fromA, toA, fromB, toB *TrackPoint, 
 	if orientation != FromAtoB && isDoubleSlip {
 		return nil, errors.New("Orientation must be 0 for double slips. ")
 	}
+	if lanes == 0 {
+		return nil, errors.New("the crossing tracks must move at least one lane")
+	}
 
-	fromAEdge := world.TrackGraph.AddTrack(fromA, toA, world.NewTrackSegment("", world.data.DefaultSwLength))
-	fromBEdge := world.TrackGraph.AddTrack(fromB, toB, world.NewTrackSegment("", world.data.DefaultSwLength))
+	fromAEdge := world.TrackGraph.AddTrack(fromA, toA, world.NewTrackSegment("", world.data.DefaultSwLength)).SetLanes(lanes)
+	fromBEdge := world.TrackGraph.AddTrack(fromB, toB, world.NewTrackSegment("", world.data.DefaultSwLength)).SetLanes(-lanes)
 	managedEdges := []*GraphEdge{fromAEdge, fromBEdge}
 
 	if isDoubleSlip || orientation == FromAtoB {
@@ -69,12 +102,12 @@ func newSlipSwitch(world *World, id string, fromA, toA, fromB, toB *TrackPoint, 
 	return world.newSwitchBlock(id, managedEdges, fromAEdge), nil
 }
 
-func NewSingleSlip(world *World, id string, fromA, toA, fromB, toB *TrackPoint, orientation SlipOrientation) (*SwitchBlock, error) {
-	return newSlipSwitch(world, id, fromA, toA, fromB, toB, false, orientation)
+func NewSingleSlip(world *World, id string, fromA, toA, fromB, toB *TrackPoint, lanes int, orientation SlipOrientation) (*SwitchBlock, error) {
+	return newSlipSwitch(world, id, fromA, toA, fromB, toB, lanes, false, orientation)
 }
 
-func NewDoubleSlip(world *World, id string, fromA, toA, fromB, toB *TrackPoint) (*SwitchBlock, error) {
-	return newSlipSwitch(world, id, fromA, toA, fromB, toB, true, FromAtoB)
+func NewDoubleSlip(world *World, id string, fromA, toA, fromB, toB *TrackPoint, lanes int) (*SwitchBlock, error) {
+	return newSlipSwitch(world, id, fromA, toA, fromB, toB, lanes, true, FromAtoB)
 }
 
 func (sb *SwitchBlock) SetDefaultEdge(edge *GraphEdge) error {

@@ -3,7 +3,7 @@ package sim
 import (
 	"errors"
 	"fmt"
-	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"trainapp/des"
@@ -26,8 +26,12 @@ type Sim struct {
 
 	// OutputDir is where logs/ and dumps/ are written. Defaults to ".".
 	OutputDir string
+	// LogFormat is the format of the run log; see LogPath. Defaults to LogText.
+	LogFormat LogFormat
+	// Observer, if set, watches Run (e.g. to record it).
+	Observer Observer
 
-	logger      io.Writer
+	log         *slog.Logger
 	initialized bool
 	err         error // first fatal error; stops the run
 }
@@ -80,7 +84,7 @@ func (s *Sim) Init() error {
 		return err
 	}
 	s.ilk = ilk
-	s.logger = io.Discard
+	s.log = slog.New(slog.DiscardHandler)
 
 	s.trainCtrllers = make(map[ids.TrainID]*TrainController)
 
@@ -134,10 +138,6 @@ func (s *Sim) fail(err error) {
 	}
 }
 
-func (s *Sim) logf(format string, args ...any) {
-	fmt.Fprintf(s.logger, "[%.2f] "+format+"\n", append([]any{s.CurTime()}, args...)...)
-}
-
 func (s *Sim) outputPath(parts ...string) string {
 	dir := s.OutputDir
 	if dir == "" {
@@ -177,7 +177,7 @@ func (s *Sim) InitLogger() (*os.File, error) {
 	if err := os.MkdirAll(s.outputPath("logs"), 0755); err != nil {
 		return nil, err
 	}
-	return os.Create(s.outputPath("logs", "logs.log"))
+	return os.Create(s.LogPath())
 }
 
 // clearDumps removes dump files from earlier runs, and nothing else.
@@ -204,8 +204,8 @@ func (s *Sim) Run() error {
 		return err
 	}
 	defer logger.Close()
-	s.logger = logger
-	defer func() { s.logger = io.Discard }()
+	s.log = s.newLogger(logger)
+	defer func() { s.log = slog.New(slog.DiscardHandler) }()
 
 	if err := s.clearDumps(); err != nil {
 		return err
@@ -216,23 +216,19 @@ func (s *Sim) Run() error {
 		if !ok {
 			break
 		}
-		s.logEvent(ev)
-
-		if ev.TrainID == "" {
-			continue
+		s.handle(ev)
+		if s.Observer != nil {
+			s.Observer.AfterEvent(ev)
 		}
-		tc, ok := s.trainCtrllers[ids.TrainID{Number: ev.TrainID}]
-		if !ok {
-			s.fail(fmt.Errorf("event %s for unknown train %q", ev.Type, ev.TrainID))
-			break
-		}
-		tc.OnEvent(ev.Type, ev.Data)
 	}
 
 	for _, st := range s.Status() {
 		if st.Phase != phaseExited.String() {
-			s.logf("STUCK - %s (%s)%s", st.Train.Name, st.Phase, st.waitingSuffix())
+			s.logStuck(st)
 		}
+	}
+	if s.err != nil {
+		s.log.Error("SIM_ERROR", "err", s.err.Error())
 	}
 	if err := s.DumpSim(); err != nil && s.err == nil {
 		return err
@@ -240,23 +236,17 @@ func (s *Sim) Run() error {
 	return s.err
 }
 
-func (s *Sim) logEvent(ev des.Event[ops.RailwayEvent]) {
-	switch data := ev.Data.(type) {
-	case *ops.Train:
-		if trk := data.CurrentTrack(); trk != nil {
-			fmt.Fprintf(s.logger, "[%.2f] %s - %s  (Track %s - %dm)\n", ev.Time, ev.Type, data.Name, trk, int(trk.Length))
-		} else {
-			fmt.Fprintf(s.logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, data.Name)
-		}
-	case *infra.TrackSegment:
-		fmt.Fprintf(s.logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, data)
-	case *ops.MovementAuthority:
-		fmt.Fprintf(s.logger, "[%.2f] %s - %s (up to %s)\n", ev.Time, ev.Type, ev.TrainID, data.Route().Step(data.Limit()).Edge.Track)
-	case *interlocking.Route:
-		fmt.Fprintf(s.logger, "[%.2f] %s - %s (%s)\n", ev.Time, ev.Type, ev.TrainID, data.Path())
-	default:
-		fmt.Fprintf(s.logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, ev.TrainID)
+func (s *Sim) handle(ev des.Event[ops.RailwayEvent]) {
+	s.logEvent(ev)
+	if ev.TrainID == "" {
+		return
 	}
+	tc, ok := s.trainCtrllers[ids.TrainID{Number: ev.TrainID}]
+	if !ok {
+		s.fail(fmt.Errorf("event %s for unknown train %q", ev.Type, ev.TrainID))
+		return
+	}
+	tc.OnEvent(ev.Type, ev.Data)
 }
 
 // TrainStatus is where a train ended up.
@@ -264,13 +254,6 @@ type TrainStatus struct {
 	Train   *ops.Train
 	Phase   string
 	Waiting *RouteRequest // set if the train is queued for a route
-}
-
-func (st TrainStatus) waitingSuffix() string {
-	if st.Waiting == nil {
-		return ""
-	}
-	return fmt.Sprintf(" waiting since %.2f for %s pf%s: %v", st.Waiting.Since, st.Waiting.Station.Code, st.Waiting.PrefPfNo, st.Waiting.LastErr)
 }
 
 // Status reports every train's phase, in the order the trains were added.
