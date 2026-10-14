@@ -3,6 +3,7 @@ package infra
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
 type SlipOrientation int
@@ -12,6 +13,9 @@ const (
 	FromBtoA
 )
 
+// SwitchBlock is a set of edges of which only one can be in use at a time
+// (the legs of a switch, the two routes over a diamond, ...). Its position and
+// lock are runtime state owned by the interlocking.
 type SwitchBlock struct {
 	Id string
 
@@ -22,97 +26,47 @@ type SwitchBlock struct {
 
 func NewSwitch(world *World, id string, from, to, div *TrackPoint) *SwitchBlock {
 	// create two edges
-	// from -> a
-	// from -> b
+	// from -> to  (straight)
+	// from -> div (diverging)
 
-	fromA := world.NewTrackSegment(NewTrackID(from, to), world.data.DefaultSwLength)
-	fromB := world.NewSwitchTrack(NewTrackID(from, div))
+	fromAEdge := world.TrackGraph.AddTrack(from, to, world.NewTrackSegment("", world.data.DefaultSwLength))
+	fromBEdge := world.TrackGraph.AddTrack(from, div, world.NewSwitchTrack(""))
 
-	world.TrackGraph.AddTrack(from, to, fromA)
-	world.TrackGraph.AddTrack(from, div, fromB)
-
-	fromAEdge := world.TrackGraph.Edges[fromA.Id]
-	fromBEdge := world.TrackGraph.Edges[fromB.Id]
-
-	managedEdges := []*GraphEdge{fromAEdge, fromBEdge}
-	swBlk := world.newSwitchBlock(id, managedEdges, fromAEdge)
-	return swBlk
+	return world.newSwitchBlock(id, []*GraphEdge{fromAEdge, fromBEdge}, fromAEdge)
 }
 
 func NewDiamondCrossing(world *World, id string, fromA, toA, fromB, toB *TrackPoint) *SwitchBlock {
-	// create two edges
+	// create two edges that cross each other
 	// fromA -> toA
 	// fromB -> toB
 
-	fromATrk := world.NewTrackSegment(NewTrackID(fromA, toA), world.data.DefaultSwLength)
-	fromBTrk := world.NewTrackSegment(NewTrackID(fromB, toB), world.data.DefaultSwLength)
+	fromAEdge := world.TrackGraph.AddTrack(fromA, toA, world.NewSwitchTrack(""))
+	fromBEdge := world.TrackGraph.AddTrack(fromB, toB, world.NewSwitchTrack(""))
 
-	world.TrackGraph.AddTrack(fromA, toA, fromATrk)
-	world.TrackGraph.AddTrack(fromB, toB, fromBTrk)
-
-	fromAEdge := world.TrackGraph.Edges[fromATrk.Id]
-	fromBEdge := world.TrackGraph.Edges[fromBTrk.Id]
-
-	managedEdges := []*GraphEdge{fromAEdge, fromBEdge}
-
-	swBlk := world.newSwitchBlock(id, managedEdges, fromAEdge)
-
-	return swBlk
-
+	return world.newSwitchBlock(id, []*GraphEdge{fromAEdge, fromBEdge}, fromAEdge)
 }
 
 func newSlipSwitch(world *World, id string, fromA, toA, fromB, toB *TrackPoint, isDoubleSlip bool, orientation SlipOrientation) (*SwitchBlock, error) {
 
-	if orientation > 1 {
-		return nil, errors.New("Orientation possible values: 0, 1")
+	if orientation != FromAtoB && orientation != FromBtoA {
+		return nil, fmt.Errorf("Orientation possible values: 0, 1, received: %d", orientation)
 	}
-	if orientation != 0 && isDoubleSlip {
+	if orientation != FromAtoB && isDoubleSlip {
 		return nil, errors.New("Orientation must be 0 for double slips. ")
 	}
 
-	fromATrk := world.NewTrackSegment(NewTrackID(fromA, toA), world.data.DefaultSwLength)
-	fromBTrk := world.NewTrackSegment(NewTrackID(fromB, toB), world.data.DefaultSwLength)
-
-	world.TrackGraph.AddTrack(fromA, toA, fromATrk)
-	world.TrackGraph.AddTrack(fromB, toB, fromBTrk)
-
-	fromAEdge := world.TrackGraph.Edges[fromA.Id]
-	fromBEdge := world.TrackGraph.Edges[fromB.Id]
+	fromAEdge := world.TrackGraph.AddTrack(fromA, toA, world.NewTrackSegment("", world.data.DefaultSwLength))
+	fromBEdge := world.TrackGraph.AddTrack(fromB, toB, world.NewTrackSegment("", world.data.DefaultSwLength))
 	managedEdges := []*GraphEdge{fromAEdge, fromBEdge}
 
-	if isDoubleSlip {
-		fromAtoB := world.NewSwitchTrack(NewTrackID(fromA, toB))
-		fromBtoA := world.NewSwitchTrack(NewTrackID(fromB, toA))
-
-		world.TrackGraph.AddTrack(fromA, toB, fromAtoB)
-		world.TrackGraph.AddTrack(fromB, toA, fromBtoA)
-
-		fromAtoBEdge := world.TrackGraph.Edges[fromAtoB.Id]
-		fromBtoAEdge := world.TrackGraph.Edges[fromBtoA.Id]
-
-		managedEdges = append(managedEdges, fromAtoBEdge, fromBtoAEdge)
-	} else {
-		switch orientation {
-		case FromAtoB:
-			fromAtoB := world.NewSwitchTrack(NewTrackID(fromA, toB))
-			world.TrackGraph.AddTrack(fromA, toB, fromAtoB)
-			fromAtoBEdge := world.TrackGraph.Edges[fromAtoB.Id]
-			managedEdges = append(managedEdges, fromAtoBEdge)
-
-		case FromBtoA:
-			fromBtoA := world.NewSwitchTrack(NewTrackID(fromB, toA))
-			world.TrackGraph.AddTrack(fromB, toA, fromBtoA)
-			fromBtoAEdge := world.TrackGraph.Edges[fromBtoA.Id]
-			managedEdges = append(managedEdges, fromBtoAEdge)
-
-		default:
-			return nil, fmt.Errorf("Orientation possible values: 0, 1, received: %d", orientation)
-		}
+	if isDoubleSlip || orientation == FromAtoB {
+		managedEdges = append(managedEdges, world.TrackGraph.AddTrack(fromA, toB, world.NewSwitchTrack("")))
+	}
+	if isDoubleSlip || orientation == FromBtoA {
+		managedEdges = append(managedEdges, world.TrackGraph.AddTrack(fromB, toA, world.NewSwitchTrack("")))
 	}
 
-	swBlk := world.newSwitchBlock(id, managedEdges, fromAEdge)
-
-	return swBlk, nil
+	return world.newSwitchBlock(id, managedEdges, fromAEdge), nil
 }
 
 func NewSingleSlip(world *World, id string, fromA, toA, fromB, toB *TrackPoint, orientation SlipOrientation) (*SwitchBlock, error) {
@@ -124,37 +78,21 @@ func NewDoubleSlip(world *World, id string, fromA, toA, fromB, toB *TrackPoint) 
 }
 
 func (sb *SwitchBlock) SetDefaultEdge(edge *GraphEdge) error {
+	if !slices.Contains(sb.managedEdges, edge) {
+		return fmt.Errorf("edge %s is not managed by switch block %s", edge.Track, sb.Id)
+	}
 	sb.defaultEdge = edge
 	return nil
 }
 
-func (sb *SwitchBlock) ListManagedEdges() []*GraphEdge {
-	return sb.managedEdges
+func (sb *SwitchBlock) DefaultEdge() *GraphEdge {
+	return sb.defaultEdge
 }
 
-// func (sb *SwitchBlock) LockSwitchFor(train *ops.Train) error {
-// 	if sb.isLocked && sb.lockedBy.Number != train.Number {
-// 		return fmt.Errorf("Switch already locked by train %s, cannot lock switch %s", sb.lockedBy, sb.Id)
-// 	}
-// 	if sb.activeEdge == nil {
-// 		return fmt.Errorf("Switch does not have active edge, cannot lock switch %s", sb.Id)
-// 	}
+func (sb *SwitchBlock) ListManagedEdges() []*GraphEdge {
+	return slices.Clone(sb.managedEdges)
+}
 
-// 	sb.isLocked = true
-// 	sb.lockedBy = train
-
-// 	return nil
-// }
-
-// func (sb *SwitchBlock) UnlockSwitchFor(train *ops.Train) error {
-// 	if !sb.isLocked {
-// 		return fmt.Errorf("Switch not locked, cannot unlock switch %s", sb.Id)
-// 	}
-// 	if sb.lockedBy != nil && sb.lockedBy.Number != train.Number {
-// 		return fmt.Errorf("Switch locked by train %s, cannot unlock switch %s", sb.lockedBy, sb.Id)
-// 	}
-
-// 	sb.isLocked = false
-// 	sb.lockedBy = nil
-// 	return nil
-// }
+func (sb *SwitchBlock) Manages(edge *GraphEdge) bool {
+	return slices.Contains(sb.managedEdges, edge)
+}

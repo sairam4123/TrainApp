@@ -3,19 +3,25 @@ package worlds
 import (
 	"fmt"
 	"strings"
-	"trainapp/railway"
+	"trainapp/railway/ids"
+	"trainapp/railway/infra"
 	"trainapp/units"
 )
 
-func newTrackPointId(stnCode string, tpType string, tpId string, other string) string {
-	return fmt.Sprintf("%s%s%s%s", strings.ToLower(stnCode), tpType, tpId, other)
+func newTrackPointId(stnCode ids.StnCode, tpType string, tpId string, other string) ids.PointID {
+	return ids.PointID{StnCode: stnCode, Type: tpType, Seq: tpId, Other: other}
 }
 
-func newPfTrackId(stnCode string, pfNo string) string {
-	return fmt.Sprintf("%sPf%s", strings.ToLower(stnCode), pfNo)
+// newSwitchId names a switch block with the same scheme as track points, e.g. "tpjSw0A".
+func newSwitchId(stnCode ids.StnCode, swType string, swId string, other string) string {
+	return newTrackPointId(stnCode, swType, swId, other).String()
 }
 
-func constructPlatform(world *railway.World, stn *railway.Station, pfNo string, pfLen units.Meters) (*railway.TrackPoint, *railway.TrackPoint, *railway.TrackSegment) {
+func newPfTrackId(stnCode ids.StnCode, pfNo string) string {
+	return fmt.Sprintf("%sPf%s", strings.ToLower(string(stnCode)), pfNo)
+}
+
+func constructPlatform(world *infra.World, stn *infra.Station, pfNo string, pfLen units.Meters) (*infra.TrackPoint, *infra.TrackPoint, *infra.TrackSegment) {
 	stnPfS := world.NewTrackPoint(newTrackPointId(stn.Code, "Pf", pfNo, "S"))
 	stnPfE := world.NewTrackPoint(newTrackPointId(stn.Code, "Pf", pfNo, "E"))
 
@@ -28,68 +34,15 @@ func constructPlatform(world *railway.World, stn *railway.Station, pfNo string, 
 
 }
 
-func pathDistance(path *railway.Path) float64 {
-	dist := 0.0
-
-	for _, edge := range path.Edges {
-		dist += float64(edge.Track.Length)
-	}
-	return dist
+func constructCrossover(world *infra.World, stnCode ids.StnCode, a, b, c, d *infra.TrackPoint) {
+	infra.NewDiamondCrossing(world, newSwitchId(stnCode, "Dp", "0", ""), a, d, b, c)
+	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "0", "A"), a, b, d)
+	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "0", "B"), d, c, a)
+	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "1", "A"), c, d, b)
+	infra.NewSwitch(world, newSwitchId(stnCode, "Sw", "1", "B"), b, a, c)
 }
 
-func IsCorrectWay(world *railway.World, path *railway.Path, initPoint *railway.TrackPoint) bool {
-	curPoint := initPoint
-	curPtIdx := 0
-
-	trackSigMap := make(map[string]string) // TEMP: trackId -> signalId / "" (if no sig is present)
-	for _, edge := range world.TrackGraph.Edges {
-		trackSigMap[edge.Track.Id] = ""
-	}
-
-	for _, sig := range world.ListSignals() {
-		atPMap := world.TrackGraph.NeighborMap[sig.AtPoint.Id]
-		if atPMap != nil {
-			trk := atPMap[sig.FacingPoint.Id]
-			trackSigMap[trk.Id] = sig.Id
-		}
-	}
-
-	facesRight := true
-
-	for {
-		if curPtIdx >= len(path.Edges) {
-			break
-		}
-		edge := path.Edges[curPtIdx]
-		prevPoint := curPoint
-		curPoint = world.TrackGraph.OtherEnd(edge.Track, curPoint.Id)
-		sigId := trackSigMap[edge.Track.Id]
-		if sigId == "" {
-			curPtIdx++
-			continue
-		}
-		sig, ok := world.GetSignal(sigId)
-		if !ok {
-			curPtIdx++
-			continue
-		}
-		if !sig.FacesMovement(prevPoint, curPoint) {
-			facesRight = false
-		}
-		curPtIdx++
-	}
-	return facesRight
-}
-
-func constructCrossover(world *railway.World, stnCode string, a, b, c, d *railway.TrackPoint) {
-	railway.NewDiamondCrossing(world, newTrackPointId(stnCode, "Dp", "0", ""), a, d, b, c)
-	railway.NewSwitch(world, newTrackPointId(stnCode, "Sw", "0", "A"), a, b, d)
-	railway.NewSwitch(world, newTrackPointId(stnCode, "Sw", "0", "B"), d, c, a)
-	railway.NewSwitch(world, newTrackPointId(stnCode, "Sw", "1", "A"), c, d, b)
-	railway.NewSwitch(world, newTrackPointId(stnCode, "Sw", "1", "B"), b, a, c)
-}
-
-func BuildTpjKkdiWorld() *railway.World {
+func BuildTpjKkdiWorld() *infra.World {
 
 	PLATFORM_TRACK_LENGTH := units.M(800.0)
 	PLATFORM_LENGTH := units.M(600.0)
@@ -98,8 +51,8 @@ func BuildTpjKkdiWorld() *railway.World {
 	SWITCH_SPEED := units.KMPH(30.0)
 	SWITCH_LENGTH := units.M(100.0)
 
-	world := &railway.World{}
-	world.Init(railway.WorldData{
+	world := &infra.World{}
+	world.Init(infra.WorldData{
 		DefaultSwMaxSpeed: SWITCH_SPEED,
 		DefaultPfMaxSpeed: PF_SPEED,
 		DefaultSwLength:   SWITCH_LENGTH,
@@ -121,8 +74,8 @@ func BuildTpjKkdiWorld() *railway.World {
 	tpjBp0 := world.NewTrackPoint(newTrackPointId(tpj.Code, "Bp", "0", ""))
 	tpjBp1 := world.NewTrackPoint(newTrackPointId(tpj.Code, "Bp", "1", ""))
 
-	railway.NewSwitch(world, "tpjSw0", tpjBp0, tpjPf1E, tpjPf2E) // 1 & 2 conn
-	railway.NewSwitch(world, "tpjSw1", tpjBp1, tpjPf3E, tpjPf4E) // 3 & 4 conn
+	infra.NewSwitch(world, "tpjSw0", tpjBp0, tpjPf1E, tpjPf2E) // 1 & 2 conn
+	infra.NewSwitch(world, "tpjSw1", tpjBp1, tpjPf3E, tpjPf4E) // 3 & 4 conn
 
 	tpjBp2 := world.NewTrackPoint(newTrackPointId(tpj.Code, "Bp", "2", ""))
 	tpjBp3 := world.NewTrackPoint(newTrackPointId(tpj.Code, "Bp", "3", ""))
@@ -138,14 +91,14 @@ func BuildTpjKkdiWorld() *railway.World {
 	pdktBp0 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "0", ""))
 	pdktBp1 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "1", ""))
 
-	railway.NewSwitch(world, "pdktSw0", pdktBp0, pdktPf2S, pdktPf1S)
-	railway.NewSwitch(world, "pdktSw1", pdktBp1, pdktPf3S, pdktPf4S)
+	infra.NewSwitch(world, "pdktSw0", pdktBp0, pdktPf2S, pdktPf1S)
+	infra.NewSwitch(world, "pdktSw1", pdktBp1, pdktPf3S, pdktPf4S)
 
 	pdktBp2 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "2", ""))
 	pdktBp3 := world.NewTrackPoint(newTrackPointId(pdkt.Code, "Bp", "3", ""))
 
-	railway.NewSwitch(world, "pdktSw2", pdktBp2, pdktPf2E, pdktPf1E)
-	railway.NewSwitch(world, "pdktSw3", pdktBp3, pdktPf3E, pdktPf4E)
+	infra.NewSwitch(world, "pdktSw2", pdktBp2, pdktPf2E, pdktPf1E)
+	infra.NewSwitch(world, "pdktSw3", pdktBp3, pdktPf3E, pdktPf4E)
 
 	kkdi := world.NewStation("KKDI", "Karaikudi Jn")
 
@@ -162,8 +115,8 @@ func BuildTpjKkdiWorld() *railway.World {
 	kkdiBp2 := world.NewTrackPoint(newTrackPointId(kkdi.Code, "Bp", "2", ""))
 	kkdiBp3 := world.NewTrackPoint(newTrackPointId(kkdi.Code, "Bp", "3", ""))
 
-	railway.NewSwitch(world, "kkdiSw0", kkdiBp2, kkdiPf1S, kkdiPf2S) // 1 & 2 conn
-	railway.NewSwitch(world, "kkdiSw1", kkdiBp3, kkdiPf3S, kkdiPf4S) // 3 & 4 conn
+	infra.NewSwitch(world, "kkdiSw0", kkdiBp2, kkdiPf1S, kkdiPf2S) // 1 & 2 conn
+	infra.NewSwitch(world, "kkdiSw1", kkdiBp3, kkdiPf3S, kkdiPf4S) // 3 & 4 conn
 
 	kkdiBp0 := world.NewTrackPoint(newTrackPointId(kkdi.Code, "Bp", "0", ""))
 	kkdiBp1 := world.NewTrackPoint(newTrackPointId(kkdi.Code, "Bp", "1", ""))
@@ -178,13 +131,13 @@ func BuildTpjKkdiWorld() *railway.World {
 	bsPdktKkdi0 := world.NewTrackSegment("bsPdktKkdi0", units.KM(41))
 	bsKkdiPdkt0 := world.NewTrackSegment("bsKkdiPdkt0", units.KM(41))
 
-	kkdiSig0 := railway.NewSignal("kkdiSig0", kkdiBp0, pdktBp2)
-	tpjSig0 := railway.NewSignal("tpjSig0", tpjBp3, pdktBp1)
+	kkdiSig0 := infra.NewSignal("kkdiSig0", kkdiBp0, pdktBp2)
+	tpjSig0 := infra.NewSignal("tpjSig0", tpjBp3, pdktBp1)
 	world.AddSignal(tpjSig0)
 	world.AddSignal(kkdiSig0)
 
-	pdktSig0 := railway.NewSignal("pdktSig0", pdktBp0, tpjBp2)
-	pdktSig1 := railway.NewSignal("pdktSig1", pdktBp3, kkdiBp1)
+	pdktSig0 := infra.NewSignal("pdktSig0", pdktBp0, tpjBp2)
+	pdktSig1 := infra.NewSignal("pdktSig1", pdktBp3, kkdiBp1)
 
 	world.AddSignal(pdktSig0)
 	world.AddSignal(pdktSig1)
@@ -198,23 +151,15 @@ func BuildTpjKkdiWorld() *railway.World {
 	world.TrackGraph.AddTrack(pdktBp2, kkdiBp0, bsPdktKkdi0)
 	world.TrackGraph.AddTrack(pdktBp3, kkdiBp1, bsKkdiPdkt0)
 
-	fmt.Println("World creation done!")
+	if err := world.Finalize(); err != nil {
+		panic(fmt.Sprintf("BuildTpjKkdiWorld: %v", err))
+	}
 	// connectivity check
 
-	// paths0, _ := world.TrackGraph.GenerateCandidatePaths(tpjPf4E, kkdiPf4)
+	// paths0, _ := world.RankedPaths(tpjPf4E, nil, kkdiPf4)
 
-	// for i, path := range paths0 {
-	// 	fmt.Printf("Path %d: ", i)
-	// 	path.PPrint()
-	// 	fmt.Print("Path dist: ", pathDistance(path), "m", " - ")
-	// 	fmt.Print("Is Correct Way: ", IsCorrectWay(world, path, tpjPf4E))
-	// 	fmt.Printf("\n")
-	// }
-
-	// paths1, _ := world.TrackGraph.GenerateCandidatePaths(tpjPf1, kkdiPf4)
-	// for i, path := range paths1 {
-	// 	fmt.Printf("Path %d: ", i)
-	// 	path.PPrint()
+	// for i, p := range paths0 {
+	// 	fmt.Printf("Path %d: %s - dist %.0fm - correct way %v\n", i, p.Path, float64(p.Path.Length()), p.FollowsSignals)
 	// }
 
 	// tpjPf1S := world.NewTrackPoint("tpjPf1S").WithDeadEnd(true).WithSimLimit(true)
@@ -232,8 +177,8 @@ func BuildTpjKkdiWorld() *railway.World {
 
 	// tpjBp0 := world.NewTrackPoint("tpjBp0")
 
-	// railway.NewSwitch(world, "tpjSw1A", tpjBp0, tpjPf1E, tpjPf2E)
-	// railway.NewSwitch(world, "tpjSw1B", tpjBp0, tpjPf2E, tpjPf3E)
+	// infra.NewSwitch(world, "tpjSw1A", tpjBp0, tpjPf1E, tpjPf2E)
+	// infra.NewSwitch(world, "tpjSw1B", tpjBp0, tpjPf2E, tpjPf3E)
 
 	// world.TrackGraph.AddTrack(tpjPf1S, tpjPf1E, tpjPf1)
 	// world.TrackGraph.AddTrack(tpjPf2S, tpjPf2E, tpjPf2)
@@ -243,7 +188,7 @@ func BuildTpjKkdiWorld() *railway.World {
 	// tpj.NewStationPlatform(tpjPf2, "2", PLATFORM_LENGTH)
 	// tpj.NewStationPlatform(tpjPf3, "3", PLATFORM_LENGTH)
 
-	// pdkt, pdktBp0, pdktBp1 := railway.NewStationSL2PF(world, "PDKT", "Pudukkottai")
+	// pdkt, pdktBp0, pdktBp1 := infra.NewStationSL2PF(world, "PDKT", "Pudukkottai")
 
 	// kkdiPf1S := world.NewTrackPoint("kkdiPf1S")
 	// kkdiPf1E := world.NewTrackPoint("kkdiPf1E").WithDeadEnd(true).WithSimLimit(true)
@@ -262,7 +207,7 @@ func BuildTpjKkdiWorld() *railway.World {
 
 	// kkdiBp0 := world.NewTrackPoint("kkdiBp0")
 
-	// railway.NewSwitch(world, "kkdiSw1A", kkdiBp0, kkdiPf1S, kkdiPf2S)
+	// infra.NewSwitch(world, "kkdiSw1A", kkdiBp0, kkdiPf1S, kkdiPf2S)
 
 	// // kkdiSw1Pf1S := world.NewSwitchTrack("kkdiSw1Pf1S")
 	// // kkdiSw1Pf2S := world.NewSwitchTrack("kkdiSw1Pf2S")

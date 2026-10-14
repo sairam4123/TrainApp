@@ -1,5 +1,11 @@
 package infra
 
+import (
+	"slices"
+)
+
+// Signal stands at AtPoint and is read by trains approaching it from
+// FacingPoint, i.e. it governs movement FacingPoint -> AtPoint.
 type Signal struct {
 	Id string
 
@@ -16,6 +22,7 @@ func NewSignal(id string, atPoint *TrackPoint, facingPoint *TrackPoint) *Signal 
 	return sig1
 }
 
+// Protects returns the tracks beyond the signal, sorted by id.
 func (sig *Signal) Protects(world *World) []*TrackSegment {
 	segments := make([]*TrackSegment, 0)
 	for key, edge := range world.TrackGraph.NeighborMap[sig.AtPoint.Id] {
@@ -24,6 +31,7 @@ func (sig *Signal) Protects(world *World) []*TrackSegment {
 		}
 		segments = append(segments, edge)
 	}
+	slices.SortFunc(segments, func(a, b *TrackSegment) int { return a.Id.Compare(b.Id) })
 	return segments
 }
 

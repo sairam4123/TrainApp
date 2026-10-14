@@ -1,158 +1,290 @@
 package sim
 
 import (
+	"errors"
 	"fmt"
-	"maps"
+	"io"
 	"os"
-	"slices"
-	"strings"
+	"path/filepath"
 	"trainapp/des"
+	"trainapp/railway/ids"
 	"trainapp/railway/infra"
+	"trainapp/railway/interlocking"
 	"trainapp/railway/ops"
 	"trainapp/units"
 )
 
 type Sim struct {
 	des   *des.DES[ops.RailwayEvent]
-	world *railway.World
+	world *infra.World
+	ilk   *interlocking.Interlocking
 
 	dispatcher *Dispatcher
 
-	trainCtrllers map[string]*TrainController
+	trainCtrllers map[ids.TrainID]*TrainController
+	trains        []*ops.Train // in the order they were added
 
-	trains map[string]*Train
+	// OutputDir is where logs/ and dumps/ are written. Defaults to ".".
+	OutputDir string
 
-	dCount int // temp dump count
+	logger      io.Writer
+	initialized bool
+	err         error // first fatal error; stops the run
 }
 
-func (s *Sim) SetWorld(world *World) *Sim {
+func (s *Sim) SetWorld(world *infra.World) *Sim {
 	s.world = world
 	return s
+}
+
+func (s *Sim) World() *infra.World {
+	return s.world
 }
 
 func (s *Sim) Dispatcher() *Dispatcher {
 	return s.dispatcher
 }
 
-func (s *Sim) Init() {
-	if s.world == nil {
-		panic("s.world is nil, did you call SetWorld?")
-	}
-	// TODO: Think about this, this works here? -- Sairam, 05-09-2026
-	s.world.TrackGraph.BuildCacheMap()
-
-	s.trainCtrllers = make(map[string]*TrainController)
-	s.trains = make(map[string]*Train)
-
-	s.des = &des.DES[RailwayEvent]{}
-	s.des.Init()
-
-	s.dispatcher = &Dispatcher{
-		sim: s,
-	}
-	s.dispatcher.Init()
-
-	for _, train := range s.world.trains {
-		s.trainCtrllers[train.Number] = &TrainController{
-			trainId: train.Number,
-			sim:     s,
-		}
-		s.ScheduleEventAt(train.schedule[0].ArrTime-des.MinDeltaTime, WorldEntered, train, train.Number)
-	}
+func (s *Sim) Interlocking() *interlocking.Interlocking {
+	return s.ilk
 }
 
-func (s *Sim) NextEvent() (des.Event[RailwayEvent], bool) {
-	if s.des == nil {
-		panic("s.des is nil, did you call InitWorld?")
+// AddTrain registers a train. Call it before Init.
+func (s *Sim) AddTrain(train *ops.Train) error {
+	if s.initialized {
+		return errors.New("sim: AddTrain after Init")
 	}
+	if err := train.Validate(); err != nil {
+		return err
+	}
+	for _, t := range s.trains {
+		if t.ID() == train.ID() {
+			return fmt.Errorf("sim: duplicate train number %s", train.Number)
+		}
+	}
+	s.trains = append(s.trains, train)
+	return nil
+}
+
+func (s *Sim) Init() error {
+	if s.world == nil {
+		return errors.New("sim: world is nil, did you call SetWorld?")
+	}
+	if !s.world.IsFinalized() {
+		if err := s.world.Finalize(); err != nil {
+			return err
+		}
+	}
+	ilk, err := interlocking.New(s.world)
+	if err != nil {
+		return err
+	}
+	s.ilk = ilk
+	s.logger = io.Discard
+
+	s.trainCtrllers = make(map[ids.TrainID]*TrainController)
+
+	s.des = &des.DES[ops.RailwayEvent]{}
+	s.des.Init()
+
+	s.dispatcher = newDispatcher(s)
+
+	for _, train := range s.trains {
+		s.trainCtrllers[train.ID()] = &TrainController{
+			sim:   s,
+			train: train,
+		}
+		first := train.Schedule()[0]
+		if err := s.des.Add(first.ArrTime-des.MinDeltaTime, ops.WorldEntered, train, train.Number); err != nil {
+			return fmt.Errorf("train %s: %w", train.Number, err)
+		}
+	}
+	s.initialized = true
+	return nil
+}
+
+func (s *Sim) NextEvent() (des.Event[ops.RailwayEvent], bool) {
 	return s.des.NextEvent()
 }
 
-func (s *Sim) ScheduleEventAfter(delta units.Minutes, evtype RailwayEvent, data any, trainId string) {
-	s.des.Add(s.CurTime()+float64(delta), evtype, data, trainId)
+// ScheduleEventAfter schedules an event delta minutes from now. Deltas below
+// des.MinDeltaTime are raised to it, so nothing is ever scheduled in the past.
+func (s *Sim) ScheduleEventAfter(delta units.Minutes, evtype ops.RailwayEvent, data any, trainId ids.TrainID) {
+	s.ScheduleEventAt(s.CurTime()+max(float64(delta), des.MinDeltaTime), evtype, data, trainId)
 }
 
-func (s *Sim) ScheduleEventNext(evtype RailwayEvent, data any, trainId string) {
-	s.des.Add(s.CurTime()+des.MinDeltaTime, evtype, data, trainId)
+func (s *Sim) ScheduleEventNext(evtype ops.RailwayEvent, data any, trainId ids.TrainID) {
+	s.ScheduleEventAfter(des.MinDeltaTime, evtype, data, trainId)
 }
 
-func (s *Sim) ScheduleEventAt(time float64, evType RailwayEvent, data any, trainId string) {
-	s.des.Add(time, evType, data, trainId)
+func (s *Sim) ScheduleEventAt(time float64, evType ops.RailwayEvent, data any, trainId ids.TrainID) {
+	if err := s.des.Add(time, evType, data, trainId.Number); err != nil {
+		s.fail(err)
+	}
 }
 
 func (s *Sim) CurTime() float64 {
 	return s.des.CurTime
 }
 
-func (s *Sim) DumpSim() {
-	os.MkdirAll("dumps/", 0755)
-	dump, err := os.OpenFile(fmt.Sprintf("dumps/dump%d.txt", int(s.des.CurTime*100)), os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+// fail records the first fatal error; Run stops after the current event.
+func (s *Sim) fail(err error) {
+	if s.err == nil {
+		s.err = fmt.Errorf("[%.2f] %w", s.CurTime(), err)
+	}
+}
+
+func (s *Sim) logf(format string, args ...any) {
+	fmt.Fprintf(s.logger, "[%.2f] "+format+"\n", append([]any{s.CurTime()}, args...)...)
+}
+
+func (s *Sim) outputPath(parts ...string) string {
+	dir := s.OutputDir
+	if dir == "" {
+		dir = "."
+	}
+	return filepath.Join(append([]string{dir}, parts...)...)
+}
+
+func (s *Sim) DumpSim() error {
+	if err := os.MkdirAll(s.outputPath("dumps"), 0755); err != nil {
+		return err
+	}
+	dump, err := os.Create(s.outputPath("dumps", fmt.Sprintf("dump%d.txt", int(s.des.CurTime*100))))
 	if err != nil {
-		panic("Error opening dump file")
+		return err
 	}
 	defer dump.Close()
 
-	trains := slices.SortedStableFunc(maps.Values(s.world.trains), func(t1, t2 *Train) int {
-		return strings.Compare(t1.Number, t2.Number)
-	})
-	for _, train := range trains {
-		fmt.Fprintf(dump, "Train %s", train)
-		if train.occupation != nil {
-			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-			fmt.Fprintf(dump, " - Track %s", curTrack.Track.Id)
+	for _, st := range s.Status() {
+		fmt.Fprintf(dump, "Train %s - %s", st.Train, st.Phase)
+		if trk := st.Train.CurrentTrack(); trk != nil {
+			fmt.Fprintf(dump, " - Track %s", trk)
 		}
 		fmt.Fprintln(dump)
 	}
 	fmt.Fprintln(dump)
 
-	tracks := slices.SortedStableFunc(maps.Values(s.world.TrackGraph.tracks), func(trk1, trk2 *TrackSegment) int {
-		return strings.Compare(trk1.Id, trk2.Id)
-	})
-
-	for _, track := range tracks {
-		fmt.Fprintf(dump, "Track %s - Reserved %s - Occupied %s\n", track.Id, track.ReservedBy, track.OccupiedBy)
+	for _, track := range s.world.TrackGraph.ListTracks() {
+		r, o := s.ilk.TrackHolder(track)
+		fmt.Fprintf(dump, "Track %s - Reserved %s - Occupied %s\n", track, r, o)
 	}
 	fmt.Fprintln(dump)
+	return nil
 }
 
-func (s *Sim) InitLogger() *os.File {
-	os.MkdirAll("logs/", 0755)
-	logger, err := os.OpenFile("logs/logs.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err != nil {
-		panic("Error opening logging files")
+func (s *Sim) InitLogger() (*os.File, error) {
+	if err := os.MkdirAll(s.outputPath("logs"), 0755); err != nil {
+		return nil, err
 	}
-	return logger
+	return os.Create(s.outputPath("logs", "logs.log"))
 }
 
-func (s *Sim) Run() {
-	logger := s.InitLogger()
-	os.RemoveAll("dumps/")
-	defer logger.Close()
+// clearDumps removes dump files from earlier runs, and nothing else.
+func (s *Sim) clearDumps() error {
+	old, err := filepath.Glob(s.outputPath("dumps", "dump*.txt"))
+	if err != nil {
+		return err
+	}
+	for _, f := range old {
+		if err := os.Remove(f); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-	for {
+// Run processes events until none are left or a fatal error occurs.
+func (s *Sim) Run() error {
+	if !s.initialized {
+		return errors.New("sim: Run before Init")
+	}
+	logger, err := s.InitLogger()
+	if err != nil {
+		return err
+	}
+	defer logger.Close()
+	s.logger = logger
+	defer func() { s.logger = io.Discard }()
+
+	if err := s.clearDumps(); err != nil {
+		return err
+	}
+
+	for s.err == nil {
 		ev, ok := s.NextEvent()
 		if !ok {
-			s.DumpSim()
 			break
 		}
-		train, ok := ev.Data.(*Train)
-		if ok && train.occupation != nil {
-			curTrack := train.occupation.curPath.Edges[train.occupation.curPathIdx]
-			fmt.Fprintf(logger, "[%.2f] %s - %s  (Track %s - %dm)\n", ev.Time, ev.Type, train.Name, curTrack.Track.Id, int(curTrack.Track.Length))
-		} else if train != nil && ok {
-			fmt.Fprintf(logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, train.Name)
-		} else if track, ok := ev.Data.(*TrackSegment); ok {
-			fmt.Fprintf(logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, track.Id)
-		} else if ma, ok := ev.Data.(*MovementAuthority); ok {
-			fmt.Fprintf(logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, ma.train.Name)
-		} else if res, ok := ev.Data.(*PathResponse); ok {
-			fmt.Fprintf(logger, "[%.2f] %s - %s (%s)\n", ev.Time, ev.Type, ev.TrainID, res.nextPf.Id)
-		}
+		s.logEvent(ev)
 
-		if ev.TrainID != "" {
-			tc := s.trainCtrllers[ev.TrainID]
-			tc.OnEvent(ev.Type, ev.Data)
+		if ev.TrainID == "" {
+			continue
 		}
-
+		tc, ok := s.trainCtrllers[ids.TrainID{Number: ev.TrainID}]
+		if !ok {
+			s.fail(fmt.Errorf("event %s for unknown train %q", ev.Type, ev.TrainID))
+			break
+		}
+		tc.OnEvent(ev.Type, ev.Data)
 	}
+
+	for _, st := range s.Status() {
+		if st.Phase != phaseExited.String() {
+			s.logf("STUCK - %s (%s)%s", st.Train.Name, st.Phase, st.waitingSuffix())
+		}
+	}
+	if err := s.DumpSim(); err != nil && s.err == nil {
+		return err
+	}
+	return s.err
+}
+
+func (s *Sim) logEvent(ev des.Event[ops.RailwayEvent]) {
+	switch data := ev.Data.(type) {
+	case *ops.Train:
+		if trk := data.CurrentTrack(); trk != nil {
+			fmt.Fprintf(s.logger, "[%.2f] %s - %s  (Track %s - %dm)\n", ev.Time, ev.Type, data.Name, trk, int(trk.Length))
+		} else {
+			fmt.Fprintf(s.logger, "[%.2f] %s - %s \n", ev.Time, ev.Type, data.Name)
+		}
+	case *infra.TrackSegment:
+		fmt.Fprintf(s.logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, data)
+	case *ops.MovementAuthority:
+		fmt.Fprintf(s.logger, "[%.2f] %s - %s (up to %s)\n", ev.Time, ev.Type, ev.TrainID, data.Route().Step(data.Limit()).Edge.Track)
+	case *interlocking.Route:
+		fmt.Fprintf(s.logger, "[%.2f] %s - %s (%s)\n", ev.Time, ev.Type, ev.TrainID, data.Path())
+	default:
+		fmt.Fprintf(s.logger, "[%.2f] %s - %s\n", ev.Time, ev.Type, ev.TrainID)
+	}
+}
+
+// TrainStatus is where a train ended up.
+type TrainStatus struct {
+	Train   *ops.Train
+	Phase   string
+	Waiting *RouteRequest // set if the train is queued for a route
+}
+
+func (st TrainStatus) waitingSuffix() string {
+	if st.Waiting == nil {
+		return ""
+	}
+	return fmt.Sprintf(" waiting since %.2f for %s pf%s: %v", st.Waiting.Since, st.Waiting.Station.Code, st.Waiting.PrefPfNo, st.Waiting.LastErr)
+}
+
+// Status reports every train's phase, in the order the trains were added.
+func (s *Sim) Status() []TrainStatus {
+	out := make([]TrainStatus, 0, len(s.trains))
+	for _, t := range s.trains {
+		st := TrainStatus{Train: t, Phase: phaseOutside.String()}
+		if tc, ok := s.trainCtrllers[t.ID()]; ok {
+			st.Phase = tc.phase.String()
+		}
+		if s.dispatcher != nil {
+			st.Waiting = s.dispatcher.waitingFor(t.ID())
+		}
+		out = append(out, st)
+	}
+	return out
 }

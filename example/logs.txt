@@ -1,200 +1,762 @@
-[9.99] WORLD_ENTER - Train1Up
-[10.00] TRACK_ENTER - Train1Up (Track tpjPf1 - 800m)
-[10.96] TRACK_TRAVEL_END - Train1Up (Track tpjPf1 - 800m)
-[10.97] PATH_COMPLETED - Train1Up (Track tpjPf1 - 800m)
-[10.98] TRAIN_ARRIVE - Train1Up (Track tpjPf1 - 800m)
-[20.98] TRAIN_DWELL_END - Train1Up (Track tpjPf1 - 800m)
-[20.99] TRAIN_DEPART - Train1Up (Track tpjPf1 - 800m)
-[21.00] TRACK_RELEASE - tpjPf1
-[21.00] TRACK_ENTER - Train1Up (Track tpjPf1ESw1 - 100m)
-[21.20] TRACK_TRAVEL_END - Train1Up (Track tpjPf1ESw1 - 100m)
-[21.21] TRACK_RELEASE - tpjPf1ESw1
-[21.21] TRACK_ENTER - Train1Up (Track bsTpjPdkt0 - 5000m)
-[23.94] TRACK_TRAVEL_END - Train1Up (Track bsTpjPdkt0 - 5000m)
-[23.95] TRACK_RELEASE - bsTpjPdkt0
-[23.95] TRACK_ENTER - Train1Up (Track bsTpjKrur0 - 7000m)
-[24.99] WORLD_ENTER - Train2Up
-[25.00] TRACK_ENTER - Train2Up (Track tpjPf1 - 800m)
-[25.96] TRACK_TRAVEL_END - Train2Up (Track tpjPf1 - 800m)
-[25.97] PATH_COMPLETED - Train2Up (Track tpjPf1 - 800m)
-[25.98] TRAIN_ARRIVE - Train2Up (Track tpjPf1 - 800m)
-[27.77] TRACK_TRAVEL_END - Train1Up (Track bsTpjKrur0 - 7000m)
-[27.78] TRACK_RELEASE - bsTpjKrur0
-[27.78] TRACK_ENTER - Train1Up (Track bsKrurPdkt0 - 7000m)
-[29.99] WORLD_ENTER - Train1Down
-[30.00] TRACK_ENTER - Train1Down (Track kkdiPf1 - 800m)
-[30.96] TRACK_TRAVEL_END - Train1Down (Track kkdiPf1 - 800m)
-[30.97] PATH_COMPLETED - Train1Down (Track kkdiPf1 - 800m)
-[30.98] TRAIN_ARRIVE - Train1Down (Track kkdiPf1 - 800m)
-[31.59] TRACK_TRAVEL_END - Train1Up (Track bsKrurPdkt0 - 7000m)
-[31.60] TRACK_RELEASE - bsKrurPdkt0
-[31.60] TRACK_ENTER - Train1Up (Track bsTpjPdkt2 - 5000m)
-[34.33] TRACK_TRAVEL_END - Train1Up (Track bsTpjPdkt2 - 5000m)
-[34.34] TRACK_RELEASE - bsTpjPdkt2
-[34.34] TRACK_ENTER - Train1Up (Track pdktPf1SSw1 - 100m)
-[34.54] TRACK_TRAVEL_END - Train1Up (Track pdktPf1SSw1 - 100m)
-[34.55] TRACK_RELEASE - pdktPf1SSw1
-[34.55] TRACK_ENTER - Train1Up (Track pdktPf1 - 800m)
-[35.51] TRACK_TRAVEL_END - Train1Up (Track pdktPf1 - 800m)
-[35.52] PATH_COMPLETED - Train1Up (Track pdktPf1 - 800m)
-[35.53] TRAIN_ARRIVE - Train1Up (Track pdktPf1 - 800m)
-[35.98] TRAIN_DWELL_END - Train2Up (Track tpjPf1 - 800m)
-[35.99] TRAIN_DEPART - Train2Up (Track tpjPf1 - 800m)
-[36.00] TRACK_RELEASE - tpjPf1
-[36.00] TRACK_ENTER - Train2Up (Track tpjPf1ESw1 - 100m)
-[36.20] TRACK_TRAVEL_END - Train2Up (Track tpjPf1ESw1 - 100m)
-[36.21] TRACK_RELEASE - tpjPf1ESw1
-[36.21] TRACK_ENTER - Train2Up (Track bsTpjPdkt0 - 5000m)
-[38.94] TRACK_TRAVEL_END - Train2Up (Track bsTpjPdkt0 - 5000m)
-[38.95] TRACK_RELEASE - bsTpjPdkt0
-[38.95] TRACK_ENTER - Train2Up (Track bsTpjKrur0 - 7000m)
-[40.98] TRAIN_DWELL_END - Train1Down (Track kkdiPf1 - 800m)
-[40.99] TRAIN_DEPART - Train1Down (Track kkdiPf1 - 800m)
-[41.00] TRACK_RELEASE - kkdiPf1
-[41.00] TRACK_ENTER - Train1Down (Track kkdiSw1Pf1S - 100m)
-[41.20] TRACK_TRAVEL_END - Train1Down (Track kkdiSw1Pf1S - 100m)
-[41.21] TRACK_RELEASE - kkdiSw1Pf1S
-[41.21] TRACK_ENTER - Train1Down (Track bsPdktKkdi0 - 30000m)
-[42.77] TRACK_TRAVEL_END - Train2Up (Track bsTpjKrur0 - 7000m)
-[42.78] TRACK_RELEASE - bsTpjKrur0
-[42.78] TRACK_ENTER - Train2Up (Track bsKrurPdkt0 - 7000m)
-[44.99] WORLD_ENTER - Train2Down
-[45.00] TRACK_ENTER - Train2Down (Track kkdiPf1 - 800m)
-[45.53] TRAIN_DWELL_END - Train1Up (Track pdktPf1 - 800m)
-[45.96] TRACK_TRAVEL_END - Train2Down (Track kkdiPf1 - 800m)
-[45.97] PATH_COMPLETED - Train2Down (Track kkdiPf1 - 800m)
-[45.98] TRAIN_ARRIVE - Train2Down (Track kkdiPf1 - 800m)
-[46.59] TRACK_TRAVEL_END - Train2Up (Track bsKrurPdkt0 - 7000m)
-[46.60] TRACK_RELEASE - bsKrurPdkt0
-[46.60] TRACK_ENTER - Train2Up (Track bsTpjPdkt2 - 5000m)
-[49.33] TRACK_TRAVEL_END - Train2Up (Track bsTpjPdkt2 - 5000m)
-[49.34] TRACK_RELEASE - bsTpjPdkt2
-[49.34] TRACK_ENTER - Train2Up (Track pdktPf2SSw1 - 100m)
-[49.54] TRACK_TRAVEL_END - Train2Up (Track pdktPf2SSw1 - 100m)
-[49.55] TRACK_RELEASE - pdktPf2SSw1
-[49.55] TRACK_ENTER - Train2Up (Track pdktPf2 - 800m)
-[50.51] TRACK_TRAVEL_END - Train2Up (Track pdktPf2 - 800m)
-[50.52] PATH_COMPLETED - Train2Up (Track pdktPf2 - 800m)
-[50.53] TRAIN_ARRIVE - Train2Up (Track pdktPf2 - 800m)
-[55.98] TRAIN_DWELL_END - Train2Down (Track kkdiPf1 - 800m)
-[57.57] TRACK_TRAVEL_END - Train1Down (Track bsPdktKkdi0 - 30000m)
-[57.58] TRACK_RELEASE - bsPdktKkdi0
-[57.58] TRACK_ENTER - Train1Down (Track pdktPf3ESw2 - 100m)
-[57.59] TRAIN_DEPART - Train1Up (Track pdktPf1 - 800m)
-[57.60] TRACK_RELEASE - pdktPf1
-[57.60] TRACK_ENTER - Train1Up (Track pdktPf1ESw2 - 100m)
-[57.78] TRACK_TRAVEL_END - Train1Down (Track pdktPf3ESw2 - 100m)
-[57.79] TRACK_RELEASE - pdktPf3ESw2
-[57.79] TRACK_ENTER - Train1Down (Track pdktPf3 - 800m)
-[57.80] TRACK_TRAVEL_END - Train1Up (Track pdktPf1ESw2 - 100m)
-[57.81] TRACK_RELEASE - pdktPf1ESw2
-[57.81] TRACK_ENTER - Train1Up (Track bsPdktKkdi0 - 30000m)
-[58.75] TRACK_TRAVEL_END - Train1Down (Track pdktPf3 - 800m)
-[58.76] PATH_COMPLETED - Train1Down (Track pdktPf3 - 800m)
-[58.77] TRAIN_ARRIVE - Train1Down (Track pdktPf3 - 800m)
-[60.53] TRAIN_DWELL_END - Train2Up (Track pdktPf2 - 800m)
-[74.18] TRACK_TRAVEL_END - Train1Up (Track bsPdktKkdi0 - 30000m)
-[74.19] TRACK_RELEASE - bsPdktKkdi0
-[74.19] TRACK_ENTER - Train1Up (Track kkdiSw1Pf2S - 100m)
-[74.20] TRAIN_DEPART - Train2Down (Track kkdiPf1 - 800m)
-[74.21] TRACK_RELEASE - kkdiPf1
-[74.21] TRACK_ENTER - Train2Down (Track kkdiSw1Pf1S - 100m)
-[74.39] TRACK_TRAVEL_END - Train1Up (Track kkdiSw1Pf2S - 100m)
-[74.40] TRACK_RELEASE - kkdiSw1Pf2S
-[74.40] TRACK_ENTER - Train1Up (Track kkdiPf2 - 800m)
-[74.41] TRACK_TRAVEL_END - Train2Down (Track kkdiSw1Pf1S - 100m)
-[74.42] TRACK_RELEASE - kkdiSw1Pf1S
-[74.42] TRACK_ENTER - Train2Down (Track bsPdktKkdi0 - 30000m)
-[75.36] TRACK_TRAVEL_END - Train1Up (Track kkdiPf2 - 800m)
-[75.37] PATH_COMPLETED - Train1Up (Track kkdiPf2 - 800m)
-[75.38] TRAIN_ARRIVE - Train1Up (Track kkdiPf2 - 800m)
-[76.38] TRAIN_DWELL_END - Train1Up (Track kkdiPf2 - 800m)
-[76.39] TRAIN_DEPART - Train1Up (Track kkdiPf2 - 800m)
-[76.40] TRACK_RELEASE - kkdiPf2
-[76.40] WORLD_EXIT - Train1Up
-[80.00] TRAIN_DWELL_END - Train1Down (Track pdktPf3 - 800m)
-[80.01] TRAIN_DEPART - Train1Down (Track pdktPf3 - 800m)
-[80.02] TRACK_RELEASE - pdktPf3
-[80.02] TRACK_ENTER - Train1Down (Track pdktPf3SSw1 - 100m)
-[80.22] TRACK_TRAVEL_END - Train1Down (Track pdktPf3SSw1 - 100m)
-[80.23] TRACK_RELEASE - pdktPf3SSw1
-[80.23] TRACK_ENTER - Train1Down (Track bsTpjPdkt2 - 5000m)
-[82.96] TRACK_TRAVEL_END - Train1Down (Track bsTpjPdkt2 - 5000m)
-[82.97] TRACK_RELEASE - bsTpjPdkt2
-[82.97] TRACK_ENTER - Train1Down (Track bsKrurPdkt0 - 7000m)
-[86.79] TRACK_TRAVEL_END - Train1Down (Track bsKrurPdkt0 - 7000m)
-[86.80] TRACK_RELEASE - bsKrurPdkt0
-[86.80] TRACK_ENTER - Train1Down (Track bsTpjKrur0 - 7000m)
-[90.61] TRACK_TRAVEL_END - Train1Down (Track bsTpjKrur0 - 7000m)
-[90.62] TRACK_RELEASE - bsTpjKrur0
-[90.62] TRACK_ENTER - Train1Down (Track bsTpjPdkt0 - 5000m)
-[90.78] TRACK_TRAVEL_END - Train2Down (Track bsPdktKkdi0 - 30000m)
-[90.79] TRACK_RELEASE - bsPdktKkdi0
-[90.79] TRACK_ENTER - Train2Down (Track pdktPf1ESw2 - 100m)
-[90.80] TRAIN_DEPART - Train2Up (Track pdktPf2 - 800m)
-[90.81] TRACK_RELEASE - pdktPf2
-[90.81] TRACK_ENTER - Train2Up (Track pdktPf2ESw2 - 100m)
-[90.99] TRACK_TRAVEL_END - Train2Down (Track pdktPf1ESw2 - 100m)
-[91.00] TRACK_RELEASE - pdktPf1ESw2
-[91.00] TRACK_ENTER - Train2Down (Track pdktPf1 - 800m)
-[91.01] TRACK_TRAVEL_END - Train2Up (Track pdktPf2ESw2 - 100m)
-[91.02] TRACK_RELEASE - pdktPf2ESw2
-[91.02] TRACK_ENTER - Train2Up (Track bsPdktKkdi0 - 30000m)
-[91.96] TRACK_TRAVEL_END - Train2Down (Track pdktPf1 - 800m)
-[91.97] PATH_COMPLETED - Train2Down (Track pdktPf1 - 800m)
-[91.98] TRAIN_ARRIVE - Train2Down (Track pdktPf1 - 800m)
-[93.35] TRACK_TRAVEL_END - Train1Down (Track bsTpjPdkt0 - 5000m)
-[93.36] TRACK_RELEASE - bsTpjPdkt0
-[93.36] TRACK_ENTER - Train1Down (Track tpjPf1ESw1 - 100m)
-[93.56] TRACK_TRAVEL_END - Train1Down (Track tpjPf1ESw1 - 100m)
-[93.57] TRACK_RELEASE - tpjPf1ESw1
-[93.57] TRACK_ENTER - Train1Down (Track tpjPf1 - 800m)
-[94.53] TRACK_TRAVEL_END - Train1Down (Track tpjPf1 - 800m)
-[94.54] PATH_COMPLETED - Train1Down (Track tpjPf1 - 800m)
-[94.55] TRAIN_ARRIVE - Train1Down (Track tpjPf1 - 800m)
-[101.98] TRAIN_DWELL_END - Train2Down (Track pdktPf1 - 800m)
-[101.99] TRAIN_DEPART - Train2Down (Track pdktPf1 - 800m)
-[102.00] TRACK_RELEASE - pdktPf1
-[102.00] TRACK_ENTER - Train2Down (Track pdktPf1SSw1 - 100m)
-[102.20] TRACK_TRAVEL_END - Train2Down (Track pdktPf1SSw1 - 100m)
-[102.21] TRACK_RELEASE - pdktPf1SSw1
-[102.21] TRACK_ENTER - Train2Down (Track bsTpjPdkt2 - 5000m)
-[104.55] TRAIN_DWELL_END - Train1Down (Track tpjPf1 - 800m)
-[104.56] TRAIN_DEPART - Train1Down (Track tpjPf1 - 800m)
-[104.57] TRACK_RELEASE - tpjPf1
-[104.57] WORLD_EXIT - Train1Down
-[104.94] TRACK_TRAVEL_END - Train2Down (Track bsTpjPdkt2 - 5000m)
-[104.95] TRACK_RELEASE - bsTpjPdkt2
-[104.95] TRACK_ENTER - Train2Down (Track bsKrurPdkt0 - 7000m)
-[107.38] TRACK_TRAVEL_END - Train2Up (Track bsPdktKkdi0 - 30000m)
-[107.39] TRACK_RELEASE - bsPdktKkdi0
-[107.39] TRACK_ENTER - Train2Up (Track kkdiSw1Pf1S - 100m)
-[107.59] TRACK_TRAVEL_END - Train2Up (Track kkdiSw1Pf1S - 100m)
-[107.60] TRACK_RELEASE - kkdiSw1Pf1S
-[107.60] TRACK_ENTER - Train2Up (Track kkdiPf1 - 800m)
-[108.56] TRACK_TRAVEL_END - Train2Up (Track kkdiPf1 - 800m)
-[108.57] PATH_COMPLETED - Train2Up (Track kkdiPf1 - 800m)
-[108.58] TRAIN_ARRIVE - Train2Up (Track kkdiPf1 - 800m)
-[108.77] TRACK_TRAVEL_END - Train2Down (Track bsKrurPdkt0 - 7000m)
-[108.78] TRACK_RELEASE - bsKrurPdkt0
-[108.78] TRACK_ENTER - Train2Down (Track bsTpjKrur0 - 7000m)
-[109.58] TRAIN_DWELL_END - Train2Up (Track kkdiPf1 - 800m)
-[109.59] TRAIN_DEPART - Train2Up (Track kkdiPf1 - 800m)
-[109.60] TRACK_RELEASE - kkdiPf1
-[109.60] WORLD_EXIT - Train2Up
-[112.59] TRACK_TRAVEL_END - Train2Down (Track bsTpjKrur0 - 7000m)
-[112.60] TRACK_RELEASE - bsTpjKrur0
-[112.60] TRACK_ENTER - Train2Down (Track bsTpjPdkt0 - 5000m)
-[115.33] TRACK_TRAVEL_END - Train2Down (Track bsTpjPdkt0 - 5000m)
-[115.34] TRACK_RELEASE - bsTpjPdkt0
-[115.34] TRACK_ENTER - Train2Down (Track tpjPf2ESw1 - 100m)
-[115.54] TRACK_TRAVEL_END - Train2Down (Track tpjPf2ESw1 - 100m)
-[115.55] TRACK_RELEASE - tpjPf2ESw1
-[115.55] TRACK_ENTER - Train2Down (Track tpjPf2 - 800m)
-[116.51] TRACK_TRAVEL_END - Train2Down (Track tpjPf2 - 800m)
-[116.52] PATH_COMPLETED - Train2Down (Track tpjPf2 - 800m)
-[116.53] TRAIN_ARRIVE - Train2Down (Track tpjPf2 - 800m)
-[117.53] TRAIN_DWELL_END - Train2Down (Track tpjPf2 - 800m)
-[117.54] TRAIN_DEPART - Train2Down (Track tpjPf2 - 800m)
-[117.55] TRACK_RELEASE - tpjPf2
-[117.55] WORLD_EXIT - Train2Down
+[0.99] WORLD_ENTER - Train1Up 
+[0.99] WORLD_ENTER - Train1Down 
+[1.00] ROUTE_GRANTED - 0451U (tpjPf1S -> tpjPf1E (tpjPf1 - 800.00m))
+[1.00] ROUTE_GRANTED - 0451D (kkdiPf3E -> kkdiPf3S (kkdiPf3 - 800.00m))
+[1.01] MOVEMENT_AUTHORIZED - 0451U (up to tpjPf1)
+[1.01] MOVEMENT_AUTHORIZED - 0451D (up to kkdiPf3)
+[1.02] TRACK_ENTER - Train1Up  (Track tpjPf1 - 800m)
+[1.02] TRACK_ENTER - Train1Down  (Track kkdiPf3 - 800m)
+[1.98] TRACK_TRAVEL_END - Train1Up  (Track tpjPf1 - 800m)
+[1.98] TRACK_TRAVEL_END - Train1Down  (Track kkdiPf3 - 800m)
+[1.99] PATH_COMPLETED - Train1Up  (Track tpjPf1 - 800m)
+[1.99] PATH_COMPLETED - Train1Down  (Track kkdiPf3 - 800m)
+[2.00] TRAIN_ARRIVE - Train1Up  (Track tpjPf1 - 800m)
+[2.00] TRAIN_ARRIVE - Train1Down  (Track kkdiPf3 - 800m)
+[12.00] TRAIN_DWELL_END - Train1Up  (Track tpjPf1 - 800m)
+[12.00] TRAIN_DWELL_END - Train1Down  (Track kkdiPf3 - 800m)
+[12.01] ROUTE_GRANTED - 0451U (tpjPf1E -> tpjBp0 (tpjBp0-tpjPf1E - 100.00m) --> tpjBp0 -> tpjBp2 (tpjBp0-tpjBp2 - 100.00m) --> tpjBp2 -> pdktBp0 (bsTpjPdkt0 - 55000.00m))
+[12.01] ROUTE_GRANTED - 0451D (kkdiPf3S -> kkdiBp3 (kkdiBp3-kkdiPf3S - 100.00m) --> kkdiBp3 -> kkdiBp1 (kkdiBp1-kkdiBp3 - 100.00m) --> kkdiBp1 -> pdktBp3 (bsKkdiPdkt0 - 41000.00m))
+[12.02] MOVEMENT_AUTHORIZED - 0451U (up to bsTpjPdkt0)
+[12.02] MOVEMENT_AUTHORIZED - 0451D (up to bsKkdiPdkt0)
+[12.03] TRAIN_DEPART - 0451U (up to bsTpjPdkt0)
+[12.03] TRAIN_DEPART - 0451D (up to bsKkdiPdkt0)
+[12.04] TRACK_RELEASE - tpjPf1
+[12.04] TRACK_ENTER - Train1Up  (Track tpjBp0-tpjPf1E - 100m)
+[12.04] TRACK_RELEASE - kkdiPf3
+[12.04] TRACK_ENTER - Train1Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[12.09] TRACK_TRAVEL_END - Train1Up  (Track tpjBp0-tpjPf1E - 100m)
+[12.09] TRACK_TRAVEL_END - Train1Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[12.10] TRACK_RELEASE - tpjBp0-tpjPf1E
+[12.10] TRACK_ENTER - Train1Up  (Track tpjBp0-tpjBp2 - 100m)
+[12.10] TRACK_RELEASE - kkdiBp3-kkdiPf3S
+[12.10] TRACK_ENTER - Train1Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[12.16] TRACK_TRAVEL_END - Train1Up  (Track tpjBp0-tpjBp2 - 100m)
+[12.16] TRACK_TRAVEL_END - Train1Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[12.17] TRACK_RELEASE - tpjBp0-tpjBp2
+[12.17] TRACK_ENTER - Train1Up  (Track bsTpjPdkt0 - 55000m)
+[12.17] TRACK_RELEASE - kkdiBp1-kkdiBp3
+[12.17] TRACK_ENTER - Train1Down  (Track bsKkdiPdkt0 - 41000m)
+[20.99] WORLD_ENTER - Train2Up 
+[20.99] WORLD_ENTER - Train2Down 
+[21.00] ROUTE_GRANTED - 0452U (tpjPf1S -> tpjPf1E (tpjPf1 - 800.00m))
+[21.00] ROUTE_GRANTED - 0452D (kkdiPf3E -> kkdiPf3S (kkdiPf3 - 800.00m))
+[21.01] MOVEMENT_AUTHORIZED - 0452U (up to tpjPf1)
+[21.01] MOVEMENT_AUTHORIZED - 0452D (up to kkdiPf3)
+[21.02] TRACK_ENTER - Train2Up  (Track tpjPf1 - 800m)
+[21.02] TRACK_ENTER - Train2Down  (Track kkdiPf3 - 800m)
+[21.98] TRACK_TRAVEL_END - Train2Up  (Track tpjPf1 - 800m)
+[21.98] TRACK_TRAVEL_END - Train2Down  (Track kkdiPf3 - 800m)
+[21.99] PATH_COMPLETED - Train2Up  (Track tpjPf1 - 800m)
+[21.99] PATH_COMPLETED - Train2Down  (Track kkdiPf3 - 800m)
+[22.00] TRAIN_ARRIVE - Train2Up  (Track tpjPf1 - 800m)
+[22.00] TRAIN_ARRIVE - Train2Down  (Track kkdiPf3 - 800m)
+[32.00] TRAIN_DWELL_END - Train2Up  (Track tpjPf1 - 800m)
+[32.00] ROUTE_WAIT - Train2Up to PDKT: 0452U cannot use bsTpjPdkt0: track reserved by 0451U
+[32.00] TRAIN_DWELL_END - Train2Down  (Track kkdiPf3 - 800m)
+[32.00] ROUTE_WAIT - Train2Down to PDKT: 0452D cannot use bsKkdiPdkt0: track reserved by 0451D
+[34.53] TRACK_TRAVEL_END - Train1Down  (Track bsKkdiPdkt0 - 41000m)
+[34.54] PATH_COMPLETED - Train1Down  (Track bsKkdiPdkt0 - 41000m)
+[34.55] MOVEMENT_AUTHORITY_END - Train1Down  (Track bsKkdiPdkt0 - 41000m)
+[34.56] ROUTE_GRANTED - 0451D (pdktBp3 -> pdktPf3E (pdktBp3-pdktPf3E - 100.00m) --> pdktPf3E -> pdktPf3S (pdktPf3 - 800.00m))
+[34.57] MOVEMENT_AUTHORIZED - 0451D (up to pdktPf3)
+[34.57] ROUTE_RETRY_OK - Train2Down to PDKT after bsKkdiPdkt0 was released
+[34.58] TRACK_RELEASE - bsKkdiPdkt0
+[34.58] ROUTE_GRANTED - 0452D (kkdiPf3S -> kkdiBp3 (kkdiBp3-kkdiPf3S - 100.00m) --> kkdiBp3 -> kkdiBp1 (kkdiBp1-kkdiBp3 - 100.00m) --> kkdiBp1 -> pdktBp3 (bsKkdiPdkt0 - 41000.00m))
+[34.58] TRACK_ENTER - Train1Down  (Track pdktBp3-pdktPf3E - 100m)
+[34.59] MOVEMENT_AUTHORIZED - 0452D (up to bsKkdiPdkt0)
+[34.60] TRAIN_DEPART - 0452D (up to bsKkdiPdkt0)
+[34.61] TRACK_RELEASE - kkdiPf3
+[34.61] TRACK_ENTER - Train2Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[34.64] TRACK_TRAVEL_END - Train1Down  (Track pdktBp3-pdktPf3E - 100m)
+[34.65] TRACK_RELEASE - pdktBp3-pdktPf3E
+[34.65] TRACK_ENTER - Train1Down  (Track pdktPf3 - 800m)
+[34.67] TRACK_TRAVEL_END - Train2Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[34.68] TRACK_RELEASE - kkdiBp3-kkdiPf3S
+[34.68] TRACK_ENTER - Train2Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[34.73] TRACK_TRAVEL_END - Train2Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[34.74] TRACK_RELEASE - kkdiBp1-kkdiBp3
+[34.74] TRACK_ENTER - Train2Down  (Track bsKkdiPdkt0 - 41000m)
+[35.61] TRACK_TRAVEL_END - Train1Down  (Track pdktPf3 - 800m)
+[35.62] PATH_COMPLETED - Train1Down  (Track pdktPf3 - 800m)
+[35.63] TRAIN_ARRIVE - Train1Down  (Track pdktPf3 - 800m)
+[40.63] TRAIN_DWELL_END - Train1Down  (Track pdktPf3 - 800m)
+[40.64] ROUTE_GRANTED - 0451D (pdktPf3S -> pdktBp1 (pdktBp1-pdktPf3S - 100.00m) --> pdktBp1 -> tpjBp3 (bsPdktTpj0 - 55000.00m))
+[40.65] MOVEMENT_AUTHORIZED - 0451D (up to bsPdktTpj0)
+[40.66] TRAIN_DEPART - 0451D (up to bsPdktTpj0)
+[40.67] TRACK_RELEASE - pdktPf3
+[40.67] TRACK_ENTER - Train1Down  (Track pdktBp1-pdktPf3S - 100m)
+[40.72] TRACK_TRAVEL_END - Train1Down  (Track pdktBp1-pdktPf3S - 100m)
+[40.73] TRACK_RELEASE - pdktBp1-pdktPf3S
+[40.73] TRACK_ENTER - Train1Down  (Track bsPdktTpj0 - 55000m)
+[40.99] WORLD_ENTER - Train3Up 
+[40.99] WORLD_ENTER - Train3Down 
+[41.00] ROUTE_GRANTED - 0453U (tpjPf2S -> tpjPf2E (tpjPf2 - 800.00m))
+[41.00] ROUTE_GRANTED - 0453D (kkdiPf3E -> kkdiPf3S (kkdiPf3 - 800.00m))
+[41.01] MOVEMENT_AUTHORIZED - 0453U (up to tpjPf2)
+[41.01] MOVEMENT_AUTHORIZED - 0453D (up to kkdiPf3)
+[41.02] TRACK_ENTER - Train3Up  (Track tpjPf2 - 800m)
+[41.02] TRACK_ENTER - Train3Down  (Track kkdiPf3 - 800m)
+[41.98] TRACK_TRAVEL_END - Train3Up  (Track tpjPf2 - 800m)
+[41.98] TRACK_TRAVEL_END - Train3Down  (Track kkdiPf3 - 800m)
+[41.99] PATH_COMPLETED - Train3Up  (Track tpjPf2 - 800m)
+[41.99] PATH_COMPLETED - Train3Down  (Track kkdiPf3 - 800m)
+[42.00] TRAIN_ARRIVE - Train3Up  (Track tpjPf2 - 800m)
+[42.00] TRAIN_ARRIVE - Train3Down  (Track kkdiPf3 - 800m)
+[42.17] TRACK_TRAVEL_END - Train1Up  (Track bsTpjPdkt0 - 55000m)
+[42.18] PATH_COMPLETED - Train1Up  (Track bsTpjPdkt0 - 55000m)
+[42.19] MOVEMENT_AUTHORITY_END - Train1Up  (Track bsTpjPdkt0 - 55000m)
+[42.20] ROUTE_GRANTED - 0451U (pdktBp0 -> pdktPf1S (pdktBp0-pdktPf1S - 100.00m) --> pdktPf1S -> pdktPf1E (pdktPf1 - 800.00m))
+[42.21] MOVEMENT_AUTHORIZED - 0451U (up to pdktPf1)
+[42.21] ROUTE_RETRY_OK - Train2Up to PDKT after bsTpjPdkt0 was released
+[42.22] TRACK_RELEASE - bsTpjPdkt0
+[42.22] ROUTE_GRANTED - 0452U (tpjPf1E -> tpjBp0 (tpjBp0-tpjPf1E - 100.00m) --> tpjBp0 -> tpjBp2 (tpjBp0-tpjBp2 - 100.00m) --> tpjBp2 -> pdktBp0 (bsTpjPdkt0 - 55000.00m))
+[42.22] TRACK_ENTER - Train1Up  (Track pdktBp0-pdktPf1S - 100m)
+[42.23] MOVEMENT_AUTHORIZED - 0452U (up to bsTpjPdkt0)
+[42.24] TRAIN_DEPART - 0452U (up to bsTpjPdkt0)
+[42.25] TRACK_RELEASE - tpjPf1
+[42.25] TRACK_ENTER - Train2Up  (Track tpjBp0-tpjPf1E - 100m)
+[42.30] TRACK_TRAVEL_END - Train2Up  (Track tpjBp0-tpjPf1E - 100m)
+[42.31] TRACK_RELEASE - tpjBp0-tpjPf1E
+[42.31] TRACK_ENTER - Train2Up  (Track tpjBp0-tpjBp2 - 100m)
+[42.37] TRACK_TRAVEL_END - Train2Up  (Track tpjBp0-tpjBp2 - 100m)
+[42.38] TRACK_RELEASE - tpjBp0-tpjBp2
+[42.38] TRACK_ENTER - Train2Up  (Track bsTpjPdkt0 - 55000m)
+[42.42] TRACK_TRAVEL_END - Train1Up  (Track pdktBp0-pdktPf1S - 100m)
+[42.43] TRACK_RELEASE - pdktBp0-pdktPf1S
+[42.43] TRACK_ENTER - Train1Up  (Track pdktPf1 - 800m)
+[43.39] TRACK_TRAVEL_END - Train1Up  (Track pdktPf1 - 800m)
+[43.40] PATH_COMPLETED - Train1Up  (Track pdktPf1 - 800m)
+[43.41] TRAIN_ARRIVE - Train1Up  (Track pdktPf1 - 800m)
+[48.41] TRAIN_DWELL_END - Train1Up  (Track pdktPf1 - 800m)
+[48.42] ROUTE_GRANTED - 0451U (pdktPf1E -> pdktBp2 (pdktBp2-pdktPf1E - 100.00m) --> pdktBp2 -> kkdiBp0 (bsPdktKkdi0 - 41000.00m))
+[48.43] MOVEMENT_AUTHORIZED - 0451U (up to bsPdktKkdi0)
+[48.44] TRAIN_DEPART - 0451U (up to bsPdktKkdi0)
+[48.45] TRACK_RELEASE - pdktPf1
+[48.45] TRACK_ENTER - Train1Up  (Track pdktBp2-pdktPf1E - 100m)
+[48.65] TRACK_TRAVEL_END - Train1Up  (Track pdktBp2-pdktPf1E - 100m)
+[48.66] TRACK_RELEASE - pdktBp2-pdktPf1E
+[48.66] TRACK_ENTER - Train1Up  (Track bsPdktKkdi0 - 41000m)
+[52.00] TRAIN_DWELL_END - Train3Up  (Track tpjPf2 - 800m)
+[52.00] ROUTE_WAIT - Train3Up to PDKT: 0453U cannot use bsTpjPdkt0: track reserved by 0452U
+[52.00] TRAIN_DWELL_END - Train3Down  (Track kkdiPf3 - 800m)
+[52.00] ROUTE_WAIT - Train3Down to PDKT: 0453D cannot use bsKkdiPdkt0: track reserved by 0452D
+[57.11] TRACK_TRAVEL_END - Train2Down  (Track bsKkdiPdkt0 - 41000m)
+[57.12] PATH_COMPLETED - Train2Down  (Track bsKkdiPdkt0 - 41000m)
+[57.13] MOVEMENT_AUTHORITY_END - Train2Down  (Track bsKkdiPdkt0 - 41000m)
+[57.14] ROUTE_GRANTED - 0452D (pdktBp3 -> pdktPf3E (pdktBp3-pdktPf3E - 100.00m) --> pdktPf3E -> pdktPf3S (pdktPf3 - 800.00m))
+[57.15] MOVEMENT_AUTHORIZED - 0452D (up to pdktPf3)
+[57.15] ROUTE_RETRY_OK - Train3Down to PDKT after bsKkdiPdkt0 was released
+[57.16] TRACK_RELEASE - bsKkdiPdkt0
+[57.16] ROUTE_GRANTED - 0453D (kkdiPf3S -> kkdiBp3 (kkdiBp3-kkdiPf3S - 100.00m) --> kkdiBp3 -> kkdiBp1 (kkdiBp1-kkdiBp3 - 100.00m) --> kkdiBp1 -> pdktBp3 (bsKkdiPdkt0 - 41000.00m))
+[57.16] TRACK_ENTER - Train2Down  (Track pdktBp3-pdktPf3E - 100m)
+[57.17] MOVEMENT_AUTHORIZED - 0453D (up to bsKkdiPdkt0)
+[57.18] TRAIN_DEPART - 0453D (up to bsKkdiPdkt0)
+[57.19] TRACK_RELEASE - kkdiPf3
+[57.19] TRACK_ENTER - Train3Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[57.21] TRACK_TRAVEL_END - Train2Down  (Track pdktBp3-pdktPf3E - 100m)
+[57.22] TRACK_RELEASE - pdktBp3-pdktPf3E
+[57.22] TRACK_ENTER - Train2Down  (Track pdktPf3 - 800m)
+[57.24] TRACK_TRAVEL_END - Train3Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[57.25] TRACK_RELEASE - kkdiBp3-kkdiPf3S
+[57.25] TRACK_ENTER - Train3Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[57.30] TRACK_TRAVEL_END - Train3Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[57.31] TRACK_RELEASE - kkdiBp1-kkdiBp3
+[57.31] TRACK_ENTER - Train3Down  (Track bsKkdiPdkt0 - 41000m)
+[58.18] TRACK_TRAVEL_END - Train2Down  (Track pdktPf3 - 800m)
+[58.19] PATH_COMPLETED - Train2Down  (Track pdktPf3 - 800m)
+[58.20] TRAIN_ARRIVE - Train2Down  (Track pdktPf3 - 800m)
+[60.99] WORLD_ENTER - Train4Up 
+[60.99] WORLD_ENTER - Train4Down 
+[61.00] ROUTE_GRANTED - 0454U (tpjPf1S -> tpjPf1E (tpjPf1 - 800.00m))
+[61.00] ROUTE_GRANTED - 0454D (kkdiPf3E -> kkdiPf3S (kkdiPf3 - 800.00m))
+[61.01] MOVEMENT_AUTHORIZED - 0454U (up to tpjPf1)
+[61.01] MOVEMENT_AUTHORIZED - 0454D (up to kkdiPf3)
+[61.02] TRACK_ENTER - Train4Up  (Track tpjPf1 - 800m)
+[61.02] TRACK_ENTER - Train4Down  (Track kkdiPf3 - 800m)
+[61.98] TRACK_TRAVEL_END - Train4Up  (Track tpjPf1 - 800m)
+[61.98] TRACK_TRAVEL_END - Train4Down  (Track kkdiPf3 - 800m)
+[61.99] PATH_COMPLETED - Train4Up  (Track tpjPf1 - 800m)
+[61.99] PATH_COMPLETED - Train4Down  (Track kkdiPf3 - 800m)
+[62.00] TRAIN_ARRIVE - Train4Up  (Track tpjPf1 - 800m)
+[62.00] TRAIN_ARRIVE - Train4Down  (Track kkdiPf3 - 800m)
+[63.20] TRAIN_DWELL_END - Train2Down  (Track pdktPf3 - 800m)
+[63.20] ROUTE_WAIT - Train2Down to TPJ: 0452D cannot use bsPdktTpj0: track reserved by 0451D
+[70.73] TRACK_TRAVEL_END - Train1Down  (Track bsPdktTpj0 - 55000m)
+[70.74] PATH_COMPLETED - Train1Down  (Track bsPdktTpj0 - 55000m)
+[70.75] MOVEMENT_AUTHORITY_END - Train1Down  (Track bsPdktTpj0 - 55000m)
+[70.76] ROUTE_GRANTED - 0451D (tpjBp3 -> tpjBp1 (tpjBp1-tpjBp3 - 100.00m) --> tpjBp1 -> tpjPf3E (tpjBp1-tpjPf3E - 100.00m) --> tpjPf3E -> tpjPf3S (tpjPf3 - 800.00m))
+[70.77] MOVEMENT_AUTHORIZED - 0451D (up to tpjPf3)
+[70.77] ROUTE_RETRY_OK - Train2Down to TPJ after bsPdktTpj0 was released
+[70.78] TRACK_RELEASE - bsPdktTpj0
+[70.78] ROUTE_GRANTED - 0452D (pdktPf3S -> pdktBp1 (pdktBp1-pdktPf3S - 100.00m) --> pdktBp1 -> tpjBp3 (bsPdktTpj0 - 55000.00m))
+[70.78] TRACK_ENTER - Train1Down  (Track tpjBp1-tpjBp3 - 100m)
+[70.79] MOVEMENT_AUTHORIZED - 0452D (up to bsPdktTpj0)
+[70.80] TRAIN_DEPART - 0452D (up to bsPdktTpj0)
+[70.81] TRACK_RELEASE - pdktPf3
+[70.81] TRACK_ENTER - Train2Down  (Track pdktBp1-pdktPf3S - 100m)
+[70.84] TRACK_TRAVEL_END - Train1Down  (Track tpjBp1-tpjBp3 - 100m)
+[70.85] TRACK_RELEASE - tpjBp1-tpjBp3
+[70.85] TRACK_ENTER - Train1Down  (Track tpjBp1-tpjPf3E - 100m)
+[70.87] TRACK_TRAVEL_END - Train2Down  (Track pdktBp1-pdktPf3S - 100m)
+[70.88] TRACK_RELEASE - pdktBp1-pdktPf3S
+[70.88] TRACK_ENTER - Train2Down  (Track bsPdktTpj0 - 55000m)
+[70.90] TRACK_TRAVEL_END - Train1Down  (Track tpjBp1-tpjPf3E - 100m)
+[70.91] TRACK_RELEASE - tpjBp1-tpjPf3E
+[70.91] TRACK_ENTER - Train1Down  (Track tpjPf3 - 800m)
+[71.02] TRACK_TRAVEL_END - Train1Up  (Track bsPdktKkdi0 - 41000m)
+[71.03] PATH_COMPLETED - Train1Up  (Track bsPdktKkdi0 - 41000m)
+[71.04] MOVEMENT_AUTHORITY_END - Train1Up  (Track bsPdktKkdi0 - 41000m)
+[71.05] ROUTE_GRANTED - 0451U (kkdiBp0 -> kkdiBp2 (kkdiBp0-kkdiBp2 - 100.00m) --> kkdiBp2 -> kkdiPf1S (kkdiBp2-kkdiPf1S - 100.00m) --> kkdiPf1S -> kkdiPf1E (kkdiPf1 - 800.00m))
+[71.06] MOVEMENT_AUTHORIZED - 0451U (up to kkdiPf1)
+[71.07] TRACK_RELEASE - bsPdktKkdi0
+[71.07] TRACK_ENTER - Train1Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[71.13] TRACK_TRAVEL_END - Train1Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[71.14] TRACK_RELEASE - kkdiBp0-kkdiBp2
+[71.14] TRACK_ENTER - Train1Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[71.19] TRACK_TRAVEL_END - Train1Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[71.20] TRACK_RELEASE - kkdiBp2-kkdiPf1S
+[71.20] TRACK_ENTER - Train1Up  (Track kkdiPf1 - 800m)
+[71.87] TRACK_TRAVEL_END - Train1Down  (Track tpjPf3 - 800m)
+[71.88] PATH_COMPLETED - Train1Down  (Track tpjPf3 - 800m)
+[71.89] TRAIN_ARRIVE - Train1Down  (Track tpjPf3 - 800m)
+[72.00] TRAIN_DWELL_END - Train4Up  (Track tpjPf1 - 800m)
+[72.00] ROUTE_WAIT - Train4Up to PDKT: 0454U cannot use bsTpjPdkt0: track reserved by 0452U
+[72.00] TRAIN_DWELL_END - Train4Down  (Track kkdiPf3 - 800m)
+[72.00] ROUTE_WAIT - Train4Down to PDKT: 0454D cannot use bsKkdiPdkt0: track reserved by 0453D
+[72.16] TRACK_TRAVEL_END - Train1Up  (Track kkdiPf1 - 800m)
+[72.17] PATH_COMPLETED - Train1Up  (Track kkdiPf1 - 800m)
+[72.18] TRAIN_ARRIVE - Train1Up  (Track kkdiPf1 - 800m)
+[72.38] TRACK_TRAVEL_END - Train2Up  (Track bsTpjPdkt0 - 55000m)
+[72.39] PATH_COMPLETED - Train2Up  (Track bsTpjPdkt0 - 55000m)
+[72.40] MOVEMENT_AUTHORITY_END - Train2Up  (Track bsTpjPdkt0 - 55000m)
+[72.41] ROUTE_GRANTED - 0452U (pdktBp0 -> pdktPf1S (pdktBp0-pdktPf1S - 100.00m) --> pdktPf1S -> pdktPf1E (pdktPf1 - 800.00m))
+[72.42] MOVEMENT_AUTHORIZED - 0452U (up to pdktPf1)
+[72.42] ROUTE_RETRY_OK - Train3Up to PDKT after bsTpjPdkt0 was released
+[72.43] TRACK_RELEASE - bsTpjPdkt0
+[72.43] ROUTE_GRANTED - 0453U (tpjPf2E -> tpjBp0 (tpjBp0-tpjPf2E - 100.00m) --> tpjBp0 -> tpjBp2 (tpjBp0-tpjBp2 - 100.00m) --> tpjBp2 -> pdktBp0 (bsTpjPdkt0 - 55000.00m))
+[72.43] TRACK_ENTER - Train2Up  (Track pdktBp0-pdktPf1S - 100m)
+[72.44] MOVEMENT_AUTHORIZED - 0453U (up to bsTpjPdkt0)
+[72.45] TRAIN_DEPART - 0453U (up to bsTpjPdkt0)
+[72.46] TRACK_RELEASE - tpjPf2
+[72.46] TRACK_ENTER - Train3Up  (Track tpjBp0-tpjPf2E - 100m)
+[72.63] TRACK_TRAVEL_END - Train2Up  (Track pdktBp0-pdktPf1S - 100m)
+[72.64] TRACK_RELEASE - pdktBp0-pdktPf1S
+[72.64] TRACK_ENTER - Train2Up  (Track pdktPf1 - 800m)
+[72.66] TRACK_TRAVEL_END - Train3Up  (Track tpjBp0-tpjPf2E - 100m)
+[72.67] TRACK_RELEASE - tpjBp0-tpjPf2E
+[72.67] TRACK_ENTER - Train3Up  (Track tpjBp0-tpjBp2 - 100m)
+[72.72] TRACK_TRAVEL_END - Train3Up  (Track tpjBp0-tpjBp2 - 100m)
+[72.73] TRACK_RELEASE - tpjBp0-tpjBp2
+[72.73] TRACK_ENTER - Train3Up  (Track bsTpjPdkt0 - 55000m)
+[73.60] TRACK_TRAVEL_END - Train2Up  (Track pdktPf1 - 800m)
+[73.61] PATH_COMPLETED - Train2Up  (Track pdktPf1 - 800m)
+[73.62] TRAIN_ARRIVE - Train2Up  (Track pdktPf1 - 800m)
+[78.62] TRAIN_DWELL_END - Train2Up  (Track pdktPf1 - 800m)
+[78.63] ROUTE_GRANTED - 0452U (pdktPf1E -> pdktBp2 (pdktBp2-pdktPf1E - 100.00m) --> pdktBp2 -> kkdiBp0 (bsPdktKkdi0 - 41000.00m))
+[78.64] MOVEMENT_AUTHORIZED - 0452U (up to bsPdktKkdi0)
+[78.65] TRAIN_DEPART - 0452U (up to bsPdktKkdi0)
+[78.66] TRACK_RELEASE - pdktPf1
+[78.66] TRACK_ENTER - Train2Up  (Track pdktBp2-pdktPf1E - 100m)
+[78.86] TRACK_TRAVEL_END - Train2Up  (Track pdktBp2-pdktPf1E - 100m)
+[78.87] TRACK_RELEASE - pdktBp2-pdktPf1E
+[78.87] TRACK_ENTER - Train2Up  (Track bsPdktKkdi0 - 41000m)
+[79.68] TRACK_TRAVEL_END - Train3Down  (Track bsKkdiPdkt0 - 41000m)
+[79.69] PATH_COMPLETED - Train3Down  (Track bsKkdiPdkt0 - 41000m)
+[79.70] MOVEMENT_AUTHORITY_END - Train3Down  (Track bsKkdiPdkt0 - 41000m)
+[79.71] ROUTE_GRANTED - 0453D (pdktBp3 -> pdktPf3E (pdktBp3-pdktPf3E - 100.00m) --> pdktPf3E -> pdktPf3S (pdktPf3 - 800.00m))
+[79.72] MOVEMENT_AUTHORIZED - 0453D (up to pdktPf3)
+[79.72] ROUTE_RETRY_OK - Train4Down to PDKT after bsKkdiPdkt0 was released
+[79.73] TRACK_RELEASE - bsKkdiPdkt0
+[79.73] ROUTE_GRANTED - 0454D (kkdiPf3S -> kkdiBp3 (kkdiBp3-kkdiPf3S - 100.00m) --> kkdiBp3 -> kkdiBp1 (kkdiBp1-kkdiBp3 - 100.00m) --> kkdiBp1 -> pdktBp3 (bsKkdiPdkt0 - 41000.00m))
+[79.73] TRACK_ENTER - Train3Down  (Track pdktBp3-pdktPf3E - 100m)
+[79.74] MOVEMENT_AUTHORIZED - 0454D (up to bsKkdiPdkt0)
+[79.75] TRAIN_DEPART - 0454D (up to bsKkdiPdkt0)
+[79.76] TRACK_RELEASE - kkdiPf3
+[79.76] TRACK_ENTER - Train4Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[79.78] TRACK_TRAVEL_END - Train3Down  (Track pdktBp3-pdktPf3E - 100m)
+[79.79] TRACK_RELEASE - pdktBp3-pdktPf3E
+[79.79] TRACK_ENTER - Train3Down  (Track pdktPf3 - 800m)
+[79.81] TRACK_TRAVEL_END - Train4Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[79.82] TRACK_RELEASE - kkdiBp3-kkdiPf3S
+[79.82] TRACK_ENTER - Train4Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[79.88] TRACK_TRAVEL_END - Train4Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[79.89] TRACK_RELEASE - kkdiBp1-kkdiBp3
+[79.89] TRACK_ENTER - Train4Down  (Track bsKkdiPdkt0 - 41000m)
+[80.75] TRACK_TRAVEL_END - Train3Down  (Track pdktPf3 - 800m)
+[80.76] PATH_COMPLETED - Train3Down  (Track pdktPf3 - 800m)
+[80.77] TRAIN_ARRIVE - Train3Down  (Track pdktPf3 - 800m)
+[80.99] WORLD_ENTER - Train5Up 
+[80.99] WORLD_ENTER - Train5Down 
+[81.00] ROUTE_GRANTED - 0455U (tpjPf2S -> tpjPf2E (tpjPf2 - 800.00m))
+[81.00] ROUTE_GRANTED - 0455D (kkdiPf3E -> kkdiPf3S (kkdiPf3 - 800.00m))
+[81.01] MOVEMENT_AUTHORIZED - 0455U (up to tpjPf2)
+[81.01] MOVEMENT_AUTHORIZED - 0455D (up to kkdiPf3)
+[81.02] TRACK_ENTER - Train5Up  (Track tpjPf2 - 800m)
+[81.02] TRACK_ENTER - Train5Down  (Track kkdiPf3 - 800m)
+[81.89] TRAIN_DWELL_END - Train1Down  (Track tpjPf3 - 800m)
+[81.90] SCHEDULE_END - Train1Down  (Track tpjPf3 - 800m)
+[81.91] TRACK_RELEASE - tpjPf3
+[81.91] WORLD_EXIT - Train1Down 
+[81.98] TRACK_TRAVEL_END - Train5Up  (Track tpjPf2 - 800m)
+[81.98] TRACK_TRAVEL_END - Train5Down  (Track kkdiPf3 - 800m)
+[81.99] PATH_COMPLETED - Train5Up  (Track tpjPf2 - 800m)
+[81.99] PATH_COMPLETED - Train5Down  (Track kkdiPf3 - 800m)
+[82.00] TRAIN_ARRIVE - Train5Up  (Track tpjPf2 - 800m)
+[82.00] TRAIN_ARRIVE - Train5Down  (Track kkdiPf3 - 800m)
+[82.18] TRAIN_DWELL_END - Train1Up  (Track kkdiPf1 - 800m)
+[82.19] SCHEDULE_END - Train1Up  (Track kkdiPf1 - 800m)
+[82.20] TRACK_RELEASE - kkdiPf1
+[82.20] WORLD_EXIT - Train1Up 
+[85.77] TRAIN_DWELL_END - Train3Down  (Track pdktPf3 - 800m)
+[85.77] ROUTE_WAIT - Train3Down to TPJ: 0453D cannot use bsPdktTpj0: track reserved by 0452D
+[92.00] TRAIN_DWELL_END - Train5Up  (Track tpjPf2 - 800m)
+[92.00] ROUTE_WAIT - Train5Up to PDKT: 0455U cannot use bsTpjPdkt0: track reserved by 0453U
+[92.00] TRAIN_DWELL_END - Train5Down  (Track kkdiPf3 - 800m)
+[92.00] ROUTE_WAIT - Train5Down to PDKT: 0455D cannot use bsKkdiPdkt0: track reserved by 0454D
+[100.88] TRACK_TRAVEL_END - Train2Down  (Track bsPdktTpj0 - 55000m)
+[100.89] PATH_COMPLETED - Train2Down  (Track bsPdktTpj0 - 55000m)
+[100.90] MOVEMENT_AUTHORITY_END - Train2Down  (Track bsPdktTpj0 - 55000m)
+[100.91] ROUTE_GRANTED - 0452D (tpjBp3 -> tpjBp1 (tpjBp1-tpjBp3 - 100.00m) --> tpjBp1 -> tpjPf3E (tpjBp1-tpjPf3E - 100.00m) --> tpjPf3E -> tpjPf3S (tpjPf3 - 800.00m))
+[100.92] MOVEMENT_AUTHORIZED - 0452D (up to tpjPf3)
+[100.92] ROUTE_RETRY_OK - Train3Down to TPJ after bsPdktTpj0 was released
+[100.93] TRACK_RELEASE - bsPdktTpj0
+[100.93] ROUTE_GRANTED - 0453D (pdktPf3S -> pdktBp1 (pdktBp1-pdktPf3S - 100.00m) --> pdktBp1 -> tpjBp3 (bsPdktTpj0 - 55000.00m))
+[100.93] TRACK_ENTER - Train2Down  (Track tpjBp1-tpjBp3 - 100m)
+[100.94] MOVEMENT_AUTHORIZED - 0453D (up to bsPdktTpj0)
+[100.95] TRAIN_DEPART - 0453D (up to bsPdktTpj0)
+[100.96] TRACK_RELEASE - pdktPf3
+[100.96] TRACK_ENTER - Train3Down  (Track pdktBp1-pdktPf3S - 100m)
+[100.98] TRACK_TRAVEL_END - Train2Down  (Track tpjBp1-tpjBp3 - 100m)
+[100.99] WORLD_ENTER - Train6Up 
+[100.99] WORLD_ENTER - Train6Down 
+[100.99] TRACK_RELEASE - tpjBp1-tpjBp3
+[100.99] TRACK_ENTER - Train2Down  (Track tpjBp1-tpjPf3E - 100m)
+[101.00] ROUTE_GRANTED - 0456U (tpjPf4S -> tpjPf4E (tpjPf4 - 800.00m))
+[101.00] ROUTE_GRANTED - 0456D (kkdiPf1E -> kkdiPf1S (kkdiPf1 - 800.00m))
+[101.01] MOVEMENT_AUTHORIZED - 0456U (up to tpjPf4)
+[101.01] MOVEMENT_AUTHORIZED - 0456D (up to kkdiPf1)
+[101.01] TRACK_TRAVEL_END - Train3Down  (Track pdktBp1-pdktPf3S - 100m)
+[101.02] TRACK_ENTER - Train6Up  (Track tpjPf4 - 800m)
+[101.02] TRACK_ENTER - Train6Down  (Track kkdiPf1 - 800m)
+[101.02] TRACK_RELEASE - pdktBp1-pdktPf3S
+[101.02] TRACK_ENTER - Train3Down  (Track bsPdktTpj0 - 55000m)
+[101.05] TRACK_TRAVEL_END - Train2Down  (Track tpjBp1-tpjPf3E - 100m)
+[101.06] TRACK_RELEASE - tpjBp1-tpjPf3E
+[101.06] TRACK_ENTER - Train2Down  (Track tpjPf3 - 800m)
+[101.23] TRACK_TRAVEL_END - Train2Up  (Track bsPdktKkdi0 - 41000m)
+[101.24] PATH_COMPLETED - Train2Up  (Track bsPdktKkdi0 - 41000m)
+[101.25] MOVEMENT_AUTHORITY_END - Train2Up  (Track bsPdktKkdi0 - 41000m)
+[101.26] ROUTE_GRANTED - 0452U (kkdiBp0 -> kkdiBp2 (kkdiBp0-kkdiBp2 - 100.00m) --> kkdiBp2 -> kkdiPf2S (kkdiBp2-kkdiPf2S - 100.00m) --> kkdiPf2S -> kkdiPf2E (kkdiPf2 - 800.00m))
+[101.27] MOVEMENT_AUTHORIZED - 0452U (up to kkdiPf2)
+[101.28] TRACK_RELEASE - bsPdktKkdi0
+[101.28] TRACK_ENTER - Train2Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[101.34] TRACK_TRAVEL_END - Train2Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[101.35] TRACK_RELEASE - kkdiBp0-kkdiBp2
+[101.35] TRACK_ENTER - Train2Up  (Track kkdiBp2-kkdiPf2S - 100m)
+[101.55] TRACK_TRAVEL_END - Train2Up  (Track kkdiBp2-kkdiPf2S - 100m)
+[101.56] TRACK_RELEASE - kkdiBp2-kkdiPf2S
+[101.56] TRACK_ENTER - Train2Up  (Track kkdiPf2 - 800m)
+[101.98] TRACK_TRAVEL_END - Train6Up  (Track tpjPf4 - 800m)
+[101.98] TRACK_TRAVEL_END - Train6Down  (Track kkdiPf1 - 800m)
+[101.99] PATH_COMPLETED - Train6Up  (Track tpjPf4 - 800m)
+[101.99] PATH_COMPLETED - Train6Down  (Track kkdiPf1 - 800m)
+[102.00] TRAIN_ARRIVE - Train6Up  (Track tpjPf4 - 800m)
+[102.00] TRAIN_ARRIVE - Train6Down  (Track kkdiPf1 - 800m)
+[102.02] TRACK_TRAVEL_END - Train2Down  (Track tpjPf3 - 800m)
+[102.03] PATH_COMPLETED - Train2Down  (Track tpjPf3 - 800m)
+[102.04] TRAIN_ARRIVE - Train2Down  (Track tpjPf3 - 800m)
+[102.25] TRACK_TRAVEL_END - Train4Down  (Track bsKkdiPdkt0 - 41000m)
+[102.26] PATH_COMPLETED - Train4Down  (Track bsKkdiPdkt0 - 41000m)
+[102.27] MOVEMENT_AUTHORITY_END - Train4Down  (Track bsKkdiPdkt0 - 41000m)
+[102.28] ROUTE_GRANTED - 0454D (pdktBp3 -> pdktPf3E (pdktBp3-pdktPf3E - 100.00m) --> pdktPf3E -> pdktPf3S (pdktPf3 - 800.00m))
+[102.29] MOVEMENT_AUTHORIZED - 0454D (up to pdktPf3)
+[102.29] ROUTE_RETRY_OK - Train5Down to PDKT after bsKkdiPdkt0 was released
+[102.30] TRACK_RELEASE - bsKkdiPdkt0
+[102.30] ROUTE_GRANTED - 0455D (kkdiPf3S -> kkdiBp3 (kkdiBp3-kkdiPf3S - 100.00m) --> kkdiBp3 -> kkdiBp1 (kkdiBp1-kkdiBp3 - 100.00m) --> kkdiBp1 -> pdktBp3 (bsKkdiPdkt0 - 41000.00m))
+[102.30] TRACK_ENTER - Train4Down  (Track pdktBp3-pdktPf3E - 100m)
+[102.31] MOVEMENT_AUTHORIZED - 0455D (up to bsKkdiPdkt0)
+[102.32] TRAIN_DEPART - 0455D (up to bsKkdiPdkt0)
+[102.33] TRACK_RELEASE - kkdiPf3
+[102.33] TRACK_ENTER - Train5Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[102.36] TRACK_TRAVEL_END - Train4Down  (Track pdktBp3-pdktPf3E - 100m)
+[102.37] TRACK_RELEASE - pdktBp3-pdktPf3E
+[102.37] TRACK_ENTER - Train4Down  (Track pdktPf3 - 800m)
+[102.39] TRACK_TRAVEL_END - Train5Down  (Track kkdiBp3-kkdiPf3S - 100m)
+[102.40] TRACK_RELEASE - kkdiBp3-kkdiPf3S
+[102.40] TRACK_ENTER - Train5Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[102.45] TRACK_TRAVEL_END - Train5Down  (Track kkdiBp1-kkdiBp3 - 100m)
+[102.46] TRACK_RELEASE - kkdiBp1-kkdiBp3
+[102.46] TRACK_ENTER - Train5Down  (Track bsKkdiPdkt0 - 41000m)
+[102.52] TRACK_TRAVEL_END - Train2Up  (Track kkdiPf2 - 800m)
+[102.53] PATH_COMPLETED - Train2Up  (Track kkdiPf2 - 800m)
+[102.54] TRAIN_ARRIVE - Train2Up  (Track kkdiPf2 - 800m)
+[102.73] TRACK_TRAVEL_END - Train3Up  (Track bsTpjPdkt0 - 55000m)
+[102.74] PATH_COMPLETED - Train3Up  (Track bsTpjPdkt0 - 55000m)
+[102.75] MOVEMENT_AUTHORITY_END - Train3Up  (Track bsTpjPdkt0 - 55000m)
+[102.76] ROUTE_GRANTED - 0453U (pdktBp0 -> pdktPf1S (pdktBp0-pdktPf1S - 100.00m) --> pdktPf1S -> pdktPf1E (pdktPf1 - 800.00m))
+[102.77] MOVEMENT_AUTHORIZED - 0453U (up to pdktPf1)
+[102.77] ROUTE_RETRY_OK - Train4Up to PDKT after bsTpjPdkt0 was released
+[102.78] TRACK_RELEASE - bsTpjPdkt0
+[102.78] ROUTE_GRANTED - 0454U (tpjPf1E -> tpjBp0 (tpjBp0-tpjPf1E - 100.00m) --> tpjBp0 -> tpjBp2 (tpjBp0-tpjBp2 - 100.00m) --> tpjBp2 -> pdktBp0 (bsTpjPdkt0 - 55000.00m))
+[102.78] TRACK_ENTER - Train3Up  (Track pdktBp0-pdktPf1S - 100m)
+[102.79] MOVEMENT_AUTHORIZED - 0454U (up to bsTpjPdkt0)
+[102.80] TRAIN_DEPART - 0454U (up to bsTpjPdkt0)
+[102.81] TRACK_RELEASE - tpjPf1
+[102.81] TRACK_ENTER - Train4Up  (Track tpjBp0-tpjPf1E - 100m)
+[102.87] TRACK_TRAVEL_END - Train4Up  (Track tpjBp0-tpjPf1E - 100m)
+[102.88] TRACK_RELEASE - tpjBp0-tpjPf1E
+[102.88] TRACK_ENTER - Train4Up  (Track tpjBp0-tpjBp2 - 100m)
+[102.93] TRACK_TRAVEL_END - Train4Up  (Track tpjBp0-tpjBp2 - 100m)
+[102.94] TRACK_RELEASE - tpjBp0-tpjBp2
+[102.94] TRACK_ENTER - Train4Up  (Track bsTpjPdkt0 - 55000m)
+[102.98] TRACK_TRAVEL_END - Train3Up  (Track pdktBp0-pdktPf1S - 100m)
+[102.99] TRACK_RELEASE - pdktBp0-pdktPf1S
+[102.99] TRACK_ENTER - Train3Up  (Track pdktPf1 - 800m)
+[103.33] TRACK_TRAVEL_END - Train4Down  (Track pdktPf3 - 800m)
+[103.34] PATH_COMPLETED - Train4Down  (Track pdktPf3 - 800m)
+[103.35] TRAIN_ARRIVE - Train4Down  (Track pdktPf3 - 800m)
+[103.95] TRACK_TRAVEL_END - Train3Up  (Track pdktPf1 - 800m)
+[103.96] PATH_COMPLETED - Train3Up  (Track pdktPf1 - 800m)
+[103.97] TRAIN_ARRIVE - Train3Up  (Track pdktPf1 - 800m)
+[108.35] TRAIN_DWELL_END - Train4Down  (Track pdktPf3 - 800m)
+[108.35] ROUTE_WAIT - Train4Down to TPJ: 0454D cannot use bsPdktTpj0: track reserved by 0453D
+[108.97] TRAIN_DWELL_END - Train3Up  (Track pdktPf1 - 800m)
+[108.98] ROUTE_GRANTED - 0453U (pdktPf1E -> pdktBp2 (pdktBp2-pdktPf1E - 100.00m) --> pdktBp2 -> kkdiBp0 (bsPdktKkdi0 - 41000.00m))
+[108.99] MOVEMENT_AUTHORIZED - 0453U (up to bsPdktKkdi0)
+[109.00] TRAIN_DEPART - 0453U (up to bsPdktKkdi0)
+[109.01] TRACK_RELEASE - pdktPf1
+[109.01] TRACK_ENTER - Train3Up  (Track pdktBp2-pdktPf1E - 100m)
+[109.21] TRACK_TRAVEL_END - Train3Up  (Track pdktBp2-pdktPf1E - 100m)
+[109.22] TRACK_RELEASE - pdktBp2-pdktPf1E
+[109.22] TRACK_ENTER - Train3Up  (Track bsPdktKkdi0 - 41000m)
+[112.00] TRAIN_DWELL_END - Train6Up  (Track tpjPf4 - 800m)
+[112.00] ROUTE_WAIT - Train6Up to PDKT: 0456U cannot use bsTpjPdkt0: track reserved by 0454U
+[112.00] TRAIN_DWELL_END - Train6Down  (Track kkdiPf1 - 800m)
+[112.00] ROUTE_WAIT - Train6Down to PDKT: 0456D cannot use bsKkdiPdkt0: track reserved by 0455D
+[112.04] TRAIN_DWELL_END - Train2Down  (Track tpjPf3 - 800m)
+[112.05] SCHEDULE_END - Train2Down  (Track tpjPf3 - 800m)
+[112.06] TRACK_RELEASE - tpjPf3
+[112.06] WORLD_EXIT - Train2Down 
+[112.54] TRAIN_DWELL_END - Train2Up  (Track kkdiPf2 - 800m)
+[112.55] SCHEDULE_END - Train2Up  (Track kkdiPf2 - 800m)
+[112.56] TRACK_RELEASE - kkdiPf2
+[112.56] WORLD_EXIT - Train2Up 
+[124.82] TRACK_TRAVEL_END - Train5Down  (Track bsKkdiPdkt0 - 41000m)
+[124.83] PATH_COMPLETED - Train5Down  (Track bsKkdiPdkt0 - 41000m)
+[124.84] MOVEMENT_AUTHORITY_END - Train5Down  (Track bsKkdiPdkt0 - 41000m)
+[124.85] ROUTE_GRANTED - 0455D (pdktBp3 -> pdktPf4E (pdktBp3-pdktPf4E - 100.00m) --> pdktPf4E -> pdktPf4S (pdktPf4 - 800.00m))
+[124.86] MOVEMENT_AUTHORIZED - 0455D (up to pdktPf4)
+[124.86] ROUTE_RETRY_OK - Train6Down to PDKT after bsKkdiPdkt0 was released
+[124.87] TRACK_RELEASE - bsKkdiPdkt0
+[124.87] ROUTE_GRANTED - 0456D (kkdiPf1S -> kkdiBp2 (kkdiBp2-kkdiPf1S - 100.00m) --> kkdiBp2 -> kkdiBp1 (kkdiBp1-kkdiBp2 - 100.00m) --> kkdiBp1 -> pdktBp3 (bsKkdiPdkt0 - 41000.00m))
+[124.87] TRACK_ENTER - Train5Down  (Track pdktBp3-pdktPf4E - 100m)
+[124.88] MOVEMENT_AUTHORIZED - 0456D (up to bsKkdiPdkt0)
+[124.89] TRAIN_DEPART - 0456D (up to bsKkdiPdkt0)
+[124.90] TRACK_RELEASE - kkdiPf1
+[124.90] TRACK_ENTER - Train6Down  (Track kkdiBp2-kkdiPf1S - 100m)
+[124.96] TRACK_TRAVEL_END - Train6Down  (Track kkdiBp2-kkdiPf1S - 100m)
+[124.97] TRACK_RELEASE - kkdiBp2-kkdiPf1S
+[124.97] TRACK_ENTER - Train6Down  (Track kkdiBp1-kkdiBp2 - 100m)
+[125.07] TRACK_TRAVEL_END - Train5Down  (Track pdktBp3-pdktPf4E - 100m)
+[125.08] TRACK_RELEASE - pdktBp3-pdktPf4E
+[125.08] TRACK_ENTER - Train5Down  (Track pdktPf4 - 800m)
+[125.17] TRACK_TRAVEL_END - Train6Down  (Track kkdiBp1-kkdiBp2 - 100m)
+[125.18] TRACK_RELEASE - kkdiBp1-kkdiBp2
+[125.18] TRACK_ENTER - Train6Down  (Track bsKkdiPdkt0 - 41000m)
+[126.04] TRACK_TRAVEL_END - Train5Down  (Track pdktPf4 - 800m)
+[126.05] PATH_COMPLETED - Train5Down  (Track pdktPf4 - 800m)
+[126.06] TRAIN_ARRIVE - Train5Down  (Track pdktPf4 - 800m)
+[131.02] TRACK_TRAVEL_END - Train3Down  (Track bsPdktTpj0 - 55000m)
+[131.03] PATH_COMPLETED - Train3Down  (Track bsPdktTpj0 - 55000m)
+[131.04] MOVEMENT_AUTHORITY_END - Train3Down  (Track bsPdktTpj0 - 55000m)
+[131.05] ROUTE_GRANTED - 0453D (tpjBp3 -> tpjBp1 (tpjBp1-tpjBp3 - 100.00m) --> tpjBp1 -> tpjPf3E (tpjBp1-tpjPf3E - 100.00m) --> tpjPf3E -> tpjPf3S (tpjPf3 - 800.00m))
+[131.06] MOVEMENT_AUTHORIZED - 0453D (up to tpjPf3)
+[131.06] ROUTE_RETRY_OK - Train4Down to TPJ after bsPdktTpj0 was released
+[131.06] TRAIN_DWELL_END - Train5Down  (Track pdktPf4 - 800m)
+[131.06] ROUTE_WAIT - Train5Down to TPJ: 0455D cannot use pdktBp1-pdktPf4S: switch pdktSw1 locked by 0454D
+[131.07] TRACK_RELEASE - bsPdktTpj0
+[131.07] ROUTE_GRANTED - 0454D (pdktPf3S -> pdktBp1 (pdktBp1-pdktPf3S - 100.00m) --> pdktBp1 -> tpjBp3 (bsPdktTpj0 - 55000.00m))
+[131.07] TRACK_ENTER - Train3Down  (Track tpjBp1-tpjBp3 - 100m)
+[131.08] MOVEMENT_AUTHORIZED - 0454D (up to bsPdktTpj0)
+[131.09] TRAIN_DEPART - 0454D (up to bsPdktTpj0)
+[131.10] TRACK_RELEASE - pdktPf3
+[131.10] TRACK_ENTER - Train4Down  (Track pdktBp1-pdktPf3S - 100m)
+[131.13] TRACK_TRAVEL_END - Train3Down  (Track tpjBp1-tpjBp3 - 100m)
+[131.14] TRACK_RELEASE - tpjBp1-tpjBp3
+[131.14] TRACK_ENTER - Train3Down  (Track tpjBp1-tpjPf3E - 100m)
+[131.16] TRACK_TRAVEL_END - Train4Down  (Track pdktBp1-pdktPf3S - 100m)
+[131.17] TRACK_RELEASE - pdktBp1-pdktPf3S
+[131.17] TRACK_ENTER - Train4Down  (Track bsPdktTpj0 - 55000m)
+[131.19] TRACK_TRAVEL_END - Train3Down  (Track tpjBp1-tpjPf3E - 100m)
+[131.20] TRACK_RELEASE - tpjBp1-tpjPf3E
+[131.20] TRACK_ENTER - Train3Down  (Track tpjPf3 - 800m)
+[131.59] TRACK_TRAVEL_END - Train3Up  (Track bsPdktKkdi0 - 41000m)
+[131.60] PATH_COMPLETED - Train3Up  (Track bsPdktKkdi0 - 41000m)
+[131.61] MOVEMENT_AUTHORITY_END - Train3Up  (Track bsPdktKkdi0 - 41000m)
+[131.62] ROUTE_GRANTED - 0453U (kkdiBp0 -> kkdiBp2 (kkdiBp0-kkdiBp2 - 100.00m) --> kkdiBp2 -> kkdiPf1S (kkdiBp2-kkdiPf1S - 100.00m) --> kkdiPf1S -> kkdiPf1E (kkdiPf1 - 800.00m))
+[131.63] MOVEMENT_AUTHORIZED - 0453U (up to kkdiPf1)
+[131.64] TRACK_RELEASE - bsPdktKkdi0
+[131.64] TRACK_ENTER - Train3Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[131.69] TRACK_TRAVEL_END - Train3Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[131.70] TRACK_RELEASE - kkdiBp0-kkdiBp2
+[131.70] TRACK_ENTER - Train3Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[131.76] TRACK_TRAVEL_END - Train3Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[131.77] TRACK_RELEASE - kkdiBp2-kkdiPf1S
+[131.77] TRACK_ENTER - Train3Up  (Track kkdiPf1 - 800m)
+[132.16] TRACK_TRAVEL_END - Train3Down  (Track tpjPf3 - 800m)
+[132.17] PATH_COMPLETED - Train3Down  (Track tpjPf3 - 800m)
+[132.18] TRAIN_ARRIVE - Train3Down  (Track tpjPf3 - 800m)
+[132.73] TRACK_TRAVEL_END - Train3Up  (Track kkdiPf1 - 800m)
+[132.74] PATH_COMPLETED - Train3Up  (Track kkdiPf1 - 800m)
+[132.75] TRAIN_ARRIVE - Train3Up  (Track kkdiPf1 - 800m)
+[132.94] TRACK_TRAVEL_END - Train4Up  (Track bsTpjPdkt0 - 55000m)
+[132.95] PATH_COMPLETED - Train4Up  (Track bsTpjPdkt0 - 55000m)
+[132.96] MOVEMENT_AUTHORITY_END - Train4Up  (Track bsTpjPdkt0 - 55000m)
+[132.97] ROUTE_GRANTED - 0454U (pdktBp0 -> pdktPf1S (pdktBp0-pdktPf1S - 100.00m) --> pdktPf1S -> pdktPf1E (pdktPf1 - 800.00m))
+[132.98] MOVEMENT_AUTHORIZED - 0454U (up to pdktPf1)
+[132.98] ROUTE_RETRY_OK - Train5Up to PDKT after bsTpjPdkt0 was released
+[132.99] TRACK_RELEASE - bsTpjPdkt0
+[132.99] ROUTE_GRANTED - 0455U (tpjPf2E -> tpjBp0 (tpjBp0-tpjPf2E - 100.00m) --> tpjBp0 -> tpjBp2 (tpjBp0-tpjBp2 - 100.00m) --> tpjBp2 -> pdktBp0 (bsTpjPdkt0 - 55000.00m))
+[132.99] TRACK_ENTER - Train4Up  (Track pdktBp0-pdktPf1S - 100m)
+[133.00] MOVEMENT_AUTHORIZED - 0455U (up to bsTpjPdkt0)
+[133.01] TRAIN_DEPART - 0455U (up to bsTpjPdkt0)
+[133.02] TRACK_RELEASE - tpjPf2
+[133.02] TRACK_ENTER - Train5Up  (Track tpjBp0-tpjPf2E - 100m)
+[133.19] TRACK_TRAVEL_END - Train4Up  (Track pdktBp0-pdktPf1S - 100m)
+[133.20] TRACK_RELEASE - pdktBp0-pdktPf1S
+[133.20] TRACK_ENTER - Train4Up  (Track pdktPf1 - 800m)
+[133.22] TRACK_TRAVEL_END - Train5Up  (Track tpjBp0-tpjPf2E - 100m)
+[133.23] TRACK_RELEASE - tpjBp0-tpjPf2E
+[133.23] TRACK_ENTER - Train5Up  (Track tpjBp0-tpjBp2 - 100m)
+[133.29] TRACK_TRAVEL_END - Train5Up  (Track tpjBp0-tpjBp2 - 100m)
+[133.30] TRACK_RELEASE - tpjBp0-tpjBp2
+[133.30] TRACK_ENTER - Train5Up  (Track bsTpjPdkt0 - 55000m)
+[134.16] TRACK_TRAVEL_END - Train4Up  (Track pdktPf1 - 800m)
+[134.17] PATH_COMPLETED - Train4Up  (Track pdktPf1 - 800m)
+[134.18] TRAIN_ARRIVE - Train4Up  (Track pdktPf1 - 800m)
+[139.18] TRAIN_DWELL_END - Train4Up  (Track pdktPf1 - 800m)
+[139.19] ROUTE_GRANTED - 0454U (pdktPf1E -> pdktBp2 (pdktBp2-pdktPf1E - 100.00m) --> pdktBp2 -> kkdiBp0 (bsPdktKkdi0 - 41000.00m))
+[139.20] MOVEMENT_AUTHORIZED - 0454U (up to bsPdktKkdi0)
+[139.21] TRAIN_DEPART - 0454U (up to bsPdktKkdi0)
+[139.22] TRACK_RELEASE - pdktPf1
+[139.22] TRACK_ENTER - Train4Up  (Track pdktBp2-pdktPf1E - 100m)
+[139.42] TRACK_TRAVEL_END - Train4Up  (Track pdktBp2-pdktPf1E - 100m)
+[139.43] TRACK_RELEASE - pdktBp2-pdktPf1E
+[139.43] TRACK_ENTER - Train4Up  (Track bsPdktKkdi0 - 41000m)
+[142.18] TRAIN_DWELL_END - Train3Down  (Track tpjPf3 - 800m)
+[142.19] SCHEDULE_END - Train3Down  (Track tpjPf3 - 800m)
+[142.20] TRACK_RELEASE - tpjPf3
+[142.20] WORLD_EXIT - Train3Down 
+[142.75] TRAIN_DWELL_END - Train3Up  (Track kkdiPf1 - 800m)
+[142.76] SCHEDULE_END - Train3Up  (Track kkdiPf1 - 800m)
+[142.77] TRACK_RELEASE - kkdiPf1
+[142.77] WORLD_EXIT - Train3Up 
+[147.54] TRACK_TRAVEL_END - Train6Down  (Track bsKkdiPdkt0 - 41000m)
+[147.55] PATH_COMPLETED - Train6Down  (Track bsKkdiPdkt0 - 41000m)
+[147.56] MOVEMENT_AUTHORITY_END - Train6Down  (Track bsKkdiPdkt0 - 41000m)
+[147.57] ROUTE_GRANTED - 0456D (pdktBp3 -> pdktPf3E (pdktBp3-pdktPf3E - 100.00m) --> pdktPf3E -> pdktPf3S (pdktPf3 - 800.00m))
+[147.58] MOVEMENT_AUTHORIZED - 0456D (up to pdktPf3)
+[147.59] TRACK_RELEASE - bsKkdiPdkt0
+[147.59] TRACK_ENTER - Train6Down  (Track pdktBp3-pdktPf3E - 100m)
+[147.65] TRACK_TRAVEL_END - Train6Down  (Track pdktBp3-pdktPf3E - 100m)
+[147.66] TRACK_RELEASE - pdktBp3-pdktPf3E
+[147.66] TRACK_ENTER - Train6Down  (Track pdktPf3 - 800m)
+[148.62] TRACK_TRAVEL_END - Train6Down  (Track pdktPf3 - 800m)
+[148.63] PATH_COMPLETED - Train6Down  (Track pdktPf3 - 800m)
+[148.64] TRAIN_ARRIVE - Train6Down  (Track pdktPf3 - 800m)
+[153.64] TRAIN_DWELL_END - Train6Down  (Track pdktPf3 - 800m)
+[153.64] ROUTE_WAIT - Train6Down to TPJ: 0456D cannot use bsPdktTpj0: track reserved by 0454D
+[161.17] TRACK_TRAVEL_END - Train4Down  (Track bsPdktTpj0 - 55000m)
+[161.18] PATH_COMPLETED - Train4Down  (Track bsPdktTpj0 - 55000m)
+[161.19] MOVEMENT_AUTHORITY_END - Train4Down  (Track bsPdktTpj0 - 55000m)
+[161.20] ROUTE_GRANTED - 0454D (tpjBp3 -> tpjBp1 (tpjBp1-tpjBp3 - 100.00m) --> tpjBp1 -> tpjPf3E (tpjBp1-tpjPf3E - 100.00m) --> tpjPf3E -> tpjPf3S (tpjPf3 - 800.00m))
+[161.21] MOVEMENT_AUTHORIZED - 0454D (up to tpjPf3)
+[161.21] ROUTE_RETRY_OK - Train5Down to TPJ after bsPdktTpj0 was released
+[161.22] TRACK_RELEASE - bsPdktTpj0
+[161.22] ROUTE_GRANTED - 0455D (pdktPf4S -> pdktBp1 (pdktBp1-pdktPf4S - 100.00m) --> pdktBp1 -> tpjBp3 (bsPdktTpj0 - 55000.00m))
+[161.22] TRACK_ENTER - Train4Down  (Track tpjBp1-tpjBp3 - 100m)
+[161.23] MOVEMENT_AUTHORIZED - 0455D (up to bsPdktTpj0)
+[161.24] TRAIN_DEPART - 0455D (up to bsPdktTpj0)
+[161.25] TRACK_RELEASE - pdktPf4
+[161.25] TRACK_ENTER - Train5Down  (Track pdktBp1-pdktPf4S - 100m)
+[161.27] TRACK_TRAVEL_END - Train4Down  (Track tpjBp1-tpjBp3 - 100m)
+[161.28] TRACK_RELEASE - tpjBp1-tpjBp3
+[161.28] TRACK_ENTER - Train4Down  (Track tpjBp1-tpjPf3E - 100m)
+[161.33] TRACK_TRAVEL_END - Train4Down  (Track tpjBp1-tpjPf3E - 100m)
+[161.34] TRACK_RELEASE - tpjBp1-tpjPf3E
+[161.34] TRACK_ENTER - Train4Down  (Track tpjPf3 - 800m)
+[161.45] TRACK_TRAVEL_END - Train5Down  (Track pdktBp1-pdktPf4S - 100m)
+[161.46] TRACK_RELEASE - pdktBp1-pdktPf4S
+[161.46] TRACK_ENTER - Train5Down  (Track bsPdktTpj0 - 55000m)
+[161.80] TRACK_TRAVEL_END - Train4Up  (Track bsPdktKkdi0 - 41000m)
+[161.81] PATH_COMPLETED - Train4Up  (Track bsPdktKkdi0 - 41000m)
+[161.82] MOVEMENT_AUTHORITY_END - Train4Up  (Track bsPdktKkdi0 - 41000m)
+[161.83] ROUTE_GRANTED - 0454U (kkdiBp0 -> kkdiBp2 (kkdiBp0-kkdiBp2 - 100.00m) --> kkdiBp2 -> kkdiPf1S (kkdiBp2-kkdiPf1S - 100.00m) --> kkdiPf1S -> kkdiPf1E (kkdiPf1 - 800.00m))
+[161.84] MOVEMENT_AUTHORIZED - 0454U (up to kkdiPf1)
+[161.85] TRACK_RELEASE - bsPdktKkdi0
+[161.85] TRACK_ENTER - Train4Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[161.90] TRACK_TRAVEL_END - Train4Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[161.91] TRACK_RELEASE - kkdiBp0-kkdiBp2
+[161.91] TRACK_ENTER - Train4Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[161.96] TRACK_TRAVEL_END - Train4Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[161.97] TRACK_RELEASE - kkdiBp2-kkdiPf1S
+[161.97] TRACK_ENTER - Train4Up  (Track kkdiPf1 - 800m)
+[162.30] TRACK_TRAVEL_END - Train4Down  (Track tpjPf3 - 800m)
+[162.31] PATH_COMPLETED - Train4Down  (Track tpjPf3 - 800m)
+[162.32] TRAIN_ARRIVE - Train4Down  (Track tpjPf3 - 800m)
+[162.93] TRACK_TRAVEL_END - Train4Up  (Track kkdiPf1 - 800m)
+[162.94] PATH_COMPLETED - Train4Up  (Track kkdiPf1 - 800m)
+[162.95] TRAIN_ARRIVE - Train4Up  (Track kkdiPf1 - 800m)
+[163.30] TRACK_TRAVEL_END - Train5Up  (Track bsTpjPdkt0 - 55000m)
+[163.31] PATH_COMPLETED - Train5Up  (Track bsTpjPdkt0 - 55000m)
+[163.32] MOVEMENT_AUTHORITY_END - Train5Up  (Track bsTpjPdkt0 - 55000m)
+[163.33] ROUTE_GRANTED - 0455U (pdktBp0 -> pdktPf1S (pdktBp0-pdktPf1S - 100.00m) --> pdktPf1S -> pdktPf1E (pdktPf1 - 800.00m))
+[163.34] MOVEMENT_AUTHORIZED - 0455U (up to pdktPf1)
+[163.34] ROUTE_RETRY_OK - Train6Up to PDKT after bsTpjPdkt0 was released
+[163.35] TRACK_RELEASE - bsTpjPdkt0
+[163.35] ROUTE_GRANTED - 0456U (tpjPf4E -> tpjBp1 (tpjBp1-tpjPf4E - 100.00m) --> tpjBp1 -> tpjBp2 (tpjBp1-tpjBp2 - 100.00m) --> tpjBp2 -> pdktBp0 (bsTpjPdkt0 - 55000.00m))
+[163.35] TRACK_ENTER - Train5Up  (Track pdktBp0-pdktPf1S - 100m)
+[163.36] MOVEMENT_AUTHORIZED - 0456U (up to bsTpjPdkt0)
+[163.37] TRAIN_DEPART - 0456U (up to bsTpjPdkt0)
+[163.38] TRACK_RELEASE - tpjPf4
+[163.38] TRACK_ENTER - Train6Up  (Track tpjBp1-tpjPf4E - 100m)
+[163.55] TRACK_TRAVEL_END - Train5Up  (Track pdktBp0-pdktPf1S - 100m)
+[163.56] TRACK_RELEASE - pdktBp0-pdktPf1S
+[163.56] TRACK_ENTER - Train5Up  (Track pdktPf1 - 800m)
+[163.58] TRACK_TRAVEL_END - Train6Up  (Track tpjBp1-tpjPf4E - 100m)
+[163.59] TRACK_RELEASE - tpjBp1-tpjPf4E
+[163.59] TRACK_ENTER - Train6Up  (Track tpjBp1-tpjBp2 - 100m)
+[163.79] TRACK_TRAVEL_END - Train6Up  (Track tpjBp1-tpjBp2 - 100m)
+[163.80] TRACK_RELEASE - tpjBp1-tpjBp2
+[163.80] TRACK_ENTER - Train6Up  (Track bsTpjPdkt0 - 55000m)
+[164.52] TRACK_TRAVEL_END - Train5Up  (Track pdktPf1 - 800m)
+[164.53] PATH_COMPLETED - Train5Up  (Track pdktPf1 - 800m)
+[164.54] TRAIN_ARRIVE - Train5Up  (Track pdktPf1 - 800m)
+[169.54] TRAIN_DWELL_END - Train5Up  (Track pdktPf1 - 800m)
+[169.55] ROUTE_GRANTED - 0455U (pdktPf1E -> pdktBp2 (pdktBp2-pdktPf1E - 100.00m) --> pdktBp2 -> kkdiBp0 (bsPdktKkdi0 - 41000.00m))
+[169.56] MOVEMENT_AUTHORIZED - 0455U (up to bsPdktKkdi0)
+[169.57] TRAIN_DEPART - 0455U (up to bsPdktKkdi0)
+[169.58] TRACK_RELEASE - pdktPf1
+[169.58] TRACK_ENTER - Train5Up  (Track pdktBp2-pdktPf1E - 100m)
+[169.78] TRACK_TRAVEL_END - Train5Up  (Track pdktBp2-pdktPf1E - 100m)
+[169.79] TRACK_RELEASE - pdktBp2-pdktPf1E
+[169.79] TRACK_ENTER - Train5Up  (Track bsPdktKkdi0 - 41000m)
+[172.32] TRAIN_DWELL_END - Train4Down  (Track tpjPf3 - 800m)
+[172.33] SCHEDULE_END - Train4Down  (Track tpjPf3 - 800m)
+[172.34] TRACK_RELEASE - tpjPf3
+[172.34] WORLD_EXIT - Train4Down 
+[172.95] TRAIN_DWELL_END - Train4Up  (Track kkdiPf1 - 800m)
+[172.96] SCHEDULE_END - Train4Up  (Track kkdiPf1 - 800m)
+[172.97] TRACK_RELEASE - kkdiPf1
+[172.97] WORLD_EXIT - Train4Up 
+[191.46] TRACK_TRAVEL_END - Train5Down  (Track bsPdktTpj0 - 55000m)
+[191.47] PATH_COMPLETED - Train5Down  (Track bsPdktTpj0 - 55000m)
+[191.48] MOVEMENT_AUTHORITY_END - Train5Down  (Track bsPdktTpj0 - 55000m)
+[191.49] ROUTE_GRANTED - 0455D (tpjBp3 -> tpjBp1 (tpjBp1-tpjBp3 - 100.00m) --> tpjBp1 -> tpjPf3E (tpjBp1-tpjPf3E - 100.00m) --> tpjPf3E -> tpjPf3S (tpjPf3 - 800.00m))
+[191.50] MOVEMENT_AUTHORIZED - 0455D (up to tpjPf3)
+[191.50] ROUTE_RETRY_OK - Train6Down to TPJ after bsPdktTpj0 was released
+[191.51] TRACK_RELEASE - bsPdktTpj0
+[191.51] ROUTE_GRANTED - 0456D (pdktPf3S -> pdktBp1 (pdktBp1-pdktPf3S - 100.00m) --> pdktBp1 -> tpjBp3 (bsPdktTpj0 - 55000.00m))
+[191.51] TRACK_ENTER - Train5Down  (Track tpjBp1-tpjBp3 - 100m)
+[191.52] MOVEMENT_AUTHORIZED - 0456D (up to bsPdktTpj0)
+[191.53] TRAIN_DEPART - 0456D (up to bsPdktTpj0)
+[191.54] TRACK_RELEASE - pdktPf3
+[191.54] TRACK_ENTER - Train6Down  (Track pdktBp1-pdktPf3S - 100m)
+[191.56] TRACK_TRAVEL_END - Train5Down  (Track tpjBp1-tpjBp3 - 100m)
+[191.57] TRACK_RELEASE - tpjBp1-tpjBp3
+[191.57] TRACK_ENTER - Train5Down  (Track tpjBp1-tpjPf3E - 100m)
+[191.59] TRACK_TRAVEL_END - Train6Down  (Track pdktBp1-pdktPf3S - 100m)
+[191.60] TRACK_RELEASE - pdktBp1-pdktPf3S
+[191.60] TRACK_ENTER - Train6Down  (Track bsPdktTpj0 - 55000m)
+[191.62] TRACK_TRAVEL_END - Train5Down  (Track tpjBp1-tpjPf3E - 100m)
+[191.63] TRACK_RELEASE - tpjBp1-tpjPf3E
+[191.63] TRACK_ENTER - Train5Down  (Track tpjPf3 - 800m)
+[192.15] TRACK_TRAVEL_END - Train5Up  (Track bsPdktKkdi0 - 41000m)
+[192.16] PATH_COMPLETED - Train5Up  (Track bsPdktKkdi0 - 41000m)
+[192.17] MOVEMENT_AUTHORITY_END - Train5Up  (Track bsPdktKkdi0 - 41000m)
+[192.18] ROUTE_GRANTED - 0455U (kkdiBp0 -> kkdiBp2 (kkdiBp0-kkdiBp2 - 100.00m) --> kkdiBp2 -> kkdiPf1S (kkdiBp2-kkdiPf1S - 100.00m) --> kkdiPf1S -> kkdiPf1E (kkdiPf1 - 800.00m))
+[192.19] MOVEMENT_AUTHORIZED - 0455U (up to kkdiPf1)
+[192.20] TRACK_RELEASE - bsPdktKkdi0
+[192.20] TRACK_ENTER - Train5Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[192.25] TRACK_TRAVEL_END - Train5Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[192.26] TRACK_RELEASE - kkdiBp0-kkdiBp2
+[192.26] TRACK_ENTER - Train5Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[192.32] TRACK_TRAVEL_END - Train5Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[192.33] TRACK_RELEASE - kkdiBp2-kkdiPf1S
+[192.33] TRACK_ENTER - Train5Up  (Track kkdiPf1 - 800m)
+[192.59] TRACK_TRAVEL_END - Train5Down  (Track tpjPf3 - 800m)
+[192.60] PATH_COMPLETED - Train5Down  (Track tpjPf3 - 800m)
+[192.61] TRAIN_ARRIVE - Train5Down  (Track tpjPf3 - 800m)
+[193.29] TRACK_TRAVEL_END - Train5Up  (Track kkdiPf1 - 800m)
+[193.30] PATH_COMPLETED - Train5Up  (Track kkdiPf1 - 800m)
+[193.31] TRAIN_ARRIVE - Train5Up  (Track kkdiPf1 - 800m)
+[193.80] TRACK_TRAVEL_END - Train6Up  (Track bsTpjPdkt0 - 55000m)
+[193.81] PATH_COMPLETED - Train6Up  (Track bsTpjPdkt0 - 55000m)
+[193.82] MOVEMENT_AUTHORITY_END - Train6Up  (Track bsTpjPdkt0 - 55000m)
+[193.83] ROUTE_GRANTED - 0456U (pdktBp0 -> pdktPf1S (pdktBp0-pdktPf1S - 100.00m) --> pdktPf1S -> pdktPf1E (pdktPf1 - 800.00m))
+[193.84] MOVEMENT_AUTHORIZED - 0456U (up to pdktPf1)
+[193.85] TRACK_RELEASE - bsTpjPdkt0
+[193.85] TRACK_ENTER - Train6Up  (Track pdktBp0-pdktPf1S - 100m)
+[194.05] TRACK_TRAVEL_END - Train6Up  (Track pdktBp0-pdktPf1S - 100m)
+[194.06] TRACK_RELEASE - pdktBp0-pdktPf1S
+[194.06] TRACK_ENTER - Train6Up  (Track pdktPf1 - 800m)
+[195.02] TRACK_TRAVEL_END - Train6Up  (Track pdktPf1 - 800m)
+[195.03] PATH_COMPLETED - Train6Up  (Track pdktPf1 - 800m)
+[195.04] TRAIN_ARRIVE - Train6Up  (Track pdktPf1 - 800m)
+[200.04] TRAIN_DWELL_END - Train6Up  (Track pdktPf1 - 800m)
+[200.05] ROUTE_GRANTED - 0456U (pdktPf1E -> pdktBp2 (pdktBp2-pdktPf1E - 100.00m) --> pdktBp2 -> kkdiBp0 (bsPdktKkdi0 - 41000.00m))
+[200.06] MOVEMENT_AUTHORIZED - 0456U (up to bsPdktKkdi0)
+[200.07] TRAIN_DEPART - 0456U (up to bsPdktKkdi0)
+[200.08] TRACK_RELEASE - pdktPf1
+[200.08] TRACK_ENTER - Train6Up  (Track pdktBp2-pdktPf1E - 100m)
+[200.28] TRACK_TRAVEL_END - Train6Up  (Track pdktBp2-pdktPf1E - 100m)
+[200.29] TRACK_RELEASE - pdktBp2-pdktPf1E
+[200.29] TRACK_ENTER - Train6Up  (Track bsPdktKkdi0 - 41000m)
+[202.61] TRAIN_DWELL_END - Train5Down  (Track tpjPf3 - 800m)
+[202.62] SCHEDULE_END - Train5Down  (Track tpjPf3 - 800m)
+[202.63] TRACK_RELEASE - tpjPf3
+[202.63] WORLD_EXIT - Train5Down 
+[203.31] TRAIN_DWELL_END - Train5Up  (Track kkdiPf1 - 800m)
+[203.32] SCHEDULE_END - Train5Up  (Track kkdiPf1 - 800m)
+[203.33] TRACK_RELEASE - kkdiPf1
+[203.33] WORLD_EXIT - Train5Up 
+[221.60] TRACK_TRAVEL_END - Train6Down  (Track bsPdktTpj0 - 55000m)
+[221.61] PATH_COMPLETED - Train6Down  (Track bsPdktTpj0 - 55000m)
+[221.62] MOVEMENT_AUTHORITY_END - Train6Down  (Track bsPdktTpj0 - 55000m)
+[221.63] ROUTE_GRANTED - 0456D (tpjBp3 -> tpjBp1 (tpjBp1-tpjBp3 - 100.00m) --> tpjBp1 -> tpjPf3E (tpjBp1-tpjPf3E - 100.00m) --> tpjPf3E -> tpjPf3S (tpjPf3 - 800.00m))
+[221.64] MOVEMENT_AUTHORIZED - 0456D (up to tpjPf3)
+[221.65] TRACK_RELEASE - bsPdktTpj0
+[221.65] TRACK_ENTER - Train6Down  (Track tpjBp1-tpjBp3 - 100m)
+[221.70] TRACK_TRAVEL_END - Train6Down  (Track tpjBp1-tpjBp3 - 100m)
+[221.71] TRACK_RELEASE - tpjBp1-tpjBp3
+[221.71] TRACK_ENTER - Train6Down  (Track tpjBp1-tpjPf3E - 100m)
+[221.77] TRACK_TRAVEL_END - Train6Down  (Track tpjBp1-tpjPf3E - 100m)
+[221.78] TRACK_RELEASE - tpjBp1-tpjPf3E
+[221.78] TRACK_ENTER - Train6Down  (Track tpjPf3 - 800m)
+[222.65] TRACK_TRAVEL_END - Train6Up  (Track bsPdktKkdi0 - 41000m)
+[222.66] PATH_COMPLETED - Train6Up  (Track bsPdktKkdi0 - 41000m)
+[222.67] MOVEMENT_AUTHORITY_END - Train6Up  (Track bsPdktKkdi0 - 41000m)
+[222.68] ROUTE_GRANTED - 0456U (kkdiBp0 -> kkdiBp2 (kkdiBp0-kkdiBp2 - 100.00m) --> kkdiBp2 -> kkdiPf1S (kkdiBp2-kkdiPf1S - 100.00m) --> kkdiPf1S -> kkdiPf1E (kkdiPf1 - 800.00m))
+[222.69] MOVEMENT_AUTHORIZED - 0456U (up to kkdiPf1)
+[222.70] TRACK_RELEASE - bsPdktKkdi0
+[222.70] TRACK_ENTER - Train6Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[222.74] TRACK_TRAVEL_END - Train6Down  (Track tpjPf3 - 800m)
+[222.75] PATH_COMPLETED - Train6Down  (Track tpjPf3 - 800m)
+[222.75] TRACK_TRAVEL_END - Train6Up  (Track kkdiBp0-kkdiBp2 - 100m)
+[222.76] TRAIN_ARRIVE - Train6Down  (Track tpjPf3 - 800m)
+[222.76] TRACK_RELEASE - kkdiBp0-kkdiBp2
+[222.76] TRACK_ENTER - Train6Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[222.82] TRACK_TRAVEL_END - Train6Up  (Track kkdiBp2-kkdiPf1S - 100m)
+[222.83] TRACK_RELEASE - kkdiBp2-kkdiPf1S
+[222.83] TRACK_ENTER - Train6Up  (Track kkdiPf1 - 800m)
+[223.79] TRACK_TRAVEL_END - Train6Up  (Track kkdiPf1 - 800m)
+[223.80] PATH_COMPLETED - Train6Up  (Track kkdiPf1 - 800m)
+[223.81] TRAIN_ARRIVE - Train6Up  (Track kkdiPf1 - 800m)
+[232.76] TRAIN_DWELL_END - Train6Down  (Track tpjPf3 - 800m)
+[232.77] SCHEDULE_END - Train6Down  (Track tpjPf3 - 800m)
+[232.78] TRACK_RELEASE - tpjPf3
+[232.78] WORLD_EXIT - Train6Down 
+[233.81] TRAIN_DWELL_END - Train6Up  (Track kkdiPf1 - 800m)
+[233.82] SCHEDULE_END - Train6Up  (Track kkdiPf1 - 800m)
+[233.83] TRACK_RELEASE - kkdiPf1
+[233.83] WORLD_EXIT - Train6Up 

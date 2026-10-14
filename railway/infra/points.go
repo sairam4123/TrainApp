@@ -1,7 +1,9 @@
 package infra
 
+import "trainapp/railway/ids"
+
 type TrackPoint struct {
-	Id string
+	Id ids.PointID
 
 	IsDeadEnd     bool
 	IsSimBoundary bool

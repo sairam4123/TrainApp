@@ -1,11 +1,17 @@
 package infra
 
 import (
-	"container/heap"
+	"errors"
 	"fmt"
-	"math"
 	"slices"
+	"trainapp/railway/ids"
 )
+
+// MaxCandidatePaths bounds GenerateCandidatePaths so that loop-heavy layouts
+// cannot blow up the search.
+const MaxCandidatePaths = 256
+
+var ErrCacheNotBuilt = errors.New("track graph cache not built, call World.Finalize (or TrackGraph.BuildCacheMap) first")
 
 type GraphEdge struct {
 	Track *TrackSegment
@@ -13,224 +19,258 @@ type GraphEdge struct {
 	To    *TrackPoint
 }
 
-type TrackGraph struct {
-	points map[string]*TrackPoint
-	tracks map[string]*TrackSegment
-
-	Edges map[string]*GraphEdge
-
-	NeighborMap map[string]map[string]*TrackSegment
-}
-
-func (graph *TrackGraph) ListTracks() []*TrackSegment {
-	tracks := make([]*TrackSegment, 0)
-	for _, trk := range graph.tracks {
-		tracks = append(tracks, trk)
+// Other returns the end of the edge opposite to pt, or nil if pt is not an end.
+func (e *GraphEdge) Other(pt *TrackPoint) *TrackPoint {
+	switch pt.Id {
+	case e.From.Id:
+		return e.To
+	case e.To.Id:
+		return e.From
 	}
-	return tracks
-}
-
-func (graph *TrackGraph) FindWorldBoundaryPoint(segment *TrackSegment) *TrackPoint {
-	if from := graph.Edges[segment.Id].From; from.IsSimBoundary {
-		return from
-	}
-	if to := graph.Edges[segment.Id].To; to.IsSimBoundary {
-		return to
-	}
-
 	return nil
 }
 
-func (graph *TrackGraph) Init() {
-	graph.points = make(map[string]*TrackPoint)
-	graph.Edges = make(map[string]*GraphEdge)
-	graph.tracks = make(map[string]*TrackSegment)
-	graph.NeighborMap = make(map[string]map[string]*TrackSegment)
+type TrackGraph struct {
+	points map[ids.PointID]*TrackPoint
+	tracks map[ids.TrackID]*TrackSegment
+
+	Edges map[ids.TrackID]*GraphEdge
+
+	NeighborMap map[ids.PointID]map[ids.PointID]*TrackSegment
+
+	adjacency  map[ids.PointID][]*GraphEdge               // incident edges, sorted; built by BuildCacheMap
+	forbidden  map[ids.PointID]map[transitionKey]struct{} // track pairs that cannot be traversed through the point
+	cacheBuilt bool
 }
 
-func (graph *TrackGraph) AddTrack(fromPoint *TrackPoint, toPoint *TrackPoint, track *TrackSegment) bool {
-	if _, ok := graph.Edges[track.Id]; ok {
-		return false
+func (graph *TrackGraph) Init() {
+	graph.points = make(map[ids.PointID]*TrackPoint)
+	graph.Edges = make(map[ids.TrackID]*GraphEdge)
+	graph.tracks = make(map[ids.TrackID]*TrackSegment)
+	graph.NeighborMap = make(map[ids.PointID]map[ids.PointID]*TrackSegment)
+	graph.adjacency = make(map[ids.PointID][]*GraphEdge)
+	graph.forbidden = make(map[ids.PointID]map[transitionKey]struct{})
+}
+
+// ListTracks returns every track, sorted by id.
+func (graph *TrackGraph) ListTracks() []*TrackSegment {
+	tracks := make([]*TrackSegment, 0, len(graph.tracks))
+	for _, trk := range graph.tracks {
+		tracks = append(tracks, trk)
+	}
+	slices.SortFunc(tracks, func(a, b *TrackSegment) int { return a.Id.Compare(b.Id) })
+	return tracks
+}
+
+func (graph *TrackGraph) GetTrack(id ids.TrackID) (*TrackSegment, bool) {
+	trk, ok := graph.tracks[id]
+	return trk, ok
+}
+
+func (graph *TrackGraph) GetPoint(id ids.PointID) (*TrackPoint, bool) {
+	pt, ok := graph.points[id]
+	return pt, ok
+}
+
+func (graph *TrackGraph) Edge(track *TrackSegment) (*GraphEdge, bool) {
+	edge, ok := graph.Edges[track.Id]
+	return edge, ok
+}
+
+func (graph *TrackGraph) FindWorldBoundaryPoint(segment *TrackSegment) *TrackPoint {
+	edge, ok := graph.Edges[segment.Id]
+	if !ok {
+		return nil
+	}
+	if edge.From.IsSimBoundary {
+		return edge.From
+	}
+	if edge.To.IsSimBoundary {
+		return edge.To
+	}
+	return nil
+}
+
+// AddTrack joins two points with a track and returns the resulting edge. The
+// track's id is set from the two points.
+//
+// Adding a second track between the same two points returns the existing edge,
+// which keeps the lower of the two speed limits. This is how overlapping switch
+// blocks (e.g. a scissors crossover) share edges. Using two different point
+// objects with the same id, or a track already added between other points, is
+// a construction bug and panics.
+func (graph *TrackGraph) AddTrack(fromPoint *TrackPoint, toPoint *TrackPoint, track *TrackSegment) *GraphEdge {
+	id := ids.NewTrackID(fromPoint.Id, toPoint.Id)
+	if !track.Id.IsZero() && track.Id != id {
+		panic(fmt.Sprintf("infra: track %s is already in the graph, cannot add it again between %s and %s", track, fromPoint.Id, toPoint.Id))
+	}
+	if existing, ok := graph.Edges[id]; ok {
+		existing.Track.MaxSpeed = min(existing.Track.MaxSpeed, track.MaxSpeed)
+		if existing.Track.Name == "" {
+			existing.Track.Name = track.Name
+		}
+		return existing
 	}
 
+	graph.addPoint(fromPoint)
+	graph.addPoint(toPoint)
+
+	track.Id = id
 	edge := &GraphEdge{
 		From:  fromPoint,
 		To:    toPoint,
 		Track: track,
 	}
+	graph.tracks[id] = track
+	graph.Edges[id] = edge
+	graph.cacheBuilt = false
+	return edge
+}
 
-	graph.points[fromPoint.Id] = fromPoint
-	graph.points[toPoint.Id] = toPoint
-	graph.tracks[track.Id] = track
-
-	graph.Edges[track.Id] = edge
-	return true
+func (graph *TrackGraph) addPoint(pt *TrackPoint) {
+	if existing, ok := graph.points[pt.Id]; ok && existing != pt {
+		panic(fmt.Sprintf("infra: two different track points share the id %s", pt.Id))
+	}
+	graph.points[pt.Id] = pt
 }
 
 func (graph *TrackGraph) TrackBetween(fromPoint *TrackPoint, toPoint *TrackPoint) (*GraphEdge, error) {
-	if graph.NeighborMap[fromPoint.Id] == nil {
-		return nil, fmt.Errorf("Cache seems to be empty, did you call BuildCacheMap()?")
+	if !graph.cacheBuilt {
+		return nil, ErrCacheNotBuilt
 	}
-	return graph.Edges[graph.NeighborMap[fromPoint.Id][toPoint.Id].Id], nil
+	edge, ok := graph.Edges[ids.NewTrackID(fromPoint.Id, toPoint.Id)]
+	if !ok {
+		return nil, fmt.Errorf("no track between %s and %s", fromPoint.Id, toPoint.Id)
+	}
+	return edge, nil
 }
 
 func (graph *TrackGraph) BuildCacheMap() {
-	graph.NeighborMap = make(map[string]map[string]*TrackSegment)
+	graph.NeighborMap = make(map[ids.PointID]map[ids.PointID]*TrackSegment)
+	graph.adjacency = make(map[ids.PointID][]*GraphEdge)
 	for _, edge := range graph.Edges {
 		if graph.NeighborMap[edge.From.Id] == nil {
-			graph.NeighborMap[edge.From.Id] = make(map[string]*TrackSegment)
+			graph.NeighborMap[edge.From.Id] = make(map[ids.PointID]*TrackSegment)
 		}
 		if graph.NeighborMap[edge.To.Id] == nil {
-			graph.NeighborMap[edge.To.Id] = make(map[string]*TrackSegment)
+			graph.NeighborMap[edge.To.Id] = make(map[ids.PointID]*TrackSegment)
 		}
 
 		graph.NeighborMap[edge.From.Id][edge.To.Id] = edge.Track
 		graph.NeighborMap[edge.To.Id][edge.From.Id] = edge.Track
+
+		graph.adjacency[edge.From.Id] = append(graph.adjacency[edge.From.Id], edge)
+		graph.adjacency[edge.To.Id] = append(graph.adjacency[edge.To.Id], edge)
 	}
+	// map iteration order is random; sort so path search is deterministic
+	for _, edges := range graph.adjacency {
+		slices.SortFunc(edges, func(a, b *GraphEdge) int { return a.Track.Id.Compare(b.Track.Id) })
+	}
+	graph.cacheBuilt = true
 }
 
-type PathNode struct {
-	Id     string
-	Value  *TrackPoint
-	Cost   float64
-	Parent *PathNode
+// transitionKey is an unordered pair of tracks.
+type transitionKey struct{ a, b ids.TrackID }
+
+func newTransitionKey(x, y *GraphEdge) transitionKey {
+	a, b := x.Track.Id, y.Track.Id
+	if a.Compare(b) > 0 {
+		a, b = b, a
+	}
+	return transitionKey{a, b}
 }
 
-type PathQueue []*PathNode
-
-func (pq PathQueue) Len() int {
-	return len(pq)
+// forbidTransition records that a train cannot pass through `at` going from
+// edge a to edge b (or back), e.g. between the two legs of a switch.
+func (graph *TrackGraph) forbidTransition(at *TrackPoint, a, b *GraphEdge) {
+	if graph.forbidden[at.Id] == nil {
+		graph.forbidden[at.Id] = make(map[transitionKey]struct{})
+	}
+	graph.forbidden[at.Id][newTransitionKey(a, b)] = struct{}{}
 }
 
-func (pq PathQueue) Less(i, j int) bool {
-	return pq[i].Cost < pq[j].Cost
+// TransitionAllowed reports whether a train can pass through `at` from edge
+// `from` onto edge `to`.
+func (graph *TrackGraph) TransitionAllowed(at *TrackPoint, from, to *GraphEdge) bool {
+	if from == to {
+		return false // reversing onto the same track
+	}
+	_, banned := graph.forbidden[at.Id][newTransitionKey(from, to)]
+	return !banned
 }
 
-func (pq PathQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-}
-
-func (pq *PathQueue) Push(x any) {
-	*pq = append(*pq, x.(*PathNode))
-}
-
-func (pq *PathQueue) Pop() any {
-	old := *pq
-	n := len(old)
-
-	item := old[n-1]
-	*pq = old[:n-1]
-
-	return item
-}
-
+// GenerateCandidatePaths returns every path from fromTp that ends by running
+// over toTrack, in breadth-first (fewest tracks first) order. A path never
+// visits a point twice and never makes a transition the layout forbids (such
+// as from one switch leg to the other). At most MaxCandidatePaths are returned.
 func (graph *TrackGraph) GenerateCandidatePaths(fromTp *TrackPoint, toTrack *TrackSegment) ([]*Path, error) {
-	queue := make([]*Path, 0)
+	return graph.GenerateCandidatePathsVia(nil, fromTp, toTrack)
+}
+
+// GenerateCandidatePathsVia is GenerateCandidatePaths for a train that reached
+// fromTp over the edge via: paths do not reverse onto via, and their first
+// transition out of via must be allowed. A nil via means no constraint.
+func (graph *TrackGraph) GenerateCandidatePathsVia(via *GraphEdge, fromTp *TrackPoint, toTrack *TrackSegment) ([]*Path, error) {
+	if !graph.cacheBuilt {
+		return nil, ErrCacheNotBuilt
+	}
+	if fromTp == nil || toTrack == nil {
+		return nil, errors.New("GenerateCandidatePaths: nil start point or target track")
+	}
+	if via != nil && via.Other(fromTp) == nil {
+		return nil, fmt.Errorf("GenerateCandidatePaths: %s does not end at %s", via.Track, fromTp.Id)
+	}
+	if _, ok := graph.points[fromTp.Id]; !ok {
+		return nil, fmt.Errorf("GenerateCandidatePaths: unknown point %s", fromTp.Id)
+	}
+	if _, ok := graph.tracks[toTrack.Id]; !ok {
+		return nil, fmt.Errorf("GenerateCandidatePaths: unknown track %s", toTrack)
+	}
+
+	type partial struct {
+		edges  []*GraphEdge
+		points []*TrackPoint // points[0] is fromTp, points[i+1] is the end of edges[i]
+	}
+
+	queue := []partial{{points: []*TrackPoint{fromTp}}}
 	allPaths := make([]*Path, 0)
 
-	queue = append(queue, &Path{Edges: []*GraphEdge{}, curPoint: fromTp, InitPoint: fromTp})
+	for head := 0; head < len(queue) && len(allPaths) < MaxCandidatePaths; head++ {
+		cur := queue[head]
+		queue[head] = partial{}
 
-	for len(queue) > 0 {
-		path := queue[0]
-		queue = slices.Delete(queue, 0, 1)
+		curPoint := cur.points[len(cur.points)-1]
+		lastEdge := via
+		if len(cur.edges) > 0 {
+			lastEdge = cur.edges[len(cur.edges)-1]
+		}
 
-		if len(path.Edges) > 0 {
-			cur := path.Edges[len(path.Edges)-1]
-			if cur.Track.Id == toTrack.Id {
-				allPaths = append(allPaths, path)
+		for _, edge := range graph.adjacency[curPoint.Id] {
+			if lastEdge != nil && !graph.TransitionAllowed(curPoint, lastEdge, edge) {
 				continue
 			}
-		}
-
-		curPoint := path.curPoint
-
-		ends := []*TrackPoint{curPoint}
-
-		for _, endp := range ends {
-			for nextP, edge := range graph.NeighborMap[endp.Id] {
-				if path.Contains(graph.Edges[edge.Id]) {
-					continue
-				}
-				nextPoint := graph.points[nextP]
-
-				newPath := slices.Clone(path.Edges)
-				newPath = append(newPath, graph.Edges[edge.Id])
-				queue = append(queue, &Path{Edges: newPath, curPoint: nextPoint, InitPoint: fromTp})
+			nextPoint := edge.Other(curPoint)
+			if slices.ContainsFunc(cur.points, func(p *TrackPoint) bool { return p.Id == nextPoint.Id }) {
+				continue
 			}
-		}
 
+			edges := append(slices.Clip(cur.edges), edge)
+			if edge.Track.Id == toTrack.Id {
+				allPaths = append(allPaths, &Path{InitPoint: fromTp, Edges: edges})
+				continue
+			}
+			queue = append(queue, partial{edges: edges, points: append(slices.Clip(cur.points), nextPoint)})
+		}
 	}
 
 	return allPaths, nil
 }
 
-// @Deprecated
-func (graph *TrackGraph) FindPath(fromPoint *TrackPoint, toPoint *TrackPoint) *Path {
-	queue := make(PathQueue, 0)
-	nodes := make(map[string]*PathNode, 0)
-	for _, vert := range graph.points {
-		nodes[vert.Id] = &PathNode{
-			Id:     vert.Id,
-			Value:  vert,
-			Cost:   math.MaxInt,
-			Parent: nil,
-		}
+func (graph *TrackGraph) OtherEnd(track *TrackSegment, pointId ids.PointID) *TrackPoint {
+	edge, ok := graph.Edges[track.Id]
+	if !ok {
+		return nil
 	}
-
-	// set initial node cost 0
-	nodes[fromPoint.Id].Cost = 0
-	queue = append(queue, nodes[fromPoint.Id])
-	heap.Init(&queue)
-
-	// path := make([]*GraphEdge, 0)
-	visited := make(map[string]struct{})
-
-	for {
-		if len(queue) <= 0 {
-			cur := nodes[toPoint.Id]
-			seq := make([]*GraphEdge, 0)
-			for {
-				parent := cur.Parent
-				if parent == nil {
-					slices.Reverse(seq)
-					path := &Path{
-						Edges: seq,
-					}
-					return path
-				}
-				track, err := graph.TrackBetween(cur.Value, parent.Value)
-				if err != nil {
-					fmt.Println(err)
-					return &Path{}
-				}
-
-				seq = append(seq, track)
-				cur = parent
-			}
-		}
-		// fetch element from priority queue
-		elem := heap.Pop(&queue).(*PathNode)
-		if elem.Value.IsDeadEnd {
-			continue
-		}
-		if _, ok := visited[elem.Id]; !ok {
-			visited[elem.Id] = struct{}{}
-			for key, edge := range graph.NeighborMap[elem.Id] {
-				newCost := elem.Cost + float64(edge.Length)
-				v := nodes[key]
-				if newCost < v.Cost {
-					v.Cost = newCost
-					v.Parent = elem
-				}
-				heap.Push(&queue, v)
-			}
-		}
-
-	}
-}
-
-func (graph *TrackGraph) OtherEnd(track *TrackSegment, pointId string) *TrackPoint {
-	edge := graph.Edges[track.Id]
 	if edge.From.Id == pointId {
 		return edge.To
 	}
@@ -240,91 +280,72 @@ func (graph *TrackGraph) OtherEnd(track *TrackSegment, pointId string) *TrackPoi
 	return nil
 }
 
-// @Deprecated
-func (graph *TrackGraph) FindPathToTrack(fromPoint *TrackPoint, toSegment *TrackSegment) *Path {
-	queue := make(PathQueue, 0)
-	nodes := make(map[string]*PathNode, 0)
-	for _, vert := range graph.points {
-		nodes[vert.Id] = &PathNode{
-			Id:     vert.Id,
-			Value:  vert,
-			Cost:   math.MaxInt,
-			Parent: nil,
+// Position is where a train stands for planning: at a point, having arrived
+// over an edge. Via is nil for a train that has not moved yet (no constraint
+// on its first edge).
+type Position struct {
+	At  *TrackPoint
+	Via *GraphEdge
+}
+
+func (p Position) key() positionKey {
+	k := positionKey{at: p.At.Id}
+	if p.Via != nil {
+		k.via = p.Via.Track.Id
+	}
+	return k
+}
+
+type positionKey struct {
+	at  ids.PointID
+	via ids.TrackID
+}
+
+// Reach searches outward from the start positions, honouring the layout's
+// forbidden transitions and never reversing onto the edge just run. A step is
+// only taken if allow returns true for it (nil allows everything). When a step
+// satisfies isTarget the search records the position after it and does not go
+// further along that branch. It returns those positions, deduplicated, in a
+// deterministic order. Requires the cache to be built.
+func (graph *TrackGraph) Reach(starts []Position, isTarget, allow func(Step) bool) ([]Position, error) {
+	if !graph.cacheBuilt {
+		return nil, ErrCacheNotBuilt
+	}
+	seen := make(map[positionKey]struct{})
+	found := make(map[positionKey]struct{})
+	var out []Position
+
+	queue := make([]Position, 0, len(starts))
+	for _, s := range starts {
+		if _, ok := seen[s.key()]; !ok {
+			seen[s.key()] = struct{}{}
+			queue = append(queue, s)
 		}
 	}
-
-	// set initial node cost 0
-	nodes[fromPoint.Id].Cost = 0
-	queue = append(queue, nodes[fromPoint.Id])
-	heap.Init(&queue)
-
-	var approachedPoint *TrackPoint
-	var targetPoint *TrackPoint
-
-	found := false
-
-	// path := make([]*GraphEdge, 0)
-	visited := make(map[string]struct{})
-	for {
-		if len(queue) == 0 {
-			break
-		}
-		if found {
-			break
-		}
-		// fetch element from priority queue
-		elem := heap.Pop(&queue).(*PathNode)
-
-		if _, ok := visited[elem.Id]; !ok {
-			visited[elem.Id] = struct{}{}
-			for key, edge := range graph.NeighborMap[elem.Id] {
-				newCost := elem.Cost + float64(edge.Length)
-				v := nodes[key]
-				if newCost < v.Cost {
-					v.Cost = newCost
-					v.Parent = elem
-				}
-				if edge.Id == toSegment.Id {
-					graphEdge := graph.Edges[edge.Id]
-					approachedPoint = elem.Value
-					targetPoint = graph.OtherEnd(graphEdge.Track, approachedPoint.Id)
-					found = true
-					break
-				}
-
-				if v.Value.IsDeadEnd {
-					continue
-				}
-
-				heap.Push(&queue, v)
+	for head := 0; head < len(queue); head++ {
+		cur := queue[head]
+		for _, edge := range graph.adjacency[cur.At.Id] {
+			if cur.Via != nil && !graph.TransitionAllowed(cur.At, cur.Via, edge) {
+				continue
 			}
-		}
-
-	}
-
-	if targetPoint == nil {
-		fmt.Println("Target point is empty?!")
-		return nil
-	}
-
-	cur := nodes[targetPoint.Id]
-	seq := make([]*GraphEdge, 0)
-	for {
-		parent := cur.Parent
-		if parent == nil {
-			slices.Reverse(seq)
-			path := &Path{
-				Edges: seq,
+			step := Step{Edge: edge, From: cur.At, To: edge.Other(cur.At)}
+			if allow != nil && !allow(step) {
+				continue
 			}
-			return path
+			next := Position{At: step.To, Via: edge}
+			if isTarget(step) {
+				if _, ok := found[next.key()]; !ok {
+					found[next.key()] = struct{}{}
+					out = append(out, next)
+				}
+				continue
+			}
+			if _, ok := seen[next.key()]; ok {
+				continue
+			}
+			seen[next.key()] = struct{}{}
+			queue = append(queue, next)
 		}
-		track, err := graph.TrackBetween(cur.Value, parent.Value)
-		if err != nil {
-			fmt.Println(err)
-			return nil
-		}
-
-		seq = append(seq, track)
-		cur = parent
 	}
+	return out, nil
 }

@@ -1,19 +1,24 @@
 package infra
 
 import (
+	"cmp"
+	"fmt"
+	"maps"
+	"slices"
+	"trainapp/railway/ids"
 	"trainapp/units"
 )
 
 type Station struct {
-	Code string
+	Code ids.StnCode
 	Name string
 
-	pfNoMapCache map[string]string
-	platforms    map[string]*Platform
+	pfNoMapCache map[string]ids.TrackID
+	platforms    map[ids.TrackID]*Platform
 }
 
 type Platform struct {
-	Id string
+	Id ids.TrackID
 
 	PfNo   string
 	Length units.Meters
@@ -22,11 +27,23 @@ type Platform struct {
 }
 
 func (stn *Station) Init() {
-	stn.pfNoMapCache = make(map[string]string)
-	stn.platforms = make(map[string]*Platform)
+	stn.pfNoMapCache = make(map[string]ids.TrackID)
+	stn.platforms = make(map[ids.TrackID]*Platform)
 }
 
+// NewStationPlatform registers track as platform pfNo. The track must already
+// be in the graph. It panics if either the platform number or the track is
+// already registered at this station.
 func (stn *Station) NewStationPlatform(track *TrackSegment, pfNo string, length units.Meters) {
+	if track.Id.IsZero() {
+		panic(fmt.Sprintf("infra: station %s platform %s: add the track to the graph before registering it", stn.Code, pfNo))
+	}
+	if _, ok := stn.pfNoMapCache[pfNo]; ok {
+		panic(fmt.Sprintf("infra: station %s already has a platform %s", stn.Code, pfNo))
+	}
+	if _, ok := stn.platforms[track.Id]; ok {
+		panic(fmt.Sprintf("infra: track %s is already a platform of station %s", track, stn.Code))
+	}
 	pf := &Platform{
 		Id:     track.Id,
 		PfNo:   pfNo,
@@ -35,37 +52,7 @@ func (stn *Station) NewStationPlatform(track *TrackSegment, pfNo string, length 
 	}
 	stn.platforms[pf.Id] = pf
 	stn.pfNoMapCache[pf.PfNo] = pf.Id
-	// stn.Platforms = append(stn.Platforms, pf)
 }
-
-// func (stn *Station) FindAvailableStnPlatform(prefPfNo string) *TrackSegment {
-// 	// for _, pf := range stn.Platforms {
-// 	// 	if pf.PfNo == prefPfNo && pf.Track.IsAvailable() {
-// 	// 		return pf.Track
-// 	// 	}
-// 	// }
-// 	pfTrackId, ok := stn.pfNoMapCache[prefPfNo]
-// 	if !ok {
-// 		return nil
-// 	}
-// 	pf, ok := stn.platforms[pfTrackId]
-// 	if ok && pf.Track.IsAvailable() {
-// 		return pf.Track
-// 	}
-
-// 	// find the first Available track
-// 	for _, pf := range stn.platforms {
-// 		if pf.Track.IsAvailable() {
-// 			return pf.Track
-// 		}
-// 	}
-
-// 	// we don't have any platform atp -- just route to the first platform for the time being
-// 	// for _, pf := range stn.Platforms {
-// 	// 	return pf.Track
-// 	// }
-// 	return nil
-// }
 
 func (stn *Station) FindStnPlatform(pfNo string) *TrackSegment {
 	pfTrackId, ok := stn.pfNoMapCache[pfNo]
@@ -79,7 +66,14 @@ func (stn *Station) FindStnPlatform(pfNo string) *TrackSegment {
 	return nil
 }
 
-func (stn *Station) IsPlatform(trackId string) bool {
+// Platforms returns the station's platforms ordered by platform number.
+func (stn *Station) Platforms() []*Platform {
+	return slices.SortedFunc(maps.Values(stn.platforms), func(a, b *Platform) int {
+		return cmp.Or(cmp.Compare(len(a.PfNo), len(b.PfNo)), cmp.Compare(a.PfNo, b.PfNo))
+	})
+}
+
+func (stn *Station) IsPlatform(trackId ids.TrackID) bool {
 	_, ok := stn.platforms[trackId]
 	return ok
 }

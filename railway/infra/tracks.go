@@ -1,7 +1,9 @@
 package infra
 
 import (
+	"fmt"
 	"math"
+	"trainapp/railway/ids"
 	"trainapp/units"
 )
 
@@ -13,12 +15,11 @@ const (
 	Bidir TrackDirection = "BIDIR"
 )
 
+// TrackSegment is a piece of static infrastructure. Who has reserved or
+// occupied it is tracked by the interlocking, not here.
 type TrackSegment struct {
-	Id string
-
-	// // Resource related
-	// ReservedBy *ops.Train
-	// OccupiedBy *ops.Train
+	Id   ids.TrackID // set when the track is added to the graph
+	Name string      // optional display name, e.g. "bsTpjPdkt0"
 
 	// Track related
 	Direction TrackDirection
@@ -26,53 +27,26 @@ type TrackSegment struct {
 	MaxSpeed  units.MetersPerMin
 }
 
-// func (t *TrackSegment) Reserve(train *ops.Train) bool {
-// 	if t.IsAvailable() {
-// 		t.ReservedBy = train
-// 		return true
-// 	}
-// 	return false
-// }
-
-// func (t *TrackSegment) IsOccupied() bool {
-// 	return t.OccupiedBy != nil
-// }
-
-// func (t *TrackSegment) IsAvailable() bool {
-// 	return t.OccupiedBy == nil && t.ReservedBy == nil
-// }
-
-// func (t *TrackSegment) IsReserved() bool {
-// 	return t.OccupiedBy == nil && t.ReservedBy != nil
-// }
-
-// func (t *TrackSegment) Acquire(train *ops.Train) bool {
-// 	fmt.Printf("is avbl: %v, is rsvd: %v, train 1: %s train 2: %s\n", t.IsAvailable(), t.IsReserved(), train, t.ReservedBy)
-// 	if t.IsAvailable() || (t.IsReserved() && train.Number == t.ReservedBy.Number) {
-// 		t.OccupiedBy = train
-// 		return true
-// 	}
-// 	return false
-// }
-
-// func (t *TrackSegment) Release(train *ops.Train) (bool, error) {
-// 	if t.IsAvailable() {
-// 		fmt.Printf("Cannot release an empty track\n")
-// 		return false, fmt.Errorf("Cannot release an empty track")
-// 	}
-// 	if t.OccupiedBy.Number != train.Number {
-// 		return false, fmt.Errorf("Cannot release train occupied by another track")
-// 	}
-// 	if t.ReservedBy.Number == train.Number {
-// 		t.ReservedBy = nil
-// 	}
-// 	t.OccupiedBy = nil
-// 	return true, nil
-// }
-
+// TravelTime is the time to run the whole segment at the lower of the train's
+// and the track's speed limit. It panics if that speed is not positive or the
+// length is negative, since either means the world or train was set up wrong.
 func (t *TrackSegment) TravelTime(trainMaxSpeed units.MetersPerMin) units.Minutes {
 	maxSpeed := math.Min(float64(trainMaxSpeed), float64(t.MaxSpeed))
+	if !(maxSpeed > 0) || t.Length < 0 {
+		panic(fmt.Sprintf("infra: track %s has no valid travel time (length %v m, speed %v m/min)", t, t.Length, maxSpeed))
+	}
 	return units.Min(float64(t.Length) / maxSpeed)
+}
+
+// String is the display name if there is one, otherwise the id.
+func (t *TrackSegment) String() string {
+	if t == nil {
+		return "<nil>"
+	}
+	if t.Name != "" {
+		return t.Name
+	}
+	return t.Id.String()
 }
 
 func (t *TrackSegment) SetTrackAttributes(length units.Meters, speed units.MetersPerMin) *TrackSegment {

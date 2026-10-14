@@ -23,9 +23,10 @@ const (
 
 	PathCompleted RailwayEvent = "PATH_COMPLETED"
 
-	RouteGranted           RailwayEvent = "ROUTE_GRANTED"
-	MovementAuthorized     RailwayEvent = "MOVEMENT_AUTHORIZED"
-	MovementAuthorityEnded RailwayEvent = "MOVEMENT_AUTHORITY_END"
+	RouteGranted              RailwayEvent = "ROUTE_GRANTED"
+	MovementAuthorized        RailwayEvent = "MOVEMENT_AUTHORIZED"
+	MovementAuthorityExtended RailwayEvent = "MOVEMENT_AUTHORITY_EXTENDED"
+	MovementAuthorityEnded    RailwayEvent = "MOVEMENT_AUTHORITY_END"
 
 	ScheduleEnd RailwayEvent = "SCHEDULE_END"
 

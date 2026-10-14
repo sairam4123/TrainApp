@@ -2,6 +2,7 @@ package ops
 
 import (
 	"trainapp/des"
+	"trainapp/railway/ids"
 	"trainapp/units"
 )
 
@@ -16,7 +17,7 @@ const (
 type SchedulePoint struct {
 	kind SchedulePointKind
 
-	StnCode string
+	StnCode ids.StnCode
 
 	ArrTime   float64
 	DwellTime float64
@@ -45,7 +46,7 @@ func (s *SchedulePoint) ExpDwellTime(curTime float64) units.Minutes {
 
 }
 
-func NewArrDepPoint(stnCode string, arrTime, deptTime float64, prefPfNo string) *SchedulePoint {
+func NewArrDepPoint(stnCode ids.StnCode, arrTime, deptTime float64, prefPfNo string) *SchedulePoint {
 	return &SchedulePoint{
 		kind: SpStop,
 
@@ -59,7 +60,7 @@ func NewArrDepPoint(stnCode string, arrTime, deptTime float64, prefPfNo string) 
 	}
 }
 
-func NewPassPoint(stnCode string, passTime float64, prefPfNo string) *SchedulePoint {
+func NewPassPoint(stnCode ids.StnCode, passTime float64, prefPfNo string) *SchedulePoint {
 	return &SchedulePoint{
 		kind: SpPass,
 
@@ -83,7 +84,7 @@ func (s *SchedulePoint) SetExitTime(exitTime float64) *SchedulePoint {
 	return s
 }
 
-func NewStopPoint(stnCode string, dwellTime float64, prefPfNo string) *SchedulePoint {
+func NewStopPoint(stnCode ids.StnCode, dwellTime float64, prefPfNo string) *SchedulePoint {
 	return &SchedulePoint{
 		kind: SpDwell,
 

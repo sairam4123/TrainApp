@@ -3,6 +3,7 @@ package des
 import (
 	"container/heap"
 	"fmt"
+	"math"
 )
 
 const MinDeltaTime = 0.01
@@ -13,6 +14,8 @@ type Event[T comparable] struct {
 	Type      T
 	Data      any
 	TrainID   string
+
+	seq uint64 // insertion order, breaks ties between events at the same time
 }
 
 type EventQueue[T comparable] []Event[T]
@@ -21,8 +24,13 @@ func (pq EventQueue[T]) Len() int {
 	return len(pq)
 }
 
+// Less orders by time, then by insertion order, so events scheduled for the
+// same instant are processed first-in first-out.
 func (pq EventQueue[T]) Less(i, j int) bool {
-	return pq[i].Time < pq[j].Time
+	if pq[i].Time != pq[j].Time {
+		return pq[i].Time < pq[j].Time
+	}
+	return pq[i].seq < pq[j].seq
 }
 
 func (pq EventQueue[T]) Swap(i, j int) {
@@ -38,6 +46,7 @@ func (pq *EventQueue[T]) Pop() any {
 	n := len(old)
 
 	item := old[n-1]
+	old[n-1] = Event[T]{} // drop the reference to Data
 	*pq = old[:n-1]
 
 	return item
@@ -46,16 +55,22 @@ func (pq *EventQueue[T]) Pop() any {
 type DES[T comparable] struct {
 	eq      EventQueue[T]
 	CurTime float64
+
+	nextSeq uint64
 }
 
 func (d *DES[T]) Init() {
 	heap.Init(&d.eq)
 }
 
-func (d *DES[T]) Add(eventTime float64, evtype T, data any, trainId string) {
+// Add schedules an event. It returns an error, and schedules nothing, when the
+// time is not finite or is less than MinDeltaTime after the current time.
+func (d *DES[T]) Add(eventTime float64, evtype T, data any, trainId string) error {
+	if math.IsNaN(eventTime) || math.IsInf(eventTime, 0) {
+		return fmt.Errorf("des: event %v for %q has non-finite time %v", evtype, trainId, eventTime)
+	}
 	if eventTime < d.CurTime+MinDeltaTime {
-		fmt.Println("Event time is below minimum time")
-		return
+		return fmt.Errorf("des: event %v for %q at %.4f is before the earliest allowed time %.4f", evtype, trainId, eventTime, d.CurTime+MinDeltaTime)
 	}
 
 	heap.Push(&d.eq, Event[T]{
@@ -64,7 +79,14 @@ func (d *DES[T]) Add(eventTime float64, evtype T, data any, trainId string) {
 		Type:      evtype,
 		Data:      data,
 		TrainID:   trainId,
+		seq:       d.nextSeq,
 	})
+	d.nextSeq++
+	return nil
+}
+
+func (d *DES[T]) Len() int {
+	return d.eq.Len()
 }
 
 func (d *DES[T]) NextEvent() (Event[T], bool) {

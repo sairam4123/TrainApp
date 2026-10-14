@@ -2,10 +2,13 @@ package visualization
 
 import (
 	"fmt"
-	"trainapp/railway"
+	"maps"
+	"slices"
+	"trainapp/railway/ids"
+	"trainapp/railway/infra"
 )
 
-func PrintEdge(edge *railway.GraphEdge) {
+func PrintEdge(edge *infra.GraphEdge) {
 	if edge.From.IsSimBoundary {
 		fmt.Print("←")
 	}
@@ -15,9 +18,9 @@ func PrintEdge(edge *railway.GraphEdge) {
 	}
 }
 
-func BuildViz(world *railway.World) {
+func BuildViz(world *infra.World) {
 	for _, pt := range world.ListSimPts() {
-		for pt2 := range world.TrackGraph.NeighborMap[pt.Id] {
+		for _, pt2 := range slices.SortedFunc(maps.Keys(world.TrackGraph.NeighborMap[pt.Id]), ids.PointID.Compare) {
 			seg := world.TrackGraph.NeighborMap[pt.Id][pt2]
 			edge := world.TrackGraph.Edges[seg.Id]
 			PrintEdge(edge)

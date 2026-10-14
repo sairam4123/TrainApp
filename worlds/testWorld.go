@@ -1,11 +1,12 @@
 package worlds
 
 import (
-	"trainapp/railway"
+	"fmt"
+	"trainapp/railway/infra"
 	"trainapp/units"
 )
 
-func BuildTestWorld() *railway.World {
+func BuildTestWorld() *infra.World {
 
 	PLATFORM_TRACK_LENGTH := units.M(800.0)
 	PLATFORM_LENGTH := units.M(600.0)
@@ -14,8 +15,8 @@ func BuildTestWorld() *railway.World {
 	SWITCH_SPEED := units.KMPH(30.0)
 	SWITCH_LENGTH := units.M(100.0)
 
-	world := &railway.World{}
-	world.Init(railway.WorldData{
+	world := &infra.World{}
+	world.Init(infra.WorldData{
 		DefaultSwMaxSpeed: SWITCH_SPEED,
 		DefaultPfMaxSpeed: PF_SPEED,
 		DefaultSwLength:   SWITCH_LENGTH,
@@ -27,23 +28,23 @@ func BuildTestWorld() *railway.World {
 	// pdkt := world.NewStation("PDKT", "Pudukkottai")
 	kkdi := world.NewStation("KKDI", "Karaikudi Jn")
 
-	tpjPf1S := world.NewTrackPoint("tpjPf1S").WithDeadEnd(true).WithSimLimit(true)
-	tpjPf1E := world.NewTrackPoint("tpjPf1E")
+	tpjPf1S := world.NewTrackPoint(newTrackPointId("TPJ", "Pf", "1", "S")).WithDeadEnd(true).WithSimLimit(true)
+	tpjPf1E := world.NewTrackPoint(newTrackPointId("TPJ", "Pf", "1", "E"))
 
-	tpjPf2S := world.NewTrackPoint("tpjPf2S").WithDeadEnd(true).WithSimLimit(true)
-	tpjPf2E := world.NewTrackPoint("tpjPf2E")
+	tpjPf2S := world.NewTrackPoint(newTrackPointId("TPJ", "Pf", "2", "S")).WithDeadEnd(true).WithSimLimit(true)
+	tpjPf2E := world.NewTrackPoint(newTrackPointId("TPJ", "Pf", "2", "E"))
 
-	tpjPf3S := world.NewTrackPoint("tpjPf3S").WithDeadEnd(true).WithSimLimit(true)
-	tpjPf3E := world.NewTrackPoint("tpjPf3E")
+	tpjPf3S := world.NewTrackPoint(newTrackPointId("TPJ", "Pf", "3", "S")).WithDeadEnd(true).WithSimLimit(true)
+	tpjPf3E := world.NewTrackPoint(newTrackPointId("TPJ", "Pf", "3", "E"))
 
 	tpjPf1 := world.NewPlatformTrack("tpjPf1")
 	tpjPf2 := world.NewPlatformTrack("tpjPf2")
 	tpjPf3 := world.NewPlatformTrack("tpjPf3")
 
-	tpjBp0 := world.NewTrackPoint("tpjBp0")
+	tpjBp0 := world.NewTrackPoint(newTrackPointId("TPJ", "Bp", "0", ""))
 
-	railway.NewSwitch(world, "tpjSw1A", tpjBp0, tpjPf1E, tpjPf2E)
-	railway.NewSwitch(world, "tpjSw1B", tpjBp0, tpjPf2E, tpjPf3E)
+	infra.NewSwitch(world, "tpjSw1A", tpjBp0, tpjPf1E, tpjPf2E)
+	infra.NewSwitch(world, "tpjSw1B", tpjBp0, tpjPf2E, tpjPf3E)
 
 	// tpjPf1ESw1 := world.NewSwitchTrack("tpjPf1ESw1")
 	// tpjPf2ESw1 := world.NewSwitchTrack("tpjPf2ESw1")
@@ -103,26 +104,26 @@ func BuildTestWorld() *railway.World {
 	// world.TrackGraph.AddTrack(pdktPf3S, pdktSw1, pdktPf3SSw1)
 	// world.TrackGraph.AddTrack(pdktPf3E, pdktSw2, pdktPf3ESw2)
 
-	_, pdktBp0, pdktBp1 := railway.NewStationSL2PF(world, "PDKT", "Pudukkottai")
+	_, pdktBp0, pdktBp1 := infra.NewStationSL2PF(world, "PDKT", "Pudukkottai")
 
-	kkdiPf1S := world.NewTrackPoint("kkdiPf1S")
-	kkdiPf1E := world.NewTrackPoint("kkdiPf1E").WithDeadEnd(true).WithSimLimit(true)
+	kkdiPf1S := world.NewTrackPoint(newTrackPointId("KKDI", "Pf", "1", "S"))
+	kkdiPf1E := world.NewTrackPoint(newTrackPointId("KKDI", "Pf", "1", "E")).WithDeadEnd(true).WithSimLimit(true)
 
-	kkdiPf2S := world.NewTrackPoint("kkdiPf2S")
-	kkdiPf2E := world.NewTrackPoint("kkdiPf2E").WithDeadEnd(true).WithSimLimit(true)
+	kkdiPf2S := world.NewTrackPoint(newTrackPointId("KKDI", "Pf", "2", "S"))
+	kkdiPf2E := world.NewTrackPoint(newTrackPointId("KKDI", "Pf", "2", "E")).WithDeadEnd(true).WithSimLimit(true)
 
 	kkdiPf1 := world.NewPlatformTrack("kkdiPf1")
 	kkdiPf2 := world.NewPlatformTrack("kkdiPf2")
 
-	kkdi.NewStationPlatform(kkdiPf1, "1", PLATFORM_LENGTH)
-	kkdi.NewStationPlatform(kkdiPf2, "2", PLATFORM_LENGTH)
-
 	world.TrackGraph.AddTrack(kkdiPf1S, kkdiPf1E, kkdiPf1)
 	world.TrackGraph.AddTrack(kkdiPf2S, kkdiPf2E, kkdiPf2)
 
-	kkdiBp0 := world.NewTrackPoint("kkdiBp0")
+	kkdi.NewStationPlatform(kkdiPf1, "1", PLATFORM_LENGTH)
+	kkdi.NewStationPlatform(kkdiPf2, "2", PLATFORM_LENGTH)
 
-	railway.NewSwitch(world, "kkdiSw1A", kkdiBp0, kkdiPf1S, kkdiPf2S)
+	kkdiBp0 := world.NewTrackPoint(newTrackPointId("KKDI", "Bp", "0", ""))
+
+	infra.NewSwitch(world, "kkdiSw1A", kkdiBp0, kkdiPf1S, kkdiPf2S)
 
 	// kkdiSw1Pf1S := world.NewSwitchTrack("kkdiSw1Pf1S")
 	// kkdiSw1Pf2S := world.NewSwitchTrack("kkdiSw1Pf2S")
@@ -137,9 +138,9 @@ func BuildTestWorld() *railway.World {
 	bsTpjPdkt1 := world.NewTrackSegment("bsTpjPdkt1", units.KM(16))
 	bsTpjPdkt2 := world.NewTrackSegment("bsTpjPdkt2", units.KM(5))
 
-	krurCp1 := world.NewTrackPoint("krurCp1")
-	tpjCp1 := world.NewTrackPoint("tpjCp1")
-	pdktCp1 := world.NewTrackPoint("pdktCp1")
+	krurCp1 := world.NewTrackPoint(newTrackPointId("KRUR", "Cp", "1", ""))
+	tpjCp1 := world.NewTrackPoint(newTrackPointId("TPJ", "Cp", "1", ""))
+	pdktCp1 := world.NewTrackPoint(newTrackPointId("PDKT", "Cp", "1", ""))
 
 	bsTpjKrur0 := world.NewTrackSegment("bsTpjKrur0", units.KM(7))
 	bsKrurPdkt0 := world.NewTrackSegment("bsKrurPdkt0", units.KM(7))
@@ -161,6 +162,10 @@ func BuildTestWorld() *railway.World {
 	// bsecTpjPdkt.AddTrack(bsTpjPdkt0)
 	// bsecTpjPdkt.AddTrack(bsTpjPdkt1)
 	// bsecTpjPdkt.AddTrack(bsTpjPdkt2)
+
+	if err := world.Finalize(); err != nil {
+		panic(fmt.Sprintf("BuildTestWorld: %v", err))
+	}
 
 	return world
 }
