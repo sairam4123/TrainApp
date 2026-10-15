@@ -218,6 +218,7 @@ The other worlds in `worlds/` are not run by `trainapp`. The single-line and jun
 - One-way package dependencies: static infrastructure, safety state, train model and simulation are separate packages.
 - Simplified realism: the project focuses on the core ideas of railway operations instead of full operational detail.
 - Deterministic behavior: the same scenario produces the same log every run.
+- Trains always obey their movement authority, so signals passed at danger (SPADs) and other failures are not modelled: they would make a run probabilistic. If they are added later, they will need braking physics (TODO #7) and a seeded random source, so that the same seed still gives the same log.
 - Wrong-direction running is a candidate, not a rejection: it is used only when there is no correct-direction way to a station.
 
 ## Known limitations

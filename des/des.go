@@ -6,7 +6,7 @@ import (
 	"math"
 )
 
-const MinDeltaTime = 0.01
+const MinDeltaTime = 0.001
 
 type Event[T comparable] struct {
 	Time      float64

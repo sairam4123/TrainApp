@@ -27,7 +27,7 @@ const (
 
 // Every log entry has these keys, in this order:
 //
-//	t      sim time in minutes, rounded to 0.01
+//	t      sim time in minutes, rounded to 0.001
 //	level  INFO for events, WARN for trains that never finished, ERROR for a failed run
 //	event  the event or dispatcher decision, e.g. TRACK_ENTER, ROUTE_WAIT
 //
@@ -90,7 +90,7 @@ func (s *Sim) newHandler(w io.Writer) slog.Handler {
 }
 
 func roundTime(t float64) float64 {
-	return math.Round(t*100) / 100
+	return math.Round(t*1000) / 1000
 }
 
 func trainAttrs(t *ops.Train) []any {
