@@ -40,7 +40,13 @@ func New(w io.Writer, s *sim.Sim) (*Recorder, error) {
 	}
 	world := vizproto.FromWorld(s.World())
 	for _, st := range s.Status() {
-		world.Trains = append(world.Trains, vizproto.Train{Number: st.Train.Number, Name: st.Train.Name})
+		t := vizproto.Train{Number: st.Train.Number, Name: st.Train.Name, Class: st.Train.Class}
+		for _, sp := range st.Train.Schedule() {
+			t.Schedule = append(t.Schedule, vizproto.SchedulePoint{
+				Stn: sp.StnCode.String(), Kind: string(sp.Kind()), Pf: sp.SpPfNo, Arr: sp.ArrTime, Dep: sp.DeptTime,
+			})
+		}
+		world.Trains = append(world.Trains, t)
 	}
 	r := &Recorder{
 		sim:       s,

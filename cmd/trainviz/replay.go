@@ -8,6 +8,7 @@ import (
 // replay plays a recording: the state is every message up to applied, and t
 // is the playback time.
 type replay struct {
+	world   *vizproto.World
 	msgs    []vizproto.Message
 	stops   []int // first message of each sim event's batch
 	state   *vizproto.State
@@ -21,7 +22,7 @@ type replay struct {
 }
 
 func newReplay(hello *vizproto.HelloMsg, msgs []vizproto.Message) *replay {
-	r := &replay{msgs: msgs, trackName: map[string]string{}}
+	r := &replay{world: &hello.World, msgs: msgs, trackName: map[string]string{}}
 	for _, t := range hello.World.Trains {
 		r.trains = append(r.trains, t.Number)
 	}

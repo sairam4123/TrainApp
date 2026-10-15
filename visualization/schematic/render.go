@@ -905,7 +905,9 @@ func (cv *canvas) row(y, x, w int, color bool) string {
 			if s := c.sgr(); s != cur {
 				sb.WriteString("\x1b[0m")
 				if s != "" {
-					sb.WriteString("\x1b[" + s + "m")
+					sb.WriteString("\x1b[")
+					sb.WriteString(s)
+					sb.WriteString("m")
 				}
 				cur = s
 			}

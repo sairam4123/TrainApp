@@ -91,11 +91,14 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 			stop, _ := train.CurrentStop()
 			stop.RecordArrival(sim.CurTime())
 			tc.begin(ma)
+			tc.recordPlatform(stop)
 		case phaseHeld:
+			stop, _ := train.CurrentStop()
+			stop.EndSignalStop(sim.CurTime(), disp.WokenBy(train.ID()))
 			tc.begin(ma)
 		case phaseReady:
 			stop, _ := train.CurrentStop()
-			stop.RecordDeparture(sim.CurTime())
+			stop.RecordDepartureAfter(sim.CurTime(), disp.WokenBy(train.ID()))
 			train.AdvanceStop()
 			tc.phase = phaseRunning
 			sim.ScheduleEventNext(ops.TrainDeparted, ma, train.ID())
@@ -149,6 +152,7 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 		tc.phase = phaseHeld
 		tc.release(train.Route())
 		stop, _ := train.CurrentStop()
+		stop.BeginSignalStop(sim.CurTime(), train.CurrentTrack().String())
 		stn, _ := sim.world.GetStation(stop.StnCode)
 		if route, ok := disp.RequestRoute(train, stn, stop.SpPfNo); ok {
 			sim.ScheduleEventNext(ops.RouteGranted, route, train.ID())
@@ -160,6 +164,7 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 		if !stop.Arrived() { // the first stop's arrival is the entry
 			stop.RecordArrival(sim.CurTime())
 		}
+		tc.recordPlatform(stop)
 		dwell := stop.ExpDwellTime(sim.CurTime())
 		tc.arrivedAt = sim.CurTime()
 		tc.dwellEnd = sim.CurTime() + max(float64(dwell), des.MinDeltaTime)
@@ -237,6 +242,18 @@ func (tc *TrainController) begin(ma *ops.MovementAuthority) {
 	tc.sim.ScheduleEventNext(ops.TrackEntered, train, train.ID())
 }
 
+// recordPlatform notes the platform of the stop the train is on, if it is on
+// one.
+func (tc *TrainController) recordPlatform(stop *ops.SchedulePoint) {
+	stn, ok := tc.sim.world.GetStation(stop.StnCode)
+	if !ok {
+		return
+	}
+	if pf := platformOf(stn, tc.train.CurrentTrack()); pf != nil {
+		stop.RecordPlatform(pf.PfNo)
+	}
+}
+
 // advance moves the train's front onto the next edge of its route and its rear
 // off the previous one.
 func (tc *TrainController) advance() {
@@ -259,13 +276,13 @@ func (tc *TrainController) leave(route *interlocking.Route) {
 		return
 	}
 	tc.sim.ScheduleEventNext(ops.TrackReleased, step.Edge.Track, tc.train.ID())
-	tc.sim.dispatcher.OnTrackReleased(step.Edge.Track)
+	tc.sim.dispatcher.OnTrackReleased(step.Edge.Track, tc.train.ID())
 }
 
 // release gives back the part of the route the train has not entered.
 func (tc *TrainController) release(route *interlocking.Route) {
 	for _, trk := range tc.sim.ilk.Release(route) {
 		tc.sim.ScheduleEventNext(ops.TrackReleased, trk, tc.train.ID())
-		tc.sim.dispatcher.OnTrackReleased(trk)
+		tc.sim.dispatcher.OnTrackReleased(trk, tc.train.ID())
 	}
 }

@@ -275,3 +275,90 @@ func TestHeldTrainsAndDecisionsAreShown(t *testing.T) {
 		t.Errorf("released hold not listed at the end:\n%s", got)
 	}
 }
+
+func TestGraphView(t *testing.T) {
+	m := newReplayModel(t)
+	press(m, "g")
+	if !m.showGraph {
+		t.Fatalf("g did not show the graph: %s", m.note)
+	}
+	s := screen(m)
+	for _, want := range []string{"time-distance", "TPJ", "PDKT", "KKDI", "0451U", "00:30", "p planned"} {
+		if !strings.Contains(s, want) {
+			t.Errorf("graph screen lacks %q:\n%s", want, s)
+		}
+	}
+	lines := strings.Split(m.render(), "\n")
+	if len(lines) != 40 {
+		t.Errorf("%d lines, want 40", len(lines))
+	}
+	for i, l := range lines {
+		if w := ansi.StringWidth(l); w > 140 {
+			t.Errorf("line %d is %d wide", i, w)
+		}
+	}
+
+	// fitted, the whole run is in view; zooming in narrows it around the
+	// middle, and 0 fits it again
+	start, end := m.graph.Span()
+	o := m.graphOptions()
+	if o.From != start || o.To < end-m.gPerCol {
+		t.Errorf("fitted graph shows %.1f-%.1f, want %.1f-%.1f", o.From, o.To, start, end)
+	}
+	press(m, "+", "+")
+	if z := m.graphOptions(); z.To-z.From >= o.To-o.From {
+		t.Errorf("zooming in shows %.1f min, no less than %.1f", z.To-z.From, o.To-o.From)
+	}
+	press(m, "0")
+	if z := m.graphOptions(); z.From != o.From || z.To != o.To {
+		t.Errorf("0 shows %.1f-%.1f, want %.1f-%.1f", z.From, z.To, o.From, o.To)
+	}
+
+	// a click on the graph seeks there, and the time stays in view as it plays
+	m.Update(tea.MouseClickMsg{Button: tea.MouseLeft, X: 60, Y: 5})
+	m.Update(tea.MouseReleaseMsg{Button: tea.MouseLeft, X: 60, Y: 5})
+	want, _ := m.graph.TimeAt(m.graphOptions(), 59)
+	if m.rep.t != want {
+		t.Errorf("clicked at column 59: t=%.2f, want %.2f", m.rep.t, want)
+	}
+	press(m, "+", "+", "+", "end")
+	if z := m.graphOptions(); m.rep.t < z.From || m.rep.t > z.To {
+		t.Errorf("t=%.2f out of view %.1f-%.1f after end", m.rep.t, z.From, z.To)
+	}
+
+	press(m, "g")
+	if m.showGraph || !strings.Contains(screen(m), "layout, zoom") {
+		t.Error("g did not go back to the schematic")
+	}
+}
+
+func TestNoGraphForAJunction(t *testing.T) {
+	s := &sim.Sim{OutputDir: t.TempDir()}
+	s.SetWorld(worlds.BuildJunctionWorld(2))
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	rec, err := record.New(&buf, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Observer = rec
+	if err := rec.Close(s.Run()); err != nil {
+		t.Fatal(err)
+	}
+	hello, msgs, err := vizproto.ReadAll(&buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, err := schematic.Build(&hello.World)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := newModel(d, newReplay(hello, msgs))
+	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
+	press(m, "g")
+	if m.showGraph || !strings.Contains(screen(m), "single line") {
+		t.Errorf("junction world: graph shown %v, note %q", m.showGraph, m.note)
+	}
+}

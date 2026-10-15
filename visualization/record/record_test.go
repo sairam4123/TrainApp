@@ -135,6 +135,9 @@ func TestReplayMatchesTheSimAfterEveryEvent(t *testing.T) {
 	if len(hello.World.Trains) != 12 {
 		t.Errorf("hello lists %d trains, want 12", len(hello.World.Trains))
 	}
+	if sched := hello.World.Trains[0].Schedule; len(sched) != 3 || sched[0].Stn != "TPJ" || sched[0].Arr != 1 || sched[1].Kind != "dwell" {
+		t.Errorf("first train's schedule in hello: %+v", sched)
+	}
 	if last := msgs[len(msgs)-1]; last.Head().Type != vizproto.TypeEnd {
 		t.Errorf("stream ends with %s, want end", last.Head().Type)
 	}

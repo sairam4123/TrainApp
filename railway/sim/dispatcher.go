@@ -31,6 +31,9 @@ type Dispatcher struct {
 	frontier  map[ids.TrainID]*interlocking.Route // latest route granted to each train
 	ranked    map[rankKey][]infra.RankedPath      // World.RankedPaths, which never changes
 	reviewing map[ids.TrainID]bool                // a review event is on its way
+	// wokenBy is, for a train whose latest route came after a wait, the
+	// train whose leaving a track let it through
+	wokenBy map[ids.TrainID]ids.TrainID
 }
 
 type rankKey struct {
@@ -49,6 +52,7 @@ func newDispatcher(s *Sim) *Dispatcher {
 		frontier:  map[ids.TrainID]*interlocking.Route{},
 		ranked:    map[rankKey][]infra.RankedPath{},
 		reviewing: map[ids.TrainID]bool{},
+		wokenBy:   map[ids.TrainID]ids.TrainID{},
 	}
 	disp.waits.Rank = s.Priority
 	return disp
@@ -116,6 +120,7 @@ func (disp *Dispatcher) Authorize(train *ops.Train, route *interlocking.Route) (
 // Forget drops everything the dispatcher knows about a train that left.
 func (disp *Dispatcher) Forget(train ids.TrainID) {
 	delete(disp.requests, train)
+	delete(disp.wokenBy, train)
 	delete(disp.frontier, train)
 	disp.waits.Remove(train)
 	if disp.prec != nil {
@@ -130,7 +135,7 @@ func (disp *Dispatcher) request(req *RouteRequest) (*interlocking.Route, bool) {
 	id := req.Train.ID()
 	route, blockers, err := disp.try(req)
 	if err == nil {
-		disp.served(id, route)
+		disp.served(id, route, ids.TrainID{})
 		return route, true
 	}
 	if existing := disp.requests[id]; existing != nil {
@@ -145,8 +150,12 @@ func (disp *Dispatcher) request(req *RouteRequest) (*interlocking.Route, bool) {
 	return nil, false
 }
 
-func (disp *Dispatcher) served(id ids.TrainID, route *interlocking.Route) {
+func (disp *Dispatcher) served(id ids.TrainID, route *interlocking.Route, wokenBy ids.TrainID) {
 	delete(disp.requests, id)
+	delete(disp.wokenBy, id)
+	if wokenBy != id && !wokenBy.IsZero() {
+		disp.wokenBy[id] = wokenBy
+	}
 	disp.waits.Remove(id)
 	disp.frontier[id] = route
 	if disp.prec != nil {
@@ -154,13 +163,19 @@ func (disp *Dispatcher) served(id ids.TrainID, route *interlocking.Route) {
 	}
 }
 
-// OnTrackReleased retries the requests waiting on the track, highest priority
-// first, then longest-waiting. Each either gets its route or waits again on
-// whatever now blocks it.
-func (disp *Dispatcher) OnTrackReleased(track *infra.TrackSegment) {
+// OnTrackReleased retries the requests waiting on the track, which train by
+// released, highest priority first, then longest-waiting. Each either gets
+// its route or waits again on whatever now blocks it.
+func (disp *Dispatcher) OnTrackReleased(track *infra.TrackSegment, by ids.TrainID) {
 	for _, id := range disp.waits.Wake(track.Id) {
-		disp.retry(id, track)
+		disp.retry(id, track, by)
 	}
+}
+
+// WokenBy is the train whose leaving a track let the train's latest route be
+// granted, zero if it was granted without waiting for one.
+func (disp *Dispatcher) WokenBy(train ids.TrainID) ids.TrainID {
+	return disp.wokenBy[train]
 }
 
 // Review retries the train's request, if it has one queued: a precedence hold
@@ -168,7 +183,7 @@ func (disp *Dispatcher) OnTrackReleased(track *infra.TrackSegment) {
 func (disp *Dispatcher) Review(train ids.TrainID) {
 	delete(disp.reviewing, train)
 	if _, ok := disp.requests[train]; ok {
-		disp.retry(train, nil)
+		disp.retry(train, nil, ids.TrainID{})
 	}
 }
 
@@ -188,8 +203,8 @@ func (disp *Dispatcher) reviewUnsafe() {
 }
 
 // retry tries a queued request again. released is the track whose release
-// woke it, nil if none.
-func (disp *Dispatcher) retry(id ids.TrainID, released *infra.TrackSegment) {
+// woke it and by the train that released it, nil and zero if none.
+func (disp *Dispatcher) retry(id ids.TrainID, released *infra.TrackSegment, by ids.TrainID) {
 	req := disp.requests[id]
 	route, blockers, err := disp.try(req)
 	if err != nil {
@@ -197,7 +212,7 @@ func (disp *Dispatcher) retry(id ids.TrainID, released *infra.TrackSegment) {
 		disp.waits.Wait(id, blockers...)
 		return
 	}
-	disp.served(id, route)
+	disp.served(id, route, by)
 	disp.sim.logRouteRetryOK(req, released)
 	disp.sim.ScheduleEventNext(ops.RouteGranted, route, id)
 }

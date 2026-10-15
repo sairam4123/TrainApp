@@ -72,6 +72,19 @@ type Platform struct {
 type Train struct {
 	Number string `json:"number"`
 	Name   string `json:"name"`
+	// Class and Schedule are empty before version 3.
+	Class    string          `json:"class,omitempty"`
+	Schedule []SchedulePoint `json:"schedule,omitempty"`
+}
+
+// SchedulePoint is a station in a train's schedule as planned. Arr and Dep
+// are -1 where the schedule gives no time.
+type SchedulePoint struct {
+	Stn  string  `json:"stn"`
+	Kind string  `json:"kind"` // stop, dwell or pass, as ops.SchedulePointKind
+	Pf   string  `json:"pf,omitempty"`
+	Arr  float64 `json:"arr"`
+	Dep  float64 `json:"dep"`
 }
 
 // FromWorld describes a finalized world. Trains are left for the caller.

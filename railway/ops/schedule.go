@@ -28,6 +28,58 @@ type SchedulePoint struct {
 	ActDeptTime float64
 
 	SpPfNo string
+	// ActPfNo is the platform the train actually used, empty until it arrives.
+	// It can differ from SpPfNo when the preferred one was taken.
+	ActPfNo string
+
+	// SignalStops are the stops at signals on the way to this point.
+	SignalStops []SignalStop
+
+	// WaitedFor is the train whose leaving a track let this train depart from
+	// here, if it had to wait for one.
+	WaitedFor ids.TrainID
+}
+
+// SignalStop is a stop at a signal short of a schedule point. To is -1 while
+// the train is still standing.
+type SignalStop struct {
+	Track    string // the track the train stood on
+	From, To float64
+	// WaitedFor is the train whose leaving a track let it move on, if any.
+	WaitedFor ids.TrainID
+}
+
+// RecordPlatform notes the platform the train actually used.
+func (s *SchedulePoint) RecordPlatform(pfNo string) {
+	s.ActPfNo = pfNo
+}
+
+// BeginSignalStop notes the train stopped at a signal on the way here.
+func (s *SchedulePoint) BeginSignalStop(t float64, track string) {
+	s.SignalStops = append(s.SignalStops, SignalStop{Track: track, From: t, To: -1})
+}
+
+// EndSignalStop notes the train set off again after its last signal stop,
+// once waitedFor (zero if none in particular) let it.
+func (s *SchedulePoint) EndSignalStop(t float64, waitedFor ids.TrainID) {
+	if n := len(s.SignalStops); n > 0 && s.SignalStops[n-1].To < 0 {
+		s.SignalStops[n-1].To = t
+		s.SignalStops[n-1].WaitedFor = waitedFor
+	}
+}
+
+// RecordDepartureAfter notes when the train departed, and the train it had to
+// wait for, zero if none.
+func (s *SchedulePoint) RecordDepartureAfter(t float64, waitedFor ids.TrainID) {
+	s.ActDeptTime = t
+	s.WaitedFor = waitedFor
+}
+
+// WithMinDwell sets the shortest dwell for a timed stop, kept even when the
+// train arrives late.
+func (s *SchedulePoint) WithMinDwell(dwell float64) *SchedulePoint {
+	s.DwellTime = dwell
+	return s
 }
 
 // Kind is whether the train stops, dwells or passes here.
@@ -62,12 +114,12 @@ func (s *SchedulePoint) ExpDwellTime(curTime float64) units.Minutes {
 
 	switch s.kind {
 	case SpStop:
-		if curTime < s.ArrTime {
-			return units.Min(s.DeptTime - curTime)
-		} else if curTime > s.DeptTime {
-			return units.Min(1) // one minute stop cuz we're delayed af
+		if curTime > s.DeptTime {
+			// late: a one minute stop, or the minimum dwell if it has one
+			return units.Min(max(s.DwellTime, 1))
 		}
-		return units.Min(s.DeptTime - s.ArrTime)
+		// leave on time, but not before the minimum dwell
+		return units.Min(max(s.DeptTime-curTime, s.DwellTime, 0))
 	case SpPass:
 		return units.Min(des.MinDeltaTime)
 	case SpDwell:

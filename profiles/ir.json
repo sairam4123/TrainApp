@@ -24,6 +24,12 @@
     "main_line_max_stay_min": 5,
     "min_priority_gap": 10,
     "min_saving_min": 1,
-    "min_net_gain": 0
+    "min_net_gain": 1
+  },
+  "timetable": {
+    "rounding_min": 1,
+    "recovery_pct": 0,
+    "halt_min": 0.5,
+    "check_tolerance_min": 1
   }
 }

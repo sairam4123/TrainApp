@@ -32,6 +32,9 @@ type PriorityConfig struct {
 	// Precedence, if set, lets the dispatcher hold a train back, or move it
 	// to another platform, for a higher-priority one; see precedence.go.
 	Precedence *PrecedenceConfig `json:"precedence,omitempty"`
+	// Timetable holds the timetable generator's settings, which share the
+	// profile file. The sim does not read them; see package timetable.
+	Timetable json.RawMessage `json:"timetable,omitempty"`
 }
 
 // DelayBand adjusts the priority of trains running more than OverMin minutes

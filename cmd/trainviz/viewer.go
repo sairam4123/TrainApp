@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 	"trainapp/visualization/schematic"
+	"trainapp/visualization/traingraph"
 	"trainapp/visualization/vizproto"
 
 	tea "charm.land/bubbletea/v2"
@@ -25,6 +26,9 @@ var zoomSteps = []struct {
 	{schematic.Detail, 1},
 	{schematic.Detail, 2},
 }
+
+// graphScales are the time-distance graph's minutes per column.
+var graphScales = []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 20}
 
 // speeds are sim minutes per real minute.
 var speeds = []float64{1, 10, 60, 600}
@@ -63,10 +67,26 @@ type model struct {
 	selected  int // index into rep.trains, -1 for none
 	follow    bool
 	decisions bool // the bottom pane lists precedence decisions, not events
+
+	// the time-distance graph, shown in place of the schematic
+	graph     *traingraph.Graph // nil without a recording or a single line
+	noGraph   string            // why there is no graph
+	showGraph bool
+	gFrom     float64 // time at the graph's left edge
+	gPerCol   float64 // minutes per column
+	gFitted   bool
+	planned   bool // mark planned times on the graph
 }
 
 func newModel(d *schematic.Diagram, rep *replay) *model {
-	m := &model{d: d, rep: rep, step: 1, speed: 2, selected: -1}
+	m := &model{d: d, rep: rep, step: 1, speed: 2, selected: -1, noGraph: "the graph needs a recording (trainviz replay)"}
+	if rep != nil {
+		if cor, err := d.Corridor(); err != nil {
+			m.noGraph = "no time-distance graph: " + strings.TrimPrefix(err.Error(), "schematic: ")
+		} else {
+			m.graph = traingraph.Build(rep.world, cor, rep.msgs)
+		}
+	}
 	m.redraw()
 	return m
 }
@@ -205,6 +225,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.fitted = true
 			m.fit()
 		}
+		if m.showGraph {
+			m.fitGraph()
+		}
 		m.redraw()
 
 	case tickMsg:
@@ -218,6 +241,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !m.rep.advance(dt) {
 			m.playing = false
 		}
+		m.keepCursor()
 		m.redraw()
 		if m.playing {
 			return m, m.tick()
@@ -232,6 +256,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.MouseWheelMsg:
 		sx, sy := msg.X-1, msg.Y-1
+		if m.showGraph {
+			m.zoomGraph(msg.Button == tea.MouseWheelUp, sx)
+			break
+		}
 		switch msg.Button {
 		case tea.MouseWheelUp:
 			m.zoomTo(m.step+1, sx, sy)
@@ -247,10 +275,16 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.seekTimeline(msg.X)
 			break
 		}
+		if pw, ph := m.pane(); m.showGraph && msg.X >= 1 && msg.X <= pw && msg.Y >= 1 && msg.Y <= ph {
+			m.seekGraph(msg.X - 1)
+		}
 		m.dragging, m.dragX, m.dragY = true, msg.X, msg.Y
 
 	case tea.MouseMotionMsg:
-		if m.dragging {
+		if m.dragging && m.showGraph {
+			m.gFrom -= float64(msg.X-m.dragX) * m.gPerCol
+			m.dragX, m.dragY = msg.X, msg.Y
+		} else if m.dragging {
 			m.x -= msg.X - m.dragX
 			m.y -= msg.Y - m.dragY
 			m.dragX, m.dragY = msg.X, msg.Y
@@ -266,6 +300,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) key(msg tea.KeyPressMsg) tea.Cmd {
 	m.note = ""
 	pw, ph := m.pane()
+	if msg.String() == "g" {
+		m.toggleGraph()
+		return nil
+	}
+	if m.showGraph && m.graphKey(msg.String()) {
+		return nil
+	}
 	switch msg.String() {
 	case "q", "ctrl+c":
 		return tea.Quit
@@ -298,6 +339,7 @@ func (m *model) key(msg tea.KeyPressMsg) tea.Cmd {
 
 func (m *model) replayKey(key string) {
 	r := m.rep
+	was := r.t
 	switch key {
 	case "space":
 		m.playing = !m.playing
@@ -358,6 +400,9 @@ func (m *model) replayKey(key string) {
 	default:
 		return
 	}
+	if r.t != was {
+		m.keepCursor()
+	}
 	m.redraw()
 }
 
@@ -395,7 +440,116 @@ func (m *model) seekTimeline(x int) {
 	}
 	m.playing = false
 	m.rep.seek(float64(x-start) / float64(w-1) * m.rep.end)
+	m.keepCursor()
 	m.redraw()
+}
+
+func (m *model) toggleGraph() {
+	if m.graph == nil {
+		m.note = m.noGraph
+		return
+	}
+	m.showGraph = !m.showGraph
+	if m.showGraph && !m.gFitted {
+		m.fitGraph()
+	}
+}
+
+// graphKey handles the keys that work differently on the graph, and reports
+// whether it did.
+func (m *model) graphKey(key string) bool {
+	pw, _ := m.pane()
+	switch key {
+	case "+", "=":
+		m.zoomGraph(true, pw/2)
+	case "-", "_":
+		m.zoomGraph(false, pw/2)
+	case "0":
+		m.fitGraph()
+	case "h", "left":
+		m.gFrom -= 8 * m.gPerCol
+	case "l", "right":
+		m.gFrom += 8 * m.gPerCol
+	case "p":
+		m.planned = !m.planned
+	case "k", "up", "j", "down":
+	case "/":
+		m.note = "station search is on the schematic (g)"
+	default:
+		return false
+	}
+	return true
+}
+
+// graphOptions draws the graph to fill the pane.
+func (m *model) graphOptions() traingraph.Options {
+	pw, ph := m.pane()
+	return traingraph.Options{
+		Width: pw, Height: ph,
+		From: m.gFrom, To: m.gFrom + m.gPerCol*float64(max(pw-m.graph.Gutter()-1, 1)),
+		Now: m.rep.t, Selected: m.selectedTrain(), Planned: m.planned, Color: true,
+	}
+}
+
+// fitGraph shows the whole run.
+func (m *model) fitGraph() {
+	if m.graph == nil || m.width == 0 {
+		return
+	}
+	pw, _ := m.pane()
+	start, end := m.graph.Span()
+	m.gFrom = start
+	m.gPerCol = max((end-start)/float64(max(pw-m.graph.Gutter()-1, 1)), graphScales[0])
+	m.gFitted = true
+}
+
+// zoomGraph moves to the next time scale, keeping the time at pane column
+// col where it is.
+func (m *model) zoomGraph(in bool, col int) {
+	at, ok := m.graph.TimeAt(m.graphOptions(), col)
+	if !ok {
+		at = m.gFrom
+	}
+	next := m.gPerCol
+	if in {
+		for i := len(graphScales) - 1; i >= 0; i-- {
+			if graphScales[i] < m.gPerCol-1e-9 {
+				next = graphScales[i]
+				break
+			}
+		}
+	} else {
+		for _, s := range graphScales {
+			if s > m.gPerCol+1e-9 {
+				next = s
+				break
+			}
+		}
+	}
+	m.gFrom = at - (at-m.gFrom)*next/m.gPerCol
+	m.gPerCol = next
+}
+
+// seekGraph moves playback to the time at pane column col of the graph.
+func (m *model) seekGraph(col int) {
+	if t, ok := m.graph.TimeAt(m.graphOptions(), col); ok {
+		m.playing = false
+		m.rep.seek(t)
+		m.redraw()
+	}
+}
+
+// keepCursor scrolls the graph to keep the replay time in view, but not to
+// before the run starts.
+func (m *model) keepCursor() {
+	if !m.showGraph || m.graph == nil {
+		return
+	}
+	o := m.graphOptions()
+	if t := m.rep.t; t < o.From || t > o.To {
+		start, _ := m.graph.Span()
+		m.gFrom = max(t-(o.To-o.From)/4, start)
+	}
 }
 
 func (m *model) View() tea.View {
@@ -412,7 +566,15 @@ func (m *model) render() string {
 	pw, ph := m.pane()
 	s := zoomSteps[m.step]
 	title := fmt.Sprintf("%s, zoom %d", s.level, s.zoom)
-	lines := box(title, m.frame.View(m.x, m.y, pw, ph, true), pw+2, ph+2)
+	body := m.frame.View(m.x, m.y, pw, ph, true)
+	if m.showGraph {
+		title = fmt.Sprintf("time-distance, %.3g min per column", m.gPerCol)
+		if m.planned {
+			title += ", ◆ planned"
+		}
+		body = m.graph.Draw(m.graphOptions())
+	}
+	lines := box(title, body, pw+2, ph+2)
 	if sw := m.sideWidth(); sw > 0 {
 		side := box("trains", m.trainLines(sw-2, ph), sw, ph+2)
 		for i := range lines {
@@ -561,8 +723,14 @@ func (m *model) keyLine() string {
 		return " station: " + m.query + "_"
 	}
 	keys := "+/- zoom  hjkl pan  0 fit  / station  q quit"
+	if m.showGraph {
+		keys = "+/- time zoom  h l pan  0 fit  p planned  click seek  g schematic  q quit"
+	}
 	if m.rep != nil {
 		keys = "space play  [ ] speed  , . step  tab train  ⇧←→ train events  f follow  d decisions  " + keys
+		if !m.showGraph {
+			keys = strings.Replace(keys, "q quit", "g graph  q quit", 1)
+		}
 	}
 	line := dim.Render(" " + keys)
 	if m.note != "" {

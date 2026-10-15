@@ -13,8 +13,9 @@ import (
 )
 
 // Version 2 added precedence: decision messages, the trains a waiting train
-// is held for, and each platform's class. Version 1 recordings still read.
-const Version = 2
+// is held for, and each platform's class. Version 3 added each train's class
+// and planned schedule. Older recordings still read.
+const Version = 3
 
 const (
 	TypeHello  = "hello"

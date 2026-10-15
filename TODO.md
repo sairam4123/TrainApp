@@ -28,3 +28,6 @@
 28. A train may take refuge on the main line or a through track when it would otherwise block the platforms (e.g. goods trains, trains that run through the loop line). Precedence never holds a train on a through track, nor on a main line beyond main_line_max_stay_min, yet.
 29. The safety check judges trains where their granted route ends, and lets one move on a stop at a time, only with precedence on (sim/safety.go). Both are sound and less cautious; turning them on always would change today's logs, so it was left for a separate change.
 30. Precedence projections assume a train runs free once it can set off. Let them account for the trains ahead of it (e.g. a slower one on the same line), so holds are not longer than needed.
+31. Load trains from JSON instead of building them in main.go. The timetable output (`-timetable`) has the same shape, so a generated timetable could go straight back in as input.
+32. Timetable generation is order-dependent: trains get their paths by priority, then first come. Search for a better one (e.g. try other orders, or hold trains for crossings at chosen loops) instead of taking the first that works.
+33. The time-distance graph needs a single line. Draw branched worlds as one graph per route (e.g. WJN-EJN and WJN-NJN).

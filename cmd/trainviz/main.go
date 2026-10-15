@@ -5,6 +5,7 @@
 //	go run ./cmd/trainviz -print -zoom 2        print it once
 //	go run ./cmd/trainviz replay run.ndjson     play a recording
 //	go run ./cmd/trainviz replay -print -at 34.5 run.ndjson
+//	go run ./cmd/trainviz replay -print -graph run.ndjson   time-distance graph
 package main
 
 import (
@@ -16,6 +17,7 @@ import (
 	"strings"
 	"trainapp/railway/infra"
 	"trainapp/visualization/schematic"
+	"trainapp/visualization/traingraph"
 	"trainapp/visualization/vizproto"
 	"trainapp/worlds"
 
@@ -86,6 +88,10 @@ func replayMain(args []string) {
 		fs.PrintDefaults()
 	}
 	at := fs.Float64("at", -1, "with -print: the sim time to show (default the end)")
+	graph := fs.Bool("graph", false, "with -print: print the time-distance graph instead of the schematic")
+	width := fs.Int("width", 120, "with -print -graph: width in columns")
+	height := fs.Int("height", 30, "with -print -graph: height in lines")
+	planned := fs.Bool("planned", false, "with -print -graph: mark the trains' planned times")
 	pr := printFlags(fs)
 	fs.Parse(args)
 	if fs.NArg() != 1 {
@@ -115,6 +121,22 @@ func replayMain(args []string) {
 	rep.seek(rep.end)
 	if *at >= 0 {
 		rep.seek(*at)
+	}
+	if *graph {
+		cor, err := d.Corridor()
+		if err != nil {
+			log.Fatal(err)
+		}
+		g := traingraph.Build(&hello.World, cor, msgs)
+		from, to := g.Span()
+		now := -1.0
+		if *at >= 0 {
+			now = rep.t
+		}
+		for _, line := range g.Draw(traingraph.Options{Width: *width, Height: *height, From: from, To: to, Now: now, Planned: *planned, Color: pr.useColor()}) {
+			fmt.Println(strings.TrimRight(line, " "))
+		}
+		return
 	}
 	color := pr.output(d, schematic.Options{State: rep.state, Time: rep.t})
 	fmt.Printf("\nt=%.2f\n", rep.t)
@@ -150,15 +172,20 @@ func (p printOptions) output(d *schematic.Diagram, opt schematic.Options) bool {
 		log.Fatalf("unknown level %q, want overview, layout or detail", *p.level)
 	}
 	opt.Level, opt.Zoom = level, *p.zoom
-	opt.Color = *p.color == "always"
-	if *p.color == "auto" {
-		fi, err := os.Stdout.Stat()
-		opt.Color = err == nil && fi.Mode()&os.ModeCharDevice != 0 && os.Getenv("NO_COLOR") == ""
-	}
+	opt.Color = p.useColor()
 	for _, line := range d.Render(opt) {
 		fmt.Println(line)
 	}
 	return opt.Color
+}
+
+// useColor reports whether to print in colour.
+func (p printOptions) useColor() bool {
+	if *p.color != "auto" {
+		return *p.color == "always"
+	}
+	fi, err := os.Stdout.Stat()
+	return err == nil && fi.Mode()&os.ModeCharDevice != 0 && os.Getenv("NO_COLOR") == ""
 }
 
 func run(m *model) {

@@ -62,7 +62,7 @@ At a high level, the system contains five major parts:
 .
 ├── cmd/
 │   ├── trainapp/            # Runs the simulation: builds the TPJ-PDKT-KKDI world and 12 trains
-│   │   └── main.go          # Flags: -log (text|json), -record (write a recording for trainviz), -priorities, -overrides
+│   │   └── main.go          # Flags: -log (text|json), -record (write a recording for trainviz), -priorities, -overrides, -timetable, -check-record
 │   └── trainviz/            # Terminal viewer
 │       ├── main.go          # Flags and the two modes: draw a world, or `replay` a recording
 │       ├── viewer.go        # Interactive Bubble Tea model: pan, zoom, panes, timeline
@@ -71,7 +71,7 @@ At a high level, the system contains five major parts:
 │   ├── testWorld.go         # Older 3-station (TPJ-PDKT-KKDI) world
 │   ├── kkdiTpjWorld.go      # Active double-line TPJ-PDKT-KKDI world with crossovers and signals
 │   └── singleLineWorld.go   # Single-line worlds (passing loops, halts, junction) used by the deadlock tests
-├── profiles/                # Per-railway priority and precedence configs (JSON), e.g. ir.json for Indian Railways
+├── profiles/                # Per-railway priority, precedence and timetable settings (JSON), e.g. ir.json for Indian Railways
 ├── railway/
 │   ├── ids/                 # Typed identifiers: StnCode, PointID, TrackID, TrainID
 │   ├── infra/               # Static infrastructure (no runtime state)
@@ -88,6 +88,7 @@ At a high level, the system contains five major parts:
 │   │   └── templates.go     # Helpers to build common station layouts
 │   ├── interlocking/        # Runtime safety state: track reservations/occupation, switch setting/locking
 │   ├── ops/                 # Train, schedule (planned and actual times, delay), MovementAuthority, event types
+│   ├── timetable/           # Turns a finished run into a timetable: halts and why, rounding, the check run
 │   └── sim/                 # The run itself:
 │       ├── sim.go           #   Sim: owns the world, interlocking and event loop; Run, Init, state dump
 │       ├── controller.go    #   TrainController state machine
@@ -106,7 +107,8 @@ At a high level, the system contains five major parts:
 ├── visualization/
 │   ├── vizproto/            # The stream trainapp writes and trainviz reads (newline-delimited JSON)
 │   ├── record/              # Records a sim run as that stream (a sim.Observer)
-│   ├── schematic/           # Lays a world out as a line schematic and draws it in the terminal
+│   ├── schematic/           # Lays a world out as a line schematic and draws it in the terminal; the corridor (distance axis)
+│   ├── traingraph/          # Draws a recorded run as a time-distance graph
 │   └── viz_term.go          # Older plain-text printout of the track graph; no command uses it
 ├── example/                 # Example simulation output (logs.txt, from an earlier log format)
 ├── TODO.md                  # Planned work
@@ -124,6 +126,7 @@ Tests sit next to the code they cover (`*_test.go`); see [Run the tests](#run-th
 - `logs/` holds the run log.
 - `dumps/` holds the final state dump, `dump<N>.txt`: each train's phase, and who has reserved or occupies every track. Dumps from earlier runs are cleared when a run starts.
 - With `-record <file>`, the recording goes to the path you give.
+- With `-timetable <file>`, the timetable goes to the path you give, and the check run writes its own log and dump under `logs/check/`.
 
 Git ignores `*.log` and `dumps/`.
 
@@ -140,7 +143,7 @@ Each entry starts with `t` (sim minutes), `level` and `event`. Times come from t
 
 ## Architecture
 
-The architecture is organized around a simple idea: model the railway as a set of connected resources, then let trains request access to those resources over time. Packages depend in one direction only: `ids` ← `infra` ← `interlocking` ← `ops` ← `sim`. The visualization packages sit on top: `vizproto` knows only the world (`infra`), `schematic` draws from `vizproto`, and only `record` knows about `sim`.
+The architecture is organized around a simple idea: model the railway as a set of connected resources, then let trains request access to those resources over time. Packages depend in one direction only: `ids` ← `infra` ← `interlocking` ← `ops` ← `sim` ← `timetable`. The visualization packages sit on top: `vizproto` knows only the world (`infra`), `schematic` and `traingraph` draw from `vizproto`, and only `record` knows about `sim`.
 
 ### 1. World (`infra`)
 `World` is the static railway: stations, track points, track segments, switch blocks and signals. It holds no runtime state; who has reserved a track or locked a switch lives in the interlocking. Call `World.Finalize()` once the world is built: it builds the graph caches, indexes signals and switch blocks by track, and checks the world is consistent (e.g. every signal stands on a real track).
@@ -168,7 +171,7 @@ The interlocking owns all runtime safety state and exposes it only through opera
 A track is never occupied without being reserved by the occupier, and a switch block can only be locked for one of its edges at a time.
 
 ### 4. Train model (`ops`)
-`Train` is identity, schedule and movement state: the `Route` its front is on and the `MovementAuthority` it runs under. Each `SchedulePoint` keeps the actual arrival and departure next to the timetabled ones, and `Train.Delay(now)` derives from them how late the train is running (growing while it waits past a timetabled time). A `MovementAuthority` can only be created from a reserved `Route`, so everything it covers is already held for the train. It never runs past a signal. `NewMovementAuthority` covers the route up to the next signal or platform end ahead of the train, and `Extend` moves it on one signal section at a time.
+`Train` is identity, schedule and movement state: the `Route` its front is on and the `MovementAuthority` it runs under. Each `SchedulePoint` keeps the actual arrival and departure next to the timetabled ones, and `Train.Delay(now)` derives from them how late the train is running (growing while it waits past a timetabled time). It also records the platform actually used, the stops at signals on the way to it, and which train's leaving a track finally let the train go (`WaitedFor`), for the timetable. A `MovementAuthority` can only be created from a reserved `Route`, so everything it covers is already held for the train. It never runs past a signal. `NewMovementAuthority` covers the route up to the next signal or platform end ahead of the train, and `Extend` moves it on one signal section at a time.
 
 ### 5. Dispatcher and deadlock avoidance (`sim`)
 `TrainController` asks the `Dispatcher` for routes:
@@ -220,12 +223,22 @@ The discrete-event engine processes events in time order; events at the same tim
 
 A fatal inconsistency (e.g. an unknown station in a schedule) stops the run and is returned from `Run()`. Trains that never finish are logged as `STUCK` entries (`level=WARN`) at the end of the log, with the reason they are waiting, and a failed run ends with a `SIM_ERROR` entry.
 
-### 7. Visualization (`visualization`, `cmd/trainviz`)
+### 7. Timetable generation (`timetable`)
+Give trains only an entry time, stop points with a dwell (`ops.NewStopPoint`) and untimed pass points (`ops.NewPassPoint(stn, -1, pf)`), run them, and their actual times are a timetable that works. The stations are through stations, so each train has an arrival at its first station (its entry, the one fixed time) and a departure from its last. Fully timed trains can share the run, so new paths can be fitted around an existing timetable.
+
+- **`timetable.FromRun`** reads the times back. Arrivals and passes are when the front reaches the end of the platform track. A train that stood at a pass point gets a **halt**, and one that stood past its dwell an **extended dwell**, each with a reason: `cross` (waited for a train from the other way), `overtake` (a train behind passed it) or `technical` (anything else, e.g. a train ahead on the line). The reason comes from a precedence hold if there was one, and otherwise from the train whose leaving a track let it go and how the two schedules meet there. Stops at signals between stations, which hide inside the running time, are listed too. A train that could not enter on time (no free boundary platform) is a conflict and gets a warning: in timetable mode trains do not enter late.
+- **`timetable.Round`** adds the recovery allowance to running times and rounds arrivals and departures **up** to the step, so no train is timed to leave before it could and no dwell gets shorter than its minimum. The entry time is kept as it is.
+- **The check run** (`timetable.NewCheckSim`, `Report`) runs the rounded timetable again as fully timed trains and reports every train that runs later than the tolerance. Rounding moves trains, and that can change how they meet, so this shows the timetable can be kept, not just that it was generated.
+
+The settings are the `timetable` section of the profile: `rounding_min`, `recovery_pct`, `halt_min` (how long counts as standing) and `check_tolerance_min`. The result depends on the order trains get their paths (priority, then first come): it is one timetable that works, not an optimised one.
+
+### 8. Visualization (`visualization`, `cmd/trainviz`)
 The simulation never knows it is being drawn. A `sim.Observer` can be set on the `Sim`; it is handed every log entry, and told after each event once the train's controller has run.
 
 - **`vizproto`** is the stream between the two programs: newline-delimited JSON, one message per line, each with a type and the sim time. A `hello` describes the world, then `track`, `switch`, `train` and `event` messages report what changed, and the stream ends with `end` (or `error` if the run failed). It reports state changes rather than sim events, so the viewer does not depend on how the sim works inside.
 - **`record`** is the `Observer` that writes that stream. After every event it compares the interlocking and the trains with what it last sent, and sends only the difference. Recording does not change the run or its log.
-- **`schematic`** lays a world out as a line schematic: tracks run west to east along horizontal lanes, and switches and crossovers move between lanes. It uses the lane information the templates recorded (see Network model). Nothing is drawn to scale. It renders at three levels (overview, layout, detail) and can overlay a replayed state.
+- **`schematic`** lays a world out as a line schematic: tracks run west to east along horizontal lanes, and switches and crossovers move between lanes. It uses the lane information the templates recorded (see Network model). Nothing is drawn to scale. It renders at three levels (overview, layout, detail) and can overlay a replayed state. `Diagram.Corridor` lays a single line's stations along a distance axis: each at the length of the shortest line from the westernmost, and every point on the line between two stations in proportion.
+- **`traingraph`** draws a recording as a time-distance graph along the corridor, from the trains' recorded moves, with their planned times as markers.
 - **`trainviz`** is the front end: it draws a world, or opens a recording with `replay`, using [Bubble Tea](https://github.com/charmbracelet/bubbletea). See [Draw a world](#draw-a-world) and [Replay a run](#replay-a-run).
 
 ## cmd/trainapp
@@ -238,6 +251,8 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 | `-record` | none | Also write the run to this file, for `trainviz replay` |
 | `-priorities` | `profiles/ir.json` | Priority config (classes, delay bands and precedence); empty for none, which leaves every train at priority 0 and precedence off |
 | `-overrides` | none | Precedence overrides to apply (see [Precedence](#5-dispatcher-and-deadlock-avoidance-sim)) |
+| `-timetable` | none | Generate a timetable from the run, check it with a second run, print it and write it to this file (JSON); see [Timetable generation](#7-timetable-generation-timetable) |
+| `-check-record` | none | With `-timetable`, also record the check run for `trainviz replay` |
 
 The other worlds in `worlds/` are not run by `trainapp`. The single-line and junction worlds are used by the deadlock tests, and all of them can be drawn with `trainviz`.
 
@@ -279,6 +294,26 @@ go run ./cmd/trainapp -record run.ndjson   # also record the run for trainviz
 
 This prints how many trains completed their schedule, and writes the log and the final state dump (see [Output files](#output-files)).
 
+### Generate a timetable
+
+```bash
+go run ./cmd/trainapp -timetable tt.json -record run.ndjson -check-record check.ndjson
+```
+
+The trains in `main.go` have only entry times, dwells and preferred platforms. This prints each train's timetable and the check run's verdict, and writes the same as JSON:
+
+```text
+0453U  Train3Up  (Mail/Express)
+  STN   KIND  PF  ARR    DEP    DWELL  RUN  NOTES
+  TPJ   stop  2   00:41  01:43  62     —    dwell +50.8 (overtaken by 0454U)
+  PDKT  stop  1   02:15  02:20  5      32
+  KKDI  stop  1   02:44  02:54  10     24
+
+check run: all 12 trains kept their times (tolerance 1 min)
+```
+
+Times are minutes from 0, shown as a clock. Open `check.ndjson` with `trainviz replay` and press `g`, then `p`: the planned times sit on the trains' lines.
+
 ### Draw a world
 
 ```bash
@@ -308,6 +343,7 @@ In the viewer, `+`/`-` or the mouse wheel zoom, `hjkl`, the arrows or a mouse dr
 go run ./cmd/trainapp -record run.ndjson
 go run ./cmd/trainviz replay run.ndjson
 go run ./cmd/trainviz replay -print -at 34.5 run.ndjson   # one frame, as text
+go run ./cmd/trainviz replay -print -graph run.ndjson     # the time-distance graph, as text
 ```
 
 The recording is newline-delimited JSON (`visualization/vizproto`): a `hello` with the world, then after each sim event the log entries and every track, switch and train that changed. Recording does not change the run or its log. With `-print`, `-at` picks the sim time to show (the end of the run by default), and the frame is followed by a list of the trains and what each waits for.
@@ -326,8 +362,11 @@ Precedence shows too: a train held for another is drawn in amber with `⏸` (`04
 | `f` | follow the selected train |
 | `home` `end` | jump to the start / end |
 | `d`, `enter` | show the precedence decisions; jump to the next one |
+| `g` | switch between the schematic and the time-distance graph |
 
 The pan, zoom, `/` and `q` keys work in the replay too. Clicking on the timeline seeks to that time.
+
+**Time-distance graph.** `g` swaps the schematic for a train graph: time left to right, the line's stations top (west) to bottom (east) at their distances, each train a line, sloping while it runs and flat while it stands. Lines are drawn up to the replay time, marked by a cursor, so the graph builds as the run plays; up and down trains have their own colour, and the selected train is picked out. There, `+`/`-` or the wheel change the minutes per column, `h`/`l` or a drag pan in time, `0` fits the whole run, `p` marks the trains' planned times (`◆`), and a click seeks to that time. The graph needs a single line, so the junction world has none. With `-print -graph`, `-width`, `-height`, `-planned` and `-at` shape the printout.
 
 ### Run the tests
 
