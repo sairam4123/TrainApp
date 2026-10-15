@@ -23,7 +23,8 @@
 23. Overlap: hold track and switches beyond a stop signal. Needs a length-based carve-out of the next segment; only matters with 21 or 24.
 24. SPADs and other failures: not modelled on purpose, they make a run probabilistic (see README). Would need a seeded random source and braking (7).
 25. Automatic signals on plain line could skip the safety check (see 18).
-26. Add the real line's skipped stations to the TPJ-KKDI world as non-stopping signalled points, for realistic headway. Low priority.
+26. Add the real line's skipped stations to the TPJ-KKDI world as non-stopping signalled points, for realistic headway. Low priority. (The real single line, with every station, is now its own world: worlds.BuildTpjKkdiSingleLineWorld.)
+34. Halts are not block stations: a train at NMN or KTYR should not split the block section around it (absolute block allows one train between PDKT and TYM). Today every platform end acts as a signal.
 ~~27. Each event hop costs des.MinDeltaTime (0.01 min), so a signal handoff takes 0.05 min. Let same-instant hops share a timestamp?~~
 28. A train may take refuge on the main line or a through track when it would otherwise block the platforms (e.g. goods trains, trains that run through the loop line). Precedence never holds a train on a through track, nor on a main line beyond main_line_max_stay_min, yet.
 29. The safety check judges trains where their granted route ends, and lets one move on a stop at a time, only with precedence on (sim/safety.go). Both are sound and less cautious; turning them on always would change today's logs, so it was left for a separate change.

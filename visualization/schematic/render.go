@@ -40,7 +40,8 @@ type Options struct {
 	Color bool // ANSI colours, for Render
 
 	// State, if set, colours tracks by who holds them, shows switch
-	// positions and signals, and draws trains where they are at Time.
+	// positions and signal aspects, and draws trains where they are at Time.
+	// Signals are drawn either way.
 	State    *vizproto.State
 	Time     float64
 	Selected string // train to highlight
@@ -248,11 +249,9 @@ func (d *Diagram) look(t *Track, st *vizproto.State) look {
 	return l
 }
 
-// drawState adds signals and trains.
+// drawState adds signals, with their aspects when there is state, and
+// trains.
 func (d *Diagram) drawState(f *Frame, opt Options) {
-	if opt.State == nil {
-		return
-	}
 	for _, sig := range d.signals {
 		t := d.between(sig.Facing, sig.At)
 		if t == nil || len(f.paths[t.ID]) < 3 {
@@ -263,11 +262,17 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 		if t.To == sig.At {
 			p, glyph = path[len(path)-2], '▶'
 		}
-		s := styleSignalStop
-		if d.clear(sig, t, opt.State) {
-			s = styleSignalClear
+		s := styleSignal
+		if opt.State != nil {
+			s = styleSignalStop
+			if d.clear(sig, t, opt.State) {
+				s = styleSignalClear
+			}
 		}
 		f.cv.set(p.X, p.Y, glyph, s)
+	}
+	if opt.State == nil {
+		return
 	}
 
 	numbers := make([]string, 0, len(opt.State.Trains))
@@ -591,7 +596,8 @@ const (
 	styleID
 	styleTrain
 	styleSelected
-	styleHeld // a train precedence holds back, in amber
+	styleHeld   // a train precedence holds back, in amber
+	styleSignal // a signal drawn without state, so without an aspect
 	styleSignalClear
 	styleSignalStop
 	styleReserved
@@ -609,6 +615,7 @@ var sgr = map[style]string{
 	styleTrain:         "1;7",
 	styleSelected:      "1;30;43",
 	styleHeld:          "1;30;48;5;214",
+	styleSignal:        "1",
 	styleSignalClear:   "1;32",
 	styleSignalStop:    "1;31",
 	styleReserved:      "32",

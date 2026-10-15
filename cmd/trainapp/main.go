@@ -8,6 +8,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
+	"trainapp/railway/ids"
+	"trainapp/railway/infra"
 	"trainapp/railway/ops"
 	"trainapp/railway/sim"
 	"trainapp/railway/timetable"
@@ -111,7 +114,7 @@ import (
 // }
 
 func main() {
-	world := worlds.BuildTpjKkdiWorld()
+	worldName := flag.String("world", "tpjkkdi", "world to run: tpjkkdi (the double line) or tpjkkdi-sl (the real single line, with every station)")
 	logFormat := flag.String("log", string(sim.LogText), "log format: text (logfmt) or json (one object per line)")
 	recordPath := flag.String("record", "", "also write the run to this file for trainviz replay")
 	prioritiesPath := flag.String("priorities", "profiles/ir.json", "train class priorities, delay bands and precedence settings (JSON); empty for none")
@@ -119,6 +122,20 @@ func main() {
 	timetablePath := flag.String("timetable", "", "generate a timetable from the run, check it with a second run, and write it to this file (JSON)")
 	checkRecordPath := flag.String("check-record", "", "with -timetable, also write the check run to this file for trainviz replay")
 	flag.Parse()
+
+	// between lists the stations the trains run through between their calls,
+	// TPJ-PDKT and PDKT-KKDI, from TPJ
+	var world *infra.World
+	var between [2][]ids.StnCode
+	switch *worldName {
+	case "tpjkkdi":
+		world = worlds.BuildTpjKkdiWorld()
+	case "tpjkkdi-sl":
+		world = worlds.BuildTpjKkdiSingleLineWorld()
+		between = [2][]ids.StnCode{{"KRMG", "KRUR", "VEL"}, {"NMN", "TYM", "CTND", "KTYR"}}
+	default:
+		log.Fatalf("unknown world %q: want tpjkkdi or tpjkkdi-sl", *worldName)
+	}
 
 	s := &sim.Sim{LogFormat: sim.LogFormat(*logFormat)}
 	s.SetWorld(world)
@@ -169,10 +186,12 @@ func main() {
 			),
 		)
 
+		addPasses(&train1, between[0], false)
 		train1.AddSchedule(ops.NewStopPoint(
 			pdkt.Code, 5, "1",
 		))
 
+		addPasses(&train1, between[1], false)
 		train1.AddSchedule(ops.NewStopPoint(
 			kkdi.Code, 10, "1",
 		))
@@ -191,10 +210,12 @@ func main() {
 			),
 		)
 
+		addPasses(&train2, between[1], true)
 		train2.AddSchedule(ops.NewStopPoint(
 			pdkt.Code, 5, "3",
 		))
 
+		addPasses(&train2, between[0], true)
 		train2.AddSchedule(ops.NewStopPoint(
 			tpj.Code, 10, "3",
 		))
@@ -257,6 +278,18 @@ func main() {
 		if err := writeTimetable(s, *timetablePath, *checkRecordPath); err != nil {
 			log.Fatal(err)
 		}
+	}
+}
+
+// addPasses adds a pass point at each of the stations, in reverse order for a
+// train running towards TPJ. No platform is preferred: the dispatcher picks.
+func addPasses(t *ops.Train, stations []ids.StnCode, reverse bool) {
+	if reverse {
+		stations = slices.Clone(stations)
+		slices.Reverse(stations)
+	}
+	for _, code := range stations {
+		t.AddSchedule(ops.NewPassPoint(code, -1, ""))
 	}
 }
 

@@ -16,6 +16,7 @@ import (
 	"trainapp/worlds"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -360,5 +361,101 @@ func TestNoGraphForAJunction(t *testing.T) {
 	press(m, "g")
 	if m.showGraph || !strings.Contains(screen(m), "single line") {
 		t.Errorf("junction world: graph shown %v, note %q", m.showGraph, m.note)
+	}
+}
+
+func TestScheduleIsShown(t *testing.T) {
+	m := newReplayModel(t)
+	press(m, "s")
+	if s := screen(m); !strings.Contains(s, "select a train with tab") {
+		t.Errorf("schedule without a train selected:\n%s", s)
+	}
+
+	// 0451U has left TPJ and PDKT by t=60, and not yet reached KKDI
+	press(m, "tab")
+	m.rep.seek(60)
+	m.redraw()
+	s := screen(m)
+	for _, want := range []string{"schedule 0451U", "kind", "stop", "00:02", "00:12"} {
+		if !strings.Contains(s, want) {
+			t.Errorf("schedule lacks %q:\n%s", want, s)
+		}
+	}
+	calls := m.rep.calls("0451U", 3)
+	if calls[0].pf != "1" || calls[1].arr < 0 || calls[1].dep < 0 || calls[2].arr >= 0 {
+		t.Errorf("calls at t=60: %+v", calls)
+	}
+
+	press(m, "s")
+	if s := screen(m); !strings.Contains(s, "events 0451U") {
+		t.Errorf("s again does not go back to the events:\n%s", s)
+	}
+}
+
+func TestTrainsAreColouredByClass(t *testing.T) {
+	s := &sim.Sim{OutputDir: t.TempDir(), Priorities: &sim.PriorityConfig{
+		Classes: map[string]int{"Superfast Express": 50, "Mail/Express": 40, "Passenger": 20},
+	}}
+	s.SetWorld(worlds.BuildTpjKkdiWorld())
+	for _, c := range []struct{ number, class string }{{"SF", "Superfast Express"}, {"PS", "Passenger"}, {"ME", "Mail/Express"}, {"XX", ""}} {
+		tr := &ops.Train{Name: c.number, Number: c.number, MaxSpeed: units.KMPH(110), Class: c.class}
+		for j, code := range []ids.StnCode{"TPJ", "PDKT", "KKDI"} {
+			sp := ops.NewStopPoint(code, 5, "1")
+			if j == 0 {
+				sp.SetEntryTime(float64(1 + len(s.Status())*10))
+			}
+			tr.AddSchedule(sp)
+		}
+		if err := s.AddTrain(tr); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	rec, err := record.New(&buf, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Observer = rec
+	if err := rec.Close(s.Run()); err != nil {
+		t.Fatal(err)
+	}
+	hello, msgs, err := vizproto.ReadAll(&buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	r := newReplay(hello, msgs)
+	var names []string
+	for _, k := range r.classes {
+		names = append(names, fmt.Sprintf("%s %d %s", k.name, k.priority, k.color))
+	}
+	want := []string{"Passenger 20 " + classColors[0], "Mail/Express 40 " + classColors[5], "Superfast Express 50 " + classColors[9]}
+	if !slices.Equal(names, want) {
+		t.Errorf("classes %v, want %v", names, want)
+	}
+	if got := r.classStyle("SF").GetForeground(); got != lipgloss.Color(classColors[9]) {
+		t.Errorf("SF drawn in %v", got)
+	}
+	if got := r.classStyle("XX").GetForeground(); got != bold.GetForeground() {
+		t.Errorf("a train without a class drawn in %v", got)
+	}
+
+	d, err := schematic.Build(&hello.World)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := newModel(d, r)
+	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
+	sc := screen(m)
+	for _, want := range []string{"■ Superfast Express (50)", "■ Mail/Express (40)", "■ Passenger (20)"} {
+		if !strings.Contains(sc, want) {
+			t.Errorf("trains pane lacks %q:\n%s", want, sc)
+		}
+	}
+	if i, j := strings.Index(sc, "Superfast Express (50)"), strings.Index(sc, "Passenger (20)"); i > j {
+		t.Error("the key does not list the highest priority first")
 	}
 }

@@ -26,8 +26,9 @@ import (
 )
 
 var builders = map[string]func() *infra.World{
-	"tpjkkdi": worlds.BuildTpjKkdiWorld,
-	"test":    worlds.BuildTestWorld,
+	"tpjkkdi":    worlds.BuildTpjKkdiWorld,
+	"tpjkkdi-sl": worlds.BuildTpjKkdiSingleLineWorld,
+	"test":       worlds.BuildTestWorld,
 	"single": func() *infra.World {
 		return worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 2, LoopPlatforms: 2, BlocksPerLine: 2})
 	},

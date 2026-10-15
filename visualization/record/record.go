@@ -152,6 +152,7 @@ func (r *Recorder) diff(ev *des.Event[ops.RailwayEvent]) {
 		msg.Train = train.Number
 		msg.Phase = st.Phase
 		msg.Waiting = waiting(st.Waiting)
+		msg.Priority = st.Priority
 		// the front sets off along an edge at TRACK_ENTER
 		switch edge := train.CurrentEdge(); {
 		case edge == nil:

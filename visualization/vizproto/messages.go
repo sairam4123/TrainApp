@@ -14,8 +14,8 @@ import (
 
 // Version 2 added precedence: decision messages, the trains a waiting train
 // is held for, and each platform's class. Version 3 added each train's class
-// and planned schedule. Older recordings still read.
-const Version = 3
+// and planned schedule, version 4 its priority. Older recordings still read.
+const Version = 4
 
 const (
 	TypeHello  = "hello"
@@ -78,6 +78,9 @@ type TrainMsg struct {
 	TEnd    float64  `json:"tEnd"`
 	Phase   string   `json:"phase"`
 	Waiting *Waiting `json:"waiting,omitempty"`
+	// Priority is the train's priority now, its delay band included (see
+	// sim.Sim.Priority); 0 before version 4.
+	Priority int `json:"priority,omitempty"`
 }
 
 // Waiting is a train's queued route request.

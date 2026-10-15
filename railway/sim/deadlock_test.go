@@ -3,6 +3,7 @@ package sim_test
 import (
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"strings"
 	"testing"
 	"trainapp/railway/ids"
@@ -73,6 +74,18 @@ var (
 	westbound = []ids.StnCode{"EST", "HLT", "LPA", "WST"}
 )
 
+// the real TPJ-KKDI single line: all stations, and the expresses' calls
+var (
+	tpjKkdiAllStops = []ids.StnCode{"TPJ", "KRMG", "KRUR", "VEL", "PDKT", "NMN", "TYM", "CTND", "KTYR", "KKDI"}
+	tpjKkdiExpress  = []ids.StnCode{"TPJ", pass("KRMG"), pass("KRUR"), pass("VEL"), "PDKT", pass("NMN"), pass("TYM"), pass("CTND"), pass("KTYR"), "KKDI"}
+)
+
+func reversed(stops []ids.StnCode) []ids.StnCode {
+	out := slices.Clone(stops)
+	slices.Reverse(out)
+	return out
+}
+
 func TestSingleLineWithPassingLoop(t *testing.T) {
 	w := worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 2, LoopPlatforms: 2, BlocksPerLine: 2})
 	runJourneys(t, w, both(5, 15, eastbound, westbound))
@@ -89,6 +102,24 @@ func TestSingleLineWithoutAnyPassingPlace(t *testing.T) {
 	// nowhere to pass: opposing trains must take turns over the whole line
 	w := worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 1, LoopPlatforms: 1, BlocksPerLine: 2})
 	runJourneys(t, w, both(4, 2, eastbound, westbound))
+}
+
+func TestTpjKkdiSingleLine(t *testing.T) {
+	// all-stops trains and expresses from both ends, a train every 10 minutes
+	// each way, crossing at the loops
+	w := worlds.BuildTpjKkdiSingleLineWorld()
+	var js []journey
+	for i := range 6 {
+		up, down := tpjKkdiAllStops, reversed(tpjKkdiAllStops)
+		if i%2 == 1 {
+			up, down = tpjKkdiExpress, reversed(tpjKkdiExpress)
+		}
+		js = append(js,
+			journey{fmt.Sprintf("U%d", i), 1 + float64(i)*10, up},
+			journey{fmt.Sprintf("D%d", i), 1 + float64(i)*10, down},
+		)
+	}
+	runJourneys(t, w, js)
 }
 
 func TestJunction(t *testing.T) {
@@ -125,6 +156,9 @@ func TestRandomTrafficNeverDeadlocks(t *testing.T) {
 		}},
 		{"tpj-kkdi", worlds.BuildTpjKkdiWorld, [][]ids.StnCode{
 			{"TPJ", "PDKT", "KKDI"}, {"KKDI", "PDKT", "TPJ"}, {"TPJ", pass("PDKT"), "KKDI"}, {"KKDI", pass("PDKT"), "TPJ"},
+		}},
+		{"tpj-kkdi single line", worlds.BuildTpjKkdiSingleLineWorld, [][]ids.StnCode{
+			tpjKkdiAllStops, reversed(tpjKkdiAllStops), tpjKkdiExpress, reversed(tpjKkdiExpress),
 		}},
 	}
 	for _, sh := range shapes {

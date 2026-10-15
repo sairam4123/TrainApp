@@ -1,8 +1,14 @@
 package main
 
 import (
+	"cmp"
+	"fmt"
+	"math"
+	"slices"
 	"sort"
 	"trainapp/visualization/vizproto"
+
+	"charm.land/lipgloss/v2"
 )
 
 // replay plays a recording: the state is every message up to applied, and t
@@ -18,16 +24,42 @@ type replay struct {
 
 	trains    []string          // in the order the sim added them
 	trackName map[string]string // display name of each track
+	pfNo      map[string]string // platform number of each platform track, by name
 	failure   string            // why the run failed, if it did
+
+	class   map[string]string // each train's class, if it has one
+	classes []classKey        // the classes in the run, lowest priority first
 }
 
+// classKey is a class of train in the run, with the colour its trains are
+// drawn in and its trains' priority when they first appear (the class's base
+// priority; 0 in recordings before version 4).
+type classKey struct {
+	name     string
+	priority int
+	color    string
+}
+
+// classColors colour the classes from the lowest priority to the highest:
+// blue to red, leaving out the amber of held trains.
+var classColors = []string{"27", "39", "44", "42", "113", "149", "141", "177", "169", "203"}
+
 func newReplay(hello *vizproto.HelloMsg, msgs []vizproto.Message) *replay {
-	r := &replay{world: &hello.World, msgs: msgs, trackName: map[string]string{}}
+	r := &replay{world: &hello.World, msgs: msgs, trackName: map[string]string{}, pfNo: map[string]string{}}
+	r.class = map[string]string{}
 	for _, t := range hello.World.Trains {
 		r.trains = append(r.trains, t.Number)
+		if t.Class != "" {
+			r.class[t.Number] = t.Class
+		}
 	}
 	for _, t := range hello.World.Tracks {
 		r.trackName[t.ID] = t.Name
+	}
+	for _, stn := range hello.World.Stations {
+		for _, pf := range stn.Platforms {
+			r.pfNo[r.trackName[pf.Track]] = pf.No
+		}
 	}
 	for i, m := range msgs {
 		_, isEvent := m.(*vizproto.EventMsg)
@@ -41,6 +73,7 @@ func newReplay(hello *vizproto.HelloMsg, msgs []vizproto.Message) *replay {
 	if len(msgs) > 0 {
 		r.end = msgs[len(msgs)-1].Head().T
 	}
+	r.rankClasses()
 	r.reset()
 	return r
 }
@@ -192,4 +225,97 @@ func (r *replay) recent(n int, train string) []*vizproto.EventMsg {
 		out[i], out[j] = out[j], out[i]
 	}
 	return out
+}
+
+// call is when a train reached and left a station of its schedule, and on
+// which platform; -1 and "" until it has.
+type call struct {
+	arr, dep float64
+	pf       string
+}
+
+// calls is how far the train has got through its schedule by now, one entry
+// per schedule point: its k-th TRAIN_ARRIVE is at its k-th point, passes
+// included, and the TRAIN_DEPART (or, at the last, the SCHEDULE_END) after it
+// is when it left.
+func (r *replay) calls(train string, points int) []call {
+	out := make([]call, points)
+	for i := range out {
+		out[i] = call{arr: -1, dep: -1}
+	}
+	k := -1
+	for _, m := range r.msgs[:r.applied] {
+		e, ok := m.(*vizproto.EventMsg)
+		if !ok || e.Train != train {
+			continue
+		}
+		switch e.Event {
+		case "TRAIN_ARRIVE":
+			k++
+			if k < points {
+				out[k].arr = e.T
+				for _, f := range e.Fields {
+					if f.Key == "track" {
+						out[k].pf = r.pfNo[fmt.Sprint(f.Value)]
+					}
+				}
+			}
+		case "TRAIN_DEPART", "SCHEDULE_END":
+			if k >= 0 && k < points && out[k].dep < 0 {
+				out[k].dep = e.T
+			}
+		}
+	}
+	return out
+}
+
+// rankClasses orders the run's classes by their trains' priority when they
+// first appear, then by name, and gives each a colour, spread from the lowest
+// to the highest.
+func (r *replay) rankClasses() {
+	base := map[string]int{}
+	seen := map[string]bool{}
+	for _, m := range r.msgs {
+		t, ok := m.(*vizproto.TrainMsg)
+		if !ok || seen[t.Train] {
+			continue
+		}
+		seen[t.Train] = true
+		if c, ok := r.class[t.Train]; ok {
+			base[c] = max(base[c], t.Priority)
+		}
+	}
+	for _, c := range r.class {
+		if _, ok := base[c]; !ok {
+			base[c] = 0
+		}
+	}
+	r.classes = nil
+	for c, p := range base {
+		r.classes = append(r.classes, classKey{name: c, priority: p})
+	}
+	slices.SortFunc(r.classes, func(a, b classKey) int {
+		return cmp.Or(cmp.Compare(a.priority, b.priority), cmp.Compare(a.name, b.name))
+	})
+	for i := range r.classes {
+		k := len(classColors) - 1
+		if n := len(r.classes); n > 1 {
+			k = int(math.Round(float64(i) / float64(n-1) * float64(len(classColors)-1)))
+		}
+		r.classes[i].color = classColors[k]
+	}
+}
+
+// classStyle is how a train's number is drawn: bold, in its class's colour.
+func (r *replay) classStyle(train string) lipgloss.Style {
+	c, ok := r.class[train]
+	if !ok {
+		return bold
+	}
+	for _, k := range r.classes {
+		if k.name == c {
+			return bold.Foreground(lipgloss.Color(k.color))
+		}
+	}
+	return bold
 }

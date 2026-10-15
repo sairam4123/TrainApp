@@ -124,9 +124,9 @@ func TestTpjKkdiRender(t *testing.T) {
   TPJ                    PDKT                   KKDI
 [═Pf1═══               ══Pf1═══               ══Pf1══]
         ╲             ╱        ╲             ╱
-[═Pf2═══─────(55km)────══Pf2═══───(41km)──────══Pf2══]
+[═Pf2═══─────(55km)─▶──══Pf2═══───(41km)─▶────══Pf2══]
           ╳                                ╳
-[═Pf3═══─────(55km)────══Pf3═══───(41km)──────══Pf3══]
+[═Pf3═══────◀(55km)────══Pf3═══──◀(41km)──────══Pf3══]
         ╱             ╲        ╱             ╲
 [═Pf4═══               ══Pf4═══               ══Pf4══]`
 	if got := "\n" + strings.Join(d.Render(Options{Zoom: 1}), "\n"); got != want {
@@ -186,9 +186,9 @@ func TestOverviewCollapsesStations(t *testing.T) {
 	}
 	want := `
 ┌─TPJ──┐         ┌─PDKT─┐         ┌─KKDI─┐
-│ ○○○○ ├─(55km)──┤ ○○○○ ├─(41km)──┤ ○○○○ │
+│ ○○○○ ├─(55km)─▶┤ ○○○○ ├─(41km)─▶┤ ○○○○ │
 │      │         │      │         │      │
-│      ├─(55km)──┤      ├─(41km)──┤      │
+│      ├◀(55km)──┤      ├◀(41km)──┤      │
 └──────┘         └──────┘         └──────┘`
 	if got := "\n" + strings.Join(d.Render(Options{Level: Overview, Zoom: 1}), "\n"); got != want {
 		t.Errorf("got:%s\nwant:%s", got, want)

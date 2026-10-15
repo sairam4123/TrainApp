@@ -70,6 +70,7 @@ At a high level, the system contains five major parts:
 ├── worlds/                  # Sample railway worlds
 │   ├── testWorld.go         # Older 3-station (TPJ-PDKT-KKDI) world
 │   ├── kkdiTpjWorld.go      # Active double-line TPJ-PDKT-KKDI world with crossovers and signals
+│   ├── tpjKkdiSingleLineWorld.go # The real TPJ-KKDI single line: all 10 stations, loops and sidings, from OpenStreetMap
 │   └── singleLineWorld.go   # Single-line worlds (passing loops, halts, junction) used by the deadlock tests
 ├── profiles/                # Per-railway priority, precedence and timetable settings (JSON), e.g. ir.json for Indian Railways
 ├── railway/
@@ -247,6 +248,7 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 
 | Flag | Default | Effect |
 |---|---|---|
+| `-world` | `tpjkkdi` | World to run: `tpjkkdi` (the double line) or `tpjkkdi-sl` (the real single line; the trains run through the stations between TPJ, PDKT and KKDI) |
 | `-log` | `text` | Log format: `text` (logfmt, `logs/logs.log`) or `json` (`logs/logs.jsonl`) |
 | `-record` | none | Also write the run to this file, for `trainviz replay` |
 | `-priorities` | `profiles/ir.json` | Priority config (classes, delay bands and precedence); empty for none, which leaves every train at priority 0 and precedence off |
@@ -255,6 +257,8 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 | `-check-record` | none | With `-timetable`, also record the check run for `trainviz replay` |
 
 The other worlds in `worlds/` are not run by `trainapp`. The single-line and junction worlds are used by the deadlock tests, and all of them can be drawn with `trainviz`.
+
+`worlds.BuildTpjKkdiSingleLineWorld()` (`trainviz -world tpjkkdi-sl`) is the real line between the same two junctions: a single electrified line at 110 km/h with all ten stations (TPJ, KRMG, KRUR, VEL, PDKT, NMN, TYM, CTND, KTYR, KKDI), each stretch between stations one block section. Station positions and track layouts come from OpenStreetMap: crossing stations with the main line straight through between two loop platforms, PDKT and CTND with a platform on the main line and a goods loop, two halts, and TPJ (8 platforms and a through track) and KKDI (5 platforms and a through loop) at the world's edges. Platform numbers OSM does not record are guesses. A halt's platform ends act as signals, so unlike on the real line a halt splits its block section.
 
 ## Key design decisions
 
@@ -322,7 +326,7 @@ go run ./cmd/trainviz -print                 # print once
 go run ./cmd/trainviz -print -zoom 2         # print once, wider
 ```
 
-`-world` is one of `tpjkkdi`, `test`, `single` or `junction`. With `-print`, `-zoom 1` is the most compact, `-level` is `overview` (stations collapsed to boxes), `layout` or `detail` (with point, track and switch ids), and `-color` is `auto`, `always` or `never`. The schematic is not to scale: lines between stations are labelled with their length instead.
+`-world` is one of `tpjkkdi`, `tpjkkdi-sl`, `test`, `single` or `junction`. With `-print`, `-zoom 1` is the most compact, `-level` is `overview` (stations collapsed to boxes), `layout` or `detail` (with point, track and switch ids), and `-color` is `auto`, `always` or `never`. The schematic is not to scale: lines between stations are labelled with their length instead.
 
 In the viewer, `+`/`-` or the mouse wheel zoom, `hjkl`, the arrows or a mouse drag pan, `/` then a station code jumps to it, `0` fits the world on screen, and `q` quits.
 
@@ -330,9 +334,9 @@ In the viewer, `+`/`-` or the mouse wheel zoom, `hjkl`, the arrows or a mouse dr
   TPJ                    PDKT                   KKDI
 [═Pf1═══               ══Pf1═══               ══Pf1══]
         ╲             ╱        ╲             ╱
-[═Pf2═══─────(55km)────══Pf2═══───(41km)──────══Pf2══]
+[═Pf2═══─────(55km)─▶──══Pf2═══───(41km)─▶────══Pf2══]
           ╳                                ╳
-[═Pf3═══─────(55km)────══Pf3═══───(41km)──────══Pf3══]
+[═Pf3═══────◀(55km)────══Pf3═══──◀(41km)──────══Pf3══]
         ╱             ╲        ╱             ╲
 [═Pf4═══               ══Pf4═══               ══Pf4══]
 ```
@@ -348,7 +352,9 @@ go run ./cmd/trainviz replay -print -graph run.ndjson     # the time-distance gr
 
 The recording is newline-delimited JSON (`visualization/vizproto`): a `hello` with the world, then after each sim event the log entries and every track, switch and train that changed. Recording does not change the run or its log. With `-print`, `-at` picks the sim time to show (the end of the run by default), and the frame is followed by a list of the trains and what each waits for.
 
-Tracks are grey when free, green when reserved and red when occupied. A switch leg that is not set is drawn faint. Trains are labelled at their front, e.g. `0451U▶`. Signals (`▶ ◀`) show green when the track beyond is reserved for the approaching train, and red otherwise. The side pane lists each train's phase and what it waits for, and the events pane shows the latest log entries.
+Train numbers in the side pane are coloured by class, from blue for the lowest priority class to red for the highest, with a key below the trains (the recording carries each train's priority as it goes). `s` swaps the events pane for the selected train's schedule: a column per station, with whether it stops or passes, and the platform and times it actually arrived and left; times still to come are dimmed.
+
+Tracks are grey when free, green when reserved and red when occupied. A switch leg that is not set is drawn faint. Trains are labelled at their front, e.g. `0451U▶`. Signals (`▶ ◀`, also drawn in the plain world view) show green when the track beyond is reserved for the approaching train, and red otherwise. The side pane lists each train's phase and what it waits for, and the events pane shows the latest log entries.
 
 Precedence shows too: a train held for another is drawn in amber with `⏸` (`0452U▶⏸`), and the side pane says why (`held at PDKT for 0451U (overtake, +6.2m)`, `pf 3→4 at KKDI (main_line_stay)`). `d` swaps the events pane for the decisions, active ones first; `enter` there jumps to the next decision and selects its train. Main lines have their platform label underlined (and say `(main)` at the detail level), and a through track is labelled `T1` rather than `Pf1`. A replay cannot change a run: use `-overrides` and run again.
 
@@ -362,6 +368,7 @@ Precedence shows too: a train held for another is drawn in amber with `⏸` (`04
 | `f` | follow the selected train |
 | `home` `end` | jump to the start / end |
 | `d`, `enter` | show the precedence decisions; jump to the next one |
+| `s` | show the selected train's schedule instead of the events |
 | `g` | switch between the schematic and the time-distance graph |
 
 The pan, zoom, `/` and `q` keys work in the replay too. Clicking on the timeline seeks to that time.

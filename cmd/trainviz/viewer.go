@@ -1,7 +1,9 @@
 package main
 
 import (
+	"cmp"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 	"time"
@@ -43,6 +45,15 @@ var (
 
 type tickMsg time.Time
 
+// bottomPane is what the pane below the schematic shows.
+type bottomPane int
+
+const (
+	paneEvents    bottomPane = iota
+	paneDecisions            // precedence decisions
+	paneSchedule             // the selected train's schedule
+)
+
 type model struct {
 	d   *schematic.Diagram
 	rep *replay // nil when only showing the layout
@@ -60,13 +71,13 @@ type model struct {
 	query        string
 	note         string
 
-	playing   bool
-	ticking   bool
-	lastTick  time.Time
-	speed     int
-	selected  int // index into rep.trains, -1 for none
-	follow    bool
-	decisions bool // the bottom pane lists precedence decisions, not events
+	playing  bool
+	ticking  bool
+	lastTick time.Time
+	speed    int
+	selected int // index into rep.trains, -1 for none
+	follow   bool
+	bottom   bottomPane
 
 	// the time-distance graph, shown in place of the schematic
 	graph     *traingraph.Graph // nil without a recording or a single line
@@ -376,9 +387,11 @@ func (m *model) replayKey(key string) {
 			m.note = "select a train with tab first"
 		}
 	case "d":
-		m.decisions = !m.decisions
+		m.bottom = toggle(m.bottom, paneDecisions)
+	case "s":
+		m.bottom = toggle(m.bottom, paneSchedule)
 	case "enter":
-		if !m.decisions {
+		if m.bottom != paneDecisions {
 			return
 		}
 		m.playing = false
@@ -583,10 +596,18 @@ func (m *model) render() string {
 	}
 	if eh := m.eventsHeight(); eh > 0 {
 		title, body := "events", m.eventLines(eh-2)
-		if m.decisions {
+		switch {
+		case m.bottom == paneDecisions:
 			title, body = "decisions (enter: next)", m.decisionLines(eh-2)
-		} else if t := m.selectedTrain(); t != "" {
-			title += " " + t
+		case m.bottom == paneSchedule:
+			title, body = "schedule", m.scheduleLines(m.width-2, eh-2)
+			if t := m.selectedTrain(); t != "" {
+				title += " " + t
+			}
+		default:
+			if t := m.selectedTrain(); t != "" {
+				title += " " + t
+			}
 		}
 		lines = append(lines, box(title, body, m.width, eh)...)
 	}
@@ -606,31 +627,45 @@ func (m *model) trainLines(w, h int) []string {
 			at = len(out)
 		}
 		tr, ok := r.state.Trains[n]
-		text := n + "  " + tr.Phase
+		text := "  " + tr.Phase
 		switch {
 		case !ok:
-			text = n
+			text = ""
 		case tr.Waiting != nil:
-			text = fmt.Sprintf("%s  waiting %s %s", n, tr.Waiting.Station, tr.Waiting.Pf)
+			text = fmt.Sprintf("  waiting %s %s", tr.Waiting.Station, tr.Waiting.Pf)
 		case tr.Track != "":
 			text += " " + r.trackName[tr.Track]
 		}
-		style := lipgloss.NewStyle()
+		// the number in its class's colour, the rest by what the train does
+		style, number := lipgloss.NewStyle(), r.classStyle(n)
 		switch {
 		case i == m.selected:
-			style = bold.Reverse(true)
+			style, number = bold.Reverse(true), number.Reverse(true)
 		case tr.Phase == "exited" || tr.Phase == "outside":
 			style = dim
 		}
 		if ok && tr.Waiting.Held() && i != m.selected {
 			style = held
 		}
-		out = append(out, style.Render(fit(text, w)))
+		rest := max(w-ansi.StringWidth(n), 0)
+		out = append(out, fit(number.Render(n)+style.Render(fit(text, rest)), w))
 		for _, d := range r.state.ActiveDecisions(n) {
 			out = append(out, dim.Render(fit("   "+decisionSummary(d), w)))
 		}
 		if ok && tr.Waiting != nil && tr.Waiting.BlockedBy != "" && !tr.Waiting.Held() {
 			out = append(out, dim.Render(fit("   blocked by "+tr.Waiting.BlockedBy, w)))
+		}
+	}
+	// a key to the class colours, highest priority first, if there is room
+	if keys := r.classes; len(keys) > 0 && len(out)+1+len(keys) <= h {
+		out = append(out, "")
+		for _, k := range slices.Backward(keys) {
+			line := k.name
+			if k.priority != 0 {
+				line += fmt.Sprintf(" (%d)", k.priority)
+			}
+			mark := lipgloss.NewStyle().Foreground(lipgloss.Color(k.color)).Render("■ ")
+			out = append(out, mark+dim.Render(fit(line, max(w-2, 0))))
 		}
 	}
 	if at >= h {
@@ -683,6 +718,96 @@ func (m *model) decisionLines(n int) []string {
 	return out
 }
 
+// toggle shows pane in the bottom pane, or the events if it already shows.
+func toggle(cur, pane bottomPane) bottomPane {
+	if cur == pane {
+		return paneEvents
+	}
+	return pane
+}
+
+// scheduleLines is the selected train's schedule as a table, a column per
+// station: whether it stops or passes, and on which platform and when it
+// arrived and left. Times still to come are the planned ones, dimmed, or "—"
+// where the schedule gives none. The station the train is at or heading for
+// is picked out, and kept in view when the columns do not all fit in w.
+func (m *model) scheduleLines(w, n int) []string {
+	train := m.selectedTrain()
+	if train == "" {
+		return []string{dim.Render("select a train with tab to see its schedule")}
+	}
+	var points []vizproto.SchedulePoint
+	for _, t := range m.rep.world.Trains {
+		if t.Number == train {
+			points = t.Schedule
+		}
+	}
+	if len(points) == 0 {
+		return []string{dim.Render("no schedule in this recording")}
+	}
+	calls := m.rep.calls(train, len(points))
+	next := len(points) // the first station not left yet
+	for i, c := range calls {
+		if c.dep < 0 {
+			next = i
+			break
+		}
+	}
+	at := func(actual, planned float64) string {
+		switch {
+		case actual >= 0:
+			return clock(actual)
+		case planned >= 0:
+			return dim.Render(clock(planned))
+		}
+		return dim.Render("—")
+	}
+	const label, col = 6, 7
+	rows := [][]string{{""}, {"kind"}, {"pf"}, {"arr"}, {"dep"}}
+	for i, sp := range points {
+		stn := fit(sp.Stn, col)
+		switch {
+		case i == next:
+			stn = bold.Reverse(true).Render(fit(sp.Stn, col-1)) + " "
+		case i < next:
+			stn = dim.Render(stn)
+		}
+		pf := dim.Render(cmp.Or(sp.Pf, "—"))
+		if c := calls[i]; c.pf != "" {
+			pf = c.pf
+		}
+		rows[0] = append(rows[0], stn)
+		kind := "stop" // timed or not
+		if sp.Kind == "pass" {
+			kind = "pass"
+		}
+		rows[1] = append(rows[1], dim.Render(kind))
+		rows[2] = append(rows[2], pf)
+		rows[3] = append(rows[3], at(calls[i].arr, sp.Arr))
+		rows[4] = append(rows[4], at(calls[i].dep, sp.Dep))
+	}
+	// drop columns from the left until the next station fits
+	first := 0
+	if fits := max((w-label)/col, 1); next >= fits {
+		first = min(next, len(points)-1) - fits + 1
+	}
+	var out []string
+	for _, row := range rows[:min(len(rows), n)] {
+		line := fit(" "+row[0], label)
+		for _, cell := range row[1+first:] {
+			line += fit(cell, col)
+		}
+		out = append(out, line)
+	}
+	return out
+}
+
+// clock shows minutes from 0 as HH:MM, as the timetable does.
+func clock(t float64) string {
+	mins := int(math.Round(t))
+	return fmt.Sprintf("%02d:%02d", mins/60, mins%60)
+}
+
 func (m *model) eventLines(n int) []string {
 	var out []string
 	for _, e := range m.rep.recent(n, m.selectedTrain()) {
@@ -727,7 +852,7 @@ func (m *model) keyLine() string {
 		keys = "+/- time zoom  h l pan  0 fit  p planned  click seek  g schematic  q quit"
 	}
 	if m.rep != nil {
-		keys = "space play  [ ] speed  , . step  tab train  ⇧←→ train events  f follow  d decisions  " + keys
+		keys = "space play  [ ] speed  , . step  tab train  ⇧←→ train events  f follow  d decisions  s schedule  " + keys
 		if !m.showGraph {
 			keys = strings.Replace(keys, "q quit", "g graph  q quit", 1)
 		}

@@ -6,7 +6,7 @@ import (
 )
 
 func TestReadsOlderVersions(t *testing.T) {
-	for _, v := range []string{"1", "2", "3"} {
+	for _, v := range []string{"1", "2", "3", "4"} {
 		rec := `{"type":"hello","t":0,"version":` + v + `,"world":{"points":[],"tracks":[],"switches":[],"signals":[],"stations":[],"trains":[]}}
 {"type":"decision","t":3,"id":"hold:A>B@X","action":"hold","train":"A","for":"B","at":"X","status":"active","source":"auto","since":3}
 {"type":"end","t":4}
@@ -23,8 +23,8 @@ func TestReadsOlderVersions(t *testing.T) {
 			t.Errorf("version %s: decisions %+v", v, got)
 		}
 	}
-	if _, _, err := ReadAll(strings.NewReader(`{"type":"hello","t":0,"version":4,"world":{}}`)); err == nil {
-		t.Error("version 4 accepted")
+	if _, _, err := ReadAll(strings.NewReader(`{"type":"hello","t":0,"version":5,"world":{}}`)); err == nil {
+		t.Error("version 5 accepted")
 	}
 }
 
