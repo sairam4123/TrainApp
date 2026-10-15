@@ -116,18 +116,30 @@ func (w *World) RankedPaths(from *TrackPoint, via *GraphEdge, to *TrackSegment) 
 // can be reached the correct way at all, matching how the dispatcher routes;
 // otherwise wrong-direction running is allowed. Requires Finalize.
 func (w *World) CanVisit(pos Position, stops []ids.StnCode, blocked func(Step) bool) (bool, error) {
-	cur := []Position{pos}
+	ends, err := w.VisitEnds([]Position{pos}, stops, blocked)
+	return len(ends) > 0, err
+}
+
+// VisitEnds is CanVisit for a train that may stand at any of starts. It
+// returns the positions the train can end at, on a platform track of the last
+// stop: none if it cannot call at every stop, the starts themselves if stops
+// is empty. Requires Finalize.
+func (w *World) VisitEnds(starts []Position, stops []ids.StnCode, blocked func(Step) bool) ([]Position, error) {
+	cur := starts
 	for _, code := range stops {
+		if len(cur) == 0 {
+			return nil, nil
+		}
 		stn, ok := w.stations[code]
 		if !ok {
-			return false, fmt.Errorf("unknown station %s", code)
+			return nil, fmt.Errorf("unknown station %s", code)
 		}
 		atStation := func(s Step) bool { return stn.IsPlatform(s.Edge.Track.Id) }
 
 		correctOnly := func(s Step) bool { return w.RunsCorrectWay(s) }
 		static, err := w.TrackGraph.Reach(cur, atStation, correctOnly)
 		if err != nil {
-			return false, err
+			return nil, err
 		}
 		policy := correctOnly
 		if len(static) == 0 {
@@ -141,12 +153,9 @@ func (w *World) CanVisit(pos Position, stops []ids.StnCode, blocked func(Step) b
 		}
 		next, err := w.TrackGraph.Reach(cur, atStation, allow)
 		if err != nil {
-			return false, err
-		}
-		if len(next) == 0 {
-			return false, nil
+			return nil, err
 		}
 		cur = next
 	}
-	return true, nil
+	return cur, nil
 }

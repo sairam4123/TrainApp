@@ -12,7 +12,9 @@ import (
 	"slices"
 )
 
-const Version = 1
+// Version 2 added precedence: decision messages, the trains a waiting train
+// is held for, and each platform's class. Version 1 recordings still read.
+const Version = 2
 
 const (
 	TypeHello  = "hello"
@@ -20,8 +22,10 @@ const (
 	TypeSwitch = "switch"
 	TypeTrain  = "train"
 	TypeEvent  = "event"
-	TypeEnd    = "end"
-	TypeError  = "error"
+	// TypeDecision is a precedence decision as it is now.
+	TypeDecision = "decision"
+	TypeEnd      = "end"
+	TypeError    = "error"
 )
 
 // Message is one line of the stream.
@@ -83,7 +87,12 @@ type Waiting struct {
 	Since     float64 `json:"since"`
 	Reason    string  `json:"reason,omitempty"`
 	BlockedBy string  `json:"blockedBy,omitempty"`
+	// HeldFor lists the trains precedence holds it back for, comma separated.
+	HeldFor string `json:"heldFor,omitempty"`
 }
+
+// Held reports whether precedence holds the train back for others.
+func (w *Waiting) Held() bool { return w != nil && w.HeldFor != "" }
 
 // Fraction is how far along its track the front is at time t, 0 to 1.
 func (m *TrainMsg) Fraction(t float64) float64 {
@@ -108,6 +117,33 @@ type Field struct {
 	Value any
 }
 
+// DecisionMsg is a precedence decision as it stands at T: a train held back
+// for another (Action "hold"), or moved off its timetabled platform
+// ("platform"). It is sent again whenever it changes, e.g. when it ends.
+type DecisionMsg struct {
+	Header
+	ID     string  `json:"id"`
+	Action string  `json:"action"`
+	Kind   string  `json:"kind,omitempty"`
+	Train  string  `json:"train"`
+	For    string  `json:"for,omitempty"`
+	At     string  `json:"at"`
+	PfFrom string  `json:"pfFrom,omitempty"`
+	PfTo   string  `json:"pfTo,omitempty"`
+	Status string  `json:"status"` // active, released, expired, overridden or done
+	Source string  `json:"source"` // auto or manual
+	Rule   string  `json:"rule,omitempty"`
+	Reason string  `json:"reason,omitempty"`
+	Gain   float64 `json:"gain,omitempty"` // minutes the other train saves
+	Wait   float64 `json:"wait,omitempty"` // minutes the held train is expected to wait
+	Since  float64 `json:"since"`
+	Until  float64 `json:"until,omitempty"` // when a hold is expected to end
+	Ended  float64 `json:"ended,omitempty"`
+}
+
+// Active reports whether the decision still stands.
+func (m *DecisionMsg) Active() bool { return m.Status == "active" }
+
 type EndMsg struct {
 	Header
 }
@@ -117,13 +153,14 @@ type ErrorMsg struct {
 	Message string `json:"message"`
 }
 
-func (*HelloMsg) kind() string  { return TypeHello }
-func (*TrackMsg) kind() string  { return TypeTrack }
-func (*SwitchMsg) kind() string { return TypeSwitch }
-func (*TrainMsg) kind() string  { return TypeTrain }
-func (*EventMsg) kind() string  { return TypeEvent }
-func (*EndMsg) kind() string    { return TypeEnd }
-func (*ErrorMsg) kind() string  { return TypeError }
+func (*HelloMsg) kind() string    { return TypeHello }
+func (*TrackMsg) kind() string    { return TypeTrack }
+func (*SwitchMsg) kind() string   { return TypeSwitch }
+func (*TrainMsg) kind() string    { return TypeTrain }
+func (*EventMsg) kind() string    { return TypeEvent }
+func (*DecisionMsg) kind() string { return TypeDecision }
+func (*EndMsg) kind() string      { return TypeEnd }
+func (*ErrorMsg) kind() string    { return TypeError }
 
 var eventKeys = []string{"type", "t", "event", "level", "train"}
 

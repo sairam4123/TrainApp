@@ -300,6 +300,10 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 				label = "◀" + label
 			}
 		}
+		held := tr.Waiting.Held()
+		if held {
+			label += "⏸"
+		}
 		size := utf8.RuneCountInString(label)
 		if east {
 			x -= size - 1
@@ -322,8 +326,11 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 			y = rowAt(path, x+size/2)
 		}
 		s := styleTrain
-		if n == opt.Selected {
+		switch {
+		case n == opt.Selected:
 			s = styleSelected
+		case held:
+			s = styleHeld
 		}
 		f.cv.unlabel(x, y, size)
 		for i, r := range []rune(label) {
@@ -577,12 +584,14 @@ const (
 	styleTrack
 	stylePlatform
 	stylePlatformLabel
+	styleMainLabel // a main line's platform label, underlined
 	styleLength
 	styleEnd
 	styleStation
 	styleID
 	styleTrain
 	styleSelected
+	styleHeld // a train precedence holds back, in amber
 	styleSignalClear
 	styleSignalStop
 	styleReserved
@@ -592,12 +601,14 @@ const (
 var sgr = map[style]string{
 	stylePlatform:      "1",
 	stylePlatformLabel: "1;33",
+	styleMainLabel:     "1;33;4",
 	styleLength:        "2",
 	styleEnd:           "2",
 	styleStation:       "1;36",
 	styleID:            "2",
 	styleTrain:         "1;7",
 	styleSelected:      "1;30;43",
+	styleHeld:          "1;30;48;5;214",
 	styleSignalClear:   "1;32",
 	styleSignalStop:    "1;31",
 	styleReserved:      "32",
@@ -758,7 +769,10 @@ func (cv *canvas) track(t *Track, level Level, l look, x1, y1, x2, y2 int) []pos
 		return path
 	}
 	ls := styleLength
-	if t.Kind == Platform {
+	switch {
+	case t.Kind == Platform && t.Class == "main":
+		ls = styleMainLabel
+	case t.Kind == Platform:
 		ls = stylePlatformLabel
 	}
 	// on the longer level part, if it fits with a track glyph either side

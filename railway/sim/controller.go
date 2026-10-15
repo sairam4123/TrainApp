@@ -2,6 +2,7 @@ package sim
 
 import (
 	"fmt"
+	"trainapp/des"
 	"trainapp/railway/interlocking"
 	"trainapp/railway/ops"
 )
@@ -40,6 +41,11 @@ type TrainController struct {
 	sim   *Sim
 	train *ops.Train
 	phase trainPhase
+
+	// for the look-ahead (projection.go)
+	since     float64 // when the front entered the track it is on
+	arrivedAt float64 // when it last arrived at a stop
+	dwellEnd  float64 // when its current dwell ends
 }
 
 func (tc *TrainController) fail(format string, args ...any) {
@@ -101,6 +107,7 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 		tc.begin(data.(*ops.MovementAuthority))
 
 	case ops.TrackEntered:
+		tc.since = sim.CurTime()
 		curTrack := train.CurrentTrack()
 		if curTrack == nil {
 			tc.fail("entered a track but is on none")
@@ -153,7 +160,10 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 		if !stop.Arrived() { // the first stop's arrival is the entry
 			stop.RecordArrival(sim.CurTime())
 		}
-		sim.ScheduleEventAfter(stop.ExpDwellTime(sim.CurTime()), ops.TrainDwellEnd, train, train.ID())
+		dwell := stop.ExpDwellTime(sim.CurTime())
+		tc.arrivedAt = sim.CurTime()
+		tc.dwellEnd = sim.CurTime() + max(float64(dwell), des.MinDeltaTime)
+		sim.ScheduleEventAfter(dwell, ops.TrainDwellEnd, train, train.ID())
 
 	case ops.TrainDwellEnd:
 		tc.phase = phaseReady
@@ -183,6 +193,9 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 		disp.Forget(train.ID())
 		tc.phase = phaseExited
 		sim.ScheduleEventNext(ops.WorldExited, train, train.ID())
+
+	case ops.PrecedenceReview:
+		disp.Review(train.ID())
 
 	case ops.PriorityChanged:
 		// waiting requests are ordered when they are next woken, so nothing

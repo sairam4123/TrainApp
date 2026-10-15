@@ -29,10 +29,21 @@ func newWorld() *infra.World {
 
 // platforms builds n parallel platform tracks for a station and joins their
 // two ends into single throat points with chains of switches. It returns the
-// west and east throat points. Each platform is pfS (west) -> pfE (east).
-func platforms(world *infra.World, stn *infra.Station, n int) (west, east *infra.TrackPoint, pfS, pfE []*infra.TrackPoint) {
+// west and east throat points. Each platform is pfS (west) -> pfE (east). With
+// through, platform track 1 is a through track instead (platform length 0, at
+// line speed) and the n platforms are numbered from 2; it is the straight
+// road through both throats.
+func platforms(world *infra.World, stn *infra.Station, n int, through bool) (west, east *infra.TrackPoint, pfS, pfE []*infra.TrackPoint) {
+	first := 1
+	if through {
+		s, e, trk := constructPlatform(world, stn, "1", 0)
+		trk.MaxSpeed = defaultData().DefaultRouteSpeed
+		pfS = append(pfS, s)
+		pfE = append(pfE, e)
+		first = 2
+	}
 	for i := range n {
-		no := fmt.Sprint(i + 1)
+		no := fmt.Sprint(i + first)
 		s, e, _ := constructPlatform(world, stn, no, 600)
 		pfS = append(pfS, s)
 		pfE = append(pfE, e)
@@ -82,7 +93,7 @@ func singleLine(world *infra.World, name string, from, to *infra.TrackPoint, len
 // the west; the line leaves eastwards from the returned point.
 func westTerminus(world *infra.World, code ids.StnCode, name string, n int) (*infra.Station, *infra.TrackPoint) {
 	stn := world.NewStation(code, name)
-	_, east, pfS, _ := platforms(world, stn, n)
+	_, east, pfS, _ := platforms(world, stn, n, false)
 	for _, p := range pfS {
 		p.WithDeadEnd(true).WithSimLimit(true)
 	}
@@ -92,7 +103,7 @@ func westTerminus(world *infra.World, code ids.StnCode, name string, n int) (*in
 // eastTerminus is the mirror image of westTerminus.
 func eastTerminus(world *infra.World, code ids.StnCode, name string, n int) (*infra.Station, *infra.TrackPoint) {
 	stn := world.NewStation(code, name)
-	west, _, _, pfE := platforms(world, stn, n)
+	west, _, _, pfE := platforms(world, stn, n, false)
 	for _, p := range pfE {
 		p.WithDeadEnd(true).WithSimLimit(true)
 	}
@@ -100,10 +111,11 @@ func eastTerminus(world *infra.World, code ids.StnCode, name string, n int) (*in
 }
 
 // throughStation builds a station with n platforms between a west and an east
-// throat. With n >= 2 it is a passing loop.
-func throughStation(world *infra.World, code ids.StnCode, name string, n int) (*infra.Station, *infra.TrackPoint, *infra.TrackPoint) {
+// throat, plus a through track if through is set. With n >= 2 it is a passing
+// loop.
+func throughStation(world *infra.World, code ids.StnCode, name string, n int, through bool) (*infra.Station, *infra.TrackPoint, *infra.TrackPoint) {
 	stn := world.NewStation(code, name)
-	west, east, _, _ := platforms(world, stn, n)
+	west, east, _, _ := platforms(world, stn, n, through)
 	return stn, west, east
 }
 
@@ -112,6 +124,9 @@ type SingleLineOptions struct {
 	TerminusPlatforms int // platforms at each terminus (WST and EST)
 	LoopPlatforms     int // platforms at the passing loop LPA
 	BlocksPerLine     int // signal sections on each stretch of line
+	// ThroughTrack adds a through track at LPA as its platform track 1 (no
+	// platform, line speed); the loop platforms are then numbered from 2.
+	ThroughTrack bool
 }
 
 // BuildSingleLineWorld builds a single line WST - LPA - HLT - EST:
@@ -126,8 +141,8 @@ func BuildSingleLineWorld(opt SingleLineOptions) *infra.World {
 	world := newWorld()
 
 	_, wstE := westTerminus(world, "WST", "West Terminus", opt.TerminusPlatforms)
-	_, lpaW, lpaE := throughStation(world, "LPA", "Loop A", opt.LoopPlatforms)
-	_, hltW, hltE := throughStation(world, "HLT", "Halt", 1)
+	_, lpaW, lpaE := throughStation(world, "LPA", "Loop A", opt.LoopPlatforms, opt.ThroughTrack)
+	_, hltW, hltE := throughStation(world, "HLT", "Halt", 1, false)
 	_, estW := eastTerminus(world, "EST", "East Terminus", opt.TerminusPlatforms)
 
 	singleLine(world, "slWL", wstE, lpaW, units.KM(12), opt.BlocksPerLine)
@@ -154,7 +169,7 @@ func BuildJunctionWorld(terminusPlatforms int) *infra.World {
 	world := newWorld()
 
 	_, wjnE := westTerminus(world, "WJN", "West Junction Terminus", terminusPlatforms)
-	_, midW, midE := throughStation(world, "MID", "Middle", 2)
+	_, midW, midE := throughStation(world, "MID", "Middle", 2, false)
 	_, ejnW := eastTerminus(world, "EJN", "East Junction Terminus", terminusPlatforms)
 	_, njnW := eastTerminus(world, "NJN", "North Junction Terminus", terminusPlatforms)
 

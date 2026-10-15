@@ -30,6 +30,16 @@ type SchedulePoint struct {
 	SpPfNo string
 }
 
+// Kind is whether the train stops, dwells or passes here.
+func (s *SchedulePoint) Kind() SchedulePointKind {
+	return s.kind
+}
+
+// IsPass reports whether the train runs through the station without stopping.
+func (s *SchedulePoint) IsPass() bool {
+	return s.kind == SpPass
+}
+
 // RecordArrival notes when the train actually arrived.
 func (s *SchedulePoint) RecordArrival(t float64) {
 	s.ActArrTime = t
@@ -85,6 +95,8 @@ func NewArrDepPoint(stnCode ids.StnCode, arrTime, deptTime float64, prefPfNo str
 	}
 }
 
+// NewPassPoint is a station the train runs through without stopping. A
+// negative passTime leaves the pass untimed, so it never makes the train late.
 func NewPassPoint(stnCode ids.StnCode, passTime float64, prefPfNo string) *SchedulePoint {
 	return &SchedulePoint{
 		kind: SpPass,

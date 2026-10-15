@@ -15,6 +15,14 @@ type Station struct {
 
 	pfNoMapCache map[string]ids.TrackID
 	platforms    map[ids.TrackID]*Platform
+
+	// built by World.Finalize, see station_tracks.go
+	area      map[ids.TrackID]struct{}
+	mainFor   map[ids.TrackID]*Platform     // running line -> its main line
+	mainRoute map[ids.TrackID][]ids.TrackID // running line -> the way onto its main line
+	class     map[ids.TrackID]TrackClass
+	// a train can run through it; see RunsThrough
+	runsThrough bool
 }
 
 type Platform struct {

@@ -20,6 +20,7 @@ type Sim struct {
 	ilk   *interlocking.Interlocking
 
 	dispatcher *Dispatcher
+	prec       *precedence // nil when precedence is off
 
 	trainCtrllers map[ids.TrainID]*TrainController
 	trains        []*ops.Train // in the order they were added
@@ -38,6 +39,7 @@ type Sim struct {
 	delayBands  []DelayBand // Priorities.DelayBands, smallest OverMin first
 	log         *slog.Logger
 	initialized bool
+	running     bool
 	err         error // first fatal error; stops the run
 }
 
@@ -87,6 +89,9 @@ func (s *Sim) Init() error {
 	if err := s.initPriorities(); err != nil {
 		return err
 	}
+	if err := s.checkSchedules(); err != nil {
+		return err
+	}
 	ilk, err := interlocking.New(s.world)
 	if err != nil {
 		return err
@@ -99,6 +104,10 @@ func (s *Sim) Init() error {
 	s.des = &des.DES[ops.RailwayEvent]{}
 	s.des.Init()
 
+	s.prec = nil
+	if s.Priorities != nil && s.Priorities.Precedence != nil {
+		s.prec = newPrecedence(s, s.Priorities.Precedence)
+	}
 	s.dispatcher = newDispatcher(s)
 
 	for _, train := range s.trains {
@@ -113,6 +122,40 @@ func (s *Sim) Init() error {
 	}
 	s.initialized = true
 	return nil
+}
+
+// checkSchedules checks every train has a schedule point at every station it
+// runs through: it must be able to run from each stop to the next without
+// running onto another station's platform tracks. A station it does not stop
+// at needs a pass point. Unknown stations are left for the run to report.
+func (s *Sim) checkSchedules() error {
+	var errs []error
+	for _, t := range s.trains {
+		sched := t.Schedule()
+		for i := 1; i < len(sched); i++ {
+			from, okFrom := s.world.GetStation(sched[i-1].StnCode)
+			to, okTo := s.world.GetStation(sched[i].StnCode)
+			if !okFrom || !okTo || from == to {
+				continue
+			}
+			var starts []infra.Position
+			for _, pf := range from.Platforms() {
+				edge, _ := s.world.TrackGraph.Edge(pf.Track)
+				starts = append(starts, infra.Position{At: edge.To, Via: edge}, infra.Position{At: edge.From, Via: edge})
+			}
+			other := func(step infra.Step) bool {
+				stn, ok := s.world.StationOfPlatform(step.Edge.Track)
+				return ok && stn != from && stn != to
+			}
+			ends, err := s.world.VisitEnds(starts, []ids.StnCode{to.Code}, other)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("train %s: %w", t.Number, err))
+			} else if len(ends) == 0 {
+				errs = append(errs, fmt.Errorf("train %s: cannot run from %s to %s without passing another station; give it a pass point there", t.Number, from.Code, to.Code))
+			}
+		}
+	}
+	return errors.Join(errs...)
 }
 
 func (s *Sim) NextEvent() (des.Event[ops.RailwayEvent], bool) {
@@ -213,7 +256,17 @@ func (s *Sim) Run() error {
 	}
 	defer logger.Close()
 	s.log = s.newLogger(logger)
-	defer func() { s.log = slog.New(slog.DiscardHandler) }()
+	s.running = true
+	defer func() {
+		s.log = slog.New(slog.DiscardHandler)
+		s.running = false
+	}()
+	if s.prec != nil {
+		for _, o := range s.prec.early {
+			s.logOverride(o, "applied", "")
+		}
+		s.prec.early = nil
+	}
 
 	if err := s.clearDumps(); err != nil {
 		return err
@@ -246,6 +299,13 @@ func (s *Sim) Run() error {
 
 func (s *Sim) handle(ev des.Event[ops.RailwayEvent]) {
 	s.logEvent(ev)
+	if s.prec != nil {
+		s.prec.invalidate()
+	}
+	if ev.Type == ops.PrecedenceOverride {
+		s.applyOverride(ev.Data.(Override))
+		return
+	}
 	if ev.TrainID == "" {
 		return
 	}
@@ -264,6 +324,8 @@ type TrainStatus struct {
 	Waiting  *RouteRequest // set if the train is queued for a route
 	Priority int           // priority now, see Sim.Priority
 	Delay    units.Minutes // how late it is running now
+	// HeldFor lists the trains it is held back for (see precedence.go).
+	HeldFor []ids.TrainID
 }
 
 // Status reports every train's phase, in the order the trains were added.
@@ -279,7 +341,22 @@ func (s *Sim) Status() []TrainStatus {
 		if s.dispatcher != nil {
 			st.Waiting = s.dispatcher.waitingFor(t.ID())
 		}
+		if s.prec != nil {
+			for _, d := range s.prec.holds[t.ID()] {
+				st.HeldFor = append(st.HeldFor, d.For)
+			}
+		}
 		out = append(out, st)
 	}
 	return out
+}
+
+// Decisions returns every precedence decision made so far, in the order they
+// were made: active ones and those that have ended. Empty when precedence is
+// off.
+func (s *Sim) Decisions() []Decision {
+	if s.prec == nil {
+		return nil
+	}
+	return s.prec.decisions()
 }

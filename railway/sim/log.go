@@ -10,6 +10,7 @@ import (
 	"trainapp/railway/infra"
 	"trainapp/railway/interlocking"
 	"trainapp/railway/ops"
+	"trainapp/units"
 )
 
 // LogFormat selects how the run log is written. Both formats carry the same
@@ -44,6 +45,18 @@ const (
 //	                      on PRIORITY_CHANGE, priority is the new base priority
 //	phase, since          a train that never finished: its phase and when it started waiting
 //	err                   why the run failed
+//
+// Precedence entries (see precedence.go):
+//
+//	decision              the decision's id, e.g. hold:0452U>0451U@PDKT or pf:0453D@PDKT
+//	kind                  overtake, cross, platform or manual
+//	for                   the train it makes way for
+//	at                    where the train is held: its station, or the track it stands on
+//	gain, wait            minutes the other train saves; minutes the held one is expected to wait
+//	rule, source          the hold rule that decided it; auto or manual
+//	status, held          how a hold ended (released, expired, overridden) and how long it lasted
+//	pf_from, pf_to        a platform change: timetabled platform and the one given
+//	action                an override: release, hold, platform or disable
 const (
 	keyTime  = "t"
 	keyEvent = "event"
@@ -148,6 +161,10 @@ func (s *Sim) logEvent(ev des.Event[ops.RailwayEvent]) {
 		attrs = append(attrs, routeAttrs(data)...)
 	case priorityChange:
 		attrs = append(attrs, "priority", data.to)
+	case string:
+		if ev.Type == ops.PrecedenceReview {
+			attrs = append(attrs, "decision", data)
+		}
 	}
 	s.log.Info(string(ev.Type), attrs...)
 }
@@ -164,8 +181,55 @@ func (s *Sim) logRouteWait(req *RouteRequest, blockers []ids.TrackID) {
 }
 
 func (s *Sim) logRouteRetryOK(req *RouteRequest, released *infra.TrackSegment) {
-	attrs := append(trainAttrs(req.Train), "station", req.Station.Code.String(), "released", released.String())
+	attrs := append(trainAttrs(req.Train), "station", req.Station.Code.String())
+	if released != nil {
+		attrs = append(attrs, "released", released.String())
+	}
 	s.log.Info("ROUTE_RETRY_OK", append(attrs, s.priorityAttrs(req.Train)...)...)
+}
+
+func (s *Sim) trainByID(id ids.TrainID) *ops.Train {
+	if tc, ok := s.trainCtrllers[id]; ok {
+		return tc.train
+	}
+	return &ops.Train{Number: id.Number}
+}
+
+func roundMin(m units.Minutes) float64 { return roundTime(float64(m)) }
+
+func (s *Sim) logHold(d *Decision) {
+	attrs := append(trainAttrs(s.trainByID(d.Train)),
+		"decision", d.ID, "kind", string(d.Kind), "for", d.For.Number, "at", d.At,
+		"gain", roundMin(d.Gain), "wait", roundMin(d.Wait), "rule", d.Rule, "source", d.Source, "reason", d.Reason)
+	s.log.Info("PRECEDENCE_HOLD", attrs...)
+}
+
+func (s *Sim) logRelease(d *Decision) {
+	attrs := append(trainAttrs(s.trainByID(d.Train)),
+		"decision", d.ID, "status", d.Status, "held", roundTime(d.Ended-d.Since))
+	s.log.Info("PRECEDENCE_RELEASE", attrs...)
+}
+
+func (s *Sim) logPlatformChange(d *Decision) {
+	attrs := append(trainAttrs(s.trainByID(d.Train)),
+		"decision", d.ID, "station", d.At, "pf_from", d.PfFrom, "pf_to", d.PfTo, "for", d.For.Number, "reason", d.Reason, "source", d.Source)
+	s.log.Info("PLATFORM_CHANGE", attrs...)
+}
+
+func (s *Sim) logSkipped(t *ops.Train, id string, c conflict, at, reason string) {
+	attrs := append(trainAttrs(t),
+		"decision", id, "kind", string(c.Kind), "for", c.For.Number, "at", at,
+		"gain", roundMin(c.Saving), "wait", roundMin(c.Wait), "reason", reason)
+	s.log.Info("PRECEDENCE_SKIPPED", attrs...)
+}
+
+func (s *Sim) logOverride(o Override, status, reason string) {
+	attrs := []any{"train", o.Train, "action", string(o.Action), "decision", o.Decision, "for", o.For,
+		"station", o.Station, "pf", o.Pf, "status", status}
+	if reason != "" {
+		attrs = append(attrs, "reason", reason)
+	}
+	s.log.Info("PRECEDENCE_OVERRIDE", attrs...)
 }
 
 func (s *Sim) logStuck(st TrainStatus) {

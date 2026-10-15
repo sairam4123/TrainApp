@@ -149,6 +149,35 @@ func (r *replay) prevStop(i int) int {
 	return r.stops[k]
 }
 
+// nextDecision returns the first decision made after time t, if any.
+func (r *replay) nextDecision(t float64) (*vizproto.DecisionMsg, bool) {
+	for _, m := range r.msgs {
+		if d, ok := m.(*vizproto.DecisionMsg); ok && d.Since > t+1e-9 {
+			return d, true
+		}
+	}
+	return nil, false
+}
+
+// decisions returns every decision as it stands now: active ones first, then
+// the rest, latest first within each.
+func (r *replay) decisions() []vizproto.DecisionMsg {
+	var out []vizproto.DecisionMsg
+	for _, d := range r.state.Decisions {
+		out = append(out, d)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Active() != out[j].Active() {
+			return out[i].Active()
+		}
+		if out[i].Since != out[j].Since {
+			return out[i].Since > out[j].Since
+		}
+		return out[i].ID < out[j].ID
+	})
+	return out
+}
+
 // recent returns up to n of the latest events applied, oldest first, only the
 // train's if train is set.
 func (r *replay) recent(n int, train string) []*vizproto.EventMsg {

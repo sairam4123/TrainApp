@@ -3,6 +3,7 @@ package sim_test
 import (
 	"fmt"
 	"math/rand/v2"
+	"strings"
 	"testing"
 	"trainapp/railway/ids"
 	"trainapp/railway/infra"
@@ -13,12 +14,18 @@ import (
 )
 
 // journey is a train's calling pattern: stations in order, entering at the
-// first one at the given time.
+// first one at the given time. A station marked with pass is run through
+// without stopping.
 type journey struct {
 	number string
 	entry  float64
 	stops  []ids.StnCode
 }
+
+const passMark = "*"
+
+// pass marks a station of a journey as one the train runs through.
+func pass(code ids.StnCode) ids.StnCode { return code + passMark }
 
 func runJourneys(t *testing.T, world *infra.World, js []journey) *sim.Sim {
 	t.Helper()
@@ -28,6 +35,9 @@ func runJourneys(t *testing.T, world *infra.World, js []journey) *sim.Sim {
 		tr := &ops.Train{Name: "T" + j.number, Number: j.number, MaxSpeed: units.KMPH(100)}
 		for i, code := range j.stops {
 			sp := ops.NewStopPoint(code, 3, "1")
+			if name, ok := strings.CutSuffix(string(code), passMark); ok {
+				sp = ops.NewPassPoint(ids.StnCode(name), -1, "1")
+			}
 			if i == 0 {
 				sp.SetEntryTime(j.entry)
 			}
@@ -111,10 +121,10 @@ func TestRandomTrafficNeverDeadlocks(t *testing.T) {
 			return worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 2, LoopPlatforms: 3, BlocksPerLine: 3})
 		}, slRoutes[:2]},
 		{"junction", func() *infra.World { return worlds.BuildJunctionWorld(2) }, [][]ids.StnCode{
-			{"WJN", "MID", "EJN"}, {"EJN", "MID", "WJN"}, {"WJN", "NJN"}, {"NJN", "MID", "WJN"},
+			{"WJN", "MID", "EJN"}, {"EJN", "MID", "WJN"}, {"WJN", pass("MID"), "NJN"}, {"NJN", "MID", "WJN"},
 		}},
 		{"tpj-kkdi", worlds.BuildTpjKkdiWorld, [][]ids.StnCode{
-			{"TPJ", "PDKT", "KKDI"}, {"KKDI", "PDKT", "TPJ"}, {"TPJ", "KKDI"}, {"KKDI", "TPJ"},
+			{"TPJ", "PDKT", "KKDI"}, {"KKDI", "PDKT", "TPJ"}, {"TPJ", pass("PDKT"), "KKDI"}, {"KKDI", pass("PDKT"), "TPJ"},
 		}},
 	}
 	for _, sh := range shapes {

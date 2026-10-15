@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 	"trainapp/visualization/schematic"
+	"trainapp/visualization/vizproto"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -32,6 +34,7 @@ const tickEvery = 50 * time.Millisecond
 var (
 	dim  = lipgloss.NewStyle().Faint(true)
 	bold = lipgloss.NewStyle().Bold(true)
+	held = lipgloss.NewStyle().Foreground(lipgloss.Color("214")) // amber, as on the schematic
 )
 
 type tickMsg time.Time
@@ -53,12 +56,13 @@ type model struct {
 	query        string
 	note         string
 
-	playing  bool
-	ticking  bool
-	lastTick time.Time
-	speed    int
-	selected int // index into rep.trains, -1 for none
-	follow   bool
+	playing   bool
+	ticking   bool
+	lastTick  time.Time
+	speed     int
+	selected  int // index into rep.trains, -1 for none
+	follow    bool
+	decisions bool // the bottom pane lists precedence decisions, not events
 }
 
 func newModel(d *schematic.Diagram, rep *replay) *model {
@@ -329,6 +333,22 @@ func (m *model) replayKey(key string) {
 		if m.selected < 0 {
 			m.note = "select a train with tab first"
 		}
+	case "d":
+		m.decisions = !m.decisions
+	case "enter":
+		if !m.decisions {
+			return
+		}
+		m.playing = false
+		d, ok := r.nextDecision(r.t)
+		if !ok {
+			m.note = "no more decisions"
+			return
+		}
+		r.seek(d.Since)
+		if i := slices.Index(r.trains, d.Train); i >= 0 {
+			m.selected = i
+		}
 	case "home":
 		m.playing = false
 		r.reset()
@@ -400,11 +420,13 @@ func (m *model) render() string {
 		}
 	}
 	if eh := m.eventsHeight(); eh > 0 {
-		title := "events"
-		if t := m.selectedTrain(); t != "" {
+		title, body := "events", m.eventLines(eh-2)
+		if m.decisions {
+			title, body = "decisions (enter: next)", m.decisionLines(eh-2)
+		} else if t := m.selectedTrain(); t != "" {
 			title += " " + t
 		}
-		lines = append(lines, box(title, m.eventLines(eh-2), m.width, eh)...)
+		lines = append(lines, box(title, body, m.width, eh)...)
 	}
 	if m.rep != nil {
 		lines = append(lines, m.timeline())
@@ -438,13 +460,63 @@ func (m *model) trainLines(w, h int) []string {
 		case tr.Phase == "exited" || tr.Phase == "outside":
 			style = dim
 		}
+		if ok && tr.Waiting.Held() && i != m.selected {
+			style = held
+		}
 		out = append(out, style.Render(fit(text, w)))
-		if ok && tr.Waiting != nil && tr.Waiting.BlockedBy != "" {
+		for _, d := range r.state.ActiveDecisions(n) {
+			out = append(out, dim.Render(fit("   "+decisionSummary(d), w)))
+		}
+		if ok && tr.Waiting != nil && tr.Waiting.BlockedBy != "" && !tr.Waiting.Held() {
 			out = append(out, dim.Render(fit("   blocked by "+tr.Waiting.BlockedBy, w)))
 		}
 	}
 	if at >= h {
 		out = out[at-h+1:]
+	}
+	return out
+}
+
+// decisionSummary says what a decision does, e.g. "held at PDKT for 0451U
+// (overtake, +6.2m)" or "pf 3→4 at PDKT (main_line_stay)".
+func decisionSummary(d vizproto.DecisionMsg) string {
+	if d.Action == "platform" {
+		text := fmt.Sprintf("pf %s→%s at %s (%s", d.PfFrom, d.PfTo, d.At, d.Reason)
+		if d.For != "" {
+			text += " for " + d.For
+		}
+		return text + ")"
+	}
+	text := fmt.Sprintf("held at %s for %s (%s", d.At, d.For, d.Kind)
+	if d.Gain > 0 {
+		text += fmt.Sprintf(", +%.1fm", d.Gain)
+	}
+	if d.Source == "manual" {
+		text += ", manual"
+	}
+	return text + ")"
+}
+
+// decisionLines lists the precedence decisions as they stand now.
+func (m *model) decisionLines(n int) []string {
+	var out []string
+	for _, d := range m.rep.decisions() {
+		if len(out) == n {
+			break
+		}
+		line := fmt.Sprintf("t=%.2f %-10s %s %s", d.Since, d.Status, d.Train, decisionSummary(d))
+		if d.Reason != "" && d.Action == "hold" {
+			line += "  " + d.Reason
+		}
+		if d.Active() {
+			line = held.Render(line)
+		} else {
+			line = dim.Render(line)
+		}
+		out = append(out, line)
+	}
+	if len(out) == 0 {
+		out = append(out, dim.Render("no precedence decisions yet"))
 	}
 	return out
 }
@@ -490,7 +562,7 @@ func (m *model) keyLine() string {
 	}
 	keys := "+/- zoom  hjkl pan  0 fit  / station  q quit"
 	if m.rep != nil {
-		keys = "space play  [ ] speed  , . step  tab train  ⇧←→ train events  f follow  " + keys
+		keys = "space play  [ ] speed  , . step  tab train  ⇧←→ train events  f follow  d decisions  " + keys
 	}
 	line := dim.Render(" " + keys)
 	if m.note != "" {

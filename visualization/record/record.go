@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"math"
+	"strings"
 	"trainapp/des"
 	"trainapp/railway/infra"
 	"trainapp/railway/interlocking"
@@ -23,12 +24,13 @@ type Recorder struct {
 	out *vizproto.Writer
 	err error
 
-	tracks   []*infra.TrackSegment
-	blocks   []*infra.SwitchBlock
-	held     map[string]vizproto.TrackMsg
-	switches map[string]vizproto.SwitchMsg
-	trains   map[string]vizproto.TrainMsg
-	pending  []*vizproto.EventMsg
+	tracks    []*infra.TrackSegment
+	blocks    []*infra.SwitchBlock
+	held      map[string]vizproto.TrackMsg
+	switches  map[string]vizproto.SwitchMsg
+	trains    map[string]vizproto.TrainMsg
+	decisions map[string]vizproto.DecisionMsg
+	pending   []*vizproto.EventMsg
 }
 
 // New writes the hello message and the starting state.
@@ -41,13 +43,14 @@ func New(w io.Writer, s *sim.Sim) (*Recorder, error) {
 		world.Trains = append(world.Trains, vizproto.Train{Number: st.Train.Number, Name: st.Train.Name})
 	}
 	r := &Recorder{
-		sim:      s,
-		out:      vizproto.NewWriter(w),
-		tracks:   s.World().TrackGraph.ListTracks(),
-		blocks:   s.World().ListSwitchBlocks(),
-		held:     map[string]vizproto.TrackMsg{},
-		switches: map[string]vizproto.SwitchMsg{},
-		trains:   map[string]vizproto.TrainMsg{},
+		sim:       s,
+		out:       vizproto.NewWriter(w),
+		tracks:    s.World().TrackGraph.ListTracks(),
+		blocks:    s.World().ListSwitchBlocks(),
+		held:      map[string]vizproto.TrackMsg{},
+		switches:  map[string]vizproto.SwitchMsg{},
+		trains:    map[string]vizproto.TrainMsg{},
+		decisions: map[string]vizproto.DecisionMsg{},
 	}
 	r.write(&vizproto.HelloMsg{Version: vizproto.Version, World: *world})
 	r.diff(nil)
@@ -105,8 +108,9 @@ func (r *Recorder) flush() {
 	}
 }
 
-// diff sends the log entries since the last call, then every track, switch
-// and train that changed. ev is the event just handled, nil if none.
+// diff sends the log entries since the last call, then every track, switch,
+// train and precedence decision that changed. ev is the event just handled,
+// nil if none.
 func (r *Recorder) diff(ev *des.Event[ops.RailwayEvent]) {
 	for _, e := range r.pending {
 		r.write(e)
@@ -158,6 +162,22 @@ func (r *Recorder) diff(ev *des.Event[ops.RailwayEvent]) {
 			r.write(&msg)
 		}
 	}
+
+	for _, d := range r.sim.Decisions() {
+		msg := decision(d)
+		if prev, ok := r.decisions[msg.ID]; !ok || prev != msg {
+			r.decisions[msg.ID] = msg
+			r.write(&msg)
+		}
+	}
+}
+
+func decision(d sim.Decision) vizproto.DecisionMsg {
+	return vizproto.DecisionMsg{
+		ID: d.ID, Action: d.Action, Kind: string(d.Kind), Train: d.Train.Number, For: d.For.Number, At: d.At,
+		PfFrom: d.PfFrom, PfTo: d.PfTo, Status: d.Status, Source: d.Source, Rule: d.Rule, Reason: d.Reason,
+		Gain: round(float64(d.Gain)), Wait: round(float64(d.Wait)), Since: round(d.Since), Until: round(d.Until), Ended: round(d.Ended),
+	}
 }
 
 func waiting(req *sim.RouteRequest) *vizproto.Waiting {
@@ -170,6 +190,14 @@ func waiting(req *sim.RouteRequest) *vizproto.Waiting {
 		var conflict *interlocking.ConflictError
 		if errors.As(req.LastErr, &conflict) {
 			w.BlockedBy = conflict.HeldBy.Number
+		}
+		var held *sim.HeldError
+		if errors.As(req.LastErr, &held) {
+			names := make([]string, len(held.Decisions))
+			for i, d := range held.Decisions {
+				names[i] = d.For.Number
+			}
+			w.HeldFor = strings.Join(names, ",")
 		}
 	}
 	return w

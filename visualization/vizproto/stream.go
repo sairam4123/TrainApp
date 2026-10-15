@@ -63,6 +63,8 @@ func (r *Reader) Next() (Message, error) {
 			m = &TrainMsg{}
 		case TypeEvent:
 			m = &EventMsg{}
+		case TypeDecision:
+			m = &DecisionMsg{}
 		case TypeEnd:
 			m = &EndMsg{}
 		case TypeError:
@@ -102,8 +104,8 @@ func ReadAll(r io.Reader) (*HelloMsg, []Message, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("vizproto: recording starts with %s, not hello", msgs[0].Head().Type)
 	}
-	if hello.Version != Version {
-		return nil, nil, fmt.Errorf("vizproto: recording is version %d, this program reads %d", hello.Version, Version)
+	if hello.Version < 1 || hello.Version > Version {
+		return nil, nil, fmt.Errorf("vizproto: recording is version %d, this program reads 1 to %d", hello.Version, Version)
 	}
 	return hello, msgs[1:], nil
 }

@@ -401,3 +401,105 @@ func TestReachStopsAtTargetsAndHonoursAllow(t *testing.T) {
 		t.Errorf("reached %d positions with every step disallowed", len(none))
 	}
 }
+
+func TestStationTrackClasses(t *testing.T) {
+	type want struct {
+		stn   ids.StnCode
+		pf    string
+		class infra.TrackClass
+		lines int // running lines it is the main line for
+	}
+	cases := []struct {
+		name  string
+		world *infra.World
+		want  []want
+	}{
+		{"tpj-kkdi", worlds.BuildTpjKkdiWorld(), []want{
+			{"TPJ", "1", infra.Loop, 0}, {"TPJ", "2", infra.Main, 1}, {"TPJ", "3", infra.Main, 1}, {"TPJ", "4", infra.Loop, 0},
+			{"PDKT", "1", infra.Loop, 0}, {"PDKT", "2", infra.Main, 2}, {"PDKT", "3", infra.Main, 2}, {"PDKT", "4", infra.Loop, 0},
+			{"KKDI", "1", infra.Loop, 0}, {"KKDI", "2", infra.Main, 1}, {"KKDI", "3", infra.Main, 1}, {"KKDI", "4", infra.Loop, 0},
+		}},
+		{"single-line", worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 2, LoopPlatforms: 2, BlocksPerLine: 2}), []want{
+			{"LPA", "1", infra.Main, 2}, {"LPA", "2", infra.Loop, 0},
+			{"HLT", "1", infra.Main, 2},
+			{"WST", "1", infra.Main, 1}, {"WST", "2", infra.Loop, 0},
+		}},
+		{"single-line with through track", worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 1, LoopPlatforms: 2, BlocksPerLine: 2, ThroughTrack: true}), []want{
+			{"LPA", "1", infra.Through, 2}, {"LPA", "2", infra.Loop, 0}, {"LPA", "3", infra.Loop, 0},
+		}},
+		{"junction", worlds.BuildJunctionWorld(1), []want{
+			{"MID", "1", infra.Main, 2}, {"MID", "2", infra.Loop, 0},
+		}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			for _, w := range c.want {
+				stn, _ := c.world.GetStation(w.stn)
+				trk := stn.FindStnPlatform(w.pf)
+				if got := stn.TrackClass(trk.Id); got != w.class {
+					t.Errorf("%s pf%s is %s, want %s", w.stn, w.pf, got, w.class)
+				}
+				if got := len(stn.MainLinesOf(trk.Id)); got != w.lines {
+					t.Errorf("%s pf%s is the main line for %d lines, want %d", w.stn, w.pf, got, w.lines)
+				}
+			}
+		})
+	}
+}
+
+func TestMainLineFollowsTheRunningLine(t *testing.T) {
+	w := worlds.BuildTpjKkdiWorld()
+	pdkt, _ := w.GetStation("PDKT")
+	for line, pf := range map[string]string{"bsTpjPdkt0": "2", "bsPdktKkdi0": "2", "bsPdktTpj0": "3", "bsKkdiPdkt0": "3"} {
+		var id ids.TrackID
+		for _, trk := range w.TrackGraph.ListTracks() {
+			if trk.Name == line {
+				id = trk.Id
+			}
+		}
+		main, ok := pdkt.MainFor(id)
+		if !ok || main.PfNo != pf {
+			t.Errorf("main line at PDKT for %s = %v, want pf%s", line, main, pf)
+		}
+		if !pdkt.InArea(main.Id) || pdkt.InArea(id) {
+			t.Errorf("station area wrong around %s", line)
+		}
+	}
+}
+
+func TestVisitEnds(t *testing.T) {
+	w := worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 1, LoopPlatforms: 2, BlocksPerLine: 1})
+	wst, _ := w.GetStation("WST")
+	edge, _ := w.TrackGraph.Edge(wst.FindStnPlatform("1"))
+	start := infra.Position{At: edge.To, Via: edge}
+	ends, err := w.VisitEnds([]infra.Position{start}, []ids.StnCode{"LPA"}, nil)
+	if err != nil || len(ends) != 2 {
+		t.Fatalf("ends at LPA = %v (%v), want both platforms", ends, err)
+	}
+	lpa, _ := w.GetStation("LPA")
+	pf1 := lpa.FindStnPlatform("1")
+	ends, _ = w.VisitEnds([]infra.Position{start}, []ids.StnCode{"LPA"}, func(s infra.Step) bool { return s.Edge.Track == pf1 })
+	if len(ends) != 1 || ends[0].Via.Track == pf1 {
+		t.Fatalf("ends with pf1 blocked = %v", ends)
+	}
+	if ends, _ := w.VisitEnds([]infra.Position{start}, nil, nil); len(ends) != 1 {
+		t.Fatalf("no stops should end where it starts, got %v", ends)
+	}
+}
+
+func TestTerminiAndMainRoutes(t *testing.T) {
+	w := worlds.BuildTpjKkdiWorld()
+	for code, through := range map[ids.StnCode]bool{"TPJ": false, "PDKT": true, "KKDI": false} {
+		stn, _ := w.GetStation(code)
+		if stn.RunsThrough() != through {
+			t.Errorf("%s runs through = %v, want %v", code, stn.RunsThrough(), through)
+		}
+		for _, line := range stn.Lines() {
+			route := stn.MainRoute(line)
+			main, _ := stn.MainFor(line)
+			if len(route) < 2 || route[len(route)-1] != main.Id {
+				t.Errorf("%s main route from %s = %v, want it to end on %s", code, line, route, main.Track)
+			}
+		}
+	}
+}

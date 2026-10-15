@@ -34,6 +34,7 @@ type Track struct {
 	Kind     Kind
 	Length   float64
 	PfNo     string // platform number, for a platform
+	Class    string // main, through or loop, for a platform (empty if unknown)
 
 	span int // fixed width, for a box
 
@@ -44,7 +45,9 @@ type Track struct {
 }
 
 // label is drawn on the track: its platform number or length. At the detail
-// level a named track shows its name instead of the platform number.
+// level a named track shows its name instead of the platform number, and a
+// station track its class if it is a main line or through track. A through
+// track has no platform, so it is T1 rather than Pf1.
 func (t *Track) label(level Level) string {
 	named := level == Detail && t.Name != t.ID
 	switch {
@@ -52,8 +55,12 @@ func (t *Track) label(level Level) string {
 		return t.Name + " (" + formatLength(t.Length) + ")"
 	case t.Kind == Line:
 		return "(" + formatLength(t.Length) + ")"
+	case named && (t.Class == "main" || t.Class == "through"):
+		return t.Name + " (" + t.Class + ")"
 	case named:
 		return t.Name
+	case t.Kind == Platform && t.Class == "through":
+		return "T" + t.PfNo
 	case t.Kind == Platform:
 		return "Pf" + t.PfNo
 	}
@@ -123,7 +130,7 @@ func Build(w *vizproto.World) (*Diagram, error) {
 			if !ok {
 				return nil, fmt.Errorf("schematic: station %s platform %s is unknown track %s", ws.Code, pf.No, pf.Track)
 			}
-			t.PfNo = pf.No
+			t.PfNo, t.Class = pf.No, pf.Class
 			s.platforms = append(s.platforms, t)
 			d.group[t.From] = ws.Code + "/west"
 			d.group[t.To] = ws.Code + "/east"

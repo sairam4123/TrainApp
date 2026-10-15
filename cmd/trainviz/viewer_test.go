@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"trainapp/railway/ids"
@@ -88,6 +89,8 @@ func press(m *model, keys ...string) {
 			msg = tea.KeyPressMsg{Code: tea.KeyEnter}
 		case "home":
 			msg = tea.KeyPressMsg{Code: tea.KeyHome}
+		case "end":
+			msg = tea.KeyPressMsg{Code: tea.KeyEnd}
 		default:
 			r := []rune(k)[0]
 			msg = tea.KeyPressMsg{Code: r, Text: k}
@@ -193,5 +196,82 @@ func TestZoomAndStationJump(t *testing.T) {
 	press(m, "/", "x", "y", "z", "enter")
 	if !strings.Contains(screen(m), "no station XYZ") {
 		t.Error("no message for an unknown station")
+	}
+}
+
+// precedenceRecording records a slow passenger held at LPA so an express can
+// overtake it.
+func precedenceRecording(t *testing.T) (*vizproto.HelloMsg, []vizproto.Message) {
+	t.Helper()
+	s := &sim.Sim{OutputDir: t.TempDir(), Priorities: &sim.PriorityConfig{Precedence: &sim.PrecedenceConfig{
+		HeadwayMin: 1, MaxHoldMin: 30, MainLineMaxStayMin: 5, MinPriorityGap: 10, MinSavingMin: 1,
+	}}}
+	s.SetWorld(worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 2, LoopPlatforms: 2, BlocksPerLine: 2}))
+	for _, tr := range []struct {
+		number string
+		prio   int
+		kmph   float64
+		entry  float64
+		pf     string
+	}{{"P", 20, 60, 1, "1"}, {"X", 50, 100, 12, "2"}} {
+		train := &ops.Train{Name: "T" + tr.number, Number: tr.number, MaxSpeed: units.KMPH(tr.kmph), Priority: tr.prio}
+		train.AddSchedule(ops.NewStopPoint("WST", 2, tr.pf).SetEntryTime(tr.entry))
+		if tr.number == "P" {
+			train.AddSchedule(ops.NewStopPoint("LPA", 2, "1"))
+		} else {
+			train.AddSchedule(ops.NewPassPoint("LPA", -1, "1"))
+		}
+		train.AddSchedule(ops.NewPassPoint("HLT", -1, "1"))
+		train.AddSchedule(ops.NewStopPoint("EST", 2, tr.pf))
+		if err := s.AddTrain(train); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	rec, err := record.New(&buf, s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Observer = rec
+	if err := rec.Close(s.Run()); err != nil {
+		t.Fatal(err)
+	}
+	hello, msgs, err := vizproto.ReadAll(&buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return hello, msgs
+}
+
+func TestHeldTrainsAndDecisionsAreShown(t *testing.T) {
+	hello, msgs := precedenceRecording(t)
+	if pfs := hello.World.Stations[slices.IndexFunc(hello.World.Stations, func(s vizproto.Station) bool { return s.Code == "LPA" })].Platforms; pfs[0].Class != "main" || len(pfs[0].MainFor) != 2 || pfs[1].Class != "loop" {
+		t.Errorf("LPA platforms described as %+v", pfs)
+	}
+	d, err := schematic.Build(&hello.World)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := newModel(d, newReplay(hello, msgs))
+	m.Update(tea.WindowSizeMsg{Width: 160, Height: 40})
+
+	press(m, "d", "enter") // the first decision: P moved to the loop
+	press(m, "enter")      // the second: P held for X
+	got := screen(m)
+	for _, want := range []string{"held at LPA for X (overtake", "pf 1→2 at LPA (booked for X)", "decisions (enter: next)", "P▶⏸"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("screen lacks %q:\n%s", want, got)
+		}
+	}
+	if !m.rep.state.Trains["P"].Waiting.Held() {
+		t.Error("P not held in the replayed state")
+	}
+
+	press(m, "end")
+	if got := screen(m); !strings.Contains(got, "released") {
+		t.Errorf("released hold not listed at the end:\n%s", got)
 	}
 }

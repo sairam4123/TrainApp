@@ -111,7 +111,8 @@ func main() {
 	world := worlds.BuildTpjKkdiWorld()
 	logFormat := flag.String("log", string(sim.LogText), "log format: text (logfmt) or json (one object per line)")
 	recordPath := flag.String("record", "", "also write the run to this file for trainviz replay")
-	prioritiesPath := flag.String("priorities", "profiles/ir.json", "train class priorities and delay bands (JSON); empty for none")
+	prioritiesPath := flag.String("priorities", "profiles/ir.json", "train class priorities, delay bands and precedence settings (JSON); empty for none")
+	overridesPath := flag.String("overrides", "", "precedence overrides to apply (JSON), e.g. to release a hold from an earlier run")
 	flag.Parse()
 
 	s := &sim.Sim{LogFormat: sim.LogFormat(*logFormat)}
@@ -206,6 +207,15 @@ func main() {
 	if err := s.Init(); err != nil {
 		log.Fatal(err)
 	}
+	if *overridesPath != "" {
+		overrides, err := sim.LoadOverrides(*overridesPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := s.ApplyOverrides(overrides); err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	var rec *record.Recorder
 	var recFile *os.File
@@ -242,6 +252,15 @@ func main() {
 		fmt.Println()
 	}
 	fmt.Printf("%d/%d trains completed their schedule by t=%.2f (log: %s)\n", exited, len(s.Status()), s.CurTime(), s.LogPath())
+	if ds := s.Decisions(); len(ds) > 0 {
+		holds := 0
+		for _, d := range ds {
+			if d.Action == sim.ActionHold {
+				holds++
+			}
+		}
+		fmt.Printf("precedence: %d holds, %d platform changes (PRECEDENCE_* and PLATFORM_CHANGE in the log)\n", holds, len(ds)-holds)
+	}
 	if runErr != nil {
 		log.Fatal(runErr)
 	}

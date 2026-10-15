@@ -32,6 +32,12 @@ const (
 
 	PriorityChanged RailwayEvent = "PRIORITY_CHANGE"
 
+	// PrecedenceReview asks the dispatcher to look again at a train it holds
+	// back for another; PrecedenceOverride applies an operator's change to
+	// the precedence decisions.
+	PrecedenceReview   RailwayEvent = "PRECEDENCE_REVIEW"
+	PrecedenceOverride RailwayEvent = "PRECEDENCE_OVERRIDE"
+
 	// SWT //
 	SwitchSet RailwayEvent = "SWITCH_SET"
 )

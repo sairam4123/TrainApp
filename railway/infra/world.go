@@ -83,6 +83,7 @@ func (w *World) Finalize() error {
 	if err := errors.Join(errs...); err != nil {
 		return err
 	}
+	w.buildStationTracks()
 	w.finalized = true
 	return nil
 }

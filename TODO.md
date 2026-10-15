@@ -17,7 +17,7 @@
 ~~17. Implement station exit verifier for (10)~~ (generalised into the safety check in sim/safety.go: no grant may leave a state where some train cannot finish its schedule)
 18. Speed up the safety check for large worlds (cache static reachability per position/station, or check incrementally).
 19. Model reversals so trains can change direction at termini and junctions.
-20. Precedence: hold a lower-priority train (e.g. in a loop) so an approaching higher-priority one can overtake or cross. Priority (6) only orders trains already waiting on the same track. Must not fight the safety check.
+~~20. Precedence: hold a lower-priority train (e.g. in a loop) so an approaching higher-priority one can overtake or cross. Priority (6) only orders trains already waiting on the same track. Must not fight the safety check.~~ (look-ahead, station plan, holds and platform moves, overrides; see sim/precedence.go and docs/trainapp/precedence/plan.md)
 21. Train length: free a track only once the rear has cleared it (also stops switches unlocking under the tail). Needs several routes per train and a platform length check. Pairs with 7.
 22. Signal aspects and requesting the next section on approach, once trains brake (7).
 23. Overlap: hold track and switches beyond a stop signal. Needs a length-based carve-out of the next segment; only matters with 21 or 24.
@@ -25,3 +25,6 @@
 25. Automatic signals on plain line could skip the safety check (see 18).
 26. Add the real line's skipped stations to the TPJ-KKDI world as non-stopping signalled points, for realistic headway. Low priority.
 ~~27. Each event hop costs des.MinDeltaTime (0.01 min), so a signal handoff takes 0.05 min. Let same-instant hops share a timestamp?~~
+28. A train may take refuge on the main line or a through track when it would otherwise block the platforms (e.g. goods trains, trains that run through the loop line). Precedence never holds a train on a through track, nor on a main line beyond main_line_max_stay_min, yet.
+29. The safety check judges trains where their granted route ends, and lets one move on a stop at a time, only with precedence on (sim/safety.go). Both are sound and less cautious; turning them on always would change today's logs, so it was left for a separate change.
+30. Precedence projections assume a train runs free once it can set off. Let them account for the trains ahead of it (e.g. a slower one on the same line), so holds are not longer than needed.

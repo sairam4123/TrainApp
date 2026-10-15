@@ -63,6 +63,10 @@ type Station struct {
 type Platform struct {
 	No    string `json:"no"`
 	Track string `json:"track"`
+	// Class is main, through or loop (see infra.TrackClass); MainFor lists
+	// the running lines it is the main line for. Empty in version 1.
+	Class   string   `json:"class,omitempty"`
+	MainFor []string `json:"mainFor,omitempty"`
 }
 
 type Train struct {
@@ -119,7 +123,11 @@ func FromWorld(w *infra.World) *World {
 	for _, stn := range w.ListStations() {
 		s := Station{Code: string(stn.Code), Name: stn.Name}
 		for _, pf := range stn.Platforms() {
-			s.Platforms = append(s.Platforms, Platform{No: pf.PfNo, Track: pf.Track.Id.String()})
+			p := Platform{No: pf.PfNo, Track: pf.Track.Id.String(), Class: stn.TrackClass(pf.Id).String()}
+			for _, line := range stn.MainLinesOf(pf.Id) {
+				p.MainFor = append(p.MainFor, line.String())
+			}
+			s.Platforms = append(s.Platforms, p)
 		}
 		out.Stations = append(out.Stations, s)
 	}

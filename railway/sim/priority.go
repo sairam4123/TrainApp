@@ -29,6 +29,9 @@ type PriorityConfig struct {
 	// largest OverMin below the train's delay applies; none applies to a
 	// train running no later than the smallest OverMin.
 	DelayBands []DelayBand `json:"delay_bands"`
+	// Precedence, if set, lets the dispatcher hold a train back, or move it
+	// to another platform, for a higher-priority one; see precedence.go.
+	Precedence *PrecedenceConfig `json:"precedence,omitempty"`
 }
 
 // DelayBand adjusts the priority of trains running more than OverMin minutes
@@ -57,7 +60,8 @@ func LoadPriorityConfig(path string) (*PriorityConfig, error) {
 	return &cfg, nil
 }
 
-// Validate checks the delay bands do not overlap.
+// Validate checks the delay bands do not overlap and the precedence settings
+// make sense.
 func (c *PriorityConfig) Validate() error {
 	seen := map[units.Minutes]bool{}
 	var errs []error
@@ -66,6 +70,11 @@ func (c *PriorityConfig) Validate() error {
 			errs = append(errs, fmt.Errorf("two delay bands over %v min", b.OverMin))
 		}
 		seen[b.OverMin] = true
+	}
+	if c.Precedence != nil {
+		if err := c.Precedence.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("precedence: %w", err))
+		}
 	}
 	return errors.Join(errs...)
 }

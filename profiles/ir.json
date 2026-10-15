@@ -15,5 +15,15 @@
     { "over_min": 1, "adjust": 5 },
     { "over_min": 15, "adjust": 0 },
     { "over_min": 60, "adjust": -5 }
-  ]
+  ],
+  "precedence": {
+    "rule": "thresholds",
+    "horizon_min": 30,
+    "headway_min": 1,
+    "max_hold_min": 30,
+    "main_line_max_stay_min": 5,
+    "min_priority_gap": 10,
+    "min_saving_min": 1,
+    "min_net_gain": 0
+  }
 }
