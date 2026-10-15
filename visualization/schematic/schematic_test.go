@@ -10,6 +10,7 @@ import (
 	"trainapp/units"
 	"trainapp/visualization/vizproto"
 	"trainapp/worlds"
+	"unicode/utf8"
 )
 
 var testWorlds = map[string]func() *infra.World{
@@ -265,5 +266,58 @@ func TestStateDrawsTrainsAndColours(t *testing.T) {
 		if colored := strings.Join(f.Lines(true), "\n"); !strings.Contains(colored, "\x1b[31m─") {
 			t.Errorf("%s: occupied track not drawn red", level)
 		}
+	}
+}
+
+// A train's label must start moving as soon as the train does, in either
+// direction, not wait at the start of a long track for the front to catch up.
+func TestTrainLabelMovesFromTheStartOfATrack(t *testing.T) {
+	w := vizproto.FromWorld(worlds.BuildTpjKkdiWorld())
+	d, err := Build(w)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var line vizproto.Track
+	for _, trk := range w.Tracks {
+		if trk.Name == "bsTpjPdkt0" {
+			line = trk
+		}
+	}
+	column := func(from, to string, time float64) int {
+		st := vizproto.NewState()
+		st.Apply(&vizproto.TrainMsg{Train: "0451U", Track: line.ID, From: from, To: to, TStart: 0, TEnd: 100, Phase: "running"})
+		for _, row := range d.Render(Options{Zoom: 1, State: st, Time: time}) {
+			if i := strings.Index(row, "0451U"); i >= 0 {
+				return utf8.RuneCountInString(row[:i])
+			}
+		}
+		t.Fatalf("label not drawn at t=%v", time)
+		return 0
+	}
+
+	prev := column(line.From, line.To, 0)
+	start := prev
+	for _, time := range []float64{10, 20, 30, 40, 50, 60, 70, 80, 90, 100} {
+		got := column(line.From, line.To, time)
+		if got < prev {
+			t.Errorf("eastbound label went back from column %d to %d at t=%v", prev, got, time)
+		}
+		if time == 20 && got <= start {
+			t.Errorf("eastbound label still at column %d a fifth of the way along", got)
+		}
+		prev = got
+	}
+
+	prev = column(line.To, line.From, 0)
+	start = prev
+	for _, time := range []float64{10, 20, 30, 40, 50, 60, 70, 80, 90, 100} {
+		got := column(line.To, line.From, time)
+		if got > prev {
+			t.Errorf("westbound label went back from column %d to %d at t=%v", prev, got, time)
+		}
+		if time == 20 && got >= start {
+			t.Errorf("westbound label still at column %d a fifth of the way along", got)
+		}
+		prev = got
 	}
 }

@@ -289,9 +289,10 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 			path = slices.Clone(path)
 			slices.Reverse(path)
 		}
-		front := path[int(math.Round(tr.Fraction(opt.Time)*float64(len(path)-1)))]
+		progress := tr.Fraction(opt.Time)
+		front := path[int(math.Round(progress*float64(len(path)-1)))]
 		label := n
-		x := front.X
+		x, y := front.X, front.Y
 		if opt.Level != Overview {
 			if east {
 				label += "▶"
@@ -309,18 +310,38 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 			lo, hi = min(lo, p.X), max(hi, p.X)
 		}
 		if hi-lo-1 >= size {
-			x = min(max(x, lo+1), hi-size)
+			// The label travels the room inside the track in step with the
+			// train. Lining it up with the front instead would pin it to the
+			// start of the track until the front had run a label's width,
+			// which on a long block section is much of the run.
+			first, last := lo+1, hi-size
+			if !east {
+				first, last = last, first
+			}
+			x = first + int(math.Round(progress*float64(last-first)))
+			y = rowAt(path, x+size/2)
 		}
 		s := styleTrain
 		if n == opt.Selected {
 			s = styleSelected
 		}
-		f.cv.unlabel(x, front.Y, size)
+		f.cv.unlabel(x, y, size)
 		for i, r := range []rune(label) {
-			f.cv.set(x+i, front.Y, r, s)
+			f.cv.set(x+i, y, r, s)
 		}
 		f.trains[n] = front
 	}
+}
+
+// rowAt is the row of the cell of the path nearest to column x.
+func rowAt(path []pos, x int) int {
+	best := path[0]
+	for _, p := range path[1:] {
+		if abs(p.X-x) < abs(best.X-x) {
+			best = p
+		}
+	}
+	return best.Y
 }
 
 // between is the track joining two points, nil if none.
