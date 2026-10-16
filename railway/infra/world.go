@@ -167,6 +167,7 @@ func (w *World) newSwitchBlock(id string, managedEdges []*GraphEdge, defaultEdge
 
 		defaultEdge:  defaultEdge,
 		managedEdges: managedEdges,
+		seq:          len(w.switchBlocks),
 	}
 	w.switchBlocks[swBlk.Id] = swBlk
 

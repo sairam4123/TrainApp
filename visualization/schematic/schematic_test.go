@@ -321,3 +321,57 @@ func TestTrainLabelMovesFromTheStartOfATrack(t *testing.T) {
 		prev = got
 	}
 }
+
+// A train running past a signal from behind is not governed by it, so the
+// signal is drawn ≡ in the track's colours, both while the train's route is
+// set over it and once the train is on its track.
+func TestSignalPassedFromBehindHasNoAspect(t *testing.T) {
+	w := vizproto.FromWorld(worlds.BuildTpjKkdiSingleLineWorld())
+	d, err := Build(w)
+	if err != nil {
+		t.Fatal(err)
+	}
+	const block, throat = "krmgThE1-krurThW1", "krurThW0-krurThW1"
+	var sig vizproto.Signal
+	for _, s := range w.Signals {
+		if s.ID == "slKrmgKrurSig0F" { // eastbound, at KRUR's west throat
+			sig = s
+		}
+	}
+	signal := func(st *vizproto.State) cell {
+		f := d.Draw(Options{Level: Layout, Zoom: 1, State: st, Time: 0.5}) // trains halfway, clear of the signal
+		trk := d.between(sig.Facing, sig.At)
+		path := f.paths[trk.ID]
+		p := path[1]
+		if trk.To == sig.At {
+			p = path[len(path)-2]
+		}
+		return f.cv.cells[p.Y][p.X]
+	}
+	hold := func(st *vizproto.State, train string, tracks ...string) {
+		for _, trk := range tracks {
+			st.Apply(&vizproto.TrackMsg{Track: trk, ReservedBy: train})
+		}
+	}
+
+	st := vizproto.NewState()
+	hold(st, "0451D", throat, block)
+	st.Apply(&vizproto.TrainMsg{Train: "0451D", Track: throat, From: "krurThW0", To: "krurThW1", TStart: 0, TEnd: 1, Phase: "running"})
+	if c := signal(st); c.r != '≡' || !c.track || c.style != styleTrack {
+		t.Errorf("westbound train with its route set over the block: signal drawn %q (style %d, track %v), want ≡ as track", c.r, c.style, c.track)
+	}
+
+	st = vizproto.NewState()
+	hold(st, "0451D", block)
+	st.Apply(&vizproto.TrainMsg{Train: "0451D", Track: block, From: "krurThW1", To: "krmgThE1", TStart: 0, TEnd: 1, Phase: "running"})
+	if c := signal(st); c.r != '≡' {
+		t.Errorf("westbound train on the block: signal drawn %q, want ≡", c.r)
+	}
+
+	st = vizproto.NewState()
+	hold(st, "0451U", block, throat)
+	st.Apply(&vizproto.TrainMsg{Train: "0451U", Track: block, From: "krmgThE1", To: "krurThW1", TStart: 0, TEnd: 1, Phase: "running"})
+	if c := signal(st); c.r == '≡' {
+		t.Errorf("eastbound train on the block: signal drawn ≡, want an aspect")
+	}
+}

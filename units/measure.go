@@ -1,5 +1,7 @@
 package units
 
+import "math"
+
 type Meters float64
 type Minutes float64
 type MetersPerMin float64
@@ -28,6 +30,17 @@ func Hr(time float64) Minutes {
 
 func KMPH(speed float64) MetersPerMin {
 	return MetersPerMin(speed * 1000 / 60)
+}
+
+// InKMPH is the speed in km/h, rounded to a clean number when that converts
+// back to exactly the same speed, so it reads 110 rather than
+// 110.00000000000001.
+func (v MetersPerMin) InKMPH() float64 {
+	raw := float64(v) * 60 / 1000
+	if r := math.Round(raw*1e6) / 1e6; KMPH(r) == v {
+		return r
+	}
+	return raw
 }
 
 func MilesPH(speed float64) MetersPerMin {

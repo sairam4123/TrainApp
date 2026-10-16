@@ -15,6 +15,21 @@ type Observer interface {
 	AfterEvent(ev des.Event[ops.RailwayEvent])
 }
 
+// Observers lets several Observers watch one run, called in order.
+type Observers []Observer
+
+func (obs Observers) Logged(level slog.Level, event string, attrs []slog.Attr) {
+	for _, o := range obs {
+		o.Logged(level, event, attrs)
+	}
+}
+
+func (obs Observers) AfterEvent(ev des.Event[ops.RailwayEvent]) {
+	for _, o := range obs {
+		o.AfterEvent(ev)
+	}
+}
+
 // observerHandler passes log entries to an Observer.
 type observerHandler struct {
 	obs   Observer

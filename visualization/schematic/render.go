@@ -41,7 +41,8 @@ type Options struct {
 
 	// State, if set, colours tracks by who holds them, shows switch
 	// positions and signal aspects, and draws trains where they are at Time.
-	// Signals are drawn either way.
+	// Signals are drawn either way; one a train is running past from behind
+	// is drawn ≡.
 	State    *vizproto.State
 	Time     float64
 	Selected string // train to highlight
@@ -264,9 +265,15 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 		}
 		s := styleSignal
 		if opt.State != nil {
-			s = styleSignalStop
-			if d.clear(sig, t, opt.State) {
+			switch {
+			case d.against(sig, t, opt.State):
+				// coloured as the track it stands on
+				f.cv.reglyph(p.X, p.Y, '≡')
+				continue
+			case d.clear(sig, t, opt.State):
 				s = styleSignalClear
+			default:
+				s = styleSignalStop
 			}
 		}
 		f.cv.set(p.X, p.Y, glyph, s)
@@ -379,6 +386,47 @@ func (d *Diagram) clear(sig vizproto.Signal, approach *Track, st *vizproto.State
 		}
 		if r, o := st.TrackHolder(t.ID); r == train && o != train {
 			return true
+		}
+	}
+	return false
+}
+
+// against reports whether a train is running past the signal from behind: the
+// train holding the approach track has its route onto it from the signal's
+// end. The signal does not govern that movement, so it has no aspect.
+func (d *Diagram) against(sig vizproto.Signal, approach *Track, st *vizproto.State) bool {
+	train, _ := st.TrackHolder(approach.ID)
+	if train == "" {
+		return false
+	}
+	tr, ok := st.Trains[train]
+	if !ok || tr.Track == "" {
+		return false
+	}
+	if tr.Track == approach.ID {
+		return tr.To == sig.Facing
+	}
+	// follow the train's route on from its front until it reaches the
+	// approach track
+	seen := map[string]bool{tr.Track: true}
+	for at := []string{tr.To}; len(at) > 0; at = at[1:] {
+		p := at[0]
+		for _, t := range d.tracks {
+			if seen[t.ID] || (t.From != p && t.To != p) {
+				continue
+			}
+			if r, _ := st.TrackHolder(t.ID); r != train {
+				continue
+			}
+			if t == approach {
+				return p == sig.At
+			}
+			seen[t.ID] = true
+			if t.From == p {
+				at = append(at, t.To)
+			} else {
+				at = append(at, t.From)
+			}
 		}
 	}
 	return false
@@ -731,6 +779,13 @@ func (cv *canvas) draw(x, y int, r rune, s style, track bool, l look) {
 }
 
 // put draws a glyph over whatever is there.
+// reglyph changes a cell's glyph and keeps its colours.
+func (cv *canvas) reglyph(x, y int, r rune) {
+	if cv.in(x, y) {
+		cv.cells[y][x].r = r
+	}
+}
+
 func (cv *canvas) put(x, y int, r rune, s style) {
 	if cv.in(x, y) {
 		cv.cells[y][x] = cell{r: r, style: s}
@@ -746,8 +801,9 @@ func isDiagonal(r rune) bool { return r == '╱' || r == '╲' || r == '╳' }
 // branches at both ends or neither (a crossover, where the two legs meet in
 // an X).
 func (cv *canvas) track(t *Track, level Level, l look, x1, y1, x2, y2 int) []pos {
+	// a through track has no platform, so it is drawn as plain track
 	glyph, s := '─', styleTrack
-	if t.Kind == Platform {
+	if t.Kind == Platform && t.Class != "through" {
 		glyph, s = '═', stylePlatform
 	}
 
@@ -868,6 +924,9 @@ func (cv *canvas) unlabel(x, y, n int) {
 			fill = cv.cells[y][a-1]
 		} else if cv.in(b+1, y) && cv.cells[y][b+1].track {
 			fill = cv.cells[y][b+1]
+		}
+		if fill.r != '═' {
+			fill.r = '─' // the neighbour's colours, not a ≡ signal's glyph
 		}
 		for k := a; k <= b; k++ {
 			cv.cells[y][k] = fill

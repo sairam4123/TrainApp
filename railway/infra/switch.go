@@ -22,6 +22,8 @@ type SwitchBlock struct {
 	defaultEdge *GraphEdge
 
 	managedEdges []*GraphEdge
+
+	seq int // order the block was built in; SwitchBlocksOn lists them so
 }
 
 // Heading is a direction along the schematic: East is left to right.

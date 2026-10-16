@@ -1,7 +1,9 @@
 package sim
 
 import (
+	"fmt"
 	"slices"
+	"strings"
 	"trainapp/railway/ids"
 	"trainapp/railway/infra"
 	"trainapp/railway/interlocking"
@@ -211,7 +213,7 @@ func (disp *Dispatcher) safe(requester *TrainController, route *interlocking.Rou
 
 // searchBudget caps how many states the check looks at when it has to try
 // moving trains on a stop at a time. Running out counts as unsafe.
-const searchBudget = 64
+const searchBudget = 256
 
 // safetyCheck searches for an order in which every participant can finish.
 type safetyCheck struct {
@@ -220,6 +222,12 @@ type safetyCheck struct {
 	after  [][]int // trains each is held for
 	mile   []int   // stops each must move on by to be past those held for it
 	budget int
+
+	// for the search of moves (see solve): the most moves still allowed
+	// from each state already looked at, and whether the current round
+	// stopped anywhere for lack of moves
+	seen map[string]int
+	cut  bool
 }
 
 // checkState is where the participants stand at one point of the search.
@@ -299,10 +307,36 @@ func (st *checkState) moveTo(i, n int, end infra.Position) {
 }
 
 // solve finishes every train it can, which only ever frees track. If some
-// are left and precedence is on, it tries moving one on, a stop at a time
-// (or to its milestone), to each platform track it could reach, and looks
-// again from there.
+// are left and precedence is on, it looks for moves that free the way: one
+// train moved on a stop (or to its milestone), to each platform track it
+// could reach, then the trains finished again, and so on. It tries every
+// single move before any pair of moves, every pair before any three, and so
+// on, and never looks at a state twice in a round, so the shortest way out is
+// found first and the budget is not spent reaching one state in different
+// orders.
 func (ck *safetyCheck) solve(st *checkState) bool {
+	ck.finishAll(st)
+	if !slices.Contains(st.finished, false) {
+		return true
+	}
+	if ck.disp.prec == nil {
+		return false
+	}
+	for depth := 1; ck.budget > 0; depth++ {
+		ck.seen, ck.cut = map[string]int{}, false
+		if ck.search(st, depth) {
+			return true
+		}
+		if !ck.cut {
+			return false // every way of moving trains on was tried
+		}
+	}
+	return false
+}
+
+// finishAll marks finished every train that can call at all its remaining
+// stops, over and over, as each one finished frees its track for the rest.
+func (ck *safetyCheck) finishAll(st *checkState) {
 	world := ck.disp.world
 	for progress := true; progress; {
 		progress = false
@@ -320,12 +354,21 @@ func (ck *safetyCheck) solve(st *checkState) bool {
 			progress = true
 		}
 	}
-	if !slices.Contains(st.finished, false) {
-		return true
-	}
-	if ck.disp.prec == nil {
+}
+
+// search tries every way of moving trains on, at most depth moves, after
+// which every train must be able to finish.
+func (ck *safetyCheck) search(st *checkState, depth int) bool {
+	if depth == 0 {
+		ck.cut = true
 		return false
 	}
+	key := st.key()
+	if d, ok := ck.seen[key]; ok && d >= depth {
+		return false
+	}
+	ck.seen[key] = depth
+	world := ck.disp.world
 	for i := range ck.parts {
 		if st.finished[i] || len(st.remaining[i]) == 0 || ck.held(st, i) {
 			continue
@@ -347,10 +390,32 @@ func (ck *safetyCheck) solve(st *checkState) bool {
 			ck.budget--
 			next := st.clone()
 			next.moveTo(i, n, end)
-			if ck.solve(next) {
+			ck.finishAll(next)
+			if !slices.Contains(next.finished, false) || ck.search(next, depth-1) {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+// key identifies where the trains stand, so the search can tell a state it
+// has reached before by another order of moves.
+func (st *checkState) key() string {
+	var b strings.Builder
+	for i := range st.pos {
+		if st.finished[i] {
+			b.WriteString("F;")
+			continue
+		}
+		fmt.Fprintf(&b, "%d", st.advanced[i])
+		for _, p := range st.pos[i] {
+			b.WriteString(" " + p.At.Id.String())
+			if p.Via != nil {
+				b.WriteString("<" + p.Via.Track.Id.String())
+			}
+		}
+		b.WriteString(";")
+	}
+	return b.String()
 }

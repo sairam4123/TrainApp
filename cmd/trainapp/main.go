@@ -114,19 +114,24 @@ import (
 // }
 
 func main() {
-	worldName := flag.String("world", "tpjkkdi", "world to run: tpjkkdi (the double line) or tpjkkdi-sl (the real single line, with every station)")
+	worldName := flag.String("world", "tpjkkdi", "world to run: tpjkkdi (the double line), tpjkkdi-sl (the real single line, with every station) or a world snapshot file (.json)")
+	schedulePath := flag.String("schedule", "", "trains to run (JSON); empty for the built-in demo trains, which need the tpjkkdi or tpjkkdi-sl world")
+	saveWorldPath := flag.String("save-world", "", "also write the world to this file as a snapshot (JSON), which -world can load")
+	saveSchedulePath := flag.String("save-schedule", "", "also write the trains' schedules to this file (JSON), which -schedule can load")
 	logFormat := flag.String("log", string(sim.LogText), "log format: text (logfmt) or json (one object per line)")
 	recordPath := flag.String("record", "", "also write the run to this file for trainviz replay")
 	prioritiesPath := flag.String("priorities", "profiles/ir.json", "train class priorities, delay bands and precedence settings (JSON); empty for none")
 	overridesPath := flag.String("overrides", "", "precedence overrides to apply (JSON), e.g. to release a hold from an earlier run")
 	timetablePath := flag.String("timetable", "", "generate a timetable from the run, check it with a second run, and write it to this file (JSON)")
 	checkRecordPath := flag.String("check-record", "", "with -timetable, also write the check run to this file for trainviz replay")
+	showProgress := flag.Bool("progress", isTerminal(os.Stderr), "draw a progress bar on stderr while the sim runs (default on for a terminal)")
 	flag.Parse()
 
-	// between lists the stations the trains run through between their calls,
-	// TPJ-PDKT and PDKT-KKDI, from TPJ
+	// between lists the stations the demo trains run through between their
+	// calls, TPJ-PDKT and PDKT-KKDI, from TPJ
 	var world *infra.World
 	var between [2][]ids.StnCode
+	builtin := true
 	switch *worldName {
 	case "tpjkkdi":
 		world = worlds.BuildTpjKkdiWorld()
@@ -134,7 +139,41 @@ func main() {
 		world = worlds.BuildTpjKkdiSingleLineWorld()
 		between = [2][]ids.StnCode{{"KRMG", "KRUR", "VEL"}, {"NMN", "TYM", "CTND", "KTYR"}}
 	default:
-		log.Fatalf("unknown world %q: want tpjkkdi or tpjkkdi-sl", *worldName)
+		if filepath.Ext(*worldName) != ".json" {
+			log.Fatalf("unknown world %q: want tpjkkdi, tpjkkdi-sl or a world snapshot (.json)", *worldName)
+		}
+		var err error
+		if world, err = infra.LoadWorld(*worldName); err != nil {
+			log.Fatal(err)
+		}
+		builtin = false
+	}
+
+	var trains []*ops.Train
+	if *schedulePath != "" {
+		var err error
+		if trains, err = ops.LoadTrains(*schedulePath); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		if !builtin {
+			log.Fatal("the demo trains need the tpjkkdi or tpjkkdi-sl world: give a world snapshot a -schedule")
+		}
+		var err error
+		if trains, err = demoTrains(world, between, *prioritiesPath != ""); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	if *saveWorldPath != "" {
+		if err := infra.SaveWorld(*saveWorldPath, world); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if *saveSchedulePath != "" {
+		if err := saveTrains(*saveSchedulePath, trains); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	s := &sim.Sim{LogFormat: sim.LogFormat(*logFormat)}
@@ -146,87 +185,9 @@ func main() {
 		}
 		s.Priorities = cfg
 	}
-
-	tpj, ok := world.GetStation("TPJ")
-
-	if !ok {
-		panic("Something went wrong while fetching stations")
-	}
-
-	pdkt, ok := world.GetStation("PDKT")
-
-	if !ok {
-		panic("Something went wrong while fetching stations")
-	}
-
-	kkdi, ok := world.GetStation("KKDI")
-
-	if !ok {
-		panic("Something went wrong while fetching stations")
-	}
-
-	var upInterval = 20
-	var downInterval = 20
-
-	// class names must match the priority config's classes
-	classes := []string{"Superfast Express", "Passenger", "Mail/Express"}
-
-	for i := range 6 {
-		train1 := ops.Train{
-			Name:     fmt.Sprintf("Train%dUp", i+1),
-			Number:   fmt.Sprintf("045%dU", i+1),
-			MaxSpeed: units.KMPH(110),
-		}
-
-		train1.AddSchedule(
-			ops.NewStopPoint(
-				tpj.Code, 10, "1",
-			).SetEntryTime(
-				float64(i*upInterval + 1),
-			),
-		)
-
-		addPasses(&train1, between[0], false)
-		train1.AddSchedule(ops.NewStopPoint(
-			pdkt.Code, 5, "1",
-		))
-
-		addPasses(&train1, between[1], false)
-		train1.AddSchedule(ops.NewStopPoint(
-			kkdi.Code, 10, "1",
-		))
-
-		train2 := ops.Train{
-			Name:     fmt.Sprintf("Train%dDown", i+1),
-			Number:   fmt.Sprintf("045%dD", i+1),
-			MaxSpeed: units.KMPH(110),
-		}
-
-		train2.AddSchedule(
-			ops.NewStopPoint(
-				kkdi.Code, 10, "3",
-			).SetEntryTime(
-				float64(i*downInterval + 1),
-			),
-		)
-
-		addPasses(&train2, between[1], true)
-		train2.AddSchedule(ops.NewStopPoint(
-			pdkt.Code, 5, "3",
-		))
-
-		addPasses(&train2, between[0], true)
-		train2.AddSchedule(ops.NewStopPoint(
-			tpj.Code, 10, "3",
-		))
-
-		for j, t := range []*ops.Train{&train1, &train2} {
-			if *prioritiesPath != "" {
-				t.Class = classes[(i+j)%len(classes)]
-			}
-			if err := s.AddTrain(t); err != nil {
-				log.Fatal(err)
-			}
+	for _, t := range trains {
+		if err := s.AddTrain(t); err != nil {
+			log.Fatal(err)
 		}
 	}
 
@@ -243,7 +204,11 @@ func main() {
 		}
 	}
 
-	runErr, err := runRecorded(s, *recordPath)
+	var prog *progress
+	if *showProgress {
+		prog = newProgress(*worldName, s)
+	}
+	runErr, err := runRecorded(s, *recordPath, prog)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -275,10 +240,98 @@ func main() {
 	}
 
 	if *timetablePath != "" {
-		if err := writeTimetable(s, *timetablePath, *checkRecordPath); err != nil {
+		if err := writeTimetable(s, *timetablePath, *checkRecordPath, *showProgress); err != nil {
 			log.Fatal(err)
 		}
 	}
+}
+
+// demoTrains is six trains each way between TPJ and KKDI, calling at PDKT and
+// running through the stations in between. With classes they cycle through
+// three classes, whose names must match the priority config's.
+func demoTrains(world *infra.World, between [2][]ids.StnCode, classes bool) ([]*ops.Train, error) {
+	var stns []*infra.Station
+	for _, code := range []ids.StnCode{"TPJ", "PDKT", "KKDI"} {
+		stn, ok := world.GetStation(code)
+		if !ok {
+			return nil, fmt.Errorf("demo trains: the world has no station %s", code)
+		}
+		stns = append(stns, stn)
+	}
+	tpj, pdkt, kkdi := stns[0], stns[1], stns[2]
+
+	var upInterval = 10
+	var downInterval = 10
+
+	classNames := []string{"Superfast Express", "Passenger", "Mail/Express"}
+
+	var trains []*ops.Train
+	for i := range 6 {
+		train1 := ops.Train{
+			Name:     fmt.Sprintf("Train%dUp", i+1),
+			Number:   fmt.Sprintf("045%dU", i+1),
+			MaxSpeed: units.KMPH(110),
+		}
+
+		train1.AddSchedule(
+			ops.NewStopPoint(
+				tpj.Code, 5, "1",
+			).SetEntryTime(
+				float64(i*upInterval + 1),
+			),
+		)
+
+		addPasses(&train1, between[0], false)
+		train1.AddSchedule(ops.NewStopPoint(
+			pdkt.Code, 2, "1",
+		))
+
+		addPasses(&train1, between[1], false)
+		train1.AddSchedule(ops.NewStopPoint(
+			kkdi.Code, 5, "1",
+		))
+
+		train2 := ops.Train{
+			Name:     fmt.Sprintf("Train%dDown", i+1),
+			Number:   fmt.Sprintf("045%dD", i+1),
+			MaxSpeed: units.KMPH(110),
+		}
+
+		train2.AddSchedule(
+			ops.NewStopPoint(
+				kkdi.Code, 10, "3",
+			).SetEntryTime(
+				float64(i*downInterval + 1),
+			),
+		)
+
+		addPasses(&train2, between[1], true)
+		train2.AddSchedule(ops.NewStopPoint(
+			pdkt.Code, 5, "3",
+		))
+
+		addPasses(&train2, between[0], true)
+		train2.AddSchedule(ops.NewStopPoint(
+			tpj.Code, 10, "3",
+		))
+
+		for j, t := range []*ops.Train{&train1, &train2} {
+			if classes {
+				t.Class = classNames[(i+j)%len(classNames)]
+			}
+			trains = append(trains, t)
+		}
+	}
+	return trains, nil
+}
+
+// saveTrains writes the trains' schedules to path as a schedule file.
+func saveTrains(path string, trains []*ops.Train) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	return errors.Join(ops.WriteTrains(f, trains), f.Close())
 }
 
 // addPasses adds a pass point at each of the stations, in reverse order for a
@@ -293,10 +346,19 @@ func addPasses(t *ops.Train, stations []ids.StnCode, reverse bool) {
 	}
 }
 
-// runRecorded runs the sim, writing it to path for trainviz if path is set.
-// It returns the run's error and, separately, any error recording it.
-func runRecorded(s *sim.Sim, path string) (runErr, err error) {
+// runRecorded runs the sim, writing it to path for trainviz if path is set
+// and drawing prog if it isn't nil. It returns the run's error and,
+// separately, any error recording it.
+func runRecorded(s *sim.Sim, path string, prog *progress) (runErr, err error) {
+	var obs sim.Observers
+	if prog != nil {
+		obs = append(obs, prog)
+		defer prog.clear()
+	}
 	if path == "" {
+		if obs != nil {
+			s.Observer = obs
+		}
 		return s.Run(), nil
 	}
 	f, err := os.Create(path)
@@ -307,14 +369,14 @@ func runRecorded(s *sim.Sim, path string) (runErr, err error) {
 	if err != nil {
 		return nil, errors.Join(err, f.Close())
 	}
-	s.Observer = rec
+	s.Observer = append(obs, rec)
 	runErr = s.Run()
 	return runErr, errors.Join(rec.Close(runErr), f.Close())
 }
 
 // writeTimetable turns the finished run into a timetable, rounds it, runs it
 // again as timed trains to check it holds, prints it and writes it to path.
-func writeTimetable(s *sim.Sim, path, checkRecordPath string) error {
+func writeTimetable(s *sim.Sim, path, checkRecordPath string, showProgress bool) error {
 	var raw json.RawMessage
 	if s.Priorities != nil {
 		raw = s.Priorities.Timetable
@@ -330,7 +392,11 @@ func writeTimetable(s *sim.Sim, path, checkRecordPath string) error {
 		return fmt.Errorf("check run: %w", err)
 	}
 	check.LogFormat = s.LogFormat
-	runErr, err := runRecorded(check, checkRecordPath)
+	var prog *progress
+	if showProgress {
+		prog = newProgress("check run", check)
+	}
+	runErr, err := runRecorded(check, checkRecordPath, prog)
 	if err != nil {
 		return fmt.Errorf("check run: %w", err)
 	}

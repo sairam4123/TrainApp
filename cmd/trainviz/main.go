@@ -2,6 +2,7 @@
 // replays recordings made with trainapp -record.
 //
 //	go run ./cmd/trainviz                       pan and zoom the world
+//	go run ./cmd/trainviz -world world.json     ... a world snapshot (trainapp -save-world)
 //	go run ./cmd/trainviz -print -zoom 2        print it once
 //	go run ./cmd/trainviz replay run.ndjson     play a recording
 //	go run ./cmd/trainviz replay -print -at 34.5 run.ndjson
@@ -13,6 +14,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"trainapp/railway/infra"
@@ -63,15 +65,22 @@ func viewMain(args []string) {
 		fmt.Fprintln(fs.Output(), "usage: trainviz [flags]\n       trainviz replay [flags] recording.ndjson")
 		fs.PrintDefaults()
 	}
-	worldName := fs.String("world", "tpjkkdi", "world to draw: "+strings.Join(names, ", "))
+	worldName := fs.String("world", "tpjkkdi", "world to draw: "+strings.Join(names, ", ")+", or a world snapshot file (.json)")
 	pr := printFlags(fs)
 	fs.Parse(args)
 
-	build, ok := builders[*worldName]
-	if !ok {
-		log.Fatalf("unknown world %q, want one of %s", *worldName, strings.Join(names, ", "))
+	var world *infra.World
+	if build, ok := builders[*worldName]; ok {
+		world = build()
+	} else if filepath.Ext(*worldName) == ".json" {
+		var err error
+		if world, err = infra.LoadWorld(*worldName); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Fatalf("unknown world %q, want one of %s, or a world snapshot (.json)", *worldName, strings.Join(names, ", "))
 	}
-	d, err := schematic.FromWorld(build())
+	d, err := schematic.FromWorld(world)
 	if err != nil {
 		log.Fatal(err)
 	}

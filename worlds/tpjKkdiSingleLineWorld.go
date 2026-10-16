@@ -22,6 +22,9 @@ const (
 	slCrossingPf = 450 // m, platforms at the crossing stations (KRMG's in OSM)
 	slHaltPf     = 400 // m, platforms at the halts (NMN's in OSM)
 	slSidingLen  = 700 // m, sidings and goods loops
+	// km/h through the diverging leg of the turnouts in TPJ's and KKDI's
+	// throats (1 in 8.5); elsewhere the world's 30 (1 in 12)
+	slYardTurnout = 15
 )
 
 // slTrack is one track of a station; a station lists them top to bottom, one
@@ -44,7 +47,9 @@ func pf(no string, length units.Meters) slTrack { return slTrack{pfNo: no, lengt
 // slStation builds a station's tracks and joins them into a west and an east
 // throat. edge names the side ("W" or "E") that is the world's boundary, if
 // any: tracks end there at the boundary and that side gets no throat (nil).
-func slStation(world *infra.World, code ids.StnCode, name string, edge string, tracks ...slTrack) (west, east *infra.TrackPoint) {
+// turnout is the speed (km/h) through the diverging leg of the throats'
+// turnouts; 0 for the world's default.
+func slStation(world *infra.World, code ids.StnCode, name string, edge string, turnout float64, tracks ...slTrack) (west, east *infra.TrackPoint) {
 	stn := world.NewStation(code, name)
 	westEnds := make([]*infra.TrackPoint, len(tracks))
 	eastEnds := make([]*infra.TrackPoint, len(tracks))
@@ -91,10 +96,10 @@ func slStation(world *infra.World, code ids.StnCode, name string, edge string, t
 		}
 	}
 	if edge != "W" {
-		west = slThroat(world, code, "W", westEnds, straight)
+		west = slThroat(world, code, "W", westEnds, straight, turnout)
 	}
 	if edge != "E" {
-		east = slThroat(world, code, "E", eastEnds, straight)
+		east = slThroat(world, code, "E", eastEnds, straight, turnout)
 	}
 	return west, east
 }
@@ -106,8 +111,9 @@ func slStation(world *infra.World, code ids.StnCode, name string, edge string, t
 // above it off another, as on a real throat: the line's first switch turns
 // down onto the lower ladder, the next one up onto the upper ladder, and
 // each ladder switch either lets a train off onto its track or on down (or
-// up) the ladder.
-func slThroat(world *infra.World, code ids.StnCode, side string, ends []*infra.TrackPoint, straight int) *infra.TrackPoint {
+// up) the ladder. turnout, if not 0, is the speed (km/h) through each
+// switch's diverging leg.
+func slThroat(world *infra.World, code ids.StnCode, side string, ends []*infra.TrackPoint, straight int, turnout float64) *infra.TrackPoint {
 	legs := infra.East
 	if side == "E" {
 		legs = infra.West
@@ -115,6 +121,9 @@ func slThroat(world *infra.World, code ids.StnCode, side string, ends []*infra.T
 	seq := 0
 	sw := func(toe, onward, off *infra.TrackPoint, lanes int) {
 		infra.NewSwitch(world, newSwitchId(code, "Sw"+side, fmt.Sprint(seq), ""), toe, onward, off, infra.SwitchLayout{Legs: legs, Lanes: lanes})
+		if turnout > 0 {
+			world.TrackGraph.Edges[ids.NewTrackID(toe.Id, off.Id)].Track.MaxSpeed = units.KMPH(turnout)
+		}
 		seq++
 	}
 	point := func() *infra.TrackPoint {
@@ -170,7 +179,7 @@ func slThroat(world *infra.World, code ids.StnCode, side string, ends []*infra.T
 // TYM): the main line straight through in the middle with no platform, and a
 // loop with a platform either side of it.
 func crossingStation(world *infra.World, code ids.StnCode, name string) (west, east *infra.TrackPoint) {
-	return slStation(world, code, name, "",
+	return slStation(world, code, name, "", 0,
 		pf("1", slCrossingPf),
 		slTrack{pfNo: "3", straight: true, fast: true},
 		pf("2", slCrossingPf),
@@ -180,7 +189,7 @@ func crossingStation(world *infra.World, code ids.StnCode, name string) (west, e
 // halt is a stopping place on the single line with one platform and no
 // points.
 func halt(world *infra.World, code ids.StnCode, name string) (west, east *infra.TrackPoint) {
-	return slStation(world, code, name, "", slTrack{pfNo: "1", length: slHaltPf, straight: true, fast: true})
+	return slStation(world, code, name, "", 0, slTrack{pfNo: "1", length: slHaltPf, straight: true, fast: true})
 }
 
 // BuildTpjKkdiSingleLineWorld builds the single line from Tiruchchirappalli
@@ -219,7 +228,7 @@ func BuildTpjKkdiSingleLineWorld() *infra.World {
 	// between PF1 and PF2; between PF7 and PF8 are a stabling line (open at
 	// both ends) and two stabling sidings that end at buffer stops on the far
 	// side, so they open towards this line.
-	_, tpjE := slStation(world, "TPJ", "Tiruchchirappalli Jn", "W",
+	_, tpjE := slStation(world, "TPJ", "Tiruchchirappalli Jn", "W", slYardTurnout,
 		pf("1", slBigPf),
 		slTrack{pfNo: "9"},
 		pf("2", slBigPf),
@@ -238,7 +247,7 @@ func BuildTpjKkdiSingleLineWorld() *infra.World {
 	velW, velE := crossingStation(world, "VEL", "Vellanur")
 	// PDKT: PF1 on the main line, PF2 and PF3 on loops either side of an
 	// island, and a goods loop beyond PF3
-	pdktW, pdktE := slStation(world, "PDKT", "Pudukkottai", "",
+	pdktW, pdktE := slStation(world, "PDKT", "Pudukkottai", "", 0,
 		slTrack{pfNo: "1", length: slBigPf, straight: true, fast: true},
 		pf("2", slBigPf),
 		pf("3", slBigPf),
@@ -248,7 +257,7 @@ func BuildTpjKkdiSingleLineWorld() *infra.World {
 	tymW, tymE := crossingStation(world, "TYM", "Tirumayam")
 	// CTND: loop, main, loop, goods loop; the island is between the main line
 	// and PF3
-	ctndW, ctndE := slStation(world, "CTND", "Chettinad", "",
+	ctndW, ctndE := slStation(world, "CTND", "Chettinad", "", 0,
 		pf("1", slCrossingPf),
 		slTrack{pfNo: "2", length: slCrossingPf, straight: true, fast: true},
 		pf("3", slCrossingPf),
@@ -257,7 +266,7 @@ func BuildTpjKkdiSingleLineWorld() *infra.World {
 	ktyrW, ktyrE := halt(world, "KTYR", "Kottaiyur")
 	// KKDI: the line runs straight onto the PF3 road; the through loop lies
 	// between PF1 and PF2
-	kkdiW, _ := slStation(world, "KKDI", "Karaikkudi Jn", "E",
+	kkdiW, _ := slStation(world, "KKDI", "Karaikkudi Jn", "E", slYardTurnout,
 		pf("1", slBigPf),
 		slTrack{pfNo: "6"},
 		pf("2", slBigPf),

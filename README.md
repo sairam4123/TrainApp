@@ -62,7 +62,7 @@ At a high level, the system contains five major parts:
 .
 ├── cmd/
 │   ├── trainapp/            # Runs the simulation: builds the TPJ-PDKT-KKDI world and 12 trains
-│   │   └── main.go          # Flags: -log (text|json), -record (write a recording for trainviz), -priorities, -overrides, -timetable, -check-record
+│   │   └── main.go          # Flags: -world, -schedule, -save-world, -save-schedule, -log (text|json), -record (write a recording for trainviz), -priorities, -overrides, -timetable, -check-record
 │   └── trainviz/            # Terminal viewer
 │       ├── main.go          # Flags and the two modes: draw a world, or `replay` a recording
 │       ├── viewer.go        # Interactive Bubble Tea model: pan, zoom, panes, timeline
@@ -84,11 +84,12 @@ At a high level, the system contains five major parts:
 │   │   ├── tracks.go        # TrackSegment
 │   │   ├── switch.go        # Switches, diamond crossings and slips (SwitchBlock)
 │   │   ├── signals.go       # Signal
+│   │   ├── snapshot.go      # World snapshots: a world as plain data, saved to and loaded from JSON
 │   │   ├── stations.go      # Station and Platform
 │   │   ├── station_tracks.go # Station area, main lines, through tracks and loops
 │   │   └── templates.go     # Helpers to build common station layouts
 │   ├── interlocking/        # Runtime safety state: track reservations/occupation, switch setting/locking
-│   ├── ops/                 # Train, schedule (planned and actual times, delay), MovementAuthority, event types
+│   ├── ops/                 # Train, schedule (planned and actual times, delay), schedule files (JSON), MovementAuthority, event types
 │   ├── timetable/           # Turns a finished run into a timetable: halts and why, rounding, the check run
 │   └── sim/                 # The run itself:
 │       ├── sim.go           #   Sim: owns the world, interlocking and event loop; Run, Init, state dump
@@ -248,7 +249,10 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 
 | Flag | Default | Effect |
 |---|---|---|
-| `-world` | `tpjkkdi` | World to run: `tpjkkdi` (the double line) or `tpjkkdi-sl` (the real single line; the trains run through the stations between TPJ, PDKT and KKDI) |
+| `-world` | `tpjkkdi` | World to run: `tpjkkdi` (the double line), `tpjkkdi-sl` (the real single line; the trains run through the stations between TPJ, PDKT and KKDI) or a world snapshot file (`.json`, see [World and schedule files](#world-and-schedule-files)) |
+| `-schedule` | none | Trains to run (JSON); without it, the 12 demo trains, which need `tpjkkdi` or `tpjkkdi-sl` |
+| `-save-world` | none | Also write the world to this file as a snapshot, which `-world` can load |
+| `-save-schedule` | none | Also write the trains' schedules to this file, which `-schedule` can load |
 | `-log` | `text` | Log format: `text` (logfmt, `logs/logs.log`) or `json` (`logs/logs.jsonl`) |
 | `-record` | none | Also write the run to this file, for `trainviz replay` |
 | `-priorities` | `profiles/ir.json` | Priority config (classes, delay bands and precedence); empty for none, which leaves every train at priority 0 and precedence off |
@@ -258,7 +262,7 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 
 The other worlds in `worlds/` are not run by `trainapp`. The single-line and junction worlds are used by the deadlock tests, and all of them can be drawn with `trainviz`.
 
-`worlds.BuildTpjKkdiSingleLineWorld()` (`trainviz -world tpjkkdi-sl`) is the real line between the same two junctions: a single electrified line at 110 km/h with all ten stations (TPJ, KRMG, KRUR, VEL, PDKT, NMN, TYM, CTND, KTYR, KKDI), each stretch between stations one block section. Station positions and track layouts come from OpenStreetMap: crossing stations with the main line straight through between two loop platforms, PDKT and CTND with a platform on the main line and a goods loop, two halts, and TPJ (8 platforms and a through track) and KKDI (5 platforms and a through loop) at the world's edges. Platform numbers OSM does not record are guesses. A halt's platform ends act as signals, so unlike on the real line a halt splits its block section.
+`worlds.BuildTpjKkdiSingleLineWorld()` (`trainviz -world tpjkkdi-sl`) is the real line between the same two junctions: a single electrified line at 110 km/h with all ten stations (TPJ, KRMG, KRUR, VEL, PDKT, NMN, TYM, CTND, KTYR, KKDI), each stretch between stations one block section. Station positions and track layouts come from OpenStreetMap: crossing stations with the main line straight through between two loop platforms, PDKT and CTND with a platform on the main line and a goods loop, two halts, and TPJ (8 platforms and a through track) and KKDI (5 platforms and a through loop) at the world's edges, their throats laid as ladders of 15 km/h turnouts. Platform numbers OSM does not record are guesses. A halt's platform ends act as signals, so unlike on the real line a halt splits its block section.
 
 ## Key design decisions
 
@@ -318,6 +322,37 @@ check run: all 12 trains kept their times (tolerance 1 min)
 
 Times are minutes from 0, shown as a clock. Open `check.ndjson` with `trainviz replay` and press `g`, then `p`: the planned times sit on the trains' lines.
 
+### World and schedule files
+
+The world and the trains can come from files instead of the code. Save a built-in world and the demo trains to start from:
+
+```bash
+go run ./cmd/trainapp -world tpjkkdi-sl -save-world sl.json -save-schedule trains.json
+go run ./cmd/trainapp -world sl.json -schedule trains.json   # the same run, from the files
+go run ./cmd/trainviz -world sl.json                         # draw it
+```
+
+A **world file** is a snapshot of the world (`infra.Snapshot`): every point, track, switch block, signal and station platform as built, so a world comes back from it unchanged and runs exactly as before. Points are given by the parts of their id (`stn`, `type`, `seq`, `other`; `stn` puts the point in that station's area), and are named in the rest of the file by their id's string, e.g. `tpjPf1S`. A track runs `from` its west end `to` its east end and is named by its two point ids, sorted and joined by `-`, as in the logs. The `id`s Snapshot writes may be left out; if given, they are checked. Lengths are in meters, speeds in km/h, and `defaults` are what tracks added later get. A switch block lists its tracks (only one in use at a time, and no running from one onto another through a point they share) and the one it starts set to; switches are listed in the order they were built, which is the order the interlocking checks them in. A platform of length 0 is a through track. Loading reports every problem it finds, then finalizes the world.
+
+```json
+{"version": 1,
+ "defaults": {"switch_kmph": 30, "switch_length_m": 100, "platform_kmph": 50, "platform_length_m": 800, "route_kmph": 110},
+ "points": [{"id": "tpjPf1S", "stn": "TPJ", "type": "Pf", "seq": "1", "other": "S", "dead_end": true, "boundary": true}, ...],
+ "tracks": [{"id": "tpjPf1E-tpjPf1S", "from": "tpjPf1S", "to": "tpjPf1E", "length_m": 800, "max_kmph": 50}, ...],
+ "switches": [{"id": "tpjSw0", "tracks": ["tpjBp0-tpjPf2E", "tpjBp0-tpjPf1E"], "default": "tpjBp0-tpjPf2E"}, ...],
+ "signals": [{"id": "tpjSig0", "at": "tpjBp3", "facing": "pdktBp1"}, ...],
+ "stations": [{"code": "TPJ", "name": "Tiruchy Jn", "platforms": [{"no": "1", "track": "tpjPf1E-tpjPf1S", "length_m": 600}, ...]}, ...]}
+```
+
+A **schedule file** lists the trains (`ops.LoadTrains`). A stop gives either a `dwell`, and the train leaves once it has stood that long, or an `arr` and a `dep` to keep to, with an optional `min_dwell` it stands even when late. A pass may give an `arr`, when it is due through; without one it is untimed. `pf` is the preferred platform; left out, the dispatcher picks. The first point's `arr` is when the train enters the world, and is required. `class` must be one of the priority config's classes.
+
+```json
+{"trains": [{"number": "0451U", "name": "Train1Up", "class": "Superfast Express", "max_speed_kmph": 110, "points": [
+  {"stn": "TPJ", "kind": "stop", "pf": "1", "arr": 1, "dwell": 5},
+  {"stn": "KRMG", "kind": "pass"},
+  {"stn": "PDKT", "kind": "stop", "arr": 40, "dep": 42, "min_dwell": 1}, ...]}]}
+```
+
 ### Draw a world
 
 ```bash
@@ -326,7 +361,7 @@ go run ./cmd/trainviz -print                 # print once
 go run ./cmd/trainviz -print -zoom 2         # print once, wider
 ```
 
-`-world` is one of `tpjkkdi`, `tpjkkdi-sl`, `test`, `single` or `junction`. With `-print`, `-zoom 1` is the most compact, `-level` is `overview` (stations collapsed to boxes), `layout` or `detail` (with point, track and switch ids), and `-color` is `auto`, `always` or `never`. The schematic is not to scale: lines between stations are labelled with their length instead.
+`-world` is one of `tpjkkdi`, `tpjkkdi-sl`, `test`, `single` or `junction`, or a world snapshot file (`.json`). With `-print`, `-zoom 1` is the most compact, `-level` is `overview` (stations collapsed to boxes), `layout` or `detail` (with point, track and switch ids), and `-color` is `auto`, `always` or `never`. The schematic is not to scale: lines between stations are labelled with their length instead.
 
 In the viewer, `+`/`-` or the mouse wheel zoom, `hjkl`, the arrows or a mouse drag pan, `/` then a station code jumps to it, `0` fits the world on screen, and `q` quits.
 
