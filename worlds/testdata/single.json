@@ -1,0 +1,787 @@
+{
+  "version": 1,
+  "defaults": {
+    "switch_kmph": 30,
+    "switch_length_m": 100,
+    "platform_kmph": 50,
+    "platform_length_m": 800,
+    "route_kmph": 100
+  },
+  "points": [
+    {
+      "id": "estPf1E",
+      "stn": "EST",
+      "type": "Pf",
+      "seq": "1",
+      "other": "E",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "estPf1S",
+      "stn": "EST",
+      "type": "Pf",
+      "seq": "1",
+      "other": "S"
+    },
+    {
+      "id": "estPf2E",
+      "stn": "EST",
+      "type": "Pf",
+      "seq": "2",
+      "other": "E",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "estPf2S",
+      "stn": "EST",
+      "type": "Pf",
+      "seq": "2",
+      "other": "S"
+    },
+    {
+      "id": "estPf3E",
+      "stn": "EST",
+      "type": "Pf",
+      "seq": "3",
+      "other": "E",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "estPf3S",
+      "stn": "EST",
+      "type": "Pf",
+      "seq": "3",
+      "other": "S"
+    },
+    {
+      "id": "estThE0",
+      "stn": "EST",
+      "type": "ThE",
+      "seq": "0"
+    },
+    {
+      "id": "estThE1",
+      "stn": "EST",
+      "type": "ThE",
+      "seq": "1"
+    },
+    {
+      "id": "estThW0",
+      "stn": "EST",
+      "type": "ThW",
+      "seq": "0"
+    },
+    {
+      "id": "estThW1",
+      "stn": "EST",
+      "type": "ThW",
+      "seq": "1"
+    },
+    {
+      "id": "hltPf1E",
+      "stn": "HLT",
+      "type": "Pf",
+      "seq": "1",
+      "other": "E"
+    },
+    {
+      "id": "hltPf1S",
+      "stn": "HLT",
+      "type": "Pf",
+      "seq": "1",
+      "other": "S"
+    },
+    {
+      "id": "lpaPf1E",
+      "stn": "LPA",
+      "type": "Pf",
+      "seq": "1",
+      "other": "E"
+    },
+    {
+      "id": "lpaPf1S",
+      "stn": "LPA",
+      "type": "Pf",
+      "seq": "1",
+      "other": "S"
+    },
+    {
+      "id": "lpaPf2E",
+      "stn": "LPA",
+      "type": "Pf",
+      "seq": "2",
+      "other": "E"
+    },
+    {
+      "id": "lpaPf2S",
+      "stn": "LPA",
+      "type": "Pf",
+      "seq": "2",
+      "other": "S"
+    },
+    {
+      "id": "lpaThE0",
+      "stn": "LPA",
+      "type": "ThE",
+      "seq": "0"
+    },
+    {
+      "id": "lpaThW0",
+      "stn": "LPA",
+      "type": "ThW",
+      "seq": "0"
+    },
+    {
+      "id": "wstPf1E",
+      "stn": "WST",
+      "type": "Pf",
+      "seq": "1",
+      "other": "E"
+    },
+    {
+      "id": "wstPf1S",
+      "stn": "WST",
+      "type": "Pf",
+      "seq": "1",
+      "other": "S",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "wstPf2E",
+      "stn": "WST",
+      "type": "Pf",
+      "seq": "2",
+      "other": "E"
+    },
+    {
+      "id": "wstPf2S",
+      "stn": "WST",
+      "type": "Pf",
+      "seq": "2",
+      "other": "S",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "wstPf3E",
+      "stn": "WST",
+      "type": "Pf",
+      "seq": "3",
+      "other": "E"
+    },
+    {
+      "id": "wstPf3S",
+      "stn": "WST",
+      "type": "Pf",
+      "seq": "3",
+      "other": "S",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "wstThE0",
+      "stn": "WST",
+      "type": "ThE",
+      "seq": "0"
+    },
+    {
+      "id": "wstThE1",
+      "stn": "WST",
+      "type": "ThE",
+      "seq": "1"
+    },
+    {
+      "id": "wstThW0",
+      "stn": "WST",
+      "type": "ThW",
+      "seq": "0"
+    },
+    {
+      "id": "wstThW1",
+      "stn": "WST",
+      "type": "ThW",
+      "seq": "1"
+    },
+    {
+      "id": "slheBk1",
+      "stn": "slHE",
+      "type": "Bk",
+      "seq": "1"
+    },
+    {
+      "id": "slheBk2",
+      "stn": "slHE",
+      "type": "Bk",
+      "seq": "2"
+    },
+    {
+      "id": "sllhBk1",
+      "stn": "slLH",
+      "type": "Bk",
+      "seq": "1"
+    },
+    {
+      "id": "sllhBk2",
+      "stn": "slLH",
+      "type": "Bk",
+      "seq": "2"
+    },
+    {
+      "id": "slwlBk1",
+      "stn": "slWL",
+      "type": "Bk",
+      "seq": "1"
+    },
+    {
+      "id": "slwlBk2",
+      "stn": "slWL",
+      "type": "Bk",
+      "seq": "2"
+    }
+  ],
+  "tracks": [
+    {
+      "id": "estPf1E-estPf1S",
+      "name": "estPf1",
+      "from": "estPf1S",
+      "to": "estPf1E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "estPf1E-estThE0",
+      "from": "estPf1E",
+      "to": "estThE0",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "estPf1S-estThW0",
+      "from": "estThW0",
+      "to": "estPf1S",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "estPf2E-estPf2S",
+      "name": "estPf2",
+      "from": "estPf2S",
+      "to": "estPf2E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "estPf2E-estThE0",
+      "from": "estPf2E",
+      "to": "estThE0",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "estPf2S-estThW0",
+      "from": "estThW0",
+      "to": "estPf2S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "estPf3E-estPf3S",
+      "name": "estPf3",
+      "from": "estPf3S",
+      "to": "estPf3E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "estPf3E-estThE1",
+      "from": "estPf3E",
+      "to": "estThE1",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -2
+    },
+    {
+      "id": "estPf3S-estThW1",
+      "from": "estThW1",
+      "to": "estPf3S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 2
+    },
+    {
+      "id": "estThE0-estThE1",
+      "from": "estThE0",
+      "to": "estThE1",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "estThW0-estThW1",
+      "from": "estThW1",
+      "to": "estThW0",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "estThW1-slheBk2",
+      "name": "slHE2",
+      "from": "slheBk2",
+      "to": "estThW1",
+      "length_m": 3333.3333333333335,
+      "max_kmph": 100
+    },
+    {
+      "id": "hltPf1E-hltPf1S",
+      "name": "hltPf1",
+      "from": "hltPf1S",
+      "to": "hltPf1E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "hltPf1E-slheBk1",
+      "name": "slHE0",
+      "from": "hltPf1E",
+      "to": "slheBk1",
+      "length_m": 3333.3333333333335,
+      "max_kmph": 100
+    },
+    {
+      "id": "hltPf1S-sllhBk2",
+      "name": "slLH2",
+      "from": "sllhBk2",
+      "to": "hltPf1S",
+      "length_m": 2666.6666666666665,
+      "max_kmph": 100
+    },
+    {
+      "id": "lpaPf1E-lpaPf1S",
+      "name": "lpaPf1",
+      "from": "lpaPf1S",
+      "to": "lpaPf1E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "lpaPf1E-lpaThE0",
+      "from": "lpaPf1E",
+      "to": "lpaThE0",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "lpaPf1S-lpaThW0",
+      "from": "lpaThW0",
+      "to": "lpaPf1S",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "lpaPf2E-lpaPf2S",
+      "name": "lpaPf2",
+      "from": "lpaPf2S",
+      "to": "lpaPf2E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "lpaPf2E-lpaThE0",
+      "from": "lpaPf2E",
+      "to": "lpaThE0",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "lpaPf2S-lpaThW0",
+      "from": "lpaThW0",
+      "to": "lpaPf2S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "lpaThE0-sllhBk1",
+      "name": "slLH0",
+      "from": "lpaThE0",
+      "to": "sllhBk1",
+      "length_m": 2666.6666666666665,
+      "max_kmph": 100
+    },
+    {
+      "id": "lpaThW0-slwlBk2",
+      "name": "slWL2",
+      "from": "slwlBk2",
+      "to": "lpaThW0",
+      "length_m": 4000,
+      "max_kmph": 100
+    },
+    {
+      "id": "wstPf1E-wstPf1S",
+      "name": "wstPf1",
+      "from": "wstPf1S",
+      "to": "wstPf1E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "wstPf1E-wstThE0",
+      "from": "wstPf1E",
+      "to": "wstThE0",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "wstPf1S-wstThW0",
+      "from": "wstThW0",
+      "to": "wstPf1S",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "wstPf2E-wstPf2S",
+      "name": "wstPf2",
+      "from": "wstPf2S",
+      "to": "wstPf2E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "wstPf2E-wstThE0",
+      "from": "wstPf2E",
+      "to": "wstThE0",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "wstPf2S-wstThW0",
+      "from": "wstThW0",
+      "to": "wstPf2S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "wstPf3E-wstPf3S",
+      "name": "wstPf3",
+      "from": "wstPf3S",
+      "to": "wstPf3E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "wstPf3E-wstThE1",
+      "from": "wstPf3E",
+      "to": "wstThE1",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -2
+    },
+    {
+      "id": "wstPf3S-wstThW1",
+      "from": "wstThW1",
+      "to": "wstPf3S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 2
+    },
+    {
+      "id": "wstThE0-wstThE1",
+      "from": "wstThE0",
+      "to": "wstThE1",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "wstThE1-slwlBk1",
+      "name": "slWL0",
+      "from": "wstThE1",
+      "to": "slwlBk1",
+      "length_m": 4000,
+      "max_kmph": 100
+    },
+    {
+      "id": "wstThW0-wstThW1",
+      "from": "wstThW1",
+      "to": "wstThW0",
+      "length_m": 100,
+      "max_kmph": 100
+    },
+    {
+      "id": "slheBk1-slheBk2",
+      "name": "slHE1",
+      "from": "slheBk1",
+      "to": "slheBk2",
+      "length_m": 3333.3333333333335,
+      "max_kmph": 100
+    },
+    {
+      "id": "sllhBk1-sllhBk2",
+      "name": "slLH1",
+      "from": "sllhBk1",
+      "to": "sllhBk2",
+      "length_m": 2666.6666666666665,
+      "max_kmph": 100
+    },
+    {
+      "id": "slwlBk1-slwlBk2",
+      "name": "slWL1",
+      "from": "slwlBk1",
+      "to": "slwlBk2",
+      "length_m": 4000,
+      "max_kmph": 100
+    }
+  ],
+  "switches": [
+    {
+      "id": "wstSwW0",
+      "tracks": [
+        "wstPf1S-wstThW0",
+        "wstPf2S-wstThW0"
+      ],
+      "default": "wstPf1S-wstThW0"
+    },
+    {
+      "id": "wstSwW1",
+      "tracks": [
+        "wstThW0-wstThW1",
+        "wstPf3S-wstThW1"
+      ],
+      "default": "wstThW0-wstThW1"
+    },
+    {
+      "id": "wstSwE0",
+      "tracks": [
+        "wstPf1E-wstThE0",
+        "wstPf2E-wstThE0"
+      ],
+      "default": "wstPf1E-wstThE0"
+    },
+    {
+      "id": "wstSwE1",
+      "tracks": [
+        "wstThE0-wstThE1",
+        "wstPf3E-wstThE1"
+      ],
+      "default": "wstThE0-wstThE1"
+    },
+    {
+      "id": "lpaSwW0",
+      "tracks": [
+        "lpaPf1S-lpaThW0",
+        "lpaPf2S-lpaThW0"
+      ],
+      "default": "lpaPf1S-lpaThW0"
+    },
+    {
+      "id": "lpaSwE0",
+      "tracks": [
+        "lpaPf1E-lpaThE0",
+        "lpaPf2E-lpaThE0"
+      ],
+      "default": "lpaPf1E-lpaThE0"
+    },
+    {
+      "id": "estSwW0",
+      "tracks": [
+        "estPf1S-estThW0",
+        "estPf2S-estThW0"
+      ],
+      "default": "estPf1S-estThW0"
+    },
+    {
+      "id": "estSwW1",
+      "tracks": [
+        "estThW0-estThW1",
+        "estPf3S-estThW1"
+      ],
+      "default": "estThW0-estThW1"
+    },
+    {
+      "id": "estSwE0",
+      "tracks": [
+        "estPf1E-estThE0",
+        "estPf2E-estThE0"
+      ],
+      "default": "estPf1E-estThE0"
+    },
+    {
+      "id": "estSwE1",
+      "tracks": [
+        "estThE0-estThE1",
+        "estPf3E-estThE1"
+      ],
+      "default": "estThE0-estThE1"
+    }
+  ],
+  "signals": [
+    {
+      "id": "slHESig0F",
+      "at": "slheBk1",
+      "facing": "hltPf1E"
+    },
+    {
+      "id": "slHESig0R",
+      "at": "hltPf1E",
+      "facing": "slheBk1"
+    },
+    {
+      "id": "slHESig1F",
+      "at": "slheBk2",
+      "facing": "slheBk1"
+    },
+    {
+      "id": "slHESig1R",
+      "at": "slheBk1",
+      "facing": "slheBk2"
+    },
+    {
+      "id": "slHESig2F",
+      "at": "estThW1",
+      "facing": "slheBk2"
+    },
+    {
+      "id": "slHESig2R",
+      "at": "slheBk2",
+      "facing": "estThW1"
+    },
+    {
+      "id": "slLHSig0F",
+      "at": "sllhBk1",
+      "facing": "lpaThE0"
+    },
+    {
+      "id": "slLHSig0R",
+      "at": "lpaThE0",
+      "facing": "sllhBk1"
+    },
+    {
+      "id": "slLHSig1F",
+      "at": "sllhBk2",
+      "facing": "sllhBk1"
+    },
+    {
+      "id": "slLHSig1R",
+      "at": "sllhBk1",
+      "facing": "sllhBk2"
+    },
+    {
+      "id": "slLHSig2F",
+      "at": "hltPf1S",
+      "facing": "sllhBk2"
+    },
+    {
+      "id": "slLHSig2R",
+      "at": "sllhBk2",
+      "facing": "hltPf1S"
+    },
+    {
+      "id": "slWLSig0F",
+      "at": "slwlBk1",
+      "facing": "wstThE1"
+    },
+    {
+      "id": "slWLSig0R",
+      "at": "wstThE1",
+      "facing": "slwlBk1"
+    },
+    {
+      "id": "slWLSig1F",
+      "at": "slwlBk2",
+      "facing": "slwlBk1"
+    },
+    {
+      "id": "slWLSig1R",
+      "at": "slwlBk1",
+      "facing": "slwlBk2"
+    },
+    {
+      "id": "slWLSig2F",
+      "at": "lpaThW0",
+      "facing": "slwlBk2"
+    },
+    {
+      "id": "slWLSig2R",
+      "at": "slwlBk2",
+      "facing": "lpaThW0"
+    }
+  ],
+  "stations": [
+    {
+      "code": "EST",
+      "name": "East Terminus",
+      "platforms": [
+        {
+          "no": "1",
+          "track": "estPf1E-estPf1S",
+          "length_m": 600
+        },
+        {
+          "no": "2",
+          "track": "estPf2E-estPf2S",
+          "length_m": 600
+        },
+        {
+          "no": "3",
+          "track": "estPf3E-estPf3S",
+          "length_m": 600
+        }
+      ]
+    },
+    {
+      "code": "HLT",
+      "name": "Halt",
+      "platforms": [
+        {
+          "no": "1",
+          "track": "hltPf1E-hltPf1S",
+          "length_m": 600
+        }
+      ]
+    },
+    {
+      "code": "LPA",
+      "name": "Loop A",
+      "platforms": [
+        {
+          "no": "1",
+          "track": "lpaPf1E-lpaPf1S",
+          "length_m": 600
+        },
+        {
+          "no": "2",
+          "track": "lpaPf2E-lpaPf2S",
+          "length_m": 600
+        }
+      ]
+    },
+    {
+      "code": "WST",
+      "name": "West Terminus",
+      "platforms": [
+        {
+          "no": "1",
+          "track": "wstPf1E-wstPf1S",
+          "length_m": 600
+        },
+        {
+          "no": "2",
+          "track": "wstPf2E-wstPf2S",
+          "length_m": 600
+        },
+        {
+          "no": "3",
+          "track": "wstPf3E-wstPf3S",
+          "length_m": 600
+        }
+      ]
+    }
+  ]
+}

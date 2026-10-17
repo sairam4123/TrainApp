@@ -37,6 +37,10 @@ var speeds = []float64{1, 10, 60, 600}
 
 const tickEvery = 50 * time.Millisecond
 
+// followEase is how quickly the view glides after a followed train: it
+// closes about two thirds of the way in this time.
+const followEase = 0.15 // seconds
+
 var (
 	dim  = lipgloss.NewStyle().Faint(true)
 	bold = lipgloss.NewStyle().Bold(true)
@@ -77,7 +81,14 @@ type model struct {
 	speed    int
 	selected int // index into rep.trains, -1 for none
 	follow   bool
-	bottom   bottomPane
+
+	// gliding after the followed train: the view's position, in fractions
+	// of a cell, eases towards (toX, toY), where the train is centred
+	gliding    bool
+	camX, camY float64
+	toX, toY   int
+	lastGlide  time.Time
+	bottom     bottomPane
 
 	// the time-distance graph, shown in place of the schematic
 	graph     *traingraph.Graph // nil without a recording or a single line
@@ -154,32 +165,63 @@ func (m *model) redraw() {
 	m.frame = m.d.Draw(m.options())
 	if m.follow {
 		if x, y, ok := m.frame.Train(m.selectedTrain()); ok {
-			pw, ph := m.pane()
-			if x < m.x+pw/5 || x > m.x+pw*4/5 {
-				m.x = x - pw/2
-			}
-			if y < m.y || y >= m.y+ph {
-				m.y = y - ph/2
-			}
+			m.followTo(x, y)
 		}
 	}
 	m.clamp()
 }
 
+// followTo points the view at the followed train, at frame cell (x, y):
+// straight there if the train is off the pane, as after a seek or a zoom,
+// else gliding, a tick at a time (see glide).
+func (m *model) followTo(x, y int) {
+	pw, ph := m.pane()
+	m.toX, m.toY = m.clamped(x-pw/2, y-ph/2)
+	if x < m.x || x >= m.x+pw || y < m.y || y >= m.y+ph {
+		m.x, m.y, m.gliding = m.toX, m.toY, false
+		return
+	}
+	if !m.gliding && (m.toX != m.x || m.toY != m.y) {
+		m.gliding, m.camX, m.camY, m.lastGlide = true, float64(m.x), float64(m.y), time.Now()
+	}
+}
+
+// glide eases the view towards the followed train for the time since the
+// last glide, and reports whether it has further to go.
+func (m *model) glide(now time.Time) bool {
+	if !m.gliding || !m.follow {
+		m.gliding = false
+		return false
+	}
+	a := 1 - math.Exp(-now.Sub(m.lastGlide).Seconds()/followEase)
+	m.lastGlide = now
+	m.camX += (float64(m.toX) - m.camX) * a
+	m.camY += (float64(m.toY) - m.camY) * a
+	if math.Abs(float64(m.toX)-m.camX) < 0.5 && math.Abs(float64(m.toY)-m.camY) < 0.5 {
+		m.camX, m.camY, m.gliding = float64(m.toX), float64(m.toY), false
+	}
+	m.x, m.y = int(math.Round(m.camX)), int(math.Round(m.camY))
+	return m.gliding
+}
+
 // clamp keeps the frame on screen, centred if it is smaller than the pane.
-func (m *model) clamp() {
+func (m *model) clamp() { m.x, m.y = m.clamped(m.x, m.y) }
+
+// clamped is where the view at (x, y) is kept to.
+func (m *model) clamped(x, y int) (int, int) {
 	pw, ph := m.pane()
 	fw, fh := m.frame.Width(), m.frame.Height()
 	if fw <= pw {
-		m.x = (fw - pw) / 2
+		x = (fw - pw) / 2
 	} else {
-		m.x = min(max(m.x, 0), fw-pw)
+		x = min(max(x, 0), fw-pw)
 	}
 	if fh <= ph {
-		m.y = (fh - ph) / 2
+		y = (fh - ph) / 2
 	} else {
-		m.y = min(max(m.y, 0), fh-ph)
+		y = min(max(y, 0), fh-ph)
 	}
+	return x, y
 }
 
 // zoomTo changes the zoom step, keeping the place at (sx, sy) in the pane
@@ -245,18 +287,17 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tickMsg:
 		m.ticking = false
-		if !m.playing || m.rep == nil {
-			return m, nil
-		}
 		now := time.Time(msg)
-		dt := now.Sub(m.lastTick).Minutes() * speeds[m.speed]
-		m.lastTick = now
-		if !m.rep.advance(dt) {
-			m.playing = false
+		if m.playing && m.rep != nil {
+			dt := now.Sub(m.lastTick).Minutes() * speeds[m.speed]
+			m.lastTick = now
+			if !m.rep.advance(dt) {
+				m.playing = false
+			}
+			m.keepCursor()
+			m.redraw()
 		}
-		m.keepCursor()
-		m.redraw()
-		if m.playing {
+		if m.glide(now) || m.playing {
 			return m, m.tick()
 		}
 
@@ -345,7 +386,7 @@ func (m *model) key(msg tea.KeyPressMsg) tea.Cmd {
 	}
 	if m.rep != nil {
 		m.replayKey(msg.String())
-		if m.playing {
+		if m.playing || m.gliding {
 			return m.tick()
 		}
 	}

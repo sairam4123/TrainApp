@@ -1,0 +1,826 @@
+{
+  "version": 1,
+  "defaults": {
+    "switch_kmph": 30,
+    "switch_length_m": 100,
+    "platform_kmph": 50,
+    "platform_length_m": 800,
+    "route_kmph": 110
+  },
+  "points": [
+    {
+      "id": "kkdiBp0",
+      "stn": "KKDI",
+      "type": "Bp",
+      "seq": "0"
+    },
+    {
+      "id": "kkdiBp1",
+      "stn": "KKDI",
+      "type": "Bp",
+      "seq": "1"
+    },
+    {
+      "id": "kkdiBp2",
+      "stn": "KKDI",
+      "type": "Bp",
+      "seq": "2"
+    },
+    {
+      "id": "kkdiBp3",
+      "stn": "KKDI",
+      "type": "Bp",
+      "seq": "3"
+    },
+    {
+      "id": "kkdiPf1E",
+      "stn": "KKDI",
+      "type": "Pf",
+      "seq": "1",
+      "other": "E",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "kkdiPf1S",
+      "stn": "KKDI",
+      "type": "Pf",
+      "seq": "1",
+      "other": "S"
+    },
+    {
+      "id": "kkdiPf2E",
+      "stn": "KKDI",
+      "type": "Pf",
+      "seq": "2",
+      "other": "E",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "kkdiPf2S",
+      "stn": "KKDI",
+      "type": "Pf",
+      "seq": "2",
+      "other": "S"
+    },
+    {
+      "id": "kkdiPf3E",
+      "stn": "KKDI",
+      "type": "Pf",
+      "seq": "3",
+      "other": "E",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "kkdiPf3S",
+      "stn": "KKDI",
+      "type": "Pf",
+      "seq": "3",
+      "other": "S"
+    },
+    {
+      "id": "kkdiPf4E",
+      "stn": "KKDI",
+      "type": "Pf",
+      "seq": "4",
+      "other": "E",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "kkdiPf4S",
+      "stn": "KKDI",
+      "type": "Pf",
+      "seq": "4",
+      "other": "S"
+    },
+    {
+      "id": "pdktBp0",
+      "stn": "PDKT",
+      "type": "Bp",
+      "seq": "0"
+    },
+    {
+      "id": "pdktBp1",
+      "stn": "PDKT",
+      "type": "Bp",
+      "seq": "1"
+    },
+    {
+      "id": "pdktBp2",
+      "stn": "PDKT",
+      "type": "Bp",
+      "seq": "2"
+    },
+    {
+      "id": "pdktBp3",
+      "stn": "PDKT",
+      "type": "Bp",
+      "seq": "3"
+    },
+    {
+      "id": "pdktPf1E",
+      "stn": "PDKT",
+      "type": "Pf",
+      "seq": "1",
+      "other": "E"
+    },
+    {
+      "id": "pdktPf1S",
+      "stn": "PDKT",
+      "type": "Pf",
+      "seq": "1",
+      "other": "S"
+    },
+    {
+      "id": "pdktPf2E",
+      "stn": "PDKT",
+      "type": "Pf",
+      "seq": "2",
+      "other": "E"
+    },
+    {
+      "id": "pdktPf2S",
+      "stn": "PDKT",
+      "type": "Pf",
+      "seq": "2",
+      "other": "S"
+    },
+    {
+      "id": "pdktPf3E",
+      "stn": "PDKT",
+      "type": "Pf",
+      "seq": "3",
+      "other": "E"
+    },
+    {
+      "id": "pdktPf3S",
+      "stn": "PDKT",
+      "type": "Pf",
+      "seq": "3",
+      "other": "S"
+    },
+    {
+      "id": "pdktPf4E",
+      "stn": "PDKT",
+      "type": "Pf",
+      "seq": "4",
+      "other": "E"
+    },
+    {
+      "id": "pdktPf4S",
+      "stn": "PDKT",
+      "type": "Pf",
+      "seq": "4",
+      "other": "S"
+    },
+    {
+      "id": "tpjBp0",
+      "stn": "TPJ",
+      "type": "Bp",
+      "seq": "0"
+    },
+    {
+      "id": "tpjBp1",
+      "stn": "TPJ",
+      "type": "Bp",
+      "seq": "1"
+    },
+    {
+      "id": "tpjBp2",
+      "stn": "TPJ",
+      "type": "Bp",
+      "seq": "2"
+    },
+    {
+      "id": "tpjBp3",
+      "stn": "TPJ",
+      "type": "Bp",
+      "seq": "3"
+    },
+    {
+      "id": "tpjPf1E",
+      "stn": "TPJ",
+      "type": "Pf",
+      "seq": "1",
+      "other": "E"
+    },
+    {
+      "id": "tpjPf1S",
+      "stn": "TPJ",
+      "type": "Pf",
+      "seq": "1",
+      "other": "S",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "tpjPf2E",
+      "stn": "TPJ",
+      "type": "Pf",
+      "seq": "2",
+      "other": "E"
+    },
+    {
+      "id": "tpjPf2S",
+      "stn": "TPJ",
+      "type": "Pf",
+      "seq": "2",
+      "other": "S",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "tpjPf3E",
+      "stn": "TPJ",
+      "type": "Pf",
+      "seq": "3",
+      "other": "E"
+    },
+    {
+      "id": "tpjPf3S",
+      "stn": "TPJ",
+      "type": "Pf",
+      "seq": "3",
+      "other": "S",
+      "dead_end": true,
+      "boundary": true
+    },
+    {
+      "id": "tpjPf4E",
+      "stn": "TPJ",
+      "type": "Pf",
+      "seq": "4",
+      "other": "E"
+    },
+    {
+      "id": "tpjPf4S",
+      "stn": "TPJ",
+      "type": "Pf",
+      "seq": "4",
+      "other": "S",
+      "dead_end": true,
+      "boundary": true
+    }
+  ],
+  "tracks": [
+    {
+      "id": "kkdiBp0-kkdiBp2",
+      "from": "kkdiBp0",
+      "to": "kkdiBp2",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "kkdiBp0-kkdiBp3",
+      "from": "kkdiBp0",
+      "to": "kkdiBp3",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "kkdiBp0-pdktBp2",
+      "name": "bsPdktKkdi0",
+      "from": "pdktBp2",
+      "to": "kkdiBp0",
+      "length_m": 41000,
+      "max_kmph": 110
+    },
+    {
+      "id": "kkdiBp1-kkdiBp2",
+      "from": "kkdiBp1",
+      "to": "kkdiBp2",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "kkdiBp1-kkdiBp3",
+      "from": "kkdiBp1",
+      "to": "kkdiBp3",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "kkdiBp1-pdktBp3",
+      "name": "bsKkdiPdkt0",
+      "from": "pdktBp3",
+      "to": "kkdiBp1",
+      "length_m": 41000,
+      "max_kmph": 110
+    },
+    {
+      "id": "kkdiBp2-kkdiPf1S",
+      "from": "kkdiBp2",
+      "to": "kkdiPf1S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "kkdiBp2-kkdiPf2S",
+      "from": "kkdiBp2",
+      "to": "kkdiPf2S",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "kkdiBp3-kkdiPf3S",
+      "from": "kkdiBp3",
+      "to": "kkdiPf3S",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "kkdiBp3-kkdiPf4S",
+      "from": "kkdiBp3",
+      "to": "kkdiPf4S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "kkdiPf1E-kkdiPf1S",
+      "name": "kkdiPf1",
+      "from": "kkdiPf1S",
+      "to": "kkdiPf1E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "kkdiPf2E-kkdiPf2S",
+      "name": "kkdiPf2",
+      "from": "kkdiPf2S",
+      "to": "kkdiPf2E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "kkdiPf3E-kkdiPf3S",
+      "name": "kkdiPf3",
+      "from": "kkdiPf3S",
+      "to": "kkdiPf3E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "kkdiPf4E-kkdiPf4S",
+      "name": "kkdiPf4",
+      "from": "kkdiPf4S",
+      "to": "kkdiPf4E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "pdktBp0-pdktPf1S",
+      "from": "pdktBp0",
+      "to": "pdktPf1S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "pdktBp0-pdktPf2S",
+      "from": "pdktBp0",
+      "to": "pdktPf2S",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "pdktBp0-tpjBp2",
+      "name": "bsTpjPdkt0",
+      "from": "tpjBp2",
+      "to": "pdktBp0",
+      "length_m": 55000,
+      "max_kmph": 110
+    },
+    {
+      "id": "pdktBp1-pdktPf3S",
+      "from": "pdktBp1",
+      "to": "pdktPf3S",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "pdktBp1-pdktPf4S",
+      "from": "pdktBp1",
+      "to": "pdktPf4S",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "pdktBp1-tpjBp3",
+      "name": "bsPdktTpj0",
+      "from": "tpjBp3",
+      "to": "pdktBp1",
+      "length_m": 55000,
+      "max_kmph": 110
+    },
+    {
+      "id": "pdktBp2-pdktPf1E",
+      "from": "pdktPf1E",
+      "to": "pdktBp2",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "pdktBp2-pdktPf2E",
+      "from": "pdktPf2E",
+      "to": "pdktBp2",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "pdktBp3-pdktPf3E",
+      "from": "pdktPf3E",
+      "to": "pdktBp3",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "pdktBp3-pdktPf4E",
+      "from": "pdktPf4E",
+      "to": "pdktBp3",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "pdktPf1E-pdktPf1S",
+      "name": "pdktPf1",
+      "from": "pdktPf1S",
+      "to": "pdktPf1E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "pdktPf2E-pdktPf2S",
+      "name": "pdktPf2",
+      "from": "pdktPf2S",
+      "to": "pdktPf2E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "pdktPf3E-pdktPf3S",
+      "name": "pdktPf3",
+      "from": "pdktPf3S",
+      "to": "pdktPf3E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "pdktPf4E-pdktPf4S",
+      "name": "pdktPf4",
+      "from": "pdktPf4S",
+      "to": "pdktPf4E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "tpjBp0-tpjBp2",
+      "from": "tpjBp0",
+      "to": "tpjBp2",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "tpjBp0-tpjBp3",
+      "from": "tpjBp0",
+      "to": "tpjBp3",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "tpjBp0-tpjPf1E",
+      "from": "tpjPf1E",
+      "to": "tpjBp0",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": 1
+    },
+    {
+      "id": "tpjBp0-tpjPf2E",
+      "from": "tpjPf2E",
+      "to": "tpjBp0",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "tpjBp1-tpjBp2",
+      "from": "tpjBp1",
+      "to": "tpjBp2",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "tpjBp1-tpjBp3",
+      "from": "tpjBp1",
+      "to": "tpjBp3",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "tpjBp1-tpjPf3E",
+      "from": "tpjPf3E",
+      "to": "tpjBp1",
+      "length_m": 100,
+      "max_kmph": 110
+    },
+    {
+      "id": "tpjBp1-tpjPf4E",
+      "from": "tpjPf4E",
+      "to": "tpjBp1",
+      "length_m": 100,
+      "max_kmph": 30,
+      "lanes": -1
+    },
+    {
+      "id": "tpjPf1E-tpjPf1S",
+      "name": "tpjPf1",
+      "from": "tpjPf1S",
+      "to": "tpjPf1E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "tpjPf2E-tpjPf2S",
+      "name": "tpjPf2",
+      "from": "tpjPf2S",
+      "to": "tpjPf2E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "tpjPf3E-tpjPf3S",
+      "name": "tpjPf3",
+      "from": "tpjPf3S",
+      "to": "tpjPf3E",
+      "length_m": 800,
+      "max_kmph": 50
+    },
+    {
+      "id": "tpjPf4E-tpjPf4S",
+      "name": "tpjPf4",
+      "from": "tpjPf4S",
+      "to": "tpjPf4E",
+      "length_m": 800,
+      "max_kmph": 50
+    }
+  ],
+  "switches": [
+    {
+      "id": "tpjSw0",
+      "tracks": [
+        "tpjBp0-tpjPf2E",
+        "tpjBp0-tpjPf1E"
+      ],
+      "default": "tpjBp0-tpjPf2E"
+    },
+    {
+      "id": "tpjSw1",
+      "tracks": [
+        "tpjBp1-tpjPf3E",
+        "tpjBp1-tpjPf4E"
+      ],
+      "default": "tpjBp1-tpjPf3E"
+    },
+    {
+      "id": "tpjDp0",
+      "tracks": [
+        "tpjBp0-tpjBp3",
+        "tpjBp1-tpjBp2"
+      ],
+      "default": "tpjBp0-tpjBp3"
+    },
+    {
+      "id": "tpjSw0A",
+      "tracks": [
+        "tpjBp0-tpjBp2",
+        "tpjBp0-tpjBp3"
+      ],
+      "default": "tpjBp0-tpjBp2"
+    },
+    {
+      "id": "tpjSw0B",
+      "tracks": [
+        "tpjBp1-tpjBp3",
+        "tpjBp0-tpjBp3"
+      ],
+      "default": "tpjBp1-tpjBp3"
+    },
+    {
+      "id": "tpjSw1A",
+      "tracks": [
+        "tpjBp1-tpjBp3",
+        "tpjBp1-tpjBp2"
+      ],
+      "default": "tpjBp1-tpjBp3"
+    },
+    {
+      "id": "tpjSw1B",
+      "tracks": [
+        "tpjBp0-tpjBp2",
+        "tpjBp1-tpjBp2"
+      ],
+      "default": "tpjBp0-tpjBp2"
+    },
+    {
+      "id": "pdktSw0",
+      "tracks": [
+        "pdktBp0-pdktPf2S",
+        "pdktBp0-pdktPf1S"
+      ],
+      "default": "pdktBp0-pdktPf2S"
+    },
+    {
+      "id": "pdktSw1",
+      "tracks": [
+        "pdktBp1-pdktPf3S",
+        "pdktBp1-pdktPf4S"
+      ],
+      "default": "pdktBp1-pdktPf3S"
+    },
+    {
+      "id": "pdktSw2",
+      "tracks": [
+        "pdktBp2-pdktPf2E",
+        "pdktBp2-pdktPf1E"
+      ],
+      "default": "pdktBp2-pdktPf2E"
+    },
+    {
+      "id": "pdktSw3",
+      "tracks": [
+        "pdktBp3-pdktPf3E",
+        "pdktBp3-pdktPf4E"
+      ],
+      "default": "pdktBp3-pdktPf3E"
+    },
+    {
+      "id": "kkdiSw0",
+      "tracks": [
+        "kkdiBp2-kkdiPf2S",
+        "kkdiBp2-kkdiPf1S"
+      ],
+      "default": "kkdiBp2-kkdiPf2S"
+    },
+    {
+      "id": "kkdiSw1",
+      "tracks": [
+        "kkdiBp3-kkdiPf3S",
+        "kkdiBp3-kkdiPf4S"
+      ],
+      "default": "kkdiBp3-kkdiPf3S"
+    },
+    {
+      "id": "kkdiDp0",
+      "tracks": [
+        "kkdiBp0-kkdiBp3",
+        "kkdiBp1-kkdiBp2"
+      ],
+      "default": "kkdiBp0-kkdiBp3"
+    },
+    {
+      "id": "kkdiSw0A",
+      "tracks": [
+        "kkdiBp0-kkdiBp2",
+        "kkdiBp0-kkdiBp3"
+      ],
+      "default": "kkdiBp0-kkdiBp2"
+    },
+    {
+      "id": "kkdiSw0B",
+      "tracks": [
+        "kkdiBp1-kkdiBp3",
+        "kkdiBp0-kkdiBp3"
+      ],
+      "default": "kkdiBp1-kkdiBp3"
+    },
+    {
+      "id": "kkdiSw1A",
+      "tracks": [
+        "kkdiBp1-kkdiBp3",
+        "kkdiBp1-kkdiBp2"
+      ],
+      "default": "kkdiBp1-kkdiBp3"
+    },
+    {
+      "id": "kkdiSw1B",
+      "tracks": [
+        "kkdiBp0-kkdiBp2",
+        "kkdiBp1-kkdiBp2"
+      ],
+      "default": "kkdiBp0-kkdiBp2"
+    }
+  ],
+  "signals": [
+    {
+      "id": "kkdiSig0",
+      "at": "kkdiBp0",
+      "facing": "pdktBp2"
+    },
+    {
+      "id": "pdktSig0",
+      "at": "pdktBp0",
+      "facing": "tpjBp2"
+    },
+    {
+      "id": "pdktSig1",
+      "at": "pdktBp3",
+      "facing": "kkdiBp1"
+    },
+    {
+      "id": "tpjSig0",
+      "at": "tpjBp3",
+      "facing": "pdktBp1"
+    }
+  ],
+  "stations": [
+    {
+      "code": "KKDI",
+      "name": "Karaikudi Jn",
+      "platforms": [
+        {
+          "no": "1",
+          "track": "kkdiPf1E-kkdiPf1S",
+          "length_m": 600
+        },
+        {
+          "no": "2",
+          "track": "kkdiPf2E-kkdiPf2S",
+          "length_m": 600
+        },
+        {
+          "no": "3",
+          "track": "kkdiPf3E-kkdiPf3S",
+          "length_m": 600
+        },
+        {
+          "no": "4",
+          "track": "kkdiPf4E-kkdiPf4S",
+          "length_m": 600
+        }
+      ]
+    },
+    {
+      "code": "PDKT",
+      "name": "Pudukkottai",
+      "platforms": [
+        {
+          "no": "1",
+          "track": "pdktPf1E-pdktPf1S",
+          "length_m": 600
+        },
+        {
+          "no": "2",
+          "track": "pdktPf2E-pdktPf2S",
+          "length_m": 600
+        },
+        {
+          "no": "3",
+          "track": "pdktPf3E-pdktPf3S",
+          "length_m": 600
+        },
+        {
+          "no": "4",
+          "track": "pdktPf4E-pdktPf4S",
+          "length_m": 600
+        }
+      ]
+    },
+    {
+      "code": "TPJ",
+      "name": "Tiruchy Jn",
+      "platforms": [
+        {
+          "no": "1",
+          "track": "tpjPf1E-tpjPf1S",
+          "length_m": 600
+        },
+        {
+          "no": "2",
+          "track": "tpjPf2E-tpjPf2S",
+          "length_m": 600
+        },
+        {
+          "no": "3",
+          "track": "tpjPf3E-tpjPf3S",
+          "length_m": 600
+        },
+        {
+          "no": "4",
+          "track": "tpjPf4E-tpjPf4S",
+          "length_m": 600
+        }
+      ]
+    }
+  ]
+}

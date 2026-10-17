@@ -459,3 +459,50 @@ func TestTrainsAreColouredByClass(t *testing.T) {
 		t.Error("the key does not list the highest priority first")
 	}
 }
+
+// Following a train, the view glides after it, never moving much further
+// in a tick than the train itself does, rather than jumping to re-centre it;
+// and the train stays on the pane.
+func TestFollowGlides(t *testing.T) {
+	hello, msgs := recording(t)
+	d, err := schematic.Build(&hello.World)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := newModel(d, newReplay(hello, msgs))
+	m.Update(tea.WindowSizeMsg{Width: 80, Height: 30})
+	press(m, "+", "+", "+", "tab", "f", "space") // zoomed in, so the line is wider than the pane
+	if m.frame.Width() <= 80 {
+		t.Fatalf("frame %d wide: the test needs it wider than the pane", m.frame.Width())
+	}
+	pw, _ := m.pane()
+	now, followed := m.lastTick, 0
+	maxView, maxTrain, lastX := 0, 0, -1
+	for range 3000 {
+		now = now.Add(tickEvery)
+		was := m.x
+		m.Update(tickMsg(now))
+		x, _, ok := m.frame.Train("0451U")
+		if !ok {
+			lastX = -1
+			continue
+		}
+		followed++
+		if x < m.x || x >= m.x+pw {
+			t.Fatalf("t=%.2f: 0451U at column %d, off the pane %d-%d", m.rep.t, x, m.x, m.x+pw-1)
+		}
+		if lastX >= 0 {
+			maxView, maxTrain = max(maxView, abs(m.x-was)), max(maxTrain, abs(x-lastX))
+		}
+		lastX = x
+	}
+	if followed < 100 {
+		t.Fatalf("followed 0451U for only %d ticks", followed)
+	}
+	t.Logf("largest step: view %d cells, train %d, pane %d", maxView, maxTrain, pw)
+	if maxView > maxTrain+2 {
+		t.Errorf("the view jumped %d cells in a tick, the train at most %d", maxView, maxTrain)
+	}
+}
+
+func abs(n int) int { return max(n, -n) }

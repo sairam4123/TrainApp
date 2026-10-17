@@ -70,7 +70,7 @@ func (t *Train) Clone() *Train {
 	for _, sp := range t.schedule {
 		cp := *sp
 		cp.ActArrTime, cp.ActDeptTime, cp.ActPfNo = -1, -1, ""
-		cp.SignalStops, cp.WaitedFor = nil, ids.TrainID{}
+		cp.SignalStops, cp.Via, cp.WaitedFor = nil, nil, ids.TrainID{}
 		c.schedule = append(c.schedule, &cp)
 	}
 	return c

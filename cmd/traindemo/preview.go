@@ -1,8 +1,10 @@
 package main
 
 import (
+	"cmp"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"trainapp/railway/ops"
 	"trainapp/railway/scenario"
@@ -17,23 +19,45 @@ import (
 type diagramPreview struct {
 	lines []string
 	width int
+	err   error
 }
 
-// schedulePreview is a scenario's trains, a row each.
+// schedulePreview is a scenario's trains, and their classes.
 type schedulePreview struct {
-	header string
-	rows   []string
+	trains   []trainRow
+	classes  []string          // lowest priority first
+	priority map[string]int    // each class's base priority, if the profile gives one
+	color    map[string]string // by class
+	err      error
+}
+
+// trainRow is what the schedule table shows of a train.
+type trainRow struct {
+	number, class string
+	entry         string // HH:MM, or "—" if the schedule gives none
+	from, to      string
+	stops         []string // where it stops on the way, and for how long, e.g. "PDKT 2m"
+	passes        int
+	disruptions   []string // what happens to it, in words
+	points        []*ops.SchedulePoint
+	hits          []ops.Disruption
+}
+
+// profile is a profile file, read once.
+type profile struct {
+	cfg *sim.PriorityConfig
+	err error
 }
 
 // previews builds each preview the first time it is shown and keeps it.
 type previews struct {
 	diagrams  map[string]*diagramPreview  // by world and level
 	schedules map[string]*schedulePreview // by scenario file
-	rules     map[string]string           // the profile's rule, by profile file
+	profiles  map[string]*profile         // by profile file
 }
 
 func newPreviews() *previews {
-	return &previews{diagrams: map[string]*diagramPreview{}, schedules: map[string]*schedulePreview{}, rules: map[string]string{}}
+	return &previews{diagrams: map[string]*diagramPreview{}, schedules: map[string]*schedulePreview{}, profiles: map[string]*profile{}}
 }
 
 func (p *previews) diagram(sc *scenario.Scenario, level schematic.Level) *diagramPreview {
@@ -42,11 +66,7 @@ func (p *previews) diagram(sc *scenario.Scenario, level schematic.Level) *diagra
 		return d
 	}
 	d := &diagramPreview{}
-	if lines, err := drawWorld(sc.WorldName(), level); err != nil {
-		d.lines = []string{failed.Render(" no preview: " + err.Error())}
-	} else {
-		d.lines = lines
-	}
+	d.lines, d.err = drawWorld(sc.WorldName(), level)
 	for _, line := range d.lines {
 		d.width = max(d.width, ansi.StringWidth(line))
 	}
@@ -54,6 +74,7 @@ func (p *previews) diagram(sc *scenario.Scenario, level schematic.Level) *diagra
 	return d
 }
 
+// drawWorld draws the world, less any blank lines at the top and bottom.
 func drawWorld(name string, level schematic.Level) ([]string, error) {
 	w, err := worlds.Load(name)
 	if err != nil {
@@ -63,99 +84,130 @@ func drawWorld(name string, level schematic.Level) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return d.Render(schematic.Options{Level: level, Zoom: 1, Color: true}), nil
+	lines := d.Render(schematic.Options{Level: level, Zoom: 1, Color: true})
+	blank := func(s string) bool { return strings.TrimSpace(ansi.Strip(s)) == "" }
+	for len(lines) > 0 && blank(lines[0]) {
+		lines = lines[1:]
+	}
+	for len(lines) > 0 && blank(lines[len(lines)-1]) {
+		lines = lines[:len(lines)-1]
+	}
+	return lines, nil
+}
+
+func (p *previews) profile(sc *scenario.Scenario) *profile {
+	path := sc.ProfilePath()
+	if pr, ok := p.profiles[path]; ok {
+		return pr
+	}
+	pr := &profile{}
+	if path != "" {
+		pr.cfg, pr.err = sim.LoadPriorityConfig(path)
+	}
+	p.profiles[path] = pr
+	return pr
 }
 
 func (p *previews) schedule(sc *scenario.Scenario) *schedulePreview {
 	if s, ok := p.schedules[sc.Path]; ok {
 		return s
 	}
-	s := &schedulePreview{header: fmt.Sprintf(" %-6s %-18s %5s  %-11s %-18s %s", "train", "class", "entry", "route", "disruption", "stops")}
-	if trains, err := ops.LoadTrains(sc.SchedulePath()); err != nil {
-		s.rows = []string{failed.Render(" no schedule: " + err.Error())}
+	s := &schedulePreview{}
+	trains, err := ops.LoadTrains(sc.SchedulePath())
+	if err != nil {
+		s.err = err
 	} else {
-		s.rows = scheduleRows(trains, sc.Disruptions)
+		s.trains = trainRows(trains, sc.Disruptions)
+		s.priority = map[string]int{}
+		if cfg := p.profile(sc).cfg; cfg != nil {
+			for _, t := range s.trains {
+				if pri, ok := cfg.Classes[t.class]; ok {
+					s.priority[t.class] = pri
+				}
+			}
+		}
+		s.classes, s.color = classColors(s.trains, s.priority)
 	}
 	p.schedules[sc.Path] = s
 	return s
 }
 
-// scheduleRows is a row per train: its class, when it enters, where from
-// and to, any disruption to it and where it stops on the way.
-func scheduleRows(trains []*ops.Train, disruptions []ops.Disruption) []string {
-	hit := map[string][]string{}
+// trainRows is a row per train: its class, when it enters, where from and
+// to, where it stops on the way and any disruption to it.
+func trainRows(trains []*ops.Train, disruptions []ops.Disruption) []trainRow {
+	hit := map[string][]ops.Disruption{}
 	for _, d := range disruptions {
-		text := fmt.Sprintf("late +%g", d.Min)
-		if d.Kind == ops.DisruptStand {
-			text = fmt.Sprintf("stand %s +%g", d.Stn, d.Min)
-		}
-		hit[d.Train] = append(hit[d.Train], text)
+		hit[d.Train] = append(hit[d.Train], d)
 	}
-	var rows []string
+	var rows []trainRow
 	for _, t := range trains {
 		points := t.Schedule()
 		if len(points) == 0 {
 			continue
 		}
 		first, last := points[0], points[len(points)-1]
-		entry := "—"
-		if first.ArrTime >= 0 {
-			entry = clock(first.ArrTime)
+		r := trainRow{number: t.Number, class: t.Class, entry: "—", from: string(first.StnCode), to: string(last.StnCode), points: points, hits: hit[t.Number]}
+		for _, d := range r.hits {
+			r.disruptions = append(r.disruptions, disruptionText(d, true))
 		}
-		var stops []string
-		passes := 0
+		if first.ArrTime >= 0 {
+			r.entry = clock(first.ArrTime)
+		}
 		for _, sp := range points[1 : len(points)-1] {
 			if sp.IsPass() {
-				passes++
+				r.passes++
+			} else if sp.DwellTime > 0 {
+				r.stops = append(r.stops, fmt.Sprintf("%s %gm", sp.StnCode, sp.DwellTime))
 			} else {
-				stops = append(stops, string(sp.StnCode))
+				r.stops = append(r.stops, string(sp.StnCode))
 			}
 		}
-		calls := strings.Join(stops, " ")
-		if passes > 0 {
-			calls += dim.Render(fmt.Sprintf(" (+%d passes)", passes))
-		}
-		dis := fit("", 18)
-		if h := hit[t.Number]; len(h) > 0 {
-			dis = amber.Render(fit(strings.Join(h, ", "), 18))
-		}
-		rows = append(rows, fmt.Sprintf(" %-6s %-18s %5s  %-11s ", t.Number, ansi.Truncate(t.Class, 18, "…"), entry,
-			first.StnCode+"→"+last.StnCode)+dis+" "+calls)
+		rows = append(rows, r)
 	}
 	return rows
+}
+
+// disruptionText says what a disruption does, e.g. "stand PDKT +30", or
+// "stand +30" without the station.
+func disruptionText(d ops.Disruption, stn bool) string {
+	if d.Kind != ops.DisruptStand {
+		return fmt.Sprintf("late +%g", d.Min)
+	}
+	if stn {
+		return fmt.Sprintf("stand %s +%g", d.Stn, d.Min)
+	}
+	return fmt.Sprintf("stand +%g", d.Min)
+}
+
+// palette colours the classes from the lowest priority to the highest: blue
+// to red, leaving out amber, as trainviz does.
+var palette = []string{"27", "39", "44", "42", "113", "149", "141", "177", "169", "203"}
+
+// classColors ranks the trains' classes by their priority in the profile,
+// then by name, and spreads the palette over them, as trainviz does.
+func classColors(rows []trainRow, priority map[string]int) ([]string, map[string]string) {
+	var classes []string
+	for _, r := range rows {
+		if r.class != "" && !slices.Contains(classes, r.class) {
+			classes = append(classes, r.class)
+		}
+	}
+	slices.SortFunc(classes, func(a, b string) int {
+		return cmp.Or(cmp.Compare(priority[a], priority[b]), cmp.Compare(a, b))
+	})
+	out := map[string]string{}
+	for i, c := range classes {
+		k := len(palette) - 1
+		if n := len(classes); n > 1 {
+			k = int(math.Round(float64(i) / float64(n-1) * float64(len(palette)-1)))
+		}
+		out[c] = palette[k]
+	}
+	return classes, out
 }
 
 // clock shows minutes from 0 as HH:MM, as trainviz does.
 func clock(t float64) string {
 	mins := int(math.Round(t))
 	return fmt.Sprintf("%02d:%02d", mins/60, mins%60)
-}
-
-// ruleText says which precedence rule a run will use.
-func (p *previews) ruleText(sc *scenario.Scenario, rule string) string {
-	switch rule {
-	case "":
-	case scenario.RuleOff:
-		return "off (no precedence)"
-	default:
-		return rule
-	}
-	path := sc.ProfilePath()
-	if path == "" {
-		return "profile's: none, no profile"
-	}
-	if text, ok := p.rules[path]; ok {
-		return text
-	}
-	text := "profile's: "
-	switch cfg, err := sim.LoadPriorityConfig(path); {
-	case err != nil:
-		text += "? (" + err.Error() + ")"
-	case cfg.Precedence == nil:
-		text += "off"
-	default:
-		text += valueOr(cfg.Precedence.Rule, "thresholds") // the sim's default
-	}
-	p.rules[path] = text
-	return text
 }

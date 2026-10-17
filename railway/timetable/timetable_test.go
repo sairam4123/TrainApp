@@ -388,6 +388,24 @@ func TestRoundKeepsMeetingsJustOutsideTheStand(t *testing.T) {
 	}
 }
 
+func TestNoMeetingOnTheSameTrack(t *testing.T) {
+	// H gets to Y just after L has left, onto the track L stood on: it waited
+	// for L's track, so L cannot have waited for it. Held until H arrived, L
+	// would keep H out for good
+	tt := meetingTimetable()
+	tt.Trains[0].Points[1].Pf = "1"
+	tt.Trains[0].Points[1].Arr, tt.Trains[0].Points[1].Dep = 21.2, 21.2
+	tt = timetable.Round(tt, timetable.Config{RoundingMin: 1})
+	if l := pointAt(t, tt, "L", "Y"); l.Dep != 21 {
+		t.Errorf("L dep Y = %v, want 21 (20.3 rounded up, not moved on for H)", l.Dep)
+	}
+	for _, o := range tt.PlanOverrides() {
+		if o.Train == "L" && o.Action == sim.OverrideHold {
+			t.Errorf("L is held (%+v) for a train that needs its track", o)
+		}
+	}
+}
+
 func TestRoundKeepsATrainBehindTheOneItFollows(t *testing.T) {
 	// G stands at Y until F, which passed Y before G got there, is clear of
 	// the line to Z. F's departure from X is rounded up by 0.95, so G's from

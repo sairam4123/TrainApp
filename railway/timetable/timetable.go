@@ -49,8 +49,9 @@ type Config struct {
 	RoundingMin float64 `json:"rounding_min"`
 	// RecoveryPct is added to every running time before rounding.
 	RecoveryPct float64 `json:"recovery_pct"`
-	// HaltMin is how long a train must stand past its dwell (or at a pass
-	// point) to count as halted.
+	// HaltMin is how long a train must stand at a pass point, or past its
+	// dwell at a stop for no other train, to count as halted. At a stop, any
+	// wait for another train counts (see haltNoiseMin).
 	HaltMin float64 `json:"halt_min"`
 	// CheckToleranceMin is how late a train may run in the check run.
 	CheckToleranceMin float64 `json:"check_tolerance_min"`
@@ -151,6 +152,19 @@ type Point struct {
 	Halt *Halt `json:"halt,omitempty"`
 	// SignalStops are the stops at signals on the way here.
 	SignalStops []SignalStop `json:"signal_stops,omitempty"`
+	// Via are the line and throat tracks the train ran over from the
+	// previous point. Round keeps the order of trains on each; a timetable
+	// without them keeps it on platforms only.
+	Via []Via `json:"via,omitempty"`
+}
+
+// Via is a track a train ran over between two points, by id: its front
+// entered it at In and its rear left it at Out. In a rounded timetable they
+// are moved on with the train's departure from the point before.
+type Via struct {
+	Track string  `json:"track"`
+	In    float64 `json:"in"`
+	Out   float64 `json:"out"`
 }
 
 // Reached reports whether the train got to the point.
@@ -198,6 +212,9 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 			} else {
 				p.MinDwell = minDwell(sp, s.MinStop())
 			}
+			for _, v := range sp.Via {
+				p.Via = append(p.Via, Via{Track: v.Track, In: v.In, Out: v.Out})
+			}
 			for _, ss := range sp.SignalStops {
 				// most stops are only a signal handing over to the next
 				if ss.To >= 0 && ss.To-ss.From <= cfg.HaltMin {
@@ -217,12 +234,17 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 					due += entryRun(s.World(), t, sp)
 				}
 				due += max(float64(sp.ExpDwellTime(due, s.MinStop())), des.MinDeltaTime)
-				if extra := sp.ActDeptTime - due; extra > cfg.HaltMin {
+				// at a stop, a wait for another train is a halt however
+				// short; Round times it a full step
+				extra := sp.ActDeptTime - due
+				if extra > cfg.HaltMin || (p.Kind == KindStop && extra > haltNoiseMin) {
 					h := c.classify(t, k, max(due, sp.ActArrTime), sp.ActDeptTime)
-					h.Min = extra
-					p.Halt = &h
-					if p.Kind == KindPass {
-						p.Kind = KindHalt
+					if extra > cfg.HaltMin || (h.For != "" && h.For != t.Number) {
+						h.Min = extra
+						p.Halt = &h
+						if p.Kind == KindPass {
+							p.Kind = KindHalt
+						}
 					}
 				}
 			}
@@ -247,6 +269,10 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 	}
 	return tt
 }
+
+// haltNoiseMin is how long past its dwell a train may leave a stop for no
+// more than the hops between events (des.MinDeltaTime) that take it off.
+const haltNoiseMin = 0.01
 
 // minDwell is the shortest the train has to stand at a stop: its own minimum
 // dwell, and at a call (not a halt) the sim's minimum stop.
@@ -318,29 +344,54 @@ func (tt Timetable) TimedTrains() []*ops.Train {
 
 // PlanOverrides are the run's decisions as precedence overrides, for running
 // the timetable again: every train pinned to the track it used at each point,
-// and every crossing and overtake at a station kept: a train that stood there
-// for one is held until the other has reached the station (a crossing) or
-// left it (an overtake). Without them a run of the timed trains decides
-// precedence afresh from the new times, and can meet trains elsewhere than
-// the timetable has them meet. Points TimedTrains leaves out are left out
-// here too.
+// and the order of trains on each track between points kept (see orders) by
+// holding the second at its stop or halt before the track. One from the other
+// way is waited for until it has arrived there; one the same way that
+// overtakes it there until it has left. One the same way already gone needs
+// no hold: the line ahead keeps the train back. Without them a run of the
+// timed trains decides precedence afresh from the new times, and can meet
+// trains elsewhere than the timetable has them meet. Points TimedTrains leaves
+// out are left out here too.
 func (tt Timetable) PlanOverrides() []sim.Override {
 	var out []sim.Override
-	for i, tr := range tt.Trains {
-		for k, p := range tr.Points {
+	for _, tr := range tt.Trains {
+		for _, p := range tr.Points {
 			if !p.Reached() || p.Dep < 0 {
 				break // as TimedTrains
 			}
 			if p.Pf != "" {
 				out = append(out, sim.Override{Action: sim.OverridePlatform, Train: tr.Number, Station: p.Stn, Pf: p.Pf})
 			}
-			// a technical halt needs no hold: the line ahead keeps the train
-			// back until the other has gone
-			// nor does one it follows out from elsewhere: the line ahead
-			// keeps it back
-			if j, kj, arrival, ok := meeting(tt, i, k, tt.RoundingMin); ok && p.Halt.Reason != ReasonTechnical && tt.Trains[j].Points[kj].Stn == p.Stn {
-				out = append(out, sim.Override{Action: sim.OverrideHold, Train: tr.Number, For: p.Halt.For, Station: p.Stn, Until: holdUntil(arrival)})
-			}
+		}
+	}
+	seen := map[sim.Override]bool{}
+	for _, o := range orders(tt) {
+		if !o.track {
+			continue
+		}
+		f, l := o.follow.take, o.lead.free // its departure, the other's arrival
+		fp, lps := tt.Trains[f.i].Points[f.k], tt.Trains[l.i].Points
+		if fp.Kind == KindPass {
+			continue // a pass is not held
+		}
+		h := sim.Override{Action: sim.OverrideHold, Train: tt.Trains[f.i].Number, For: tt.Trains[l.i].Number, Station: fp.Stn}
+		// only what the timetable has happen by the train's departure, give
+		// or take the gap Round keeps: the track may be at the far end of
+		// the way, freed long before the other gets to the station
+		due := fp.Dep + tt.RoundingMin + platformRunMin
+		switch {
+		case lps[l.k].Stn == fp.Stn && lps[l.k].Arr <= due:
+			// from the other way, to where the train stands
+			h.Until = sim.HoldUntilArrived
+		case l.k > 0 && lps[l.k-1].Stn == fp.Stn && lps[l.k-1].Arr >= fp.Arr && lps[l.k-1].Dep <= due:
+			// the same way, overtaking it there
+			h.Until = sim.HoldUntilLeft
+		default:
+			continue
+		}
+		if !seen[h] {
+			seen[h] = true
+			out = append(out, h)
 		}
 	}
 	return out

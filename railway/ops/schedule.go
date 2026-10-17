@@ -39,9 +39,22 @@ type SchedulePoint struct {
 	// SignalStops are the stops at signals on the way to this point.
 	SignalStops []SignalStop
 
+	// Via are the line and throat tracks the train ran over from its
+	// previous point to this one, in order: every track it entered on the
+	// way but the two stations' platform tracks.
+	Via []ViaTrack
+
 	// WaitedFor is the train whose leaving a track let this train depart from
 	// here, if it had to wait for one.
 	WaitedFor ids.TrainID
+}
+
+// ViaTrack is a track a train ran over between two points: its front entered
+// it at In, and its rear left it at Out, when the front entered the next
+// track. Out is -1 until then.
+type ViaTrack struct {
+	Track   string
+	In, Out float64
 }
 
 // SignalStop is a stop at a signal short of a schedule point. To is -1 while
@@ -56,6 +69,18 @@ type SignalStop struct {
 // RecordPlatform notes the platform the train actually used.
 func (s *SchedulePoint) RecordPlatform(pfNo string) {
 	s.ActPfNo = pfNo
+}
+
+// EnterTrack notes the train's front entered a track at t on the way here:
+// it has left the one before. via says whether the track is one of the way
+// (see Via), not a platform track of either station.
+func (s *SchedulePoint) EnterTrack(t float64, track string, via bool) {
+	if n := len(s.Via); n > 0 && s.Via[n-1].Out < 0 {
+		s.Via[n-1].Out = t
+	}
+	if via {
+		s.Via = append(s.Via, ViaTrack{Track: track, In: t, Out: -1})
+	}
 }
 
 // BeginSignalStop notes the train stopped at a signal on the way here.

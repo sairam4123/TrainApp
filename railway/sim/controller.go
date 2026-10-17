@@ -3,6 +3,7 @@ package sim
 import (
 	"fmt"
 	"trainapp/des"
+	"trainapp/railway/infra"
 	"trainapp/railway/interlocking"
 	"trainapp/railway/ops"
 )
@@ -116,6 +117,7 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 			tc.fail("entered a track but is on none")
 			return
 		}
+		tc.recordVia(curTrack)
 		sim.ScheduleEventAfter(curTrack.TravelTime(train.MaxSpeed), ops.TrackTravelEnd, train, train.ID())
 
 	case ops.TrackTravelEnd:
@@ -252,6 +254,22 @@ func (tc *TrainController) recordPlatform(stop *ops.SchedulePoint) {
 	if pf := platformOf(stn, tc.train.CurrentTrack()); pf != nil {
 		stop.RecordPlatform(pf.PfNo)
 	}
+}
+
+// recordVia notes the track the front has entered on the way to the current
+// stop. It is not of the way if it is a platform track of that stop's station
+// or of the one before: those are the stops' own tracks.
+func (tc *TrainController) recordVia(trk *infra.TrackSegment) {
+	train := tc.train
+	stop, ok := train.CurrentStop()
+	if !ok || train.StopIndex() == 0 {
+		return // the first point has no way to it
+	}
+	via := true
+	if stn, ok := tc.sim.world.StationOfPlatform(trk); ok {
+		via = stn.Code != stop.StnCode && stn.Code != train.Schedule()[train.StopIndex()-1].StnCode
+	}
+	stop.EnterTrack(tc.sim.CurTime(), trk.Id.String(), via)
 }
 
 // advance moves the train's front onto the next edge of its route and its rear
