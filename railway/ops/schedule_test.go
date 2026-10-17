@@ -11,26 +11,44 @@ func TestExpDwellTimeTimedStop(t *testing.T) {
 	cases := []struct {
 		name    string
 		minimum float64 // -1 for none
+		halt    bool
+		minStop units.Minutes
+		dep     float64
 		now     float64
 		want    units.Minutes
 	}{
-		{"early waits for departure", -1, 8, 7},
-		{"on time", -1, 10, 5},
-		{"a little late still leaves on time", -1, 12, 3},
-		{"late beyond departure stops a minute", -1, 20, 1},
-		{"minimum dwell kept when nearly due out", 4, 13, 4},
-		{"minimum dwell kept when late", 4, 20, 4},
+		{"early waits for departure", -1, false, 1, 15, 8, 7},
+		{"on time", -1, false, 1, 15, 10, 5},
+		{"a little late still leaves on time", -1, false, 1, 15, 12, 3},
+		{"late beyond departure stops the minimum stop", -1, false, 1, 15, 20, 1},
+		{"minimum dwell kept when nearly due out", 4, false, 1, 15, 13, 4},
+		{"minimum dwell kept when late", 4, false, 1, 15, 20, 4},
+		{"a minimum dwell of 0 still stops the minimum stop", 0, false, 1, 15, 20, 1},
+		{"timetabled for less than the minimum stop", 0, false, 1, 10.5, 10, 1},
+		{"the minimum stop is configurable", -1, false, 2, 15, 20, 2},
+		{"a late halt goes at once", 0, true, 1, 15, 20, 0},
+		{"an on-time halt keeps its time", 0, true, 1, 10.5, 10, 0.5},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			sp := ops.NewArrDepPoint("A", 10, 15, "1")
+			sp := ops.NewArrDepPoint("A", 10, c.dep, "1")
 			if c.minimum >= 0 {
 				sp.WithMinDwell(c.minimum)
 			}
-			if got := sp.ExpDwellTime(c.now); got != c.want {
-				t.Errorf("ExpDwellTime(%v) = %v, want %v", c.now, got, c.want)
+			if c.halt {
+				sp.AsHalt()
+			}
+			if got := sp.ExpDwellTime(c.now, c.minStop); got != c.want {
+				t.Errorf("ExpDwellTime(%v, %v) = %v, want %v", c.now, c.minStop, got, c.want)
 			}
 		})
+	}
+}
+
+func TestExpDwellTimePassNeverStops(t *testing.T) {
+	sp := ops.NewPassPoint("A", 10, "1")
+	if got := sp.ExpDwellTime(20, 5); got > 0.01 {
+		t.Errorf("ExpDwellTime of a pass = %v, want no stop", got)
 	}
 }
 

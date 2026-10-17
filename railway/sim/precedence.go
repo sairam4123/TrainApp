@@ -37,8 +37,8 @@ import (
 // behind L, and a hold that would leave the state unsafe is never placed.
 //
 // Decisions are worked out again from scratch whenever the held train is
-// woken: by H leaving the track that ends the conflict, or by a
-// PRECEDENCE_REVIEW event. Each is logged when it starts, changes or ends, and
+// woken: by H leaving the track that ends the conflict, for a platform
+// conflict by one of L's own tracks freeing, or by a PRECEDENCE_REVIEW event. Each is logged when it starts, changes or ends, and
 // can be overridden (overrides.go).
 
 // Decision statuses.
@@ -79,9 +79,10 @@ type Decision struct {
 	Until  float64 // when the hold is expected to end
 	Ended  float64
 
-	release   ids.TrackID // H leaving it ends the conflict
-	milestone int         // H's stop it must reach to be past; -1 for its last
-	reviewAt  float64     // latest review event scheduled
+	release   ids.TrackID   // H leaving it ends the conflict
+	wake      []ids.TrackID // other tracks whose freeing may end it
+	milestone int           // H's stop it must reach to be past; -1 for its last
+	reviewAt  float64       // latest review event scheduled, other than the max_hold one
 }
 
 func holdID(train, forTrain ids.TrainID, at string) string {
@@ -113,6 +114,7 @@ type pinKey struct {
 type manualHold struct {
 	forTrain ids.TrainID
 	stn      ids.StnCode
+	arrived  bool // until forTrain has reached stn, rather than left it
 }
 
 type precedence struct {
@@ -125,6 +127,7 @@ type precedence struct {
 	nowProjections map[ids.TrainID]*projection // see projectNow
 	building       map[ids.TrainID]bool        // projections being built, to stop cycles
 	plans          map[ids.StnCode]*stationPlan
+	planning       map[ids.StnCode]bool // plans being built, to stop cycles
 	conflicts      map[[2]*infra.TrackSegment]bool
 
 	all     []*Decision          // every decision, in the order made
@@ -170,6 +173,7 @@ func (p *precedence) invalidate() {
 	p.nowProjections = map[ids.TrainID]*projection{}
 	p.building = map[ids.TrainID]bool{}
 	p.plans = map[ids.StnCode]*stationPlan{}
+	p.planning = map[ids.StnCode]bool{}
 }
 
 // higher lists the trains still to finish whose priority is above the
@@ -216,8 +220,11 @@ type conflict struct {
 	natural   float64
 	release   ids.TrackID // H leaving it ends the conflict
 	releaseAt float64
-	milestone int // H's stop it must reach to be past L; -1 for its last
+	wake      []ids.TrackID // other tracks whose freeing may end it
+	milestone int           // H's stop it must reach to be past L; -1 for its last
 	manual    bool
+	reception bool   // a reception hold: the hold rule and track rules do not apply
+	why       string // for a reception hold, the reason
 }
 
 // compare works out what train l running over region now would cost h, and
@@ -403,19 +410,31 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 			byTrain[c.For] = c
 		}
 	}
+	// a reception conflict is the fallback for its train: a crossing or
+	// overtake with the same train is the better account of the meeting
+	reception := map[ids.TrainID]conflict{}
+	// with ManualPrecedence only the overrides decide
+	auto := !p.sim.ManualPrecedence
 	lp := p.projectNow(t)
 	for _, h := range p.higher(id) {
+		if !auto {
+			break
+		}
 		if c := p.compare(t, p.region(lp, p.project(h)), p.project(h)); c.Saving > 0 {
 			add(c)
 		}
 	}
 	pl := p.plan(req.Station)
-	if a := pl.assign[id]; !fits {
+	if a := pl.assign[id]; !auto {
+		// no platform conflicts of its own
+	} else if !fits {
 		for _, c := range p.platformConflicts(req, a, a.blockers) {
 			add(c)
 		}
-	} else if len(booked) > 0 && !slices.ContainsFunc(order, p.isFree) {
-		// the only tracks free now are booked for higher-priority trains
+	} else if arr := p.arrivalAt(lp, k, a); len(booked) > 0 && !slices.ContainsFunc(order, func(pf *infra.Platform) bool { return p.freeBy(id, pf, arr) }) {
+		// none of its own tracks will be free when it gets there, and the only
+		// tracks free now are booked for higher-priority trains. Any of its
+		// own tracks freeing may end that
 		var bs []booking
 		for _, pf := range booked {
 			if b, ok := p.bookingAgainst(id, pl, a, pf); ok && p.isFree(pf) {
@@ -423,7 +442,15 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 			}
 		}
 		for _, c := range p.platformConflicts(req, a, bs) {
+			for _, pf := range order {
+				c.wake = append(c.wake, pf.Track.Id)
+			}
 			add(c)
+		}
+	}
+	if auto {
+		if c, ok := p.receptionConflict(req, tc); ok {
+			reception[c.For] = c
 		}
 	}
 	for _, c := range p.manualConflicts(t, at) {
@@ -434,12 +461,21 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 	for _, c := range byTrain {
 		cs = append(cs, c)
 	}
+	for f, c := range reception {
+		if _, ok := byTrain[f]; !ok {
+			cs = append(cs, c)
+		}
+	}
 	slices.SortFunc(cs, func(a, b conflict) int {
 		return cmp.Or(cmp.Compare(b.ForPrio, a.ForPrio), cmp.Compare(a.For.Number, b.For.Number))
 	})
 	var held []*Decision
 	for _, c := range cs {
-		if d := p.tryHold(t, c, at, held); d != nil {
+		d := p.tryHold(t, c, at, held)
+		if r, ok := reception[c.For]; d == nil && ok && !c.reception {
+			d = p.tryHold(t, r, at, held)
+		}
+		if d != nil {
 			held = append(held, d)
 		}
 	}
@@ -450,9 +486,25 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 			if !d.release.IsZero() {
 				waitOn = append(waitOn, d.release)
 			}
+			waitOn = append(waitOn, d.wake...)
 		}
 		return verdict{hold: true, waitOn: waitOn, err: &HeldError{Decisions: held}}
 	}
+	if !auto {
+		// no plan to follow: a pinned platform first, then as the
+		// dispatcher would
+		pin, ok := p.pinned[pinKey{id, req.Station.Code}]
+		if !ok {
+			return verdict{}
+		}
+		pfs := platformsByPreference(req.Station, req.PrefPfNo)
+		if i := slices.IndexFunc(pfs, func(pf *infra.Platform) bool { return pf.PfNo == pin }); i > 0 {
+			pfs = append([]*infra.Platform{pfs[i]}, slices.Delete(slices.Clone(pfs), i, i+1)...)
+		}
+		return verdict{order: pfs}
+	}
+	// a pin is the plan's first choice (rank), but a platform booked for a
+	// higher-priority train stays last, pinned or not
 	if order == nil {
 		return verdict{}
 	}
@@ -461,6 +513,37 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 
 func (p *precedence) isFree(pf *infra.Platform) bool {
 	return p.sim.ilk.IsTrackFree(pf.Track)
+}
+
+// arrivalAt is when the train, setting off now, gets to its stop k: from the
+// projection lp, or failing that the plan's window a.
+func (p *precedence) arrivalAt(lp *projection, k int, a *assignment) float64 {
+	if v, ok := lp.visitOf(k); ok {
+		return v.arr
+	}
+	return a.from + float64(p.cfg.HeadwayMin)
+}
+
+// freeBy reports whether the platform track will be free for train id getting
+// there at arr: free now, or due to be left by the trains holding it a
+// headway before then.
+func (p *precedence) freeBy(id ids.TrainID, pf *infra.Platform, arr float64) bool {
+	s := p.sim
+	res, occ := s.ilk.TrackHolder(pf.Track)
+	for _, holder := range []ids.TrainID{occ, res} {
+		if holder.IsZero() || holder == id {
+			continue
+		}
+		if p.building[holder] {
+			return false // its projection depends on this train's
+		}
+		hp := p.project(s.trainCtrllers[holder].train)
+		i := slices.IndexFunc(hp.slots, func(hs slot) bool { return hs.track() == pf.Track })
+		if i < 0 || hp.slots[i].exit+float64(p.cfg.HeadwayMin) > arr {
+			return false
+		}
+	}
+	return true
 }
 
 // platformConflicts are the higher-priority trains whose bookings, bs, would
@@ -495,15 +578,23 @@ func (p *precedence) platformConflicts(req *RouteRequest, a *assignment, bs []bo
 }
 
 // manualConflicts are the operator's holds for the train at where it stands.
-// A manual hold lasts until the other train has left the station.
+// A manual hold lasts until the other train has left the station, or for
+// HoldUntilArrived until it has reached it. It holds a train at the station,
+// so not one still to enter the world there.
 func (p *precedence) manualConflicts(t *ops.Train, at string) []conflict {
 	s := p.sim
 	var out []conflict
+	if s.trainCtrllers[t.ID()].phase == phaseOutside {
+		return nil
+	}
 	keep := p.manual[t.ID()][:0]
 	for _, m := range p.manual[t.ID()] {
 		htc := s.trainCtrllers[m.forTrain]
 		k := slices.IndexFunc(htc.train.Schedule(), func(sp *ops.SchedulePoint) bool { return sp.StnCode == m.stn })
-		if htc.phase == phaseExited || k < 0 || htc.train.Schedule()[k].Departed() {
+		if htc.phase == phaseExited || k < 0 {
+			continue // done
+		}
+		if sp := htc.train.Schedule()[k]; sp.Departed() || (m.arrived && (sp.Arrived() || p.atStation(htc, k))) {
 			continue // done
 		}
 		keep = append(keep, m)
@@ -517,16 +608,84 @@ func (p *precedence) manualConflicts(t *ops.Train, at string) []conflict {
 		}
 		c.manual = true
 		c.milestone = -1
-		if k+1 < len(htc.train.Schedule()) {
-			c.milestone = k + 1
-		}
-		if hv, ok := hp.visitOf(k); ok && hv.pf != nil {
-			c.release, c.releaseAt = hv.pf.Track.Id, hv.dep
+		hv, projected := hp.visitOf(k)
+		switch {
+		case m.arrived:
+			// past once its front is on the station track: its leaving the
+			// track before it lets the held train go
+			c.milestone = k
+			if projected && hv.slot > 0 {
+				c.release, c.releaseAt = hp.slots[hv.slot-1].track().Id, hv.arr
+			}
+		default:
+			if k+1 < len(htc.train.Schedule()) {
+				c.milestone = k + 1
+			}
+			if projected && hv.pf != nil {
+				c.release, c.releaseAt = hv.pf.Track.Id, hv.dep
+			}
 		}
 		out = append(out, c)
 	}
 	p.manual[t.ID()] = keep
 	return out
+}
+
+// receptionConflict is the train, ready to leave a station, waiting there for
+// a track at the next: going now, it would get there with every track it could
+// use still taken by trains that got there first, and stand at the home
+// signal, shutting the line behind it. The other train is the one whose
+// leaving frees a track first.
+func (p *precedence) receptionConflict(req *RouteRequest, tc *TrainController) (conflict, bool) {
+	s := p.sim
+	t := req.Train
+	if req.Entry || tc.phase != phaseReady {
+		return conflict{}, false
+	}
+	if trk := t.CurrentTrack(); trk == nil {
+		return conflict{}, false
+	} else if stn, ok := s.world.StationOfPlatform(trk); !ok || stn == req.Station {
+		return conflict{}, false
+	}
+	// past any halts, whose only track is the line, to the station that
+	// would take it off the line
+	lp := p.projectNow(t)
+	v, ok := receivingVisit(lp, headingTo(tc))
+	if !ok || v.from == nil {
+		return conflict{}, false
+	}
+	// slot 0 is the station track it stands on
+	wait, b := p.receptionWait(t.ID(), p.plan(v.stn), p.candidates(t, *v.from, v.stn), v.arr, p.behind(lp, 1, v.slot))
+	if wait <= epsilon || b.train.IsZero() {
+		return conflict{}, false
+	}
+	h := s.trainCtrllers[b.train].train
+	c := conflict{
+		Conflict: Conflict{
+			Kind: KindReception, Held: t.ID(), For: b.train,
+			HeldPrio: s.Priority(t.ID()), ForPrio: s.Priority(b.train),
+			Saving: units.Min(wait), Wait: units.Min(wait),
+		},
+		release:   b.pf.Track.Id,
+		milestone: -1,
+		reception: true,
+		why:       fmt.Sprintf("no track free at %s when it would arrive, until %s leaves pf %s", v.stn.Code, b.train, b.pf.PfNo),
+	}
+	if hv, ok := p.project(h).visitAt(v.stn); ok && hv.stop+1 < len(h.Schedule()) {
+		c.milestone = hv.stop + 1
+	}
+	return c, true
+}
+
+// atStation reports whether the train's front is on a station track of its
+// stop k, so it is clear of the line behind it.
+func (p *precedence) atStation(tc *TrainController, k int) bool {
+	if tc.train.StopIndex() != k {
+		return false
+	}
+	trk := tc.train.CurrentTrack()
+	stn, ok := p.sim.world.GetStation(tc.train.Schedule()[k].StnCode)
+	return ok && trk != nil && stn.IsPlatform(trk.Id)
 }
 
 // tryHold holds the train for c, if the rule agrees and nothing rules it out.
@@ -548,22 +707,29 @@ func (p *precedence) tryHold(t *ops.Train, c conflict, at string, held []*Decisi
 	}
 	var why string
 	if !c.manual {
-		if elapsed >= p.cfg.maxHold()-epsilon {
+		limit := p.cfg.maxHold()
+		if c.reception {
+			limit = p.cfg.maxReceptionHold()
+		}
+		if elapsed >= limit-epsilon {
 			if d != nil {
 				p.end(d, StatusExpired)
 			}
 			p.expired[id] = true
 			return nil
 		}
-		ok, reason := p.rule.Hold(c.Conflict)
-		if !ok {
-			return nil
+		why = c.why
+		if !c.reception {
+			ok, reason := p.rule.Hold(c.Conflict)
+			if !ok {
+				return nil
+			}
+			why = reason
 		}
-		if elapsed+float64(c.Wait) > p.cfg.maxHold() {
+		if elapsed+float64(c.Wait) > limit {
 			p.skip(t, id, c, at, "max_hold")
 			return nil
 		}
-		why = reason
 	}
 	if reason := p.ruledOut(t, c, held); reason != "" {
 		p.skip(t, id, c, at, reason)
@@ -573,8 +739,11 @@ func (p *precedence) tryHold(t *ops.Train, c conflict, at string, held []*Decisi
 
 	if d == nil {
 		d = &Decision{ID: id, Action: ActionHold, Train: t.ID(), For: c.For, At: at, Status: StatusActive, Source: SourceAuto, Rule: p.rule.Name(), Since: now}
-		if c.manual {
+		switch {
+		case c.manual:
 			d.Source, d.Rule = SourceManual, ""
+		case c.reception:
+			d.Rule = "" // the hold rule is not asked
 		}
 	}
 	d.Kind, d.Gain, d.Wait = c.Kind, c.Saving, c.Wait
@@ -582,7 +751,7 @@ func (p *precedence) tryHold(t *ops.Train, c conflict, at string, held []*Decisi
 	if c.releaseAt > 0 {
 		d.Until = max(d.Until, c.releaseAt+float64(p.cfg.HeadwayMin))
 	}
-	d.release, d.milestone = c.release, c.milestone
+	d.release, d.wake, d.milestone = c.release, c.wake, c.milestone
 	if why != "" {
 		d.Reason = why
 	} else if d.Reason == "" {
@@ -595,7 +764,9 @@ func (p *precedence) tryHold(t *ops.Train, c conflict, at string, held []*Decisi
 func (p *precedence) ruledOut(t *ops.Train, c conflict, held []*Decision) string {
 	s := p.sim
 	tc := s.trainCtrllers[t.ID()]
-	if trk := t.CurrentTrack(); trk != nil && tc.phase != phaseOutside {
+	// a reception hold may keep a train on a main line or through track, as a
+	// last resort: standing at the home signal instead would shut the line
+	if trk := t.CurrentTrack(); trk != nil && tc.phase != phaseOutside && !c.reception {
 		if stn, ok := s.world.StationOfPlatform(trk); ok {
 			switch stn.TrackClass(trk.Id) {
 			case infra.Through:
@@ -718,8 +889,14 @@ func (p *precedence) syncHolds(t *ops.Train, held []*Decision) {
 			p.all = append(p.all, d)
 			s.logHold(d)
 			if d.Source == SourceAuto {
-				// just past the limit, so float noise cannot leave it short
-				p.review(d, p.heldSince[t.ID()]+p.cfg.maxHold()+des.MinDeltaTime)
+				// just past the limit, so float noise cannot leave it short.
+				// Not noted in reviewAt: a review at the expected end, if
+				// sooner, is still needed
+				limit := p.cfg.maxHold()
+				if d.Kind == KindReception {
+					limit = p.cfg.maxReceptionHold()
+				}
+				s.ScheduleEventAt(max(p.heldSince[t.ID()]+limit, now)+des.MinDeltaTime, ops.PrecedenceReview, d.ID, d.Train)
 			}
 		}
 		switch {
@@ -762,8 +939,9 @@ func (p *precedence) end(d *Decision, status string) {
 		// and no track release will tell them it is gone
 		p.sim.dispatcher.reviewUnsafe()
 		// once let go, a train is not held for the same train at the same
-		// place again: holding it back and forth would only churn
-		if status == StatusReleased {
+		// place again: holding it back and forth would only churn. A
+		// reception hold may come back: it follows the tracks, not a rule
+		if status == StatusReleased && d.Kind != KindReception {
 			p.expired[d.ID] = true
 		}
 	}

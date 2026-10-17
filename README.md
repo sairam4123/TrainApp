@@ -61,18 +61,21 @@ At a high level, the system contains five major parts:
 ```text
 .
 ├── cmd/
-│   ├── trainapp/            # Runs the simulation: builds the TPJ-PDKT-KKDI world and 12 trains
-│   │   └── main.go          # Flags: -world, -schedule, -save-world, -save-schedule, -log (text|json), -record (write a recording for trainviz), -priorities, -overrides, -timetable, -check-record
+│   ├── trainapp/            # Runs the simulation: builds the TPJ-PDKT-KKDI world and the demo trains, prints the KPIs
+│   │   └── main.go          # Flags: -world, -schedule, -demo, -disruptions, -save-world, -save-schedule, -log (text|json), -record (write a recording for trainviz), -priorities, -overrides, -timetable, -check-record, -kpi
+│   ├── trainbench/          # Runs the benchmark scenarios under several precedence rules and prints a KPI table
+│   ├── traindemo/           # Scenario picker with world and schedule previews; runs trainapp, then trainviz
 │   └── trainviz/            # Terminal viewer
 │       ├── main.go          # Flags and the two modes: draw a world, or `replay` a recording
 │       ├── viewer.go        # Interactive Bubble Tea model: pan, zoom, panes, timeline
 │       └── replay.go        # Replays a recording: seeks to a time and rebuilds the state there
-├── worlds/                  # Sample railway worlds
+├── worlds/                  # Sample railway worlds; load.go loads one by name or from a snapshot
 │   ├── testWorld.go         # Older 3-station (TPJ-PDKT-KKDI) world
 │   ├── kkdiTpjWorld.go      # Active double-line TPJ-PDKT-KKDI world with crossovers and signals
 │   ├── tpjKkdiSingleLineWorld.go # The real TPJ-KKDI single line: all 10 stations, loops and sidings, from OpenStreetMap
 │   └── singleLineWorld.go   # Single-line worlds (passing loops, halts, junction) used by the deadlock tests
-├── profiles/                # Per-railway priority, precedence and timetable settings (JSON), e.g. ir.json for Indian Railways
+├── profiles/                # Per-railway priority, precedence, timetable and KPI settings (JSON), e.g. ir.json for Indian Railways
+├── scenarios/               # Benchmark scenarios (world, schedule, profile, disruptions); schedules/ holds their trains
 ├── railway/
 │   ├── ids/                 # Typed identifiers: StnCode, PointID, TrackID, TrainID
 │   ├── infra/               # Static infrastructure (no runtime state)
@@ -89,8 +92,10 @@ At a high level, the system contains five major parts:
 │   │   ├── station_tracks.go # Station area, main lines, through tracks and loops
 │   │   └── templates.go     # Helpers to build common station layouts
 │   ├── interlocking/        # Runtime safety state: track reservations/occupation, switch setting/locking
-│   ├── ops/                 # Train, schedule (planned and actual times, delay), schedule files (JSON), MovementAuthority, event types
+│   ├── ops/                 # Train, schedule (planned and actual times, delay), schedule files (JSON), disruptions, MovementAuthority, event types
 │   ├── timetable/           # Turns a finished run into a timetable: halts and why, rounding, the check run
+│   ├── kpi/                 # Measures a finished run: delay against free running, punctuality, waits, track occupancy
+│   ├── scenario/            # Benchmark scenario files: world, schedule, profile, disruptions; the rule to run under
 │   └── sim/                 # The run itself:
 │       ├── sim.go           #   Sim: owns the world, interlocking and event loop; Run, Init, state dump
 │       ├── controller.go    #   TrainController state machine
@@ -145,7 +150,7 @@ Each entry starts with `t` (sim minutes), `level` and `event`. Times come from t
 
 ## Architecture
 
-The architecture is organized around a simple idea: model the railway as a set of connected resources, then let trains request access to those resources over time. Packages depend in one direction only: `ids` ← `infra` ← `interlocking` ← `ops` ← `sim` ← `timetable`. The visualization packages sit on top: `vizproto` knows only the world (`infra`), `schematic` and `traingraph` draw from `vizproto`, and only `record` knows about `sim`.
+The architecture is organized around a simple idea: model the railway as a set of connected resources, then let trains request access to those resources over time. Packages depend in one direction only: `ids` ← `infra` ← `interlocking` ← `ops` ← `sim` ← `timetable`, and `sim` ← `kpi`. The visualization packages sit on top: `vizproto` knows only the world (`infra`), `schematic` and `traingraph` draw from `vizproto`, and only `record` knows about `sim`.
 
 ### 1. World (`infra`)
 `World` is the static railway: stations, track points, track segments, switch blocks and signals. It holds no runtime state; who has reserved a track or locked a switch lives in the interlocking. Call `World.Finalize()` once the world is built: it builds the graph caches, indexes signals and switch blocks by track, and checks the world is consistent (e.g. every signal stands on a real track).
@@ -192,22 +197,24 @@ A track is never occupied without being reserved by the occupier, and a switch b
 - every track of a locked switch (the switch unlocks when its holder leaves any of them);
 - for a safety refusal, the tracks held by the trains that couldn't finish.
 
-`OnTrackReleased` wakes only the requests waiting on that track, highest priority first, then longest-waiting.
+`OnTrackReleased` wakes only the requests waiting on that track, highest rank first, then longest-waiting. A request's rank is its train's priority, raised by **ageing** for how long it has waited (see Priority).
 
 **Schedules name every station.** `Sim.Init` rejects a train that would run through a station without a schedule point for it; a station a train does not stop at gets a pass point (`ops.NewPassPoint`, untimed with a negative time).
 
-**Priority.** A train's priority is a number, higher served first: its base `Priority`, adjusted by the delay band it falls in. Both come from a `sim.PriorityConfig` (`Sim.Priorities`), loaded from JSON: `classes` maps a train's `Class` to its base priority, and `delay_bands` adjust it by lateness (the band with the largest `over_min` below the delay applies). The sim gives classes and thresholds no meaning of their own; `profiles/ir.json` holds Indian Railways' (VB Express highest down to Special Express; up to 15 min late is boosted as recoverable, over an hour is lowered as unrecoverable). Priority is worked out when it is needed, so it follows the delay as it grows, and `Sim.SetPriorityAt` changes a train's base priority during a run (logged as `PRIORITY_CHANGE`).
+**Priority.** A train's priority is a number, higher served first: its base `Priority`, adjusted by the delay band it falls in. Both come from a `sim.PriorityConfig` (`Sim.Priorities`), loaded from JSON: `classes` maps a train's `Class` to its base priority, and `delay_bands` adjust it by lateness (the band with the largest `over_min` below the delay applies). The sim gives classes and thresholds no meaning of their own; `profiles/ir.json` holds Indian Railways' (VB Express highest down to Special Express; up to 15 min late is boosted as recoverable, over an hour is lowered as unrecoverable). Priority is worked out when it is needed, so it follows the delay as it grows, and `Sim.SetPriorityAt` changes a train's base priority during a run (logged as `PRIORITY_CHANGE`). `ageing` (`every_min`, `adjust`) raises a waiting request's rank by `adjust` for every `every_min` minutes it has waited, so no train is kept waiting for ever behind a stream of higher-priority ones; `profiles/ir.json` adds 5 every 10 minutes. Ageing only orders the queue: priority, precedence and the logged `priority` are unchanged. `min_stop_min` (default 1) is the shortest a train stands at a stop, even when it runs late or is timetabled for less; a pass never stops for it, nor does a halt in a timetable (a pass the train is timed to stand at).
 
 **Precedence** (on when the config has a `precedence` block; see `docs/trainapp/precedence/plan.md` for the design). Before granting a train L anything, the dispatcher looks ahead (`projection.go`): each train's unimpeded future, at the track speed limits, and for a train already waiting on another's track, from when that track is due to be free. It then asks whether L going now would cost a higher-priority train H time, in one of three ways:
 - **overtake**: H would catch up with L, both running the same way;
 - **cross**: they would meet head on on single line, or at a switch or diamond;
 - **platform**: L would take the station track H needs.
 
-If so, and the hold rule agrees, L is **held** where it stands until H is past, as long as it stands somewhere H can get by it (a refuge). The rule is `thresholds` (priority gap and minutes saved) or `weighted` (priority × minutes, saved against waited), picked by name, and `max_hold_min` caps how long a train is held at one place in all. At stations the **station plan** may move L to another track instead. Station tracks are given out highest priority first: through tracks are kept for trains running through, a stopping train may use the main line only for a stay up to `main_line_max_stay_min` (a terminus has no limit, since nothing runs through it), a train running through prefers a through track, then its main line, and between equal choices a train keeps to its own side of the station rather than crossing the other line. Platform moves are logged as `PLATFORM_CHANGE`, holds as `PRECEDENCE_HOLD` and `PRECEDENCE_RELEASE`, and a hold the rule wanted but could not place as `PRECEDENCE_SKIPPED` (with why: `no_refuge`, `unsafe`, `max_hold`, `main_line_limit`, `through_track`, `cycle`).
+If so, and the hold rule agrees, L is **held** where it stands until H is past, as long as it stands somewhere H can get by it (a refuge). The rule is `thresholds` (priority gap and minutes saved, with `max_wait_ratio` capping how many minutes the held train may wait per minute the other saves, whatever the classes) or `weighted` (priority × minutes, saved against waited), picked by name, and `max_hold_min` caps how long a train is held at one place in all. At stations the **station plan** may move L to another track instead. Station tracks are given out highest priority first: through tracks are kept for trains running through, a stopping train may use the main line only for a stay up to `main_line_max_stay_min` (a terminus has no limit, since nothing runs through it), a train running through prefers a through track, then its main line, and between equal choices a train keeps to its own side of the station rather than crossing the other line. A train running through that is expected to stand at the station (to cross a train of any priority that gets onto the single line first, held for a higher one, waiting for a track at the next station, or because the line it leaves on is already taken) is planned onto a loop instead: standing on the main line or a through track is its last resort (`PLATFORM_CHANGE` reason `standing`).
+
+**Reception.** A train ready to leave a station is **held** there (kind `reception`) if, going now, it would reach the next station that can take it off the line (halts, whose only track is the line, are looked past) with every track it could use still taken by trains that get there first: it would only stand at the home signal and shut the line behind it. A train that would follow it there does not count. It is not a priority decision, so the hold rule does not apply, and `max_reception_hold_min` (default `max_hold_min`) caps it separately; the refuge, cycle and safety checks still do, and as a last resort it may hold a train on a main line. Where a crossing or overtake with the same train is also held for, that is the hold placed. Platform moves are logged as `PLATFORM_CHANGE`, holds as `PRECEDENCE_HOLD` and `PRECEDENCE_RELEASE`, and a hold the rule wanted but could not place as `PRECEDENCE_SKIPPED` (with why: `no_refuge`, `unsafe`, `max_hold`, `main_line_limit`, `through_track`, `cycle`).
 
 A hold must not fight deadlock avoidance: the safety check knows about every active hold (the held train can only finish after the other has reached its milestone, the first station past it), so no other grant can strand H behind L, and a hold that would make the state unsafe is never placed. With precedence on, the check also judges each train where it will stand once its granted route is run, and may move a train on a stop at a time when none can finish outright; both keep a move judged safe during a hold from looking unsafe once the hold ends. With precedence off the check is unchanged.
 
-**Overrides.** Every decision has an id that stays the same from run to run (`hold:<train>><for>@<place>`, `pf:<train>@<station>`). `Sim.Override` / `Sim.OverrideAt` and `trainapp -overrides file.json` release (or veto) a hold, force one, pin a train's platform, or turn precedence off for a train:
+**Overrides.** Every decision has an id that stays the same from run to run (`hold:<train>><for>@<place>`, `pf:<train>@<station>`). `Sim.Override` / `Sim.OverrideAt` and `trainapp -overrides file.json` release (or veto) a hold, force one, pin a train's platform, or turn precedence off for a train. A forced hold holds the train at the station, once it is there, until the other train has left it, or with `"until": "arrived"` until the other has reached it (e.g. for a crossing). A pinned platform is the train's first choice in the station plan, but a track booked for a higher-priority train is still tried last. With `Sim.ManualPrecedence` precedence makes no decisions of its own: only the overrides hold trains and pick platforms, a pinned one first.
 
 ```json
 {"overrides": [
@@ -229,12 +236,22 @@ A fatal inconsistency (e.g. an unknown station in a schedule) stops the run and 
 Give trains only an entry time, stop points with a dwell (`ops.NewStopPoint`) and untimed pass points (`ops.NewPassPoint(stn, -1, pf)`), run them, and their actual times are a timetable that works. The stations are through stations, so each train has an arrival at its first station (its entry, the one fixed time) and a departure from its last. Fully timed trains can share the run, so new paths can be fitted around an existing timetable.
 
 - **`timetable.FromRun`** reads the times back. Arrivals and passes are when the front reaches the end of the platform track. A train that stood at a pass point gets a **halt**, and one that stood past its dwell an **extended dwell**, each with a reason: `cross` (waited for a train from the other way), `overtake` (a train behind passed it) or `technical` (anything else, e.g. a train ahead on the line). The reason comes from a precedence hold if there was one, and otherwise from the train whose leaving a track let it go and how the two schedules meet there. Stops at signals between stations, which hide inside the running time, are listed too. A train that could not enter on time (no free boundary platform) is a conflict and gets a warning: in timetable mode trains do not enter late.
-- **`timetable.Round`** adds the recovery allowance to running times and rounds arrivals and departures **up** to the step, so no train is timed to leave before it could and no dwell gets shorter than its minimum. The entry time is kept as it is.
-- **The check run** (`timetable.NewCheckSim`, `Report`) runs the rounded timetable again as fully timed trains and reports every train that runs later than the tolerance. Rounding moves trains, and that can change how they meet, so this shows the timetable can be kept, not just that it was generated.
+- **`timetable.Round`** adds the recovery allowance to running times and rounds arrivals and departures **up** to the step, so no train is timed to leave before it could and no dwell gets shorter than its minimum. The entry time is kept as it is. Each running time starts from the rounded departure at a stop or halt, where a timed train waits for it, but from the unrounded time at a pass, which it runs through whenever it gets there, so rounding does not add up at every station passed. Rounding keeps the meetings: a train that stood at a station for another moves on by as much as that train's time there did (its arrival for one from the other way, its departure for one going the same way), and the trains are rounded again until no departure moves.
+- **The check run** (`timetable.NewCheckSim`, `Report`) runs the rounded timetable again as fully timed trains and reports every train that runs later than the tolerance. With precedence on, the profile's `check_precedence` (or `-check-precedence`) says how it decides. `plan`, the default, keeps to the timetable's plan (`Timetable.PlanOverrides`): each train pinned to the track it used, and held at each crossing and overtake until the other train has arrived or left; precedence makes no decisions of its own (`Sim.ManualPrecedence`), since deciding afresh from the new times would move the meetings. This shows the timetable can be kept, not just that it was generated. `auto` lets precedence decide everything afresh, as it would on the day, so it shows whether the dispatching itself keeps the timetable. The report says which it was.
 
 The settings are the `timetable` section of the profile: `rounding_min`, `recovery_pct`, `halt_min` (how long counts as standing) and `check_tolerance_min`. The result depends on the order trains get their paths (priority, then first come): it is one timetable that works, not an optimised one.
 
-### 8. Visualization (`visualization`, `cmd/trainviz`)
+### 8. KPIs (`kpi`)
+Every `trainapp` run ends with a KPI report, so a change to the dispatching can be shown to make a run better or worse on the objectives.
+
+- **Delay** is measured against free-running time. `kpi.FreeRunning` runs each train again with the line to itself, taking the dispatcher's own way, platforms and dwells. A train's journey runs from its planned entry to when it leaves the world, so waiting to enter counts. The report gives the total, the mean, the mean weighted by base priority, the worst train, and punctuality: the share of trains within each of the profile's `punctual_within_min` (1, 5 and 15 min in `ir.json`). For timed trains, such as the check run's, it gives the same against the timetable: lateness at the last timed point, early counting as on time.
+- **Waits** are each time a train stood longer than its schedule asked: to enter the world, at a signal, or at a station past its dwell (a precedence hold, say). The longest single wait is reported with its place.
+- **Utilization** comes from a `kpi.Collector`, a `sim.Observer` that notes when each train's front entered a track, reached its far end, and left it. Each track's occupancy is split into *running* and *standing*, as shares of the window from the first train's entry to the last train's exit, with trains per hour. Tracks are blocks (outside every station's area), platform tracks, or throat tracks. Standing on a block is a train standing in section. Train length is not modelled, so a track counts as left once the front enters the next.
+- **Disruptions** (`ops.Disruption`, `-disruptions`) make trains run worse than planned: `stand` keeps a train at a station for extra minutes, as for a failure, which the dispatcher learns of only once the train is there, and `late_entry` has it enter late. Their minutes are the primary delay; the rest of the run's delay is reactionary.
+
+`trainbench` runs the scenarios in `scenarios/` under each precedence rule and prints the KPIs side by side; see [Run the benchmark](#run-the-benchmark).
+
+### 9. Visualization (`visualization`, `cmd/trainviz`)
 The simulation never knows it is being drawn. A `sim.Observer` can be set on the `Sim`; it is handed every log entry, and told after each event once the train's controller has run.
 
 - **`vizproto`** is the stream between the two programs: newline-delimited JSON, one message per line, each with a type and the sim time. A `hello` describes the world, then `track`, `switch`, `train` and `event` messages report what changed, and the stream ends with `end` (or `error` if the run failed). It reports state changes rather than sim events, so the viewer does not depend on how the sim works inside.
@@ -245,12 +262,17 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 
 ## cmd/trainapp
 
-[cmd/trainapp/main.go](cmd/trainapp/main.go) builds `worlds.BuildTpjKkdiWorld()`: three stations (TPJ, PDKT, KKDI) with four platforms each, connected by a double line (TPJ↔PDKT ~55km, PDKT↔KKDI ~41km) with crossovers at the termini and a signal at the arrival end of each leg. It adds 12 trains (six each way, 20 minutes apart), runs the simulation, and prints how many trains completed their schedule, e.g. `12/12 trains completed their schedule by t=234.27 (log: logs/logs.log)`.
+[cmd/trainapp/main.go](cmd/trainapp/main.go) builds `worlds.BuildTpjKkdiWorld()`: three stations (TPJ, PDKT, KKDI) with four platforms each, connected by a double line (TPJ↔PDKT ~55km, PDKT↔KKDI ~41km) with crossovers at the termini and a signal at the arrival end of each leg. It adds the demo trains (`-demo` each way, 3 by default, 10 minutes apart), runs the simulation, and prints how many trains completed their schedule, e.g. `6/6 trains completed their schedule by t=107.18 (log: logs/logs.log)`, then the KPI report (see [KPIs](#8-kpis-kpi)).
 
 | Flag | Default | Effect |
 |---|---|---|
+| `-scenario` | none | Run a scenario file (see [Run the benchmark](#run-the-benchmark)): its world, schedule, profile and disruptions, in place of `-world`, `-schedule`, `-priorities` and `-disruptions`, which it refuses alongside |
+| `-rule` | profile's | Precedence rule in place of the profile's: `thresholds`, `weighted`, or `off` to run without precedence |
 | `-world` | `tpjkkdi` | World to run: `tpjkkdi` (the double line), `tpjkkdi-sl` (the real single line; the trains run through the stations between TPJ, PDKT and KKDI) or a world snapshot file (`.json`, see [World and schedule files](#world-and-schedule-files)) |
-| `-schedule` | none | Trains to run (JSON); without it, the 12 demo trains, which need `tpjkkdi` or `tpjkkdi-sl` |
+| `-schedule` | none | Trains to run (JSON); without it, the demo trains, which need `tpjkkdi` or `tpjkkdi-sl` |
+| `-demo` | `3` | With no `-schedule`, how many demo trains run each way |
+| `-disruptions` | none | Disruptions to apply to the trains (JSON): extra stands at stations, late entries; see [KPIs](#8-kpis-kpi) |
+| `-kpi` | none | Also write the KPI report to this file (JSON): the run's, and with `-timetable` the check run's |
 | `-save-world` | none | Also write the world to this file as a snapshot, which `-world` can load |
 | `-save-schedule` | none | Also write the trains' schedules to this file, which `-schedule` can load |
 | `-log` | `text` | Log format: `text` (logfmt, `logs/logs.log`) or `json` (`logs/logs.jsonl`) |
@@ -259,6 +281,7 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 | `-overrides` | none | Precedence overrides to apply (see [Precedence](#5-dispatcher-and-deadlock-avoidance-sim)) |
 | `-timetable` | none | Generate a timetable from the run, check it with a second run, print it and write it to this file (JSON); see [Timetable generation](#7-timetable-generation-timetable) |
 | `-check-record` | none | With `-timetable`, also record the check run for `trainviz replay` |
+| `-check-precedence` | profile's | With `-timetable`, how the check run decides precedence: `plan` (keep to the timetable's plan) or `auto` (decide afresh) |
 
 The other worlds in `worlds/` are not run by `trainapp`. The single-line and junction worlds are used by the deadlock tests, and all of them can be drawn with `trainviz`.
 
@@ -317,10 +340,48 @@ The trains in `main.go` have only entry times, dwells and preferred platforms. T
   PDKT  stop  1   02:15  02:20  5      32
   KKDI  stop  1   02:44  02:54  10     24
 
-check run: all 12 trains kept their times (tolerance 1 min)
+check run: all 12 trains kept their times (tolerance 1 min, precedence plan)
 ```
 
 Times are minutes from 0, shown as a clock. Open `check.ndjson` with `trainviz replay` and press `g`, then `p`: the planned times sit on the trains' lines.
+
+### Measure a run
+
+Every run prints its KPIs after the summary; `-kpi` writes them as JSON too:
+
+```bash
+go run ./cmd/trainapp -world tpjkkdi-sl -kpi kpi.json
+go run ./cmd/trainapp -world tpjkkdi-sl -disruptions disruptions.json
+```
+
+```text
+KPIs, run: 6/6 trains finished, t=1.0-106.0
+  delay against free running: 37.3 min in all, 6.2 a train, 5.6 priority-weighted; worst 0451D 9.1 min
+    punctual: 0% within 1 min, 33% within 5 min, 100% within 15 min
+  waits: 33.5 min in all; longest 0451D 8.3 min at VEL (station, from t=45.3)
+  precedence: 2 holds lasting 11.1 min in all, 2 platform changes
+  blocks: 28% occupied on average (14-45%), 0.0% standing (0.3 min in section)
+            block  occupied  running  standing  trains/h
+       slTpjKrmg0       37%      37%      0.0%       3.4
+  ...
+```
+
+A disruptions file lists the trains to disrupt:
+
+```json
+{"disruptions": [
+  {"train": "0452U", "kind": "stand", "stn": "PDKT", "min": 30},
+  {"train": "0453D", "kind": "late_entry", "min": 15}]}
+```
+
+### Run the benchmark
+
+```bash
+make bench                                            # every scenarios/*.json under thresholds, weighted and off
+go run ./cmd/trainbench -rules weighted scenarios/sl-12.json
+```
+
+A scenario names a world (`tpjkkdi`, `tpjkkdi-sl` or a snapshot), a schedule file, a profile and any disruptions, with paths relative to the scenario file. The ones included are the single line with 6, 12 and 24 trains (`sl-6`, `sl-12`, `sl-24`), the double line with 12 (`dl-12`), and `sl-12-disrupt`, with one train failing for 30 min at PDKT and another entering 15 min late. `trainbench` runs them in parallel (`-j`), prints one row per scenario and rule, and writes every report to `logs/bench.json`; each run's log is under `logs/bench/<scenario>-<rule>/`. The 24-train runs take a couple of minutes each.
 
 ### World and schedule files
 
@@ -406,9 +467,19 @@ Precedence shows too: a train held for another is drawn in amber with `⏸` (`04
 | `s` | show the selected train's schedule instead of the events |
 | `g` | switch between the schematic and the time-distance graph |
 
-The pan, zoom, `/` and `q` keys work in the replay too. Clicking on the timeline seeks to that time.
+The pan, zoom, `/` and `q` keys work in the replay too. Clicking on the timeline seeks to that time. `ctrl+c` quits with exit status 130 rather than 0, so a launcher such as `traindemo` can tell it from `q`.
 
 **Time-distance graph.** `g` swaps the schematic for a train graph: time left to right, the line's stations top (west) to bottom (east) at their distances, each train a line, sloping while it runs and flat while it stands. Lines are drawn up to the replay time, marked by a cursor, so the graph builds as the run plays; up and down trains have their own colour, and the selected train is picked out. There, `+`/`-` or the wheel change the minutes per column, `h`/`l` or a drag pan in time, `0` fits the whole run, `p` marks the trains' planned times (`◆`), and a click seeks to that time. The graph needs a single line, so the junction world has none. With `-print -graph`, `-width`, `-height`, `-planned` and `-at` shape the printout.
+
+### Demo the scenarios
+
+```bash
+make demo        # builds dist/trainapp, dist/trainviz and dist/traindemo, then runs traindemo
+```
+
+`traindemo` lists the scenarios in `scenarios/` (`-dir`) and previews the selected one: its description, the world's schematic (`←` `→` pan, `z` switches overview and layout) and a row per train with its class, entry time, route, stops and any disruption. `r` cycles the precedence rule (the profile's, `thresholds`, `weighted`, `off`). `enter` runs it with `trainapp -scenario ... -rule ... -record ... -kpi ...` in the terminal, so its progress and KPIs show, then opens the recording in `trainviz replay`. `q` in trainviz comes back to the list, which now sums up the run (trains done, delay, punctuality, reactionary delay, holds); `ctrl+c`, there or in the list, quits everything. Each run is written to `logs/demo/<scenario>-<rule>.ndjson` and `.kpi.json` (`-out`).
+
+traindemo does not link the sim: it runs the `trainapp` and `trainviz` binaries, looking next to itself, then in `dist/`, then on `$PATH` (`-bin` names the directory).
 
 ### Run the tests
 
@@ -423,6 +494,7 @@ The deadlock tests (`railway/sim`) run trains over the single-line and junction 
 ```bash
 go build -o trainapp ./cmd/trainapp
 go build -o trainviz ./cmd/trainviz
+make build-traindemo   # all three into dist/
 ```
 
 ## Development

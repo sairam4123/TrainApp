@@ -198,3 +198,51 @@ func TestActualTimesAreRecorded(t *testing.T) {
 		}
 	}
 }
+
+// ageingQueue has C take the TPJ-PDKT block at t=7, A (priority 0) queue for
+// it at t=8 and B (priority 20) at t=26: both wait until C leaves it at t=37.
+func ageingQueue(t *testing.T, ageing *sim.Ageing) []string {
+	t.Helper()
+	s := &sim.Sim{OutputDir: t.TempDir(), Priorities: &sim.PriorityConfig{Ageing: ageing}}
+	s.SetWorld(worlds.BuildTpjKkdiWorld())
+	c := newTrain("C", 1, [2]string{"TPJ", "1"}, [2]string{"PDKT", "1"})
+	a := newTrain("A", 2, [2]string{"TPJ", "2"}, [2]string{"PDKT", "1"})
+	b := newTrain("B", 20, [2]string{"TPJ", "1"}, [2]string{"PDKT", "1"})
+	b.Priority = 20
+	for _, tr := range []*ops.Train{c, a, b} {
+		if err := s.AddTrain(tr); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rec := &retryLog{}
+	s.Observer = rec
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Run(); err != nil {
+		t.Fatal(err)
+	}
+	assertAllExitedAndClean(t, s)
+	return rec.trains
+}
+
+func TestWithoutAgeingPriorityWins(t *testing.T) {
+	if got := firstOf(ageingQueue(t, nil), "A", "B"); got != "B" {
+		t.Fatalf("%s got the block first, want B (higher priority)", got)
+	}
+}
+
+func TestAgeingServesALongWaitFirst(t *testing.T) {
+	// at t=37 A has waited 29 min, B 11: 0 + 2x25 beats 20 + 1x25
+	if got := firstOf(ageingQueue(t, &sim.Ageing{EveryMin: 10, Adjust: 25}), "A", "B"); got != "A" {
+		t.Fatalf("%s got the block first, want A (waited longest)", got)
+	}
+}
+
+func TestAgeingConfig(t *testing.T) {
+	for name, a := range map[string]sim.Ageing{"no step": {Adjust: 5}, "negative adjust": {EveryMin: 10, Adjust: -1}} {
+		if err := (&sim.PriorityConfig{Ageing: &a}).Validate(); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+}

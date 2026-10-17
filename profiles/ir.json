@@ -16,20 +16,28 @@
     { "over_min": 15, "adjust": 0 },
     { "over_min": 60, "adjust": -5 }
   ],
+  "ageing": { "every_min": 10, "adjust": 5 },
+  "min_stop_min": 1,
   "precedence": {
     "rule": "thresholds",
     "horizon_min": 30,
     "headway_min": 1,
     "max_hold_min": 30,
+    "max_reception_hold_min": 30,
     "main_line_max_stay_min": 5,
     "min_priority_gap": 10,
     "min_saving_min": 1,
+    "max_wait_ratio": 2,
     "min_net_gain": 1
   },
   "timetable": {
     "rounding_min": 1,
     "recovery_pct": 0,
     "halt_min": 0.5,
-    "check_tolerance_min": 1
+    "check_tolerance_min": 1,
+    "check_precedence": "plan"
+  },
+  "kpi": {
+    "punctual_within_min": [1, 5, 15]
   }
 }

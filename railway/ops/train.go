@@ -63,6 +63,19 @@ func (t *Train) Schedule() []*SchedulePoint {
 	return t.schedule
 }
 
+// Clone is a fresh copy of the train as planned, ready to run in another
+// sim: the same schedule and any disruptions on it, with nothing run yet.
+func (t *Train) Clone() *Train {
+	c := &Train{Name: t.Name, Number: t.Number, MaxSpeed: t.MaxSpeed, Class: t.Class, Priority: t.Priority}
+	for _, sp := range t.schedule {
+		cp := *sp
+		cp.ActArrTime, cp.ActDeptTime, cp.ActPfNo = -1, -1, ""
+		cp.SignalStops, cp.WaitedFor = nil, ids.TrainID{}
+		c.schedule = append(c.schedule, &cp)
+	}
+	return c
+}
+
 // StopIndex is the index of the schedule point the train is at or heading to.
 func (t *Train) StopIndex() int {
 	return t.curSchedulePoint

@@ -1,0 +1,334 @@
+{
+  "trains": [
+    {
+      "number": "0451U",
+      "name": "Train1Up",
+      "class": "Superfast Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1,
+          "dwell": 5
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass"
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass"
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass"
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass"
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass"
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass"
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 5
+        }
+      ]
+    },
+    {
+      "number": "0451D",
+      "name": "Train1Down",
+      "class": "Passenger",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 1,
+          "dwell": 10
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass"
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass"
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass"
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass"
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "3",
+          "dwell": 5
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass"
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "3",
+          "dwell": 10
+        }
+      ]
+    },
+    {
+      "number": "0452U",
+      "name": "Train2Up",
+      "class": "Passenger",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 11,
+          "dwell": 5
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass"
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass"
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass"
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass"
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass"
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass"
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 5
+        }
+      ]
+    },
+    {
+      "number": "0452D",
+      "name": "Train2Down",
+      "class": "Mail/Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 11,
+          "dwell": 10
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass"
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass"
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass"
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass"
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "3",
+          "dwell": 5
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass"
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "3",
+          "dwell": 10
+        }
+      ]
+    },
+    {
+      "number": "0453U",
+      "name": "Train3Up",
+      "class": "Mail/Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 21,
+          "dwell": 5
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass"
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass"
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass"
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass"
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass"
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass"
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 5
+        }
+      ]
+    },
+    {
+      "number": "0453D",
+      "name": "Train3Down",
+      "class": "Superfast Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 21,
+          "dwell": 10
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass"
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass"
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass"
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass"
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "3",
+          "dwell": 5
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass"
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass"
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "3",
+          "dwell": 10
+        }
+      ]
+    }
+  ]
+}

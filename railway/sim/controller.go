@@ -165,7 +165,7 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 			stop.RecordArrival(sim.CurTime())
 		}
 		tc.recordPlatform(stop)
-		dwell := stop.ExpDwellTime(sim.CurTime())
+		dwell := stop.ExpDwellTime(sim.CurTime(), sim.MinStop()) + stop.ExtraStand()
 		tc.arrivedAt = sim.CurTime()
 		tc.dwellEnd = sim.CurTime() + max(float64(dwell), des.MinDeltaTime)
 		sim.ScheduleEventAfter(dwell, ops.TrainDwellEnd, train, train.ID())

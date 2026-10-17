@@ -15,7 +15,9 @@ import (
 // trains that run through. A stopping train may use the main line, but only
 // for a short stay (main_line_max_stay_min). A train that runs through takes
 // the fastest track: a through track, then the main line for the line it
-// arrives on, then a loop.
+// arrives on, then a loop. One expected to stand there, e.g. waiting for a
+// crossing, takes a loop instead: the main line and through tracks are its
+// last resort, so they stay free for the trains running through.
 //
 // The plan gives out a station's tracks to the trains due there within the
 // horizon, highest priority first, each taking the first track in its order
@@ -29,6 +31,7 @@ const (
 	reasonMainLineStay = "main_line_stay" // stop too long for the main line
 	reasonThrough      = "through_track"  // a stopping train on a through track
 	reasonPassing      = "passing"        // a faster track for a train running through
+	reasonStanding     = "standing"       // a loop for a train running through that is expected to stand
 	reasonOverride     = "override"       // an operator pinned it
 )
 
@@ -60,6 +63,16 @@ func (p *precedence) rank(t *ops.Train, k int, stn *infra.Station, c candidate, 
 	}
 	// another line's main line counts as a loop: which of those is best is
 	// down to which side of the station the train is on (rankCandidates)
+	if sp.IsPass() && p.standing(stay) {
+		r := 0
+		if class == infra.Through || class == infra.Main {
+			r = 6 // the last resort, whichever line's it is
+		}
+		if !timetabled {
+			r++
+		}
+		return r
+	}
 	if sp.IsPass() {
 		r := 4
 		switch {
@@ -87,6 +100,17 @@ func (p *precedence) rank(t *ops.Train, k int, stn *infra.Station, c candidate, 
 		return 3
 	}
 	return 5 // a main line, for too long a stay
+}
+
+// minStand is the shortest expected stand that sends a train running through
+// to a loop, whatever the headway.
+const minStand = 0.5
+
+// standing reports whether a train running through, expected to be at the
+// station for stay, stands there long enough to keep it off the main line:
+// longer than a headway.
+func (p *precedence) standing(stay float64) bool {
+	return stay > max(float64(p.cfg.HeadwayMin), minStand)
 }
 
 // rankCandidates sorts the candidates for train t at stop k, best first.
@@ -234,7 +258,9 @@ func (p *precedence) plan(stn *infra.Station) *stationPlan {
 	if pl, ok := p.plans[stn.Code]; ok {
 		return pl
 	}
+	p.planning[stn.Code] = true
 	pl := p.buildPlan(stn)
+	delete(p.planning, stn.Code)
 	p.plans[stn.Code] = pl
 	return pl
 }
@@ -274,8 +300,11 @@ func (p *precedence) buildPlan(stn *infra.Station) *stationPlan {
 		} else {
 			cands = p.candidates(t, *v.from, stn)
 		}
-		if !t.Schedule()[v.stop].IsPass() {
-			a.stay += p.predictedHold(t, pr, v)
+		// a stopping train stands its dwell and any hold; one running
+		// through counts as standing only if the hold is long enough
+		hold := max(p.predictedHold(t, pr, v), p.predictedReception(t, pr, v))
+		if !t.Schedule()[v.stop].IsPass() || p.standing(a.stay+hold) {
+			a.stay += hold
 			a.to = v.arr + a.stay + hw
 		}
 		a.ranked = p.rankCandidates(t, v.stop, stn, cands, a.stay)
@@ -307,23 +336,150 @@ func (p *precedence) buildPlan(stn *infra.Station) *stationPlan {
 }
 
 // predictedHold is how long the train is likely to stand at the visit beyond
-// its dwell because of higher-priority trains: held for them the way a hold
-// would be decided when it sets off, or waiting anyway for one that gets onto
-// a shared stretch of single line first.
+// its dwell: waiting anyway for a train, of any priority, that gets onto a
+// shared stretch of single line first, or held for a higher-priority one the
+// way a hold would be decided when it sets off.
 func (p *precedence) predictedHold(t *ops.Train, pr *projection, v visit) float64 {
+	s := p.sim
 	wait := 0.0
-	for _, h := range p.higher(t.ID()) {
+	mine := s.Priority(t.ID())
+	for _, h := range s.trains {
+		if h == t || s.trainCtrllers[h.ID()].phase == phaseExited {
+			continue
+		}
 		hp := p.project(h)
 		c := p.compare(t, p.regionFrom(pr, hp, v.slot+1), hp)
 		wait = max(wait, c.natural)
-		if c.Saving <= 0 {
+		if c.Saving <= 0 || s.Priority(h.ID()) <= mine {
 			continue
 		}
 		if ok, _ := p.rule.Hold(c.Conflict); ok && float64(c.Wait) <= p.cfg.maxHold() {
 			wait = max(wait, float64(c.Wait))
 		}
 	}
-	return min(wait, p.cfg.maxHold())
+	return min(max(wait, p.lineTaken(t, pr, v)), p.cfg.maxHold())
+}
+
+// lineTaken is how long the train would stand at the visit because the line
+// it leaves on is already reserved or occupied by another train: until that
+// train is projected to have left it, or, if that cannot be told, a stand
+// long enough to count. Projections can be wrong about who gets onto a line
+// first; a track already taken cannot.
+func (p *precedence) lineTaken(t *ops.Train, pr *projection, v visit) float64 {
+	s := p.sim
+	hw := float64(p.cfg.HeadwayMin)
+	wait := 0.0
+	for _, k := range pr.slots[min(v.slot+1, len(pr.slots)):] {
+		if v.stn.InArea(k.track().Id) {
+			continue // the station's throat
+		}
+		if _, ok := s.world.StationOfPlatform(k.track()); ok {
+			break // the next station: the line is behind it
+		}
+		res, occ := s.ilk.TrackHolder(k.track())
+		holder := occ
+		if holder.IsZero() {
+			holder = res
+		}
+		if holder.IsZero() || holder == t.ID() {
+			continue
+		}
+		free := math.Inf(1)
+		for _, hs := range p.project(s.trainCtrllers[holder].train).slots {
+			if hs.track() == k.track() {
+				free = hs.exit + hw
+				break
+			}
+		}
+		if math.IsInf(free, 1) {
+			wait = max(wait, 2*minStand)
+			continue
+		}
+		wait = max(wait, free-k.enter)
+	}
+	return wait
+}
+
+// receptionWait is how long a train getting to the plan's station at arr would
+// wait there for one of the tracks cands: 0 if one is free when it gets there.
+// Only the bookings of trains that get there before it count: one that comes
+// later is the plan's business, not the arrival's, and so is one that skip
+// says can only come behind it. It also returns the last booking in the way on
+// the track that frees first.
+func (p *precedence) receptionWait(id ids.TrainID, pl *stationPlan, cands []candidate, arr float64, skip func(ids.TrainID) bool) (float64, booking) {
+	hw := float64(p.cfg.HeadwayMin)
+	best, by := math.Inf(1), booking{}
+	for _, c := range cands {
+		at, last := arr, booking{}
+		for range len(pl.bookings) { // each booking can put it back once
+			i := slices.IndexFunc(pl.bookings, func(b booking) bool {
+				return b.train != id && b.pf == c.pf && b.from <= at && b.to > at-hw && !skip(b.train)
+			})
+			if i < 0 {
+				break
+			}
+			at, last = pl.bookings[i].to+hw, pl.bookings[i]
+		}
+		if at < best {
+			best, by = at, last
+		}
+	}
+	if math.IsInf(best, 1) {
+		return 0, booking{}
+	}
+	return max(best-arr, 0), by
+}
+
+// predictedReception is how long the train is likely to wait at the visit
+// because the next station will have no track free for it (see
+// receptionConflict). The next station's plan is looked at only if it is not
+// itself being built, so plans of neighbouring stations do not wait on each
+// other.
+func (p *precedence) predictedReception(t *ops.Train, pr *projection, v visit) float64 {
+	next, ok := receivingVisit(pr, v.stop+1)
+	if !ok || next.from == nil || next.stn == v.stn || p.planning[next.stn.Code] {
+		return 0
+	}
+	wait, _ := p.receptionWait(t.ID(), p.plan(next.stn), p.candidates(t, *next.from, next.stn), next.arr, p.behind(pr, v.slot+1, next.slot))
+	return min(wait, p.cfg.maxReceptionHold())
+}
+
+// receivingVisit is the projection's first visit from schedule index stop on
+// at a station that can take a train off the line: one with more than one
+// track. A halt, whose only track is the line, cannot.
+func receivingVisit(pr *projection, stop int) (visit, bool) {
+	for _, v := range pr.visits {
+		if v.stop >= stop && len(v.stn.Platforms()) > 1 {
+			return v, true
+		}
+	}
+	return visit{}, false
+}
+
+// behind returns a test for the trains that would follow the projected train
+// over its slots from up to to: they get onto one of those tracks after it,
+// running the same way. Projected unimpeded, such a train may seem to reach
+// the next station first, but it can only get there behind the train.
+func (p *precedence) behind(pr *projection, from, to int) func(ids.TrainID) bool {
+	from, to = max(from, 0), min(to, len(pr.slots))
+	memo := map[ids.TrainID]bool{}
+	return func(id ids.TrainID) bool {
+		if v, ok := memo[id]; ok {
+			return v
+		}
+		h := p.project(p.sim.trainCtrllers[id].train)
+		follows := false
+		for _, k := range pr.slots[from:max(from, to)] {
+			if slices.ContainsFunc(h.slots, func(hs slot) bool {
+				return hs.track() == k.track() && hs.step.From == k.step.From && hs.enter > k.enter
+			}) {
+				follows = true
+				break
+			}
+		}
+		memo[id] = follows
+		return follows
+	}
 }
 
 // order is the order the dispatcher should try the station's platforms in for
@@ -401,6 +557,9 @@ func (p *precedence) changeReason(t *ops.Train, k int, stn *infra.Station, pf *i
 	switch {
 	case sp.IsPass():
 		if p.rank(t, k, stn, *tt, a.stay) > p.rank(t, k, stn, *got, a.stay) {
+			if p.standing(a.stay) {
+				return reasonStanding, ids.TrainID{}
+			}
 			return reasonPassing, ids.TrainID{}
 		}
 	case class == infra.Through:

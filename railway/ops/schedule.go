@@ -16,6 +16,10 @@ const (
 
 type SchedulePoint struct {
 	kind SchedulePointKind
+	halt bool // see AsHalt
+	// extraStand is a disruption: minutes the train stands here on top of
+	// what the schedule asks (see Disruption).
+	extraStand float64
 
 	StnCode ids.StnCode
 
@@ -82,6 +86,26 @@ func (s *SchedulePoint) WithMinDwell(dwell float64) *SchedulePoint {
 	return s
 }
 
+// AsHalt marks a timed stop as a halt: a pass the train is timed to stand at
+// (e.g. for a crossing), not a call. It stands no longer than its times and
+// minimum dwell ask, and is never given the minimum stop.
+func (s *SchedulePoint) AsHalt() *SchedulePoint {
+	s.halt = true
+	return s
+}
+
+// ExtraStand is how many minutes a disruption makes the train stand here on
+// top of its dwell (see Disruption). The dwell itself, ExpDwellTime, leaves
+// it out, so nothing plans for it before the train has arrived.
+func (s *SchedulePoint) ExtraStand() units.Minutes {
+	return units.Min(s.extraStand)
+}
+
+// IsHalt reports whether the point is a halt (see AsHalt).
+func (s *SchedulePoint) IsHalt() bool {
+	return s.halt
+}
+
 // Kind is whether the train stops, dwells or passes here.
 func (s *SchedulePoint) Kind() SchedulePointKind {
 	return s.kind
@@ -110,24 +134,29 @@ func (s *SchedulePoint) Departed() bool {
 	return s.ActDeptTime >= 0
 }
 
-func (s *SchedulePoint) ExpDwellTime(curTime float64) units.Minutes {
-
+// ExpDwellTime is how long the train stands here if it arrives at curTime.
+// At a stop it stands at least minStop, however late it runs; a pass, or a
+// halt, is not a stop and is never held for it.
+func (s *SchedulePoint) ExpDwellTime(curTime float64, minStop units.Minutes) units.Minutes {
 	switch s.kind {
 	case SpStop:
-		if curTime > s.DeptTime {
-			// late: a one minute stop, or the minimum dwell if it has one
-			return units.Min(max(s.DwellTime, 1))
+		least := units.Min(max(s.DwellTime, 0))
+		if !s.halt {
+			least = max(least, minStop)
 		}
-		// leave on time, but not before the minimum dwell
-		return units.Min(max(s.DeptTime-curTime, s.DwellTime, 0))
+		if curTime > s.DeptTime {
+			// late: as short a stop as it may make
+			return least
+		}
+		// leave on time, but not before the least it must stand
+		return max(units.Min(s.DeptTime-curTime), least)
 	case SpPass:
 		return units.Min(des.MinDeltaTime)
 	case SpDwell:
-		return units.Min(s.DwellTime)
+		return max(units.Min(s.DwellTime), minStop)
 	default:
-		return units.Min(1)
+		return max(units.Min(1), minStop)
 	}
-
 }
 
 func NewArrDepPoint(stnCode ids.StnCode, arrTime, deptTime float64, prefPfNo string) *SchedulePoint {

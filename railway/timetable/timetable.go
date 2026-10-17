@@ -54,11 +54,25 @@ type Config struct {
 	HaltMin float64 `json:"halt_min"`
 	// CheckToleranceMin is how late a train may run in the check run.
 	CheckToleranceMin float64 `json:"check_tolerance_min"`
+	// CheckPrecedence is how the check run decides precedence, if the
+	// profile has it on: CheckPlan (the default) or CheckAuto.
+	CheckPrecedence string `json:"check_precedence,omitempty"`
 }
+
+// How the check run decides precedence (Config.CheckPrecedence).
+const (
+	// CheckPlan keeps to the timetable's plan: its platforms, and who waits
+	// for whom at each crossing and overtake. It shows the plan can be run.
+	CheckPlan = "plan"
+	// CheckAuto lets precedence decide afresh from the timetable's times,
+	// as it would on the day. It shows the dispatching can keep the
+	// timetable too.
+	CheckAuto = "auto"
+)
 
 // DefaultConfig is used when the profile has no timetable section.
 func DefaultConfig() Config {
-	return Config{RoundingMin: 1, HaltMin: 0.5, CheckToleranceMin: 1}
+	return Config{RoundingMin: 1, HaltMin: 0.5, CheckToleranceMin: 1, CheckPrecedence: CheckPlan}
 }
 
 // LoadConfig reads the settings from a profile's raw "timetable" section;
@@ -88,6 +102,9 @@ func (c Config) Validate() error {
 	}
 	if c.CheckToleranceMin < 0 {
 		errs = append(errs, errors.New("check_tolerance_min must not be negative"))
+	}
+	if c.CheckPrecedence != CheckPlan && c.CheckPrecedence != CheckAuto {
+		errs = append(errs, fmt.Errorf("check_precedence %q, want %s or %s", c.CheckPrecedence, CheckPlan, CheckAuto))
 	}
 	if err := errors.Join(errs...); err != nil {
 		return fmt.Errorf("timetable: %w", err)
@@ -179,7 +196,7 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 			if sp.IsPass() {
 				p.Kind = KindPass
 			} else {
-				p.MinDwell = minDwell(sp)
+				p.MinDwell = minDwell(sp, s.MinStop())
 			}
 			for _, ss := range sp.SignalStops {
 				// most stops are only a signal handing over to the next
@@ -199,7 +216,7 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 				if k == 0 {
 					due += entryRun(s.World(), t, sp)
 				}
-				due += max(float64(sp.ExpDwellTime(due)), des.MinDeltaTime)
+				due += max(float64(sp.ExpDwellTime(due, s.MinStop())), des.MinDeltaTime)
 				if extra := sp.ActDeptTime - due; extra > cfg.HaltMin {
 					h := c.classify(t, k, max(due, sp.ActArrTime), sp.ActDeptTime)
 					h.Min = extra
@@ -231,9 +248,13 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 	return tt
 }
 
-// minDwell is the shortest the train has to stand at a stop.
-func minDwell(sp *ops.SchedulePoint) float64 {
-	return max(sp.DwellTime, 0)
+// minDwell is the shortest the train has to stand at a stop: its own minimum
+// dwell, and at a call (not a halt) the sim's minimum stop.
+func minDwell(sp *ops.SchedulePoint, minStop units.Minutes) float64 {
+	if sp.IsHalt() {
+		return max(sp.DwellTime, 0)
+	}
+	return max(sp.DwellTime, float64(minStop))
 }
 
 // entryRun is the time from entering the world to reaching the end of the
@@ -278,14 +299,48 @@ func (tt Timetable) TimedTrains() []*ops.Train {
 			if !p.Reached() || p.Dep < 0 {
 				break
 			}
-			if p.Kind == KindPass {
+			switch p.Kind {
+			case KindPass:
 				t.AddSchedule(ops.NewPassPoint(ids.StnCode(p.Stn), p.Arr, p.Pf))
-			} else {
+			case KindHalt:
+				// a pass timed to stand: not a stop, so no minimum stop
+				t.AddSchedule(ops.NewArrDepPoint(ids.StnCode(p.Stn), p.Arr, p.Dep, p.Pf).WithMinDwell(p.MinDwell).AsHalt())
+			default:
 				t.AddSchedule(ops.NewArrDepPoint(ids.StnCode(p.Stn), p.Arr, p.Dep, p.Pf).WithMinDwell(p.MinDwell))
 			}
 		}
 		if len(t.Schedule()) > 0 {
 			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// PlanOverrides are the run's decisions as precedence overrides, for running
+// the timetable again: every train pinned to the track it used at each point,
+// and every crossing and overtake at a station kept: a train that stood there
+// for one is held until the other has reached the station (a crossing) or
+// left it (an overtake). Without them a run of the timed trains decides
+// precedence afresh from the new times, and can meet trains elsewhere than
+// the timetable has them meet. Points TimedTrains leaves out are left out
+// here too.
+func (tt Timetable) PlanOverrides() []sim.Override {
+	var out []sim.Override
+	for i, tr := range tt.Trains {
+		for k, p := range tr.Points {
+			if !p.Reached() || p.Dep < 0 {
+				break // as TimedTrains
+			}
+			if p.Pf != "" {
+				out = append(out, sim.Override{Action: sim.OverridePlatform, Train: tr.Number, Station: p.Stn, Pf: p.Pf})
+			}
+			// a technical halt needs no hold: the line ahead keeps the train
+			// back until the other has gone
+			// nor does one it follows out from elsewhere: the line ahead
+			// keeps it back
+			if j, kj, arrival, ok := meeting(tt, i, k, tt.RoundingMin); ok && p.Halt.Reason != ReasonTechnical && tt.Trains[j].Points[kj].Stn == p.Stn {
+				out = append(out, sim.Override{Action: sim.OverrideHold, Train: tr.Number, For: p.Halt.For, Station: p.Stn, Until: holdUntil(arrival)})
+			}
 		}
 	}
 	return out

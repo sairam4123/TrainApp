@@ -32,3 +32,5 @@
 31. Load trains from JSON instead of building them in main.go. The timetable output (`-timetable`) has the same shape, so a generated timetable could go straight back in as input.
 32. Timetable generation is order-dependent: trains get their paths by priority, then first come. Search for a better one (e.g. try other orders, or hold trains for crossings at chosen loops) instead of taking the first that works.
 33. The time-distance graph needs a single line. Draw branched worlds as one graph per route (e.g. WJN-EJN and WJN-NJN).
+35. Precedence projections of a train refused as unsafe: `blockedUntil` takes the latest of the tracks it waits on, though it is retried on the first; and a projection built while another is being built is cached in its weaker form. Both make predictions (e.g. "this train will stand here") flicker between evaluations. Fixing them should make main-line standing rarer still.
+36. The stand and reception predictions cost time: a single-line run with 18 trains takes about 2.8 times as long as before them. Cache them across grants, or compute them only for the stations a request concerns (see 18).

@@ -26,12 +26,20 @@ type PrecedenceConfig struct {
 	// MainLineMaxStayMin is the longest a stopping train may stand on a main
 	// line; a longer stay goes to a loop.
 	MainLineMaxStayMin units.Minutes `json:"main_line_max_stay_min,omitempty"`
+	// MaxReceptionHoldMin caps how long a train is kept at a station because
+	// the next one has no track free for it when it would arrive (a
+	// reception hold). Defaults to max_hold_min.
+	MaxReceptionHoldMin units.Minutes `json:"max_reception_hold_min,omitempty"`
 
 	// MinPriorityGap and MinSavingMin are the thresholds rule's settings: hold
 	// only for a train at least this much higher in priority, that would
 	// otherwise lose at least this many minutes.
 	MinPriorityGap int           `json:"min_priority_gap,omitempty"`
 	MinSavingMin   units.Minutes `json:"min_saving_min,omitempty"`
+	// MaxWaitRatio is also the thresholds rule's: hold only if the held
+	// train waits at most this many minutes per minute the other saves,
+	// whatever either train's class. 0 for no limit.
+	MaxWaitRatio float64 `json:"max_wait_ratio,omitempty"`
 	// MinNetGain is the weighted rule's setting: hold when priority(H) x
 	// saving - priority(L) x wait exceeds it.
 	MinNetGain float64 `json:"min_net_gain,omitempty"`
@@ -51,10 +59,14 @@ func (c *PrecedenceConfig) Validate() error {
 	for name, v := range map[string]units.Minutes{
 		"horizon_min": c.HorizonMin, "headway_min": c.HeadwayMin, "max_hold_min": c.MaxHoldMin,
 		"main_line_max_stay_min": c.MainLineMaxStayMin, "min_saving_min": c.MinSavingMin,
+		"max_reception_hold_min": c.MaxReceptionHoldMin,
 	} {
 		if v < 0 {
 			errs = append(errs, fmt.Errorf("%s is negative", name))
 		}
+	}
+	if c.MaxWaitRatio < 0 {
+		errs = append(errs, errors.New("max_wait_ratio is negative"))
 	}
 	return errors.Join(errs...)
 }
@@ -80,6 +92,14 @@ func (c *PrecedenceConfig) maxHold() float64 {
 	return float64(c.MaxHoldMin)
 }
 
+// maxReceptionHold is the cap on a reception hold.
+func (c *PrecedenceConfig) maxReceptionHold() float64 {
+	if c.MaxReceptionHoldMin == 0 {
+		return c.maxHold()
+	}
+	return float64(c.MaxReceptionHoldMin)
+}
+
 // ConflictKind is how two trains get in each other's way.
 type ConflictKind string
 
@@ -95,6 +115,11 @@ const (
 	KindPlatform ConflictKind = "platform"
 	// KindManual: an operator asked for the hold.
 	KindManual ConflictKind = "manual"
+	// KindReception: the next station would have no track free for the
+	// train when it got there, so it would stand at the home signal and shut
+	// the line behind it. Kept at its station instead, whatever the
+	// priorities: the hold rule does not apply.
+	KindReception ConflictKind = "reception"
 )
 
 // Conflict is what a HoldRule decides on: train Held would cost train For
@@ -119,7 +144,7 @@ type HoldRule interface {
 // only needs an entry here.
 var holdRules = map[string]func(*PrecedenceConfig) HoldRule{
 	"thresholds": func(c *PrecedenceConfig) HoldRule {
-		return thresholdRule{gap: c.MinPriorityGap, saving: c.MinSavingMin}
+		return thresholdRule{gap: c.MinPriorityGap, saving: c.MinSavingMin, ratio: c.MaxWaitRatio}
 	},
 	"weighted": func(c *PrecedenceConfig) HoldRule {
 		return weightedRule{minNet: c.MinNetGain}
@@ -127,10 +152,12 @@ var holdRules = map[string]func(*PrecedenceConfig) HoldRule{
 }
 
 // thresholdRule holds a train for one at least gap higher in priority that
-// would otherwise lose at least saving minutes.
+// would otherwise lose at least saving minutes, as long as the held train
+// waits no more than ratio minutes per minute saved (0: no limit).
 type thresholdRule struct {
 	gap    int
 	saving units.Minutes
+	ratio  float64
 }
 
 func (thresholdRule) Name() string { return "thresholds" }
@@ -141,6 +168,9 @@ func (r thresholdRule) Hold(c Conflict) (bool, string) {
 	}
 	if c.Saving < r.saving {
 		return false, fmt.Sprintf("saves %.1f min, below %.1f", c.Saving, r.saving)
+	}
+	if r.ratio > 0 && float64(c.Wait) > r.ratio*float64(c.Saving) {
+		return false, fmt.Sprintf("waits %.1f min to save %.1f, more than %.1f per minute saved", c.Wait, c.Saving, r.ratio)
 	}
 	return true, fmt.Sprintf("%s would lose %.1f min", c.For, c.Saving)
 }

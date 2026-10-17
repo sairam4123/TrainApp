@@ -90,11 +90,15 @@ func notes(p Point) []string {
 }
 
 func printCheck(w io.Writer, r *CheckReport, trains int) {
+	how := ""
+	if r.Precedence != "" {
+		how = ", precedence " + r.Precedence
+	}
 	if r.OK() {
-		fmt.Fprintf(w, "check run: all %d trains kept their times (tolerance %s min)\n", trains, FormatMin(r.ToleranceMin))
+		fmt.Fprintf(w, "check run: all %d trains kept their times (tolerance %s min%s)\n", trains, FormatMin(r.ToleranceMin), how)
 		return
 	}
-	fmt.Fprintf(w, "check run: the timetable does not hold (tolerance %s min)\n", FormatMin(r.ToleranceMin))
+	fmt.Fprintf(w, "check run: the timetable does not hold (tolerance %s min%s)\n", FormatMin(r.ToleranceMin), how)
 	for _, l := range r.Late {
 		fmt.Fprintf(w, "  %s up to %s min late (%s %s)\n", l.Train, FormatMin(l.LateMin), l.Event, l.Stn)
 	}

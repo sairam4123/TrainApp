@@ -27,15 +27,23 @@ const (
 	// OverrideRelease ends the hold Decision names, or keeps it from ever
 	// being placed.
 	OverrideRelease OverrideAction = "release"
-	// OverrideHold holds Train at Station until For has left Station. The
-	// hold rule and max_hold_min do not apply; the refuge and safety checks
-	// do.
+	// OverrideHold holds Train at Station until For has left Station, or
+	// with Until HoldUntilArrived until For has reached it (e.g. for a
+	// crossing). The hold rule and max_hold_min do not apply; the refuge,
+	// track and safety checks do. It holds a train standing at Station, not
+	// one still to enter the world there.
 	OverrideHold OverrideAction = "hold"
 	// OverridePlatform makes Pf Train's first choice at Station.
 	OverridePlatform OverrideAction = "platform"
 	// OverrideDisable means Train is never held or moved. Others can still
 	// be held for it.
 	OverrideDisable OverrideAction = "disable"
+)
+
+// What a hold override waits for.
+const (
+	HoldUntilLeft    = "left"    // For has left Station (the default)
+	HoldUntilArrived = "arrived" // For has reached Station
 )
 
 // Override is one change to the precedence decisions.
@@ -48,6 +56,9 @@ type Override struct {
 	For      string         `json:"for,omitempty"`
 	Station  string         `json:"station,omitempty"`
 	Pf       string         `json:"pf,omitempty"`
+	// Until is, for a hold, what it waits for: HoldUntilLeft (the default)
+	// or HoldUntilArrived.
+	Until string `json:"until,omitempty"`
 }
 
 // LoadOverrides reads overrides from a JSON file of the form
@@ -136,6 +147,9 @@ func (s *Sim) checkOverride(o Override) error {
 		if o.Train == o.For {
 			return errors.New("a train cannot be held for itself")
 		}
+		if o.Until != "" && o.Until != HoldUntilLeft && o.Until != HoldUntilArrived {
+			return fmt.Errorf("unknown until %q (want %s or %s)", o.Until, HoldUntilLeft, HoldUntilArrived)
+		}
 		if !slices.ContainsFunc(h.Schedule(), func(sp *ops.SchedulePoint) bool { return sp.StnCode.String() == o.Station }) {
 			return fmt.Errorf("%s does not call at %q", o.For, o.Station)
 		}
@@ -172,7 +186,7 @@ func (s *Sim) applyOverride(o Override) {
 			train = d.Train
 		}
 	case OverrideHold:
-		p.manual[train] = append(p.manual[train], manualHold{forTrain: ids.TrainID{Number: o.For}, stn: ids.StnCode(o.Station)})
+		p.manual[train] = append(p.manual[train], manualHold{forTrain: ids.TrainID{Number: o.For}, stn: ids.StnCode(o.Station), arrived: o.Until == HoldUntilArrived})
 	case OverridePlatform:
 		p.pinned[pinKey{train, ids.StnCode(o.Station)}] = o.Pf
 	case OverrideDisable:

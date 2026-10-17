@@ -1,0 +1,11 @@
+{
+  "name": "sl-12-disrupt",
+  "description": "sl-12 with a failure: 0452U stands 30 min at PDKT, and 0453D enters 15 min late",
+  "world": "tpjkkdi-sl",
+  "schedule": "schedules/sl-12.json",
+  "profile": "../profiles/ir.json",
+  "disruptions": [
+    { "train": "0452U", "kind": "stand", "stn": "PDKT", "min": 30 },
+    { "train": "0453D", "kind": "late_entry", "min": 15 }
+  ]
+}

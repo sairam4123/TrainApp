@@ -10,6 +10,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -198,8 +199,16 @@ func (p printOptions) useColor() bool {
 	return err == nil && fi.Mode()&os.ModeCharDevice != 0 && os.Getenv("NO_COLOR") == ""
 }
 
+// exitInterrupted is the exit status after ctrl+c, as for a shell's SIGINT,
+// so a launcher such as traindemo can tell it from q and quit too.
+const exitInterrupted = 130
+
 func run(m *model) {
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	_, err := tea.NewProgram(m).Run()
+	if errors.Is(err, tea.ErrInterrupted) || m.interrupted {
+		os.Exit(exitInterrupted)
+	}
+	if err != nil {
 		log.Fatal(err)
 	}
 }

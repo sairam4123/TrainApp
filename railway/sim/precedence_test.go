@@ -369,8 +369,10 @@ func TestLoadOverrides(t *testing.T) {
 
 func TestPrecedenceConfig(t *testing.T) {
 	for name, cfg := range map[string]sim.PrecedenceConfig{
-		"unknown rule":     {Rule: "coin-toss"},
-		"negative horizon": {HorizonMin: -1},
+		"unknown rule":            {Rule: "coin-toss"},
+		"negative horizon":        {HorizonMin: -1},
+		"negative reception hold": {MaxReceptionHoldMin: -1},
+		"negative ratio":          {MaxWaitRatio: -1},
 	} {
 		if err := (&sim.PriorityConfig{Precedence: &cfg}).Validate(); err == nil {
 			t.Errorf("%s: accepted", name)
@@ -493,5 +495,114 @@ func TestTrainsKeepToTheirOwnSide(t *testing.T) {
 		if up != (pf == "1" || pf == "2") {
 			t.Errorf("%s used %s, on the other line's side", e.attrs["train"], e.attrs["track"])
 		}
+	}
+}
+
+// receptionTrains fill EST's two platforms with A and B, which stand there
+// until t=40, while L runs from WST to EST, calling at LPA. All have the same
+// priority, so no hold rule comes into it.
+func receptionTrains() []*ops.Train {
+	return []*ops.Train{
+		testTrain("A", 20, 100, 1, stop{"EST", "1", 39, false}),
+		testTrain("B", 20, 100, 1, stop{"EST", "2", 39, false}),
+		testTrain("L", 20, 100, 1, stop{"WST", "1", 2, false}, stop{"LPA", "1", 2, false}, stop{"HLT", "1", 0, true}, stop{"EST", "1", 2, false}),
+	}
+}
+
+// longestLineStop is the longest the train stood at a signal on its way to
+// the station, and on which track.
+func longestLineStop(tr *ops.Train, code ids.StnCode) (float64, string) {
+	longest, on := 0.0, ""
+	for _, sp := range tr.Schedule() {
+		if sp.StnCode != code {
+			continue
+		}
+		for _, ss := range sp.SignalStops {
+			if d := ss.To - ss.From; d > longest {
+				longest, on = d, ss.Track
+			}
+		}
+	}
+	return longest, on
+}
+
+func TestReceptionHoldKeepsATrainOffTheLine(t *testing.T) {
+	// EST is full until t=40: L waits at LPA, not at EST's home signal
+	trains := receptionTrains()
+	_, log := runWith(t, singleLine(), precedenceConfig(), nil, trains...)
+	if got := log.find("PRECEDENCE_HOLD", map[string]string{"train": "L", "at": "LPA", "kind": "reception"}); len(got) == 0 {
+		t.Fatalf("L was not held at LPA for want of a track at EST: %+v", log.entries)
+	}
+	if got := log.find("PRECEDENCE_HOLD", map[string]string{"kind": "reception"}); got[0].attrs["rule"] != "" {
+		t.Errorf("a reception hold names rule %q, which it does not ask", got[0].attrs["rule"])
+	}
+	if d, on := longestLineStop(trains[2], "EST"); d > 0.5 {
+		t.Errorf("L stood %.2f min at a signal on %s on the way to EST", d, on)
+	}
+
+	// with the hold capped near nothing, it goes and stands out on the line
+	cfg := precedenceConfig()
+	cfg.Precedence.MaxReceptionHoldMin = 0.01
+	trains = receptionTrains()
+	runWith(t, singleLine(), cfg, nil, trains...)
+	if d, _ := longestLineStop(trains[2], "EST"); d < 5 {
+		t.Errorf("without the hold L stood only %.2f min on the way to EST: the scenario does not test it", d)
+	}
+}
+
+func TestManualPrecedenceMakesNoDecisionsOfItsOwn(t *testing.T) {
+	_, log := runWith(t, singleLine(), precedenceConfig(), func(s *sim.Sim) { s.ManualPrecedence = true }, overtakeTrains()...)
+	if got := log.find("PRECEDENCE_HOLD", nil); len(got) > 0 {
+		t.Errorf("held with ManualPrecedence: %+v", got)
+	}
+}
+
+func TestHoldUntilArrived(t *testing.T) {
+	// X stops at LPA for 10 min on its way west; P waits there for it
+	trains := func() []*ops.Train {
+		return []*ops.Train{
+			testTrain("P", 20, 60, 1, stop{"WST", "1", 2, false}, stop{"LPA", "1", 1, false}, stop{"HLT", "1", 0, true}, stop{"EST", "1", 2, false}),
+			testTrain("X", 50, 100, 5, stop{"EST", "1", 2, false}, stop{"HLT", "1", 0, true}, stop{"LPA", "2", 10, false}, stop{"WST", "2", 2, false}),
+		}
+	}
+	at := func(tr *ops.Train, code ids.StnCode) *ops.SchedulePoint {
+		for _, sp := range tr.Schedule() {
+			if sp.StnCode == code {
+				return sp
+			}
+		}
+		t.Fatalf("%s has no stop at %s", tr.Number, code)
+		return nil
+	}
+	for _, until := range []string{sim.HoldUntilArrived, sim.HoldUntilLeft} {
+		t.Run(until, func(t *testing.T) {
+			ts := trains()
+			runWith(t, singleLine(), precedenceConfig(), func(s *sim.Sim) {
+				s.ManualPrecedence = true
+				if err := s.Override(sim.Override{Action: sim.OverrideHold, Train: "P", For: "X", Station: "LPA", Until: until}); err != nil {
+					t.Fatal(err)
+				}
+			}, ts...)
+			p, x := at(ts[0], "LPA"), at(ts[1], "LPA")
+			if p.ActDeptTime < x.ActArrTime-1 {
+				t.Errorf("P left LPA at %.2f, before X got there at %.2f", p.ActDeptTime, x.ActArrTime)
+			}
+			if left := p.ActDeptTime >= x.ActDeptTime; left != (until == sim.HoldUntilLeft) {
+				t.Errorf("P left LPA at %.2f, X at %.2f: wrong for until %s", p.ActDeptTime, x.ActDeptTime, until)
+			}
+		})
+	}
+	s := &sim.Sim{OutputDir: t.TempDir(), Priorities: precedenceConfig()}
+	s.SetWorld(singleLine())
+	for _, tr := range trains() {
+		if err := s.AddTrain(tr); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Override(sim.Override{Action: sim.OverrideHold, Train: "P", For: "X", Station: "LPA", Until: "soon"}); err == nil {
+		t.Error("unknown until accepted")
 	}
 }

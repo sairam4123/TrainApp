@@ -264,3 +264,182 @@ func TestMainScenarioTimetableHolds(t *testing.T) {
 		t.Errorf("check of an impossible timetable: %+v", *rep)
 	}
 }
+
+func TestCheckWithPrecedenceDecidingAfresh(t *testing.T) {
+	prio := irProfile(t)
+	cfg, err := timetable.LoadConfig(prio.Timetable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	world := worlds.BuildTpjKkdiWorld()
+	s := run(t, world, prio, mainTrains()...)
+	tt := timetable.Round(timetable.FromRun(s, cfg), cfg)
+	for _, mode := range []string{timetable.CheckPlan, timetable.CheckAuto} {
+		cfg.CheckPrecedence = mode
+		check, err := timetable.NewCheckSim(world, prio, tt, mode, t.TempDir())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := check.ManualPrecedence, mode == timetable.CheckPlan; got != want {
+			t.Errorf("%s: ManualPrecedence = %v, want %v", mode, got, want)
+		}
+		rep := timetable.Report(check, check.Run(), cfg)
+		if rep.Precedence != mode {
+			t.Errorf("%s: report says precedence %q", mode, rep.Precedence)
+		}
+		t.Logf("%s: %+v", mode, *rep)
+	}
+}
+
+// singleLineTrains mirror main.go's demo on the real single line: three
+// trains each way, ten minutes apart, calling at PDKT and running through the
+// stations between.
+func singleLineTrains() []*ops.Train {
+	between := [2][]string{{"KRMG", "KRUR", "VEL"}, {"NMN", "TYM", "CTND", "KTYR"}}
+	passes := func(stns []string, reverse bool) []stop {
+		var out []stop
+		for i := range stns {
+			s := stns[i]
+			if reverse {
+				s = stns[len(stns)-1-i]
+			}
+			out = append(out, stop{ids.StnCode(s), "", 0, true})
+		}
+		return out
+	}
+	classes := []string{"Superfast Express", "Passenger", "Mail/Express"}
+	var out []*ops.Train
+	for i := range 3 {
+		up := append([]stop{{"TPJ", "1", 5, false}}, passes(between[0], false)...)
+		up = append(append(up, stop{"PDKT", "1", 2, false}), passes(between[1], false)...)
+		up = append(up, stop{"KKDI", "1", 5, false})
+		down := append([]stop{{"KKDI", "3", 10, false}}, passes(between[1], true)...)
+		down = append(append(down, stop{"PDKT", "3", 5, false}), passes(between[0], true)...)
+		down = append(down, stop{"TPJ", "3", 10, false})
+		u := newTrain(fmt.Sprintf("U%d", i), 0, 110, float64(i*10+1), up...)
+		d := newTrain(fmt.Sprintf("D%d", i), 0, 110, float64(i*10+1), down...)
+		u.Class, d.Class = classes[i%3], classes[(i+1)%3]
+		out = append(out, u, d)
+	}
+	return out
+}
+
+func TestSingleLineTimetableHolds(t *testing.T) {
+	// trains cross and overtake at the loops: the check run must meet them
+	// where the generated timetable does
+	prio := irProfile(t)
+	cfg, err := timetable.LoadConfig(prio.Timetable)
+	if err != nil {
+		t.Fatal(err)
+	}
+	world := worlds.BuildTpjKkdiSingleLineWorld()
+	s := run(t, world, prio, singleLineTrains()...)
+	tt := timetable.Round(timetable.FromRun(s, cfg), cfg)
+	rep, err := timetable.Check(world, prio, tt, cfg, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tt.Check = rep
+	if !rep.OK() {
+		logTimetable(t, tt)
+		t.Errorf("check run failed: %+v", *rep)
+	}
+}
+
+// meetingTimetable has H run X-Y-Z, through Y, and L run Z-Y-X, standing at Y
+// until H has got there: they cross at Y.
+func meetingTimetable() timetable.Timetable {
+	return timetable.Timetable{Trains: []timetable.Train{
+		{Number: "H", Points: []timetable.Point{
+			{Stn: "X", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 10.05, MinDwell: 10},
+			{Stn: "Y", Kind: timetable.KindPass, Pf: "2", Arr: 20.1, Dep: 20.1},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "1", Arr: 30.2, Dep: 32, MinDwell: 1},
+		}},
+		{Number: "L", Points: []timetable.Point{
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "2", Arr: 0, Dep: 5, MinDwell: 5},
+			{Stn: "Y", Kind: timetable.KindHalt, Pf: "1", Arr: 15, Dep: 20.3, Halt: &timetable.Halt{Reason: timetable.ReasonCross, For: "H", Min: 5}},
+			{Stn: "X", Kind: timetable.KindStop, Pf: "2", Arr: 30.4, Dep: 31, MinDwell: 0.5},
+		}},
+	}}
+}
+
+func TestRoundKeepsMeetings(t *testing.T) {
+	cfg := timetable.Config{RoundingMin: 1}
+	tt := timetable.Round(meetingTimetable(), cfg)
+	h, l := pointAt(t, tt, "H", "Y"), pointAt(t, tt, "L", "Y")
+	// H leaves X at 11, not 10.05, so it gets to Y at 21.05 at the earliest:
+	// L, which waits for it there, may not be timed out before
+	if l.Dep < 21.05 {
+		t.Errorf("L timed out of Y at %v, before H can be there (timed %v)", l.Dep, h.Arr)
+	}
+	if l.Dep != 22 {
+		t.Errorf("L dep Y = %v, want 22 (20.3 moved on by H's 0.95, rounded up)", l.Dep)
+	}
+}
+
+func TestRoundKeepsMeetingsJustOutsideTheStand(t *testing.T) {
+	// L is let go once H is clear of the line, which is a little before H's
+	// arrival, taken at the far end of the platform: 1.15 min after L leaves
+	tt := meetingTimetable()
+	tt.Trains[0].Points[1].Arr, tt.Trains[0].Points[1].Dep = 21.45, 21.45
+	tt = timetable.Round(tt, timetable.Config{RoundingMin: 1})
+	if l := pointAt(t, tt, "L", "Y"); l.Dep != 22 {
+		t.Errorf("L dep Y = %v, want 22 (20.3 moved on by H's 0.95, rounded up)", l.Dep)
+	}
+}
+
+func TestRoundKeepsATrainBehindTheOneItFollows(t *testing.T) {
+	// G stands at Y until F, which passed Y before G got there, is clear of
+	// the line to Z. F's departure from X is rounded up by 0.95, so G's from
+	// Y must move on as much
+	tt := timetable.Round(timetable.Timetable{Trains: []timetable.Train{
+		{Number: "F", Points: []timetable.Point{
+			{Stn: "X", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 10.05, MinDwell: 10},
+			{Stn: "Y", Kind: timetable.KindPass, Pf: "1", Arr: 20.1, Dep: 20.1},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "1", Arr: 30.2, Dep: 32, MinDwell: 1},
+		}},
+		{Number: "G", Points: []timetable.Point{
+			{Stn: "X", Kind: timetable.KindStop, Pf: "2", Arr: 12, Dep: 15, MinDwell: 1},
+			{Stn: "Y", Kind: timetable.KindHalt, Pf: "2", Arr: 25, Dep: 29.5, Halt: &timetable.Halt{Reason: timetable.ReasonTechnical, For: "F", Min: 4.5}},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "2", Arr: 39.5, Dep: 41, MinDwell: 1},
+		}},
+	}}, timetable.Config{RoundingMin: 1})
+	if g := pointAt(t, tt, "G", "Y"); g.Dep != 31 {
+		t.Errorf("G dep Y = %v, want 31 (29.5 moved on by F's 0.95, rounded up)", g.Dep)
+	}
+	for _, o := range tt.PlanOverrides() {
+		if o.Train == "G" && o.Action == sim.OverrideHold {
+			t.Errorf("G is held (%+v): the line ahead keeps it behind F", o)
+		}
+	}
+}
+
+func TestPlanOverrides(t *testing.T) {
+	tt := timetable.Round(meetingTimetable(), timetable.Config{RoundingMin: 1})
+	got := map[string]bool{}
+	for _, o := range tt.PlanOverrides() {
+		got[fmt.Sprintf("%s %s %s %s %s %s", o.Action, o.Train, o.Station, o.Pf, o.For, o.Until)] = true
+	}
+	for _, want := range []string{
+		"platform H X 1  ", "platform H Y 2  ", "platform H Z 1  ",
+		"platform L Z 2  ", "platform L Y 1  ", "platform L X 2  ",
+		"hold L Y  H arrived",
+	} {
+		if !got[want] {
+			t.Errorf("missing override %q; got %v", want, got)
+		}
+	}
+	if len(got) != 7 {
+		t.Errorf("%d overrides, want 7: %v", len(got), got)
+	}
+
+	// a halt for a train that was nowhere near the station is not a meeting
+	far := meetingTimetable()
+	far.Trains[1].Points[1].Arr, far.Trains[1].Points[1].Dep = 40, 45
+	far.Trains[1].Points[2].Arr, far.Trains[1].Points[2].Dep = 55, 56
+	for _, o := range timetable.Round(far, timetable.Config{RoundingMin: 1}).PlanOverrides() {
+		if o.Action == sim.OverrideHold {
+			t.Errorf("held for a train that passed long before: %+v", o)
+		}
+	}
+}

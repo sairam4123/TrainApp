@@ -54,8 +54,18 @@ func newDispatcher(s *Sim) *Dispatcher {
 		reviewing: map[ids.TrainID]bool{},
 		wokenBy:   map[ids.TrainID]ids.TrainID{},
 	}
-	disp.waits.Rank = s.Priority
+	disp.waits.Rank = disp.rank
 	return disp
+}
+
+// rank orders the waiting requests: the train's priority, raised by ageing
+// for how long its request has waited.
+func (disp *Dispatcher) rank(id ids.TrainID) int {
+	r := disp.sim.Priority(id)
+	if req := disp.requests[id]; req != nil {
+		r += disp.sim.ageAdjust(disp.sim.CurTime() - req.Since)
+	}
+	return r
 }
 
 // rankedPaths is World.RankedPaths, remembered: the world does not change
@@ -164,7 +174,7 @@ func (disp *Dispatcher) served(id ids.TrainID, route *interlocking.Route, wokenB
 }
 
 // OnTrackReleased retries the requests waiting on the track, which train by
-// released, highest priority first, then longest-waiting. Each either gets
+// released, highest rank first (see rank), then longest-waiting. Each either gets
 // its route or waits again on whatever now blocks it.
 func (disp *Dispatcher) OnTrackReleased(track *infra.TrackSegment, by ids.TrainID) {
 	for _, id := range disp.waits.Wake(track.Id) {
@@ -218,7 +228,7 @@ func (disp *Dispatcher) retry(id ids.TrainID, released *infra.TrackSegment, by i
 }
 
 // Waiting returns the queued requests in the order they would be served:
-// highest priority first, then longest-waiting.
+// highest rank first, then longest-waiting.
 func (disp *Dispatcher) Waiting() []*RouteRequest {
 	ids := disp.waits.Waiting()
 	out := make([]*RouteRequest, len(ids))

@@ -87,6 +87,8 @@ type model struct {
 	gPerCol   float64 // minutes per column
 	gFitted   bool
 	planned   bool // mark planned times on the graph
+
+	interrupted bool // quit with ctrl+c rather than q
 }
 
 func newModel(d *schematic.Diagram, rep *replay) *model {
@@ -319,7 +321,10 @@ func (m *model) key(msg tea.KeyPressMsg) tea.Cmd {
 		return nil
 	}
 	switch msg.String() {
-	case "q", "ctrl+c":
+	case "q":
+		return tea.Quit
+	case "ctrl+c":
+		m.interrupted = true
 		return tea.Quit
 	case "+", "=":
 		m.zoomTo(m.step+1, pw/2, ph/2)

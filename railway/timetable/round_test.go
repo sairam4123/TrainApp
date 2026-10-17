@@ -60,7 +60,7 @@ func TestLoadConfig(t *testing.T) {
 	if err != nil || cfg.RoundingMin != 0.5 || cfg.HaltMin != timetable.DefaultConfig().HaltMin {
 		t.Errorf("partial section: %+v, %v", cfg, err)
 	}
-	for _, bad := range []string{`{"rounding_min": 0}`, `{"halt_min": -1}`, `{"nope": 1}`} {
+	for _, bad := range []string{`{"rounding_min": 0}`, `{"halt_min": -1}`, `{"nope": 1}`, `{"check_precedence": "maybe"}`} {
 		if _, err := timetable.LoadConfig([]byte(bad)); err == nil {
 			t.Errorf("%s accepted", bad)
 		}

@@ -1,0 +1,7 @@
+{
+  "name": "sl-24",
+  "description": "TPJ-KKDI single line, 12 demo trains each way, 10 min apart",
+  "world": "tpjkkdi-sl",
+  "schedule": "schedules/sl-24.json",
+  "profile": "../profiles/ir.json"
+}

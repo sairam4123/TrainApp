@@ -2,6 +2,7 @@ package timetable
 
 import (
 	"cmp"
+	"fmt"
 	"slices"
 	"trainapp/railway/infra"
 	"trainapp/railway/sim"
@@ -15,6 +16,9 @@ import (
 // CheckReport is how the check run went.
 type CheckReport struct {
 	ToleranceMin float64 `json:"tolerance_min"`
+	// Precedence is how the run decided precedence (Config.CheckPrecedence),
+	// empty if precedence was off.
+	Precedence string `json:"precedence,omitempty"`
 	// Late lists, for each train that ran later than the tolerance, the
 	// point where it was latest.
 	Late []Lateness `json:"late,omitempty"`
@@ -38,10 +42,15 @@ type Lateness struct {
 }
 
 // NewCheckSim sets up the check run of tt over the world: its timed trains,
-// the same priorities, and logs under outputDir. Add an Observer if wanted,
-// Run it, then read the result with Report.
-func NewCheckSim(world *infra.World, prio *sim.PriorityConfig, tt Timetable, outputDir string) (*sim.Sim, error) {
-	s := &sim.Sim{OutputDir: outputDir, Priorities: prio}
+// the same priorities, and logs under outputDir. With precedence on, mode says
+// how it decides: CheckPlan keeps to the timetable's plan (PlanOverrides), and
+// precedence makes no decisions of its own (Sim.ManualPrecedence), since
+// re-deciding from the new times would move the meetings the timetable was
+// built on; CheckAuto lets precedence decide everything afresh. Add an
+// Observer if wanted, Run it, then read the result with Report.
+func NewCheckSim(world *infra.World, prio *sim.PriorityConfig, tt Timetable, mode, outputDir string) (*sim.Sim, error) {
+	plan := mode != CheckAuto && prio != nil && prio.Precedence != nil
+	s := &sim.Sim{OutputDir: outputDir, Priorities: prio, ManualPrecedence: plan}
 	s.SetWorld(world)
 	for _, t := range tt.TimedTrains() {
 		if err := s.AddTrain(t); err != nil {
@@ -51,12 +60,21 @@ func NewCheckSim(world *infra.World, prio *sim.PriorityConfig, tt Timetable, out
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
+	if plan {
+		if err := s.ApplyOverrides(tt.PlanOverrides()); err != nil {
+			return nil, fmt.Errorf("check run: %w", err)
+		}
+	}
 	return s, nil
 }
 
 // Report compares a finished check run with its timetable.
-func Report(s *sim.Sim, runErr error, tolerance float64) *CheckReport {
-	r := &CheckReport{ToleranceMin: tolerance}
+func Report(s *sim.Sim, runErr error, cfg Config) *CheckReport {
+	r := &CheckReport{ToleranceMin: cfg.CheckToleranceMin}
+	tolerance := cfg.CheckToleranceMin
+	if s.Priorities != nil && s.Priorities.Precedence != nil {
+		r.Precedence = cfg.CheckPrecedence
+	}
 	if runErr != nil {
 		r.Err = runErr.Error()
 	}
@@ -89,9 +107,9 @@ func Report(s *sim.Sim, runErr error, tolerance float64) *CheckReport {
 
 // Check runs the check run of tt and reports on it.
 func Check(world *infra.World, prio *sim.PriorityConfig, tt Timetable, cfg Config, outputDir string) (*CheckReport, error) {
-	s, err := NewCheckSim(world, prio, tt, outputDir)
+	s, err := NewCheckSim(world, prio, tt, cfg.CheckPrecedence, outputDir)
 	if err != nil {
 		return nil, err
 	}
-	return Report(s, s.Run(), cfg.CheckToleranceMin), nil
+	return Report(s, s.Run(), cfg), nil
 }

@@ -35,6 +35,10 @@ type Sim struct {
 	// by delay; see priority.go. Without it a train's priority is its own
 	// Priority.
 	Priorities *PriorityConfig
+	// ManualPrecedence, with precedence on, has precedence make no decisions
+	// of its own: trains are held and given platforms only as overrides say
+	// (see overrides.go), e.g. to run a timetable to its plan.
+	ManualPrecedence bool
 
 	delayBands  []DelayBand // Priorities.DelayBands, smallest OverMin first
 	log         *slog.Logger

@@ -76,8 +76,8 @@ func (pr *projection) uses(track *infra.TrackSegment) bool {
 
 // dwellAt is how long the train stands at sp if it arrives at arr, as the
 // controller would schedule it.
-func dwellAt(sp *ops.SchedulePoint, arr float64) float64 {
-	return max(float64(sp.ExpDwellTime(arr)), des.MinDeltaTime)
+func (s *Sim) dwellAt(sp *ops.SchedulePoint, arr float64) float64 {
+	return max(float64(sp.ExpDwellTime(arr, s.MinStop())), des.MinDeltaTime)
 }
 
 func endOf(step infra.Step) infra.Position {
@@ -162,7 +162,7 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 		stn, _ := s.world.GetStation(sched[k].StnCode)
 		pf := platformOf(stn, step.Edge.Track)
 		arr := enter + float64(step.Edge.Track.TravelTime(t.MaxSpeed))
-		dep := arr + dwellAt(sched[k], arr)
+		dep := arr + s.dwellAt(sched[k], arr)
 		pr.slots = append(pr.slots, slot{step, enter, dep})
 		pr.visits = append(pr.visits, visit{stop: k, stn: stn, pf: pf, arr: arr, dep: dep, slot: len(pr.slots) - 1, from: from, committed: committed})
 		return dep

@@ -226,6 +226,9 @@ func (s *Sim) logSkipped(t *ops.Train, id string, c conflict, at, reason string)
 func (s *Sim) logOverride(o Override, status, reason string) {
 	attrs := []any{"train", o.Train, "action", string(o.Action), "decision", o.Decision, "for", o.For,
 		"station", o.Station, "pf", o.Pf, "status", status}
+	if o.Until != "" {
+		attrs = append(attrs, "until", o.Until)
+	}
 	if reason != "" {
 		attrs = append(attrs, "reason", reason)
 	}
