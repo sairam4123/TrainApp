@@ -28,20 +28,25 @@ import (
 // and is required; an untimed stop takes no arr anywhere else. Times are in
 // minutes.
 
-type scheduleFile struct {
-	Trains []trainSpec `json:"trains"`
+// ScheduleFile is a schedule file's contents, as written: the trains as
+// specs, not yet checked or made into Trains (TrainSpec.Train does that).
+// An editor works on these.
+type ScheduleFile struct {
+	Trains []TrainSpec `json:"trains"`
 }
 
-type trainSpec struct {
+// TrainSpec is a train in a schedule file.
+type TrainSpec struct {
 	Number       string      `json:"number"`
 	Name         string      `json:"name,omitempty"`
 	Class        string      `json:"class,omitempty"`
 	Priority     int         `json:"priority,omitempty"`
 	MaxSpeedKmph float64     `json:"max_speed_kmph"`
-	Points       []pointSpec `json:"points"`
+	Points       []PointSpec `json:"points"`
 }
 
-type pointSpec struct {
+// PointSpec is a point of a train in a schedule file. Unset times are nil.
+type PointSpec struct {
 	Stn      string            `json:"stn"`
 	Kind     SchedulePointKind `json:"kind"` // SpStop or SpPass
 	Pf       string            `json:"pf,omitempty"`
@@ -65,19 +70,41 @@ func LoadTrains(path string) ([]*Train, error) {
 	return trains, nil
 }
 
+// ReadSchedule reads a schedule file's contents as written, without
+// checking the trains.
+func ReadSchedule(r io.Reader) (ScheduleFile, error) {
+	dec := json.NewDecoder(r)
+	dec.DisallowUnknownFields()
+	var file ScheduleFile
+	err := dec.Decode(&file)
+	return file, err
+}
+
+// LoadSchedule reads a schedule file as written (ReadSchedule).
+func LoadSchedule(path string) (ScheduleFile, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return ScheduleFile{}, err
+	}
+	defer f.Close()
+	file, err := ReadSchedule(f)
+	if err != nil {
+		return file, fmt.Errorf("%s: %w", path, err)
+	}
+	return file, nil
+}
+
 // ReadTrains reads the trains from a schedule file's contents. It reports
 // everything wrong it can find, rather than stopping at the first.
 func ReadTrains(r io.Reader) ([]*Train, error) {
-	dec := json.NewDecoder(r)
-	dec.DisallowUnknownFields()
-	var file scheduleFile
-	if err := dec.Decode(&file); err != nil {
+	file, err := ReadSchedule(r)
+	if err != nil {
 		return nil, err
 	}
 	var trains []*Train
 	var errs []error
 	for i, spec := range file.Trains {
-		t, err := spec.train()
+		t, err := spec.Train()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("train %d (%s): %w", i, spec.Number, err))
 			continue
@@ -90,7 +117,8 @@ func ReadTrains(r io.Reader) ([]*Train, error) {
 	return trains, nil
 }
 
-func (spec trainSpec) train() (*Train, error) {
+// Train makes the spec a train, reporting everything wrong with it.
+func (spec TrainSpec) Train() (*Train, error) {
 	t := &Train{
 		Number: spec.Number, Name: spec.Name, Class: spec.Class, Priority: spec.Priority,
 		MaxSpeed: units.KMPH(spec.MaxSpeedKmph),
@@ -102,7 +130,7 @@ func (spec trainSpec) train() (*Train, error) {
 		errs = append(errs, errors.New("the first point needs an arr, when the train enters"))
 	}
 	for k, p := range spec.Points {
-		sp, err := p.point(k == 0)
+		sp, err := p.Point(k == 0)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("point %d (%s): %w", k, p.Stn, err))
 			continue
@@ -115,7 +143,9 @@ func (spec trainSpec) train() (*Train, error) {
 	return t, t.Validate()
 }
 
-func (p pointSpec) point(first bool) (*SchedulePoint, error) {
+// Point makes the spec a schedule point; first says it is the train's
+// first, its entry.
+func (p PointSpec) Point(first bool) (*SchedulePoint, error) {
 	var errs []error
 	for _, v := range []struct {
 		name string
@@ -174,31 +204,48 @@ func (p pointSpec) point(first bool) (*SchedulePoint, error) {
 
 // WriteTrains writes the trains' schedules, as planned, as a schedule file.
 func WriteTrains(w io.Writer, trains []*Train) error {
-	file := scheduleFile{Trains: []trainSpec{}}
+	file := ScheduleFile{Trains: []TrainSpec{}}
 	for _, t := range trains {
-		spec := trainSpec{
-			Number: t.Number, Name: t.Name, Class: t.Class, Priority: t.Priority,
-			MaxSpeedKmph: t.MaxSpeed.InKMPH(), Points: []pointSpec{},
-		}
-		for _, sp := range t.schedule {
-			p := pointSpec{Stn: string(sp.StnCode), Pf: sp.SpPfNo, Kind: SpStop}
-			switch sp.kind {
-			case SpPass:
-				p.Kind, p.Arr = SpPass, timeOf(sp.ArrTime)
-			case SpStop:
-				p.Arr, p.Dep, p.MinDwell = timeOf(sp.ArrTime), timeOf(sp.DeptTime), timeOf(sp.DwellTime)
-			case SpDwell:
-				p.Arr, p.Dwell = timeOf(sp.ArrTime), timeOf(sp.DwellTime)
-			default:
-				return fmt.Errorf("train %s: %s: unknown kind %q", t.Number, sp.StnCode, sp.kind)
-			}
-			spec.Points = append(spec.Points, p)
+		spec, err := SpecOf(t)
+		if err != nil {
+			return err
 		}
 		file.Trains = append(file.Trains, spec)
+	}
+	return WriteSchedule(w, file)
+}
+
+// WriteSchedule writes a schedule file.
+func WriteSchedule(w io.Writer, file ScheduleFile) error {
+	if file.Trains == nil {
+		file.Trains = []TrainSpec{}
 	}
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(file)
+}
+
+// SpecOf is a train's schedule, as planned, as a schedule file has it.
+func SpecOf(t *Train) (TrainSpec, error) {
+	spec := TrainSpec{
+		Number: t.Number, Name: t.Name, Class: t.Class, Priority: t.Priority,
+		MaxSpeedKmph: t.MaxSpeed.InKMPH(), Points: []PointSpec{},
+	}
+	for _, sp := range t.schedule {
+		p := PointSpec{Stn: string(sp.StnCode), Pf: sp.SpPfNo, Kind: SpStop}
+		switch sp.kind {
+		case SpPass:
+			p.Kind, p.Arr = SpPass, timeOf(sp.ArrTime)
+		case SpStop:
+			p.Arr, p.Dep, p.MinDwell = timeOf(sp.ArrTime), timeOf(sp.DeptTime), timeOf(sp.DwellTime)
+		case SpDwell:
+			p.Arr, p.Dwell = timeOf(sp.ArrTime), timeOf(sp.DwellTime)
+		default:
+			return spec, fmt.Errorf("train %s: %s: unknown kind %q", t.Number, sp.StnCode, sp.kind)
+		}
+		spec.Points = append(spec.Points, p)
+	}
+	return spec, nil
 }
 
 // timeOf is a time to write: nil when it is unset (negative).

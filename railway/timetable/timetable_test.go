@@ -2,6 +2,7 @@ package timetable_test
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"trainapp/railway/ids"
@@ -346,19 +347,25 @@ func TestSingleLineTimetableHolds(t *testing.T) {
 	}
 }
 
+// via is a track between two points, for a hand-made timetable.
+func via(track string, in, out float64) []timetable.Via {
+	return []timetable.Via{{Track: track, In: in, Out: out}}
+}
+
 // meetingTimetable has H run X-Y-Z, through Y, and L run Z-Y-X, standing at Y
-// until H has got there: they cross at Y.
+// until H has got there: they cross at Y. The line is single: track xy
+// between X and Y, yz between Y and Z.
 func meetingTimetable() timetable.Timetable {
 	return timetable.Timetable{Trains: []timetable.Train{
 		{Number: "H", Points: []timetable.Point{
 			{Stn: "X", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 10.05, MinDwell: 10},
-			{Stn: "Y", Kind: timetable.KindPass, Pf: "2", Arr: 20.1, Dep: 20.1},
-			{Stn: "Z", Kind: timetable.KindStop, Pf: "1", Arr: 30.2, Dep: 32, MinDwell: 1},
+			{Stn: "Y", Kind: timetable.KindPass, Pf: "2", Arr: 20.1, Dep: 20.1, Via: via("xy", 10.1, 20)},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "1", Arr: 30.2, Dep: 32, MinDwell: 1, Via: via("yz", 20.1, 30.1)},
 		}},
 		{Number: "L", Points: []timetable.Point{
 			{Stn: "Z", Kind: timetable.KindStop, Pf: "2", Arr: 0, Dep: 5, MinDwell: 5},
-			{Stn: "Y", Kind: timetable.KindHalt, Pf: "1", Arr: 15, Dep: 20.3, Halt: &timetable.Halt{Reason: timetable.ReasonCross, For: "H", Min: 5}},
-			{Stn: "X", Kind: timetable.KindStop, Pf: "2", Arr: 30.4, Dep: 31, MinDwell: 0.5},
+			{Stn: "Y", Kind: timetable.KindHalt, Pf: "1", Arr: 15, Dep: 20.3, Via: via("yz", 5.1, 14.9), Halt: &timetable.Halt{Reason: timetable.ReasonCross, For: "H", Min: 5}},
+			{Stn: "X", Kind: timetable.KindStop, Pf: "2", Arr: 30.4, Dep: 31, MinDwell: 0.5, Via: via("xy", 20.4, 30.3)},
 		}},
 	}}
 }
@@ -375,33 +382,36 @@ func TestRoundKeepsMeetings(t *testing.T) {
 	if l.Dep != 22 {
 		t.Errorf("L dep Y = %v, want 22 (20.3 moved on by H's 0.95, rounded up)", l.Dep)
 	}
+	if h.Kind != timetable.KindPass {
+		t.Errorf("H at Y is a %s, want it still to pass", h.Kind)
+	}
 }
 
-func TestRoundKeepsMeetingsJustOutsideTheStand(t *testing.T) {
-	// L is let go once H is clear of the line, which is a little before H's
-	// arrival, taken at the far end of the platform: 1.15 min after L leaves
-	tt := meetingTimetable()
-	tt.Trains[0].Points[1].Arr, tt.Trains[0].Points[1].Dep = 21.45, 21.45
-	tt = timetable.Round(tt, timetable.Config{RoundingMin: 1})
-	if l := pointAt(t, tt, "L", "Y"); l.Dep != 22 {
-		t.Errorf("L dep Y = %v, want 22 (20.3 moved on by H's 0.95, rounded up)", l.Dep)
+func TestRoundMovesTheWayOnWithTheTrain(t *testing.T) {
+	tt := timetable.Round(meetingTimetable(), timetable.Config{RoundingMin: 1})
+	// L leaves Y at 22, not 20.3: the line to X moves on with it
+	if v := pointAt(t, tt, "L", "X").Via[0]; math.Abs(v.In-22.1) > 1e-9 || math.Abs(v.Out-32) > 1e-9 {
+		t.Errorf("L's way to X %+v, want in 22.1 out 32", v)
 	}
 }
 
 func TestNoMeetingOnTheSameTrack(t *testing.T) {
-	// H gets to Y just after L has left, onto the track L stood on: it waited
-	// for L's track, so L cannot have waited for it. Held until H arrived, L
-	// would keep H out for good
+	// H runs on a line of its own, xy2, and gets to Y just after L has left,
+	// onto the track L stood on: L goes first, and is not held for H
 	tt := meetingTimetable()
-	tt.Trains[0].Points[1].Pf = "1"
-	tt.Trains[0].Points[1].Arr, tt.Trains[0].Points[1].Dep = 21.2, 21.2
+	h := tt.Trains[0].Points
+	h[1].Pf, h[1].Via = "1", via("xy2", 10.1, 21)
+	h[1].Arr, h[1].Dep = 21.2, 21.2
 	tt = timetable.Round(tt, timetable.Config{RoundingMin: 1})
 	if l := pointAt(t, tt, "L", "Y"); l.Dep != 21 {
 		t.Errorf("L dep Y = %v, want 21 (20.3 rounded up, not moved on for H)", l.Dep)
 	}
+	if l, h := pointAt(t, tt, "L", "Y"), pointAt(t, tt, "H", "Y"); h.Arr <= l.Dep {
+		t.Errorf("H timed onto L's track at Y at %v, before L leaves at %v", h.Arr, l.Dep)
+	}
 	for _, o := range tt.PlanOverrides() {
-		if o.Train == "L" && o.Action == sim.OverrideHold {
-			t.Errorf("L is held (%+v) for a train that needs its track", o)
+		if o.Action == sim.OverrideHold {
+			t.Errorf("held (%+v) with no track between the stations shared", o)
 		}
 	}
 }
@@ -413,13 +423,13 @@ func TestRoundKeepsATrainBehindTheOneItFollows(t *testing.T) {
 	tt := timetable.Round(timetable.Timetable{Trains: []timetable.Train{
 		{Number: "F", Points: []timetable.Point{
 			{Stn: "X", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 10.05, MinDwell: 10},
-			{Stn: "Y", Kind: timetable.KindPass, Pf: "1", Arr: 20.1, Dep: 20.1},
-			{Stn: "Z", Kind: timetable.KindStop, Pf: "1", Arr: 30.2, Dep: 32, MinDwell: 1},
+			{Stn: "Y", Kind: timetable.KindPass, Pf: "1", Arr: 20.1, Dep: 20.1, Via: via("xy", 10.1, 19.9)},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "1", Arr: 30.2, Dep: 32, MinDwell: 1, Via: via("yz", 20.1, 29.5)},
 		}},
 		{Number: "G", Points: []timetable.Point{
 			{Stn: "X", Kind: timetable.KindStop, Pf: "2", Arr: 12, Dep: 15, MinDwell: 1},
-			{Stn: "Y", Kind: timetable.KindHalt, Pf: "2", Arr: 25, Dep: 29.5, Halt: &timetable.Halt{Reason: timetable.ReasonTechnical, For: "F", Min: 4.5}},
-			{Stn: "Z", Kind: timetable.KindStop, Pf: "2", Arr: 39.5, Dep: 41, MinDwell: 1},
+			{Stn: "Y", Kind: timetable.KindHalt, Pf: "2", Arr: 25, Dep: 29.5, Via: via("xy", 15.1, 24.9), Halt: &timetable.Halt{Reason: timetable.ReasonTechnical, For: "F", Min: 4.5}},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "2", Arr: 39.5, Dep: 41, MinDwell: 1, Via: via("yz", 29.6, 39.4)},
 		}},
 	}}, timetable.Config{RoundingMin: 1})
 	if g := pointAt(t, tt, "G", "Y"); g.Dep != 31 {
@@ -429,6 +439,168 @@ func TestRoundKeepsATrainBehindTheOneItFollows(t *testing.T) {
 		if o.Train == "G" && o.Action == sim.OverrideHold {
 			t.Errorf("G is held (%+v): the line ahead keeps it behind F", o)
 		}
+	}
+}
+
+// singleLineTimetable has L run A-S, timed onto the single line at A a
+// little late, and F stand at S, leaving for A as soon as L is off the line:
+// it waits less than halt_min, so it has no halt. With pass, F runs through
+// S from R instead.
+func singleLineTimetable(pass bool) timetable.Timetable {
+	f := []timetable.Point{
+		{Stn: "S", Kind: timetable.KindStop, Pf: "2", Arr: 15, Dep: 20, MinDwell: 1},
+		{Stn: "A", Kind: timetable.KindStop, Pf: "2", Arr: 30.1, Dep: 31, MinDwell: 0.5, Via: via("as", 20.05, 30)},
+	}
+	if pass {
+		f = []timetable.Point{
+			{Stn: "R", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 10, MinDwell: 1},
+			{Stn: "S", Kind: timetable.KindPass, Pf: "2", Arr: 20, Dep: 20, Via: via("rs", 10.05, 19.9)},
+			f[1],
+		}
+	}
+	return timetable.Timetable{Trains: []timetable.Train{
+		{Number: "L", Points: []timetable.Point{
+			{Stn: "A", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 10.05, MinDwell: 10},
+			{Stn: "S", Kind: timetable.KindStop, Pf: "1", Arr: 19.95, Dep: 22, MinDwell: 1, Via: via("as", 10.1, 19.8)},
+		}},
+		{Number: "F", Points: f},
+	}}
+}
+
+func TestRoundKeepsTheOrderOnTheLineWithNoHalt(t *testing.T) {
+	// L's departure from A is rounded up by 0.95, its arrival at S with it;
+	// F's departure from S, 20 on its own, must stay behind it
+	tt := timetable.Round(singleLineTimetable(false), timetable.Config{RoundingMin: 1})
+	if f := pointAt(t, tt, "F", "S"); f.Dep != 21 {
+		t.Errorf("F dep S = %v, want 21 (behind L's arrival at 20.9)", f.Dep)
+	}
+	held := false
+	for _, o := range tt.PlanOverrides() {
+		if o.Action == sim.OverrideHold {
+			if o.Train != "F" || o.For != "L" || o.Station != "S" || o.Until != sim.HoldUntilArrived {
+				t.Errorf("unexpected hold %+v", o)
+			}
+			held = true
+		}
+	}
+	if !held {
+		t.Error("F is not held at S for L")
+	}
+}
+
+func TestAPassStaysAPass(t *testing.T) {
+	// F runs through S: its wait for L goes back to its stop at R, less the
+	// run from there
+	tt := timetable.Round(singleLineTimetable(true), timetable.Config{RoundingMin: 1})
+	f := pointAt(t, tt, "F", "S")
+	if f.Kind != timetable.KindPass {
+		t.Errorf("F at S is a %s, want a pass", f.Kind)
+	}
+	if r := pointAt(t, tt, "F", "R"); r.Dep != 11 {
+		t.Errorf("F dep R = %v, want 11 (to get to S behind L's arrival at 20.9)", r.Dep)
+	}
+	if f.Arr < 20.9 {
+		t.Errorf("F through S at %v, before L is off the line", f.Arr)
+	}
+	for _, o := range tt.PlanOverrides() {
+		if o.Action == sim.OverrideHold {
+			t.Errorf("held (%+v): a pass is not held", o)
+		}
+	}
+}
+
+func TestRoundKeepsAnOvertake(t *testing.T) {
+	// P stands in the loop at Y while X runs through, then follows it to Z
+	tt := timetable.Round(timetable.Timetable{Trains: []timetable.Train{
+		{Number: "X", Points: []timetable.Point{
+			{Stn: "W", Kind: timetable.KindStop, Pf: "1", Arr: 5, Dep: 10.05, MinDwell: 5},
+			{Stn: "Y", Kind: timetable.KindPass, Pf: "1", Arr: 20.1, Dep: 20.1, Via: via("wy", 10.1, 19.9)},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "1", Arr: 30.2, Dep: 32, MinDwell: 1, Via: via("yz", 20.1, 30)},
+		}},
+		{Number: "P", Points: []timetable.Point{
+			{Stn: "W", Kind: timetable.KindStop, Pf: "2", Arr: 0, Dep: 2, MinDwell: 2},
+			{Stn: "Y", Kind: timetable.KindHalt, Pf: "2", Arr: 10, Dep: 30.1, Via: via("wy", 2.1, 9.9), Halt: &timetable.Halt{Reason: timetable.ReasonOvertake, For: "X", Min: 19}},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "2", Arr: 45, Dep: 46, MinDwell: 1, Via: via("yz", 30.2, 44.9)},
+		}},
+	}}, timetable.Config{RoundingMin: 1})
+	// X leaves W 0.95 later, so is off the line at Z by 31.15
+	if p := pointAt(t, tt, "P", "Y"); p.Dep != 32 {
+		t.Errorf("P dep Y = %v, want 32", p.Dep)
+	}
+	var holds []string
+	for _, o := range tt.PlanOverrides() {
+		if o.Action == sim.OverrideHold {
+			holds = append(holds, fmt.Sprintf("%s %s %s %s", o.Train, o.Station, o.For, o.Until))
+		}
+	}
+	if len(holds) != 1 || holds[0] != "P Y X left" {
+		t.Errorf("holds %v, want P at Y until X has left", holds)
+	}
+}
+
+func TestRoundKeepsTheOrderOnAPlatform(t *testing.T) {
+	// A stands on S pf 1, then B comes in onto it from the other side; no
+	// track between the stations is shared, so B is not held, only timed
+	tt := timetable.Round(timetable.Timetable{Trains: []timetable.Train{
+		{Number: "A", Points: []timetable.Point{
+			{Stn: "E", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 0.2, MinDwell: 0.2},
+			{Stn: "S", Kind: timetable.KindStop, Pf: "1", Arr: 10.2, Dep: 12.1, MinDwell: 1.9, Via: via("es", 0.3, 10)},
+		}},
+		{Number: "B", Points: []timetable.Point{
+			{Stn: "W", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 2, MinDwell: 2},
+			{Stn: "S", Kind: timetable.KindStop, Pf: "1", Arr: 12.6, Dep: 14, MinDwell: 1, Via: via("ws", 2.1, 12.4)},
+		}},
+	}}, timetable.Config{RoundingMin: 1})
+	a, b := pointAt(t, tt, "A", "S"), pointAt(t, tt, "B", "S")
+	// A is at S at 11 and leaves at 13; B, 0.5 behind as in the run
+	if b.Arr < a.Dep+0.5 {
+		t.Errorf("B timed onto S pf 1 at %v, %v after A leaves it", b.Arr, b.Arr-a.Dep)
+	}
+	for _, o := range tt.PlanOverrides() {
+		if o.Action == sim.OverrideHold {
+			t.Errorf("held (%+v) for a platform", o)
+		}
+	}
+}
+
+func TestAHaltIsAtLeastAStep(t *testing.T) {
+	// a 0.28-minute wait at a stop is timed a whole minute
+	tt := timetable.Round(timetable.Timetable{Trains: []timetable.Train{{Number: "T", Points: []timetable.Point{
+		{Stn: "A", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 5, MinDwell: 5},
+		{Stn: "B", Kind: timetable.KindStop, Pf: "1", Arr: 14.5, Dep: 15.78, MinDwell: 1, Halt: &timetable.Halt{Reason: timetable.ReasonCross, For: "U", Min: 0.28}},
+	}}}}, timetable.Config{RoundingMin: 1})
+	if p := pointAt(t, tt, "T", "B"); p.Arr != 15 || p.Dep != 17 {
+		t.Errorf("T at B %v-%v, want 15-17: its minute's dwell and a minute's halt", p.Arr, p.Dep)
+	}
+}
+
+func TestRoundGivesAFlyingCrossingAHalt(t *testing.T) {
+	// U and D run through Y within a minute of each other, each onto the
+	// line the other has just left. Rounded from stops 0.7 apart, they
+	// cannot both keep that: one halts at Y to cross the other
+	tt := timetable.Round(timetable.Timetable{Trains: []timetable.Train{
+		{Number: "U", Priority: 50, Points: []timetable.Point{
+			{Stn: "X", Kind: timetable.KindStop, Pf: "1", Arr: 0, Dep: 10.1, MinDwell: 1},
+			{Stn: "Y", Kind: timetable.KindPass, Pf: "1", Arr: 20.3, Dep: 20.3, Via: via("xy", 10.2, 20.1)},
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "1", Arr: 30.5, Dep: 32, MinDwell: 1, Via: via("yz", 20.35, 30.3)},
+		}},
+		{Number: "D", Priority: 20, Points: []timetable.Point{
+			{Stn: "Z", Kind: timetable.KindStop, Pf: "2", Arr: 0, Dep: 10.8, MinDwell: 1},
+			{Stn: "Y", Kind: timetable.KindPass, Pf: "2", Arr: 20.4, Dep: 20.4, Via: via("yz", 10.9, 20.2)},
+			{Stn: "X", Kind: timetable.KindStop, Pf: "2", Arr: 30.6, Dep: 32, MinDwell: 1, Via: via("xy", 20.45, 30.4)},
+		}},
+	}}, timetable.Config{RoundingMin: 1})
+	u, d := pointAt(t, tt, "U", "Y"), pointAt(t, tt, "D", "Y")
+	if u.Kind != timetable.KindPass || d.Kind != timetable.KindHalt || d.Halt == nil || d.Halt.For != "U" || d.Halt.Reason != timetable.ReasonCross {
+		t.Errorf("U at Y a %s, D a %s (%+v); want the lower priority D to halt to cross U", u.Kind, d.Kind, d.Halt)
+	}
+	for _, tr := range tt.Trains {
+		if len(tr.Warnings) > 0 {
+			t.Errorf("%s: %v", tr.Number, tr.Warnings)
+		}
+	}
+	if d.Dep < u.Arr {
+		t.Errorf("D leaves Y at %v, before U is off the line at %v", d.Dep, u.Arr)
 	}
 }
 
@@ -451,10 +623,11 @@ func TestPlanOverrides(t *testing.T) {
 		t.Errorf("%d overrides, want 7: %v", len(got), got)
 	}
 
-	// a halt for a train that was nowhere near the station is not a meeting
+	// a train that passed long before is not waited for
 	far := meetingTimetable()
-	far.Trains[1].Points[1].Arr, far.Trains[1].Points[1].Dep = 40, 45
-	far.Trains[1].Points[2].Arr, far.Trains[1].Points[2].Dep = 55, 56
+	l := far.Trains[1].Points
+	l[1].Arr, l[1].Dep, l[1].Via = 40, 45, via("yz", 30, 39.9)
+	l[2].Arr, l[2].Dep, l[2].Via = 55, 56, via("xy", 45.1, 54.9)
 	for _, o := range timetable.Round(far, timetable.Config{RoundingMin: 1}).PlanOverrides() {
 		if o.Action == sim.OverrideHold {
 			t.Errorf("held for a train that passed long before: %+v", o)

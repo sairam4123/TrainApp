@@ -3,5 +3,6 @@
   "description": "TPJ-KKDI double line (one block per leg), 6 demo trains each way, 10 min apart",
   "world": "tpjkkdi",
   "schedule": "schedules/dl-12.json",
+  "timetable": "timetables/dl-12.json",
   "profile": "../profiles/ir.json"
 }

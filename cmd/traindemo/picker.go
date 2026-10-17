@@ -3,27 +3,20 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
 	"trainapp/railway/scenario"
+	"trainapp/visualization/runs"
 	"trainapp/visualization/schematic"
+	"trainapp/visualization/tui"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 )
-
-var (
-	dim    = lipgloss.NewStyle().Faint(true)
-	bold   = lipgloss.NewStyle().Bold(true)
-	accent = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
-	amber  = lipgloss.NewStyle().Foreground(lipgloss.Color("214")) // as trainviz draws held trains
-	good   = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
-	failed = lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
-)
-
-var spinner = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 
 // choice is what the picker was left with.
 type choice int
@@ -48,13 +41,25 @@ const (
 	focusTrains              // the selected scenario's trains
 )
 
+type (
+	vizDoneMsg  struct{ err error }
+	editDoneMsg struct {
+		err   error
+		saved string // the file trainedit says it saved last
+		was   string // the scenario it was opened on
+	}
+	tickMsg time.Time
+)
+
 // picker lists the scenarios, with a preview of the selected one: its world,
 // schedule and precedence rule. It runs the scenario with trainapp, drawing
-// its progress, then hands the terminal to trainviz.
+// its progress, then hands the terminal to trainviz; and hands it to
+// trainedit to edit a scenario or make a new one.
 type picker struct {
+	dir       string
 	scenarios []*scenario.Scenario
 	cursor    int
-	rule      int // index into rules
+	rule      int // index into runs.Rules
 	level     schematic.Level
 	panX      int // first column of the schematic shown
 	schedTop  int // first schedule row shown
@@ -63,26 +68,61 @@ type picker struct {
 	width     int
 	height    int
 
-	trainapp, trainviz string
-	outDir             string
+	bins   bins
+	outDir string
 
 	previews *previews
-	results  map[string]*result // by resultKey
-	run      *run               // trainapp running, if it is
-	viewing  string             // resultKey of the run trainviz shows
+	results  map[string]*runs.Result // by resultKey
+	run      *runs.Run               // trainapp running, if it is
+	viewing  string                  // resultKey of the run trainviz shows
 	spin     int
 	note     string
 	choice   choice
 }
 
-func newPicker(scenarios []*scenario.Scenario, rule int, trainapp, trainviz, outDir string) *picker {
-	return &picker{scenarios: scenarios, rule: rule, level: schematic.Layout, trainapp: trainapp, trainviz: trainviz, outDir: outDir,
-		previews: newPreviews(), results: map[string]*result{}}
+// newPicker lists the scenarios in dir; one that does not read is listed
+// with its error, so trainedit can be opened on it to put it right.
+func newPicker(dir string, rule int, b bins, outDir string) (*picker, error) {
+	p := &picker{dir: dir, rule: rule, level: schematic.Layout, bins: b, outDir: outDir}
+	if err := p.reload(""); err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
+// reload reads the scenarios again, forgetting the previews and results it
+// had, and selects the scenario at path if it is there (else the same
+// place in the list).
+func (p *picker) reload(path string) error {
+	scs, err := scenario.ListDir(p.dir)
+	if err != nil {
+		return err
+	}
+	if len(scs) == 0 {
+		return fmt.Errorf("no scenarios in %s", p.dir)
+	}
+	p.scenarios, p.previews, p.results = scs, newPreviews(), map[string]*runs.Result{}
+	p.cursor = min(p.cursor, len(scs)-1)
+	if path != "" {
+		for i, sc := range scs {
+			if samePath(sc.Path, path) {
+				p.cursor, p.panX, p.schedTop, p.train = i, 0, 0, 0
+			}
+		}
+	}
+	p.clamp()
+	return nil
+}
+
+func samePath(a, b string) bool {
+	x, errX := filepath.Abs(a)
+	y, errY := filepath.Abs(b)
+	return errX == nil && errY == nil && x == y
 }
 
 // resultKey names the selected scenario under the selected rule, for its result.
 func (p *picker) resultKey() string {
-	return p.scenarios[p.cursor].Path + "|" + rules[p.rule]
+	return p.scenarios[p.cursor].Path + "|" + runs.Rules[p.rule]
 }
 
 func (p *picker) Init() tea.Cmd { return nil }
@@ -99,37 +139,46 @@ func (p *picker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return p, tick()
 		}
 
-	case progressMsg, outputMsg:
+	case runs.ProgressMsg, runs.OutputMsg:
 		if p.run != nil {
-			p.run.handle(msg)
-			return p, p.run.next
+			p.run.Handle(msg)
+			return p, p.run.Next
 		}
 
-	case runDoneMsg:
+	case runs.DoneMsg:
 		r := p.run
 		p.run = nil
-		if r.cancelled { // by esc or ctrl+c
-			for _, f := range []string{r.rec, r.kpi} {
-				os.Remove(f) // not to replay half a run
-			}
-			p.results[r.key] = nil // the run before went when this one started
+		if r.Cancelled { // by esc or ctrl+c
+			r.Discard()
+			p.results[r.Key] = nil // the run before went when this one started
 			p.note = "run cancelled"
 		}
 		if p.choice == choiceInterrupt {
 			return p, tea.Quit
 		}
-		if r.cancelled {
+		if r.Cancelled {
 			return p, nil
 		}
-		p.results[r.key] = r.finish(msg.err)
+		p.results[r.Key] = r.Finish(msg.Err)
 
 	case vizDoneMsg:
-		if interrupted(msg.err) {
+		if runs.Interrupted(msg.err) {
 			p.choice = choiceInterrupt
 			return p, tea.Quit
 		}
-		if res := p.results[p.viewing]; res != nil && msg.err != nil && res.failed == "" {
-			res.failed = "trainviz: " + msg.err.Error()
+		if res := p.results[p.viewing]; res != nil && msg.err != nil && res.Failed == "" {
+			res.Failed = "trainviz: " + msg.err.Error()
+		}
+
+	case editDoneMsg:
+		if runs.Interrupted(msg.err) {
+			p.choice = choiceInterrupt
+			return p, tea.Quit
+		}
+		if err := p.reload(tui.ValueOr(msg.saved, msg.was)); err != nil {
+			p.note = "cannot read the scenarios again: " + err.Error()
+		} else if msg.err != nil {
+			p.note = "trainedit: " + msg.err.Error()
 		}
 
 	case tea.KeyPressMsg:
@@ -152,11 +201,11 @@ func (p *picker) key(key string) tea.Cmd {
 		switch key {
 		case "ctrl+c":
 			p.choice = choiceInterrupt
-			p.run.cancel()
+			p.run.Cancel()
 		case "esc", "q":
-			p.run.cancel()
+			p.run.Cancel()
 		}
-		return nil // the runDoneMsg follows
+		return nil // the DoneMsg follows
 	}
 	p.note = ""
 	switch key {
@@ -177,6 +226,10 @@ func (p *picker) key(key string) tea.Cmd {
 		return p.start()
 	case "v":
 		return p.view()
+	case "e":
+		return p.edit(false)
+	case "n":
+		return p.edit(true)
 	case "tab", "shift+tab":
 		p.focus = 1 - p.focus
 	case "up", "k":
@@ -195,9 +248,9 @@ func (p *picker) key(key string) tea.Cmd {
 		p.level = map[schematic.Level]schematic.Level{schematic.Overview: schematic.Layout, schematic.Layout: schematic.Overview}[p.level]
 		p.panX = 0
 	case "r":
-		p.rule = (p.rule + 1) % len(rules)
+		p.rule = (p.rule + 1) % len(runs.Rules)
 	case "R":
-		p.rule = (p.rule + len(rules) - 1) % len(rules)
+		p.rule = (p.rule + len(runs.Rules) - 1) % len(runs.Rules)
 	case "pgdown", "J", "space":
 		p.page(1)
 	case "pgup", "K":
@@ -246,22 +299,62 @@ func (p *picker) setTrain(i int) {
 // view replays the selected scenario's run under the selected rule in
 // trainviz, even one that failed, such as a deadlock.
 func (p *picker) view() tea.Cmd {
-	rec, _ := runFiles(p.outDir, p.scenarios[p.cursor], rules[p.rule])
-	if !isFile(rec) {
+	sc := p.scenarios[p.cursor]
+	if sc.Err != nil {
+		p.note = "the scenario does not read: e opens it in trainedit"
+		return nil
+	}
+	rec, _ := runs.Files(p.outDir, sc, runs.Rules[p.rule])
+	if !runs.IsFile(rec) {
 		p.note = "nothing to replay yet: enter runs it"
 		return nil
 	}
 	p.viewing = p.resultKey()
-	return replay(p.trainviz, rec)
+	return runs.Replay(p.bins.trainviz, rec, func(err error) tea.Msg { return vizDoneMsg{err} })
+}
+
+// edit hands the terminal to trainedit on the selected scenario, or on a new
+// one made from it; the scenarios are read again when it quits.
+func (p *picker) edit(fresh bool) tea.Cmd {
+	if p.bins.trainedit == "" {
+		p.note = "no trainedit: " + p.bins.editErr.Error()
+		return nil
+	}
+	sc := p.scenarios[p.cursor]
+	saved, err := os.CreateTemp("", "traindemo-saved-*")
+	if err != nil {
+		p.note = "cannot start trainedit: " + err.Error()
+		return nil
+	}
+	saved.Close()
+	args := []string{"-saved-to", saved.Name(), "-out", p.outDir, "-bin", filepath.Dir(p.bins.trainapp)}
+	if fresh {
+		args = append(args, "-new", "-dir", p.dir)
+		if sc.Err == nil {
+			args = append(args, "-from", sc.Path)
+		}
+	} else {
+		args = append(args, "-scenario", sc.Path)
+	}
+	was := sc.Path
+	return tea.ExecProcess(exec.Command(p.bins.trainedit, args...), func(err error) tea.Msg {
+		b, _ := os.ReadFile(saved.Name())
+		os.Remove(saved.Name())
+		return editDoneMsg{err: err, saved: strings.TrimSpace(string(b)), was: was}
+	})
 }
 
 // result is the selected scenario's last run under the selected rule, read
 // from its files if it was run before this session; nil if there is none.
-func (p *picker) result() *result {
+func (p *picker) result() *runs.Result {
+	sc := p.scenarios[p.cursor]
+	if sc.Err != nil {
+		return nil
+	}
 	key := p.resultKey()
 	res, ok := p.results[key]
 	if !ok {
-		res = loadResult(p.outDir, p.scenarios[p.cursor], rules[p.rule])
+		res = runs.LoadResult(p.outDir, sc, runs.Rules[p.rule])
 		p.results[key] = res
 	}
 	return res
@@ -269,14 +362,19 @@ func (p *picker) result() *result {
 
 // start runs the selected scenario under the selected rule.
 func (p *picker) start() tea.Cmd {
-	r, err := startRun(p.trainapp, p.scenarios[p.cursor], rules[p.rule], p.outDir)
+	sc := p.scenarios[p.cursor]
+	if sc.Err != nil {
+		p.note = "the scenario does not read: e opens it in trainedit"
+		return nil
+	}
+	r, err := runs.Start(p.bins.trainapp, sc, runs.Rules[p.rule], p.outDir, runs.Options{})
 	if err != nil {
 		p.note = "cannot run trainapp: " + err.Error()
 		return nil
 	}
-	r.key = p.resultKey()
+	r.Key = p.resultKey()
 	p.run = r
-	return tea.Batch(r.next, tick())
+	return tea.Batch(r.Next, tick())
 }
 
 func (p *picker) choose(i int) {
@@ -369,13 +467,13 @@ func (p *picker) render() string {
 	right := l.top
 
 	d := p.previews.diagram(sc, p.level)
-	title := fmt.Sprintf("%s · %s", sc.World, p.level)
+	title := fmt.Sprintf("%s · %s", tui.ValueOr(sc.World, "no world"), p.level)
 	if d.width > l.inner {
 		title += " · " + arrow(p.panX > 0, "◀ ") + fmt.Sprintf("%d-%d of %d", p.panX+1, min(p.panX+l.inner, d.width), d.width) + arrow(p.panX+l.inner < d.width, " ▶")
 	}
 	var body []string
 	if d.err != nil {
-		body = []string{failed.Render("no preview: " + d.err.Error())}
+		body = []string{tui.Failed.Render("no preview: " + d.err.Error())}
 	}
 	for _, line := range d.lines {
 		if d.width <= l.inner {
@@ -384,61 +482,57 @@ func (p *picker) render() string {
 			body = append(body, ansi.Cut(line, p.panX, p.panX+l.inner))
 		}
 	}
-	right = append(right, box(title, false, body, l.right, l.schematic)...)
+	right = append(right, tui.Box(title, false, body, l.right, l.schematic)...)
 
 	var table, timetable []string
 	if l.table > 0 {
 		title, body = p.scheduleBox(sc, l)
-		table = box(title, p.focus == focusTrains, body, l.table, l.schedule)
+		table = tui.Box(title, p.focus == focusTrains, body, l.table, l.schedule)
 	}
 	if l.timetable > 0 {
 		title, body = p.timetableBox(sc, l)
-		timetable = box(title, false, body, l.timetable, l.schedule)
+		timetable = tui.Box(title, false, body, l.timetable, l.schedule)
 	}
 	for i := range l.schedule {
-		right = append(right, at(table, i)+at(timetable, i))
+		right = append(right, tui.At(table, i)+tui.At(timetable, i))
 	}
 
 	var left []string
 	if l.list > 0 {
-		left = box("scenarios", p.focus == focusList, p.listLines(), l.list, l.body)
+		left = tui.Box("scenarios", p.focus == focusList, p.listLines(), l.list, l.body)
 	}
 	lines := make([]string, l.body)
 	for i := range lines {
-		lines[i] = at(left, i) + at(right, i)
+		lines[i] = tui.At(left, i) + tui.At(right, i)
 	}
 	lines = append(lines, p.keyLine())
 	return strings.Join(lines, "\n")
 }
 
-func at(lines []string, i int) string {
-	if i < len(lines) {
-		return lines[i]
-	}
-	return ""
-}
-
 func (p *picker) keyLine() string {
-	keys := " ↑↓ scenario  tab trains  enter run  v replay  r rule  ←→ pan  z overview/layout  pgup/pgdn schedule  q quit"
+	keys := " ↑↓ scenario  tab trains  enter run  v replay  e edit  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn schedule  q quit"
 	if p.focus == focusTrains {
-		keys = " ↑↓ train  tab/esc scenarios  enter run  v replay  r rule  ←→ pan  z overview/layout  pgup/pgdn page  q quit"
+		keys = " ↑↓ train  tab/esc scenarios  enter run  v replay  e edit  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn page  q quit"
 	}
 	if p.run != nil {
 		keys = " esc cancel the run  ctrl+c quit"
 	}
-	return dim.Render(ansi.Truncate(keys, p.width, ""))
+	return tui.Dim.Render(ansi.Truncate(keys, p.width, ""))
 }
 
 func (p *picker) listLines() []string {
 	var out []string
 	for i, sc := range p.scenarios {
-		line := fit(" "+sc.Name, listWidth-4)
+		line := tui.Fit(" "+sc.Name, listWidth-4)
 		if i == p.cursor {
-			line = bold.Reverse(true).Faint(p.focus != focusList).Render(line)
+			line = tui.Bold.Reverse(true).Faint(p.focus != focusList).Render(line)
 		}
 		mark := " "
-		if p.ranAny(sc) {
-			mark = good.Render("✓")
+		switch {
+		case sc.Err != nil:
+			mark = tui.Failed.Render("✗")
+		case p.ranAny(sc):
+			mark = tui.Good.Render("✓")
 		}
 		out = append(out, line+mark)
 	}
@@ -448,8 +542,8 @@ func (p *picker) listLines() []string {
 // ranAny reports whether the scenario has been run under any rule, in this
 // session or before.
 func (p *picker) ranAny(sc *scenario.Scenario) bool {
-	for _, r := range rules {
-		if rec, _ := runFiles(p.outDir, sc, r); p.results[sc.Path+"|"+r] != nil || isFile(rec) {
+	for _, r := range runs.Rules {
+		if rec, _ := runs.Files(p.outDir, sc, r); p.results[sc.Path+"|"+r] != nil || runs.IsFile(rec) {
 			return true
 		}
 	}
@@ -474,12 +568,18 @@ func (p *picker) topBoxes(sc *scenario.Scenario, l screenLayout) []string {
 		widths = []int{l.right, l.right, l.right}
 	}
 	runTitle, run := p.runBox(widths[2] - 4)
+	about := tui.Wrap(tui.ValueOr(sc.Description, tui.Dim.Render("no description")), widths[0]-4, 4)
+	if sc.Err != nil {
+		about = tui.Wrap(tui.Failed.Render("does not read: "+sc.Err.Error()), widths[0]-4, 4)
+	} else if sc.Timetable != "" {
+		about = append(tui.Wrap(tui.ValueOr(sc.Description, tui.Dim.Render("no description")), widths[0]-4, 3), tui.Accent.Render("runs a timetable"))
+	}
 	boxes := []struct {
 		title string
 		lines []string
 	}{
-		{title, wrap(valueOr(sc.Description, dim.Render("no description")), widths[0]-4, 4)},
-		{"precedence rule", append([]string{p.ruleTabs(), ""}, dimAll(wrap(p.ruleExplanation(sc, rules[p.rule]), widths[1]-4, 4))...)},
+		{title, about},
+		{"precedence rule", append([]string{p.ruleTabs(), ""}, tui.DimAll(tui.Wrap(p.ruleExplanation(sc, runs.Rules[p.rule]), widths[1]-4, 4))...)},
 		{runTitle, run},
 	}
 	pad := func(lines []string) []string {
@@ -492,7 +592,7 @@ func (p *picker) topBoxes(sc *scenario.Scenario, l screenLayout) []string {
 	if l.right < stackBelow {
 		var out []string
 		for i, b := range boxes {
-			out = append(out, box(b.title, false, pad(b.lines), widths[i], len(b.lines)+2)...)
+			out = append(out, tui.Box(b.title, false, pad(b.lines), widths[i], len(b.lines)+2)...)
 		}
 		return out
 	}
@@ -502,30 +602,13 @@ func (p *picker) topBoxes(sc *scenario.Scenario, l screenLayout) []string {
 	}
 	drawn := make([][]string, len(boxes))
 	for i, b := range boxes {
-		drawn[i] = box(b.title, false, pad(b.lines), widths[i], h)
+		drawn[i] = tui.Box(b.title, false, pad(b.lines), widths[i], h)
 	}
 	out := make([]string, h)
 	for i := range out {
-		out[i] = at(drawn[0], i) + at(drawn[1], i) + at(drawn[2], i)
+		out[i] = tui.At(drawn[0], i) + tui.At(drawn[1], i) + tui.At(drawn[2], i)
 	}
 	return out
-}
-
-// wrap wraps text to w cells, at most n lines, the last cut short with "…".
-func wrap(text string, w, n int) []string {
-	lines := strings.Split(ansi.Wordwrap(text, max(w, 1), " "), "\n")
-	if len(lines) > n {
-		lines = lines[:n]
-		lines[n-1] = ansi.Truncate(lines[n-1]+" …", w, "…")
-	}
-	return lines
-}
-
-func dimAll(lines []string) []string {
-	for i, line := range lines {
-		lines[i] = dim.Render(line)
-	}
-	return lines
 }
 
 func arrow(on bool, a string) string {
@@ -538,10 +621,10 @@ func arrow(on bool, a string) string {
 // ruleTabs shows every rule, the selected one picked out.
 func (p *picker) ruleTabs() string {
 	var tabs []string
-	for i, r := range rules {
-		label := " " + ruleLabel(r) + " "
+	for i, r := range runs.Rules {
+		label := " " + runs.RuleLabel(r) + " "
 		if i == p.rule {
-			tabs = append(tabs, accent.Bold(true).Reverse(true).Render(label))
+			tabs = append(tabs, tui.Accent.Bold(true).Reverse(true).Render(label))
 		} else {
 			tabs = append(tabs, label)
 		}
@@ -555,36 +638,7 @@ func (p *picker) ruleExplanation(sc *scenario.Scenario, rule string) string {
 	if pr.err != nil {
 		return "the profile does not load: " + pr.err.Error()
 	}
-	if rule == "" {
-		if pr.cfg == nil || pr.cfg.Precedence == nil {
-			return "the profile's: " + p.ruleExplanation(sc, scenario.RuleOff)
-		}
-		own := valueOr(pr.cfg.Precedence.Rule, "thresholds") // the sim's default
-		return "the profile's " + own + ": " + p.ruleExplanation(sc, own)
-	}
-	if rule == scenario.RuleOff {
-		return "no precedence: no train is held back or moved to another platform for a higher-priority one"
-	}
-	if pr.cfg == nil || pr.cfg.Precedence == nil {
-		return "the profile has no precedence settings, so this rule cannot run"
-	}
-	c := pr.cfg.Precedence
-	var text string
-	switch rule {
-	case "thresholds":
-		text = fmt.Sprintf("hold a train for one ≥%d priority higher that would lose ≥%g min", c.MinPriorityGap, float64(c.MinSavingMin))
-		if c.MaxWaitRatio > 0 {
-			text += fmt.Sprintf(", if it waits ≤%g min per minute saved", c.MaxWaitRatio)
-		}
-	case "weighted":
-		text = fmt.Sprintf("hold a train when the other's priority × minutes saved, less its own × minutes waited, is over %g", c.MinNetGain)
-	default:
-		text = "rule " + rule
-	}
-	if c.MaxHoldMin > 0 {
-		text += fmt.Sprintf("; holds last ≤%g min", float64(c.MaxHoldMin))
-	}
-	return text
+	return runs.RuleExplanation(pr.cfg, rule, sc.Timetable != "")
 }
 
 // runBox is the run box's title and lines: trainapp's progress while it
@@ -593,41 +647,46 @@ func (p *picker) runBox(w int) (string, []string) {
 	r := p.run
 	if r == nil {
 		var lines []string
-		title := "run · " + ruleLabel(rules[p.rule])
+		title := "run · " + runs.RuleLabel(runs.Rules[p.rule])
 		switch res := p.result(); {
+		case p.scenarios[p.cursor].Err != nil:
+			lines = []string{tui.Dim.Render("cannot run"), "", tui.Dim.Render("e opens it in trainedit")}
 		case res == nil:
-			lines = []string{dim.Render("not run yet under this rule"), "", dim.Render("enter runs it")}
+			lines = []string{tui.Dim.Render("not run yet under this rule"), "", tui.Dim.Render("enter runs it")}
+		case res.Stale:
+			title = "last run · " + runs.RuleLabel(runs.Rules[p.rule]) + " · stale"
+			lines = []string{tui.Amber.Render("ran before the last edit"), "", tui.Dim.Render("enter runs it again, v replays the old run")}
 		default:
-			title = "last run · " + ruleLabel(rules[p.rule])
-			lines = resultLines(res)
-			if res.failed != "" {
-				lines = append(lines, failed.Render(ansi.Truncate(res.failed, w, "…")))
+			title = "last run · " + runs.RuleLabel(runs.Rules[p.rule])
+			lines = runs.SummaryLines(res)
+			if res.Failed != "" {
+				lines = append(lines, tui.Failed.Render(ansi.Truncate(res.Failed, w, "…")))
 			}
 		}
 		if p.note != "" {
-			lines = append(lines, amber.Render(p.note))
+			lines = append(lines, tui.Amber.Render(p.note))
 		}
 		return title, lines
 	}
 
-	spin := accent.Render(spinner[p.spin%len(spinner)])
-	elapsed := time.Since(r.started).Truncate(time.Second)
-	title := fmt.Sprintf("running · %s · %d:%02d", ruleLabel(r.rule), int(elapsed.Minutes()), int(elapsed.Seconds())%60)
-	pr := r.progress
+	spin := tui.Accent.Render(tui.Spinner[p.spin%len(tui.Spinner)])
+	elapsed := time.Since(r.Started).Truncate(time.Second)
+	title := fmt.Sprintf("running · %s · %d:%02d", runs.RuleLabel(r.Rule), int(elapsed.Minutes()), int(elapsed.Seconds())%60)
+	pr := r.Progress
 	switch {
-	case r.cancelled:
+	case r.Cancelled:
 		return title, []string{spin + " cancelling…"}
-	case r.measuring:
-		return title, []string{bar(1, w), "", spin + " working out the KPIs"}
-	case !pr.ok:
+	case r.Measuring:
+		return title, []string{tui.Bar(1, w), "", spin + " working out the KPIs"}
+	case !pr.OK:
 		return title, []string{spin + " starting trainapp…"}
 	}
 	return title, []string{
-		bar(float64(pr.reached)/float64(max(pr.points, 1)), w), "",
-		spin + fmt.Sprintf(" %d/%d points", pr.reached, pr.points),
-		figure("sim time", fmt.Sprintf("%.1f min", pr.t)),
-		figure("done", trains(pr.done)),
-		figure("waiting", trains(pr.waiting)),
+		tui.Bar(float64(pr.Reached)/float64(max(pr.Points, 1)), w), "",
+		spin + fmt.Sprintf(" %d/%d points", pr.Reached, pr.Points),
+		tui.Figure("sim time", fmt.Sprintf("%.1f min", pr.T)),
+		tui.Figure("done", trains(pr.Done)),
+		tui.Figure("waiting", trains(pr.Waiting)),
 	}
 }
 
@@ -638,54 +697,19 @@ func trains(n int) string {
 	return fmt.Sprintf("%d trains", n)
 }
 
-// figure is a labelled figure, labels lined up.
-func figure(label, value string) string {
-	return dim.Render(fit(label, 11)) + value
-}
-
-// bar is a progress bar w cells wide, share of it filled.
-func bar(share float64, w int) string {
-	w = max(w, 4)
-	filled := min(int(share*float64(w)), w)
-	return accent.Render(strings.Repeat("━", filled)) + dim.Render(strings.Repeat("─", w-filled))
-}
-
-// resultLines are a run's figures, a line each.
-func resultLines(r *result) []string {
-	rep := r.report
-	if rep == nil {
-		return []string{failed.Render("no KPIs: the run did not finish")}
-	}
-	done := fmt.Sprintf("%d/%d trains", rep.Finished, rep.Trains)
-	if rep.Finished == rep.Trains {
-		done = good.Render(done)
-	} else {
-		done = failed.Render(done)
-	}
-	out := []string{figure("done", done)}
-	if d := rep.Delay; d != nil {
-		out = append(out, figure("avg delay", fmt.Sprintf("%.1f min", d.MeanMin)))
-		if n := len(d.Punctual); n > 0 { // the widest band
-			pu := d.Punctual[n-1]
-			out = append(out, figure("on time", fmt.Sprintf("%.0f%%", 100*pu.Share)+dim.Render(fmt.Sprintf(" within %g min", pu.WithinMin))))
-		}
-	}
-	if dis := rep.Disruption; dis != nil {
-		out = append(out, figure("knock-on", fmt.Sprintf("%.1f min", dis.ReactionaryMin)))
-	}
-	return append(out, figure("holds", fmt.Sprint(rep.Holds)))
-}
-
 // scheduleBox is the schedule box's title and lines: a table of the trains,
 // columns as wide as their widest entry, and a key to the class colours.
 func (p *picker) scheduleBox(sc *scenario.Scenario, l screenLayout) (string, []string) {
 	s := p.previews.schedule(sc)
 	title := fmt.Sprintf("schedule · %d trains", len(s.trains))
+	if sc.Timetable != "" {
+		title = fmt.Sprintf("timetable · %d trains", len(s.trains))
+	}
 	if len(s.trains) > l.rows {
 		title += fmt.Sprintf(" · %d-%d", p.schedTop+1, min(p.schedTop+l.rows, len(s.trains)))
 	}
 	if s.err != nil {
-		return title, []string{failed.Render(" no schedule: " + s.err.Error())}
+		return title, []string{tui.Failed.Render(" no schedule: " + s.err.Error())}
 	}
 
 	classW, routeW, disW := len("class"), len("route"), 0
@@ -697,33 +721,33 @@ func (p *picker) scheduleBox(sc *scenario.Scenario, l screenLayout) (string, []s
 		}
 	}
 	cols := func(number, class, entry, route, dis, stops string) string {
-		line := " " + fit(number, 7) + fit(class, classW+2) + fit(entry, 7) + fit(route, routeW+2)
+		line := " " + tui.Fit(number, 7) + tui.Fit(class, classW+2) + tui.Fit(entry, 7) + tui.Fit(route, routeW+2)
 		if disW > 0 {
-			line += fit(dis, disW+2)
+			line += tui.Fit(dis, disW+2)
 		}
 		return line + stops
 	}
-	out := []string{dim.Render(cols("train", "class", "entry", "route", "disruption", "stops"))}
+	out := []string{tui.Dim.Render(cols("train", "class", "entry", "route", "disruption", "stops"))}
 
 	end := min(p.schedTop+l.rows, len(s.trains))
 	for i := min(p.schedTop, end); i < end; i++ {
 		t := s.trains[i]
 		if i == p.train && p.focus == focusTrains {
-			out = append(out, bold.Reverse(true).Render(fit(cols(t.number, "■ "+valueOr(t.class, "—"), t.entry, t.from+"→"+t.to,
+			out = append(out, tui.Bold.Reverse(true).Render(tui.Fit(cols(t.number, "■ "+tui.ValueOr(t.class, "—"), t.entry, t.from+"→"+t.to,
 				strings.Join(append([]string{}, t.disruptions...), ", "), strings.Join(t.stops, " ")), l.table-2)))
 			continue
 		}
 		number, dis := t.number, ""
 		if len(t.disruptions) > 0 {
-			number, dis = amber.Render(t.number), amber.Render("⚠ "+strings.Join(t.disruptions, ", "))
+			number, dis = tui.Amber.Render(t.number), tui.Amber.Render("⚠ "+strings.Join(t.disruptions, ", "))
 		}
-		class := dim.Render("—")
+		class := tui.Dim.Render("—")
 		if t.class != "" {
 			class = lipgloss.NewStyle().Foreground(lipgloss.Color(s.color[t.class])).Render("■ ") + t.class
 		}
 		stops := strings.Join(t.stops, " ")
 		if t.passes > 0 {
-			stops += dim.Render(fmt.Sprintf(" +%d passes", t.passes))
+			stops += tui.Dim.Render(fmt.Sprintf(" +%d passes", t.passes))
 		}
 		out = append(out, cols(number, class, t.entry, t.from+"→"+t.to, dis, stops))
 	}
@@ -736,47 +760,14 @@ func (p *picker) scheduleBox(sc *scenario.Scenario, l screenLayout) (string, []s
 	for _, c := range slices.Backward(s.classes) {
 		item := lipgloss.NewStyle().Foreground(lipgloss.Color(s.color[c])).Render("■") + " " + c
 		if pri, ok := s.priority[c]; ok {
-			item += dim.Render(fmt.Sprintf(" %d", pri))
+			item += tui.Dim.Render(fmt.Sprintf(" %d", pri))
 		}
 		key = append(key, item)
 	}
 	if len(sc.Disruptions) > 0 {
-		key = append(key, amber.Render("⚠ disrupted"))
+		key = append(key, tui.Amber.Render("⚠ disrupted"))
 	}
 	return title, append(out, " "+strings.Join(key, "  "))
-}
-
-func valueOr(s, or string) string {
-	if s == "" {
-		return or
-	}
-	return s
-}
-
-// box draws a single-line border with a title around lines, w by h cells.
-// The focused box's title stands out.
-func box(title string, focused bool, lines []string, w, h int) []string {
-	if h < 2 {
-		return nil
-	}
-	inner := max(w-2, 0)
-	label := ansi.Truncate(" "+title+" ", max(inner-1, 0), "")
-	fill := strings.Repeat("─", max(inner-1-ansi.StringWidth(label), 0)) + "┐"
-	top := dim.Render("┌─" + label + fill)
-	if focused {
-		top = dim.Render("┌─") + accent.Bold(true).Render(label) + dim.Render(fill)
-	}
-	out := []string{top}
-	for i := range h - 2 {
-		out = append(out, dim.Render("│")+fit(at(lines, i), inner)+dim.Render("│"))
-	}
-	return append(out, dim.Render("└"+strings.Repeat("─", inner)+"┘"))
-}
-
-// fit cuts or pads s to exactly w cells.
-func fit(s string, w int) string {
-	s = ansi.Truncate(s, w, "")
-	return s + strings.Repeat(" ", max(w-ansi.StringWidth(s), 0))
 }
 
 // timetableBox is the picked train's timetable: a row per schedule point,
@@ -789,40 +780,40 @@ func (p *picker) timetableBox(sc *scenario.Scenario, l screenLayout) (string, []
 		return "timetable", nil
 	}
 	t := s.trains[p.train]
-	var calls []call
-	if res := p.result(); res != nil {
-		calls = res.calls[t.number]
+	var calls []runs.Call
+	if res := p.result(); res != nil && !res.Stale {
+		calls = res.Calls[t.number]
 	}
 	title := fmt.Sprintf("timetable · %s · %s→%s", t.number, t.from, t.to)
 
 	cols := func(stn, kind, pf, arr, dep, plan, actual, note string) string {
-		return " " + fit(stn, 6) + fit(kind, 5) + fit(pf, 4) + fit(arr, 6) + fit(dep, 6) + fit(plan, 8) + fit(actual, 7) + note
+		return " " + tui.Fit(stn, 6) + tui.Fit(kind, 5) + tui.Fit(pf, 4) + tui.Fit(arr, 6) + tui.Fit(dep, 6) + tui.Fit(plan, 8) + tui.Fit(actual, 7) + note
 	}
 	planned := func(t float64) string {
 		if t < 0 {
-			return dim.Render("—")
+			return tui.Dim.Render("—")
 		}
-		return dim.Render(clock(t))
+		return tui.Dim.Render(tui.Clock(t))
 	}
-	out := []string{dim.Render(cols("stn", "kind", "pf", "arr", "dep", "planned", "actual", ""))}
+	out := []string{tui.Dim.Render(cols("stn", "kind", "pf", "arr", "dep", "planned", "actual", ""))}
 	for i, sp := range t.points {
 		kind := "stop"
 		if sp.IsPass() {
-			kind = dim.Render("pass")
+			kind = tui.Dim.Render("pass")
 		}
-		pf, arr, dep, plan, actual := dim.Render(valueOr(sp.SpPfNo, "—")), planned(sp.ArrTime), planned(sp.DeptTime), "", ""
+		pf, arr, dep, plan, actual := tui.Dim.Render(tui.ValueOr(sp.SpPfNo, "—")), planned(sp.ArrTime), planned(sp.DeptTime), "", ""
 		if !sp.IsPass() {
 			plan = fmt.Sprintf("%g", sp.DwellTime) // the schedule's, so not dimmed
 		}
 		if i < len(calls) {
 			c := calls[i]
-			pf, arr = valueOr(c.pf, pf), clock(c.arr)
-			if c.dep >= 0 {
-				dep = clock(c.dep)
-				if stood := c.dep - c.arr; !sp.IsPass() || stood >= 0.05 { // a pass that stopped shows its stand
+			pf, arr = tui.ValueOr(c.Pf, pf), tui.Clock(c.Arr)
+			if c.Dep >= 0 {
+				dep = tui.Clock(c.Dep)
+				if stood := c.Dep - c.Arr; !sp.IsPass() || stood >= 0.05 { // a pass that stopped shows its stand
 					actual = fmt.Sprintf("%.1f", stood)
 					if stood > sp.DwellTime+0.5 || sp.IsPass() { // stood longer than planned
-						actual = amber.Render(actual)
+						actual = tui.Amber.Render(actual)
 					}
 				}
 			}
@@ -835,15 +826,15 @@ func (p *picker) timetableBox(sc *scenario.Scenario, l screenLayout) (string, []
 		}
 		note := ""
 		if len(notes) > 0 {
-			note = amber.Render("⚠ " + strings.Join(notes, ", "))
+			note = tui.Amber.Render("⚠ " + strings.Join(notes, ", "))
 		}
 		out = append(out, cols(string(sp.StnCode), kind, pf, arr, dep, plan, actual, note))
 	}
 
 	h := l.schedule - 2 // inside the box
-	key := dim.Render(" stops in min; run it for the actuals")
+	key := tui.Dim.Render(" stops in min; run it for the actuals")
 	if len(calls) > 0 {
-		key = dim.Render(" stops in min; times as run under " + ruleLabel(rules[p.rule]))
+		key = tui.Dim.Render(" stops in min; times as run under " + runs.RuleLabel(runs.Rules[p.rule]))
 	}
 	if len(out) >= h {
 		out = out[:max(h-1, 1)]
@@ -852,4 +843,8 @@ func (p *picker) timetableBox(sc *scenario.Scenario, l screenLayout) (string, []
 		out = append(out, "")
 	}
 	return title, append(out, key)
+}
+
+func tick() tea.Cmd {
+	return tea.Tick(120*time.Millisecond, func(t time.Time) tea.Msg { return tickMsg(t) })
 }

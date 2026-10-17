@@ -234,12 +234,10 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 					due += entryRun(s.World(), t, sp)
 				}
 				due += max(float64(sp.ExpDwellTime(due, s.MinStop())), des.MinDeltaTime)
-				// at a stop, a wait for another train is a halt however
-				// short; Round times it a full step
 				extra := sp.ActDeptTime - due
 				if extra > cfg.HaltMin || (p.Kind == KindStop && extra > haltNoiseMin) {
 					h := c.classify(t, k, max(due, sp.ActArrTime), sp.ActDeptTime)
-					if extra > cfg.HaltMin || (h.For != "" && h.For != t.Number) {
+					if isHalt(p.Kind, extra, cfg.HaltMin, h.For, t.Number) {
 						h.Min = extra
 						p.Halt = &h
 						if p.Kind == KindPass {
@@ -268,6 +266,18 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 		tt.Trains = append(tt.Trains, tr)
 	}
 	return tt
+}
+
+// isHalt reports whether a train that stood extra minutes longer than it had
+// to at a point of the kind, held up by the train waitedFor (empty if none),
+// halted there. At a pass, or for no other train, it must be over haltMin. At
+// a stop, any wait for another train is a halt, however short: Round times it
+// a full step.
+func isHalt(kind string, extra, haltMin float64, waitedFor, self string) bool {
+	if extra > haltMin {
+		return true
+	}
+	return kind == KindStop && extra > haltNoiseMin && waitedFor != "" && waitedFor != self
 }
 
 // haltNoiseMin is how long past its dwell a train may leave a stop for no
@@ -375,15 +385,16 @@ func (tt Timetable) PlanOverrides() []sim.Override {
 			continue // a pass is not held
 		}
 		h := sim.Override{Action: sim.OverrideHold, Train: tt.Trains[f.i].Number, For: tt.Trains[l.i].Number, Station: fp.Stn}
-		// only what the timetable has happen by the train's departure, give
-		// or take the gap Round keeps: the track may be at the far end of
-		// the way, freed long before the other gets to the station
-		due := fp.Dep + tt.RoundingMin + platformRunMin
+		// only for what the timetable has happen while the train stands
+		// there, give or take the gap Round keeps: the track may be at the
+		// far end of the way, freed long before the other gets to the
+		// station, or the other may be there before the train
+		while := func(t float64) bool { return t >= fp.Arr && t <= fp.Dep+tt.RoundingMin+platformRunMin }
 		switch {
-		case lps[l.k].Stn == fp.Stn && lps[l.k].Arr <= due:
+		case lps[l.k].Stn == fp.Stn && while(lps[l.k].Arr):
 			// from the other way, to where the train stands
 			h.Until = sim.HoldUntilArrived
-		case l.k > 0 && lps[l.k-1].Stn == fp.Stn && lps[l.k-1].Arr >= fp.Arr && lps[l.k-1].Dep <= due:
+		case l.k > 0 && lps[l.k-1].Stn == fp.Stn && lps[l.k-1].Arr >= fp.Arr && while(lps[l.k-1].Dep):
 			// the same way, overtaking it there
 			h.Until = sim.HoldUntilLeft
 		default:

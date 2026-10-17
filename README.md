@@ -64,7 +64,8 @@ At a high level, the system contains five major parts:
 │   ├── trainapp/            # Runs the simulation: builds the TPJ-PDKT-KKDI world and the demo trains, prints the KPIs
 │   │   └── main.go          # Flags: -world, -schedule, -demo, -disruptions, -save-world, -save-schedule, -log (text|json), -record (write a recording for trainviz), -priorities, -overrides, -timetable, -check-record, -kpi
 │   ├── trainbench/          # Runs the benchmark scenarios under several precedence rules and prints a KPI table
-│   ├── traindemo/           # Scenario picker with world and schedule previews; runs trainapp, then trainviz
+│   ├── traindemo/           # Scenario picker with world and schedule previews; runs trainapp, then trainviz; opens trainedit
+│   ├── trainedit/           # Scenario editor: the world on its schematic, the trains, the scenario; runs and exports timetables
 │   └── trainviz/            # Terminal viewer
 │       ├── main.go          # Flags and the two modes: draw a world, or `replay` a recording
 │       ├── viewer.go        # Interactive Bubble Tea model: pan, zoom, panes, timeline
@@ -73,9 +74,11 @@ At a high level, the system contains five major parts:
 │   ├── testWorld.go         # Older 3-station (TPJ-PDKT-KKDI) world
 │   ├── kkdiTpjWorld.go      # Active double-line TPJ-PDKT-KKDI world with crossovers and signals
 │   ├── tpjKkdiSingleLineWorld.go # The real TPJ-KKDI single line: all 10 stations, loops and sidings, from OpenStreetMap
-│   └── singleLineWorld.go   # Single-line worlds (passing loops, halts, junction) used by the deadlock tests
+│   ├── singleLineWorld.go   # Single-line worlds (passing loops, halts, junction) used by the deadlock tests
+│   ├── templates/           # Station, throat, halt, crossing station and block section builders, reusable
+│   └── edit/                # Edits on a world snapshot for trainedit: extend, split, switch, crossover, signal, stamp, ...; undo; problems
 ├── profiles/                # Per-railway priority, precedence, timetable and KPI settings (JSON), e.g. ir.json for Indian Railways
-├── scenarios/               # Benchmark scenarios (world, schedule, profile, disruptions); schedules/ holds their trains
+├── scenarios/               # Scenarios (world, schedule or timetable, profile, disruptions); schedules/ holds their trains
 ├── railway/
 │   ├── ids/                 # Typed identifiers: StnCode, PointID, TrackID, TrainID
 │   ├── infra/               # Static infrastructure (no runtime state)
@@ -95,7 +98,7 @@ At a high level, the system contains five major parts:
 │   ├── ops/                 # Train, schedule (planned and actual times, delay), schedule files (JSON), disruptions, MovementAuthority, event types
 │   ├── timetable/           # Turns a finished run into a timetable: halts and why, rounding, the check run
 │   ├── kpi/                 # Measures a finished run: delay against free running, punctuality, waits, track occupancy
-│   ├── scenario/            # Benchmark scenario files: world, schedule, profile, disruptions; the rule to run under
+│   ├── scenario/            # Scenario files: world, schedule, timetable, profile, disruptions; the rule to run under
 │   └── sim/                 # The run itself:
 │       ├── sim.go           #   Sim: owns the world, interlocking and event loop; Run, Init, state dump
 │       ├── controller.go    #   TrainController state machine
@@ -116,6 +119,8 @@ At a high level, the system contains five major parts:
 │   ├── record/              # Records a sim run as that stream (a sim.Observer)
 │   ├── schematic/           # Lays a world out as a line schematic and draws it in the terminal; the corridor (distance axis)
 │   ├── traingraph/          # Draws a recorded run as a time-distance graph
+│   ├── runs/                # Runs scenarios with trainapp for traindemo and trainedit, and reads back what a run writes
+│   ├── tui/                 # What the terminal apps draw alike: boxes, styles, the class palette, a pan and zoom camera
 │   └── viz_term.go          # Older plain-text printout of the track graph; no command uses it
 ├── example/                 # Example simulation output (logs.txt, from an earlier log format)
 ├── TODO.md                  # Planned work
@@ -266,7 +271,7 @@ The simulation never knows it is being drawn. A `sim.Observer` can be set on the
 
 | Flag | Default | Effect |
 |---|---|---|
-| `-scenario` | none | Run a scenario file (see [Run the benchmark](#run-the-benchmark)): its world, schedule, profile and disruptions, in place of `-world`, `-schedule`, `-priorities` and `-disruptions`, which it refuses alongside |
+| `-scenario` | none | Run a scenario file (see [Run the benchmark](#run-the-benchmark)): its world, schedule (or timetable), profile and disruptions, in place of `-world`, `-schedule`, `-priorities` and `-disruptions`, which it refuses alongside |
 | `-rule` | profile's | Precedence rule in place of the profile's: `thresholds`, `weighted`, or `off` to run without precedence |
 | `-world` | `tpjkkdi` | World to run: `tpjkkdi` (the double line), `tpjkkdi-sl` (the real single line; the trains run through the stations between TPJ, PDKT and KKDI) or a world snapshot file (`.json`, see [World and schedule files](#world-and-schedule-files)) |
 | `-schedule` | none | Trains to run (JSON); without it, the demo trains, which need `tpjkkdi` or `tpjkkdi-sl` |
@@ -345,6 +350,15 @@ check run: all 12 trains kept their times (tolerance 1 min, precedence plan)
 
 Times are minutes from 0, shown as a clock. Open `check.ndjson` with `trainviz replay` and press `g`, then `p`: the planned times sit on the trains' lines.
 
+A timetable goes back into a scenario as its `timetable` (a path, like the schedule's), for planning against it: disrupting it, trying the rules on it.
+
+```json
+{"name": "sl-12-tt", "world": "tpjkkdi-sl", "timetable": "timetables/sl-12.json", "profile": "../profiles/ir.json",
+ "disruptions": [{"train": "0452U", "kind": "stand", "stn": "PDKT", "min": 30}]}
+```
+
+Such a scenario runs the timetable's timed trains in place of a schedule (the schedule, the draft the timetable came from, may stay or go). Under the profile's rule it keeps to the timetable's plan, as the check run does (`check_precedence`: each train on its platforms, held for the trains it waits for in the timetable); a named rule (`-rule thresholds`, `weighted`) decides precedence afresh, and `off` runs without. trainedit's Run tab exports a timetable (`t`) and makes the scenario run it (`u`); see [Edit a scenario](#edit-a-scenario).
+
 ### Measure a run
 
 Every run prints its KPIs after the summary; `-kpi` writes them as JSON too:
@@ -381,7 +395,7 @@ make bench                                            # every scenarios/*.json u
 go run ./cmd/trainbench -rules weighted scenarios/sl-12.json
 ```
 
-A scenario names a world (`tpjkkdi`, `tpjkkdi-sl` or a snapshot), a schedule file, a profile and any disruptions, with paths relative to the scenario file. The ones included are the single line with 6, 12 and 24 trains (`sl-6`, `sl-12`, `sl-24`), the double line with 12 (`dl-12`), and `sl-12-disrupt`, with one train failing for 30 min at PDKT and another entering 15 min late. `trainbench` runs them in parallel (`-j`), prints one row per scenario and rule, and writes every report to `logs/bench.json`; each run's log is under `logs/bench/<scenario>-<rule>/`. The 24-train runs take a couple of minutes each.
+A scenario names a world (`tpjkkdi`, `tpjkkdi-sl` or a snapshot), a schedule file (or a timetable, see [Generate a timetable](#generate-a-timetable)), a profile and any disruptions, with paths relative to the scenario file. The ones included are the single line with 6, 12 and 24 trains (`sl-6`, `sl-12`, `sl-24`), the double line with 12 (`dl-12`), and `sl-12-disrupt`, with one train failing for 30 min at PDKT and another entering 15 min late. `trainbench` runs them in parallel (`-j`), prints one row per scenario and rule, and writes every report to `logs/bench.json`; each run's log is under `logs/bench/<scenario>-<rule>/`. The 24-train runs take a couple of minutes each.
 
 ### World and schedule files
 
@@ -474,12 +488,28 @@ The pan, zoom, `/` and `q` keys work in the replay too. Clicking on the timeline
 ### Demo the scenarios
 
 ```bash
-make demo        # builds dist/trainapp, dist/trainviz and dist/traindemo, then runs traindemo
+make demo        # builds dist/trainapp, dist/trainviz, dist/trainedit and dist/traindemo, then runs traindemo
 ```
 
-`traindemo` lists the scenarios in `scenarios/` (`-dir`) and previews the selected one: its description, the world's schematic (`←` `→` pan, `z` switches layout and overview), and a row per train with its class, entry time, route, stops with their planned stop times and any disruption, the classes coloured by priority as trainviz colours them. `tab` moves the arrow keys to the trains (`esc` back): the picked train's timetable shows beside the schedule, a row per station with its platform, arrival, departure, and planned and actual stop; once the scenario has run under the selected rule, the times and platforms are the run's, and a stop longer than planned is amber. Every precedence rule is shown (the profile's, `thresholds`, `weighted`, `off`), with what the selected one does under the profile's settings; `r` and `R` move between them. `enter` runs the scenario with `trainapp -scenario ... -rule ... -record ... -kpi ...`, drawing its progress in place (`esc` cancels), then sums up the run (trains done, delay, punctuality, reactionary delay, holds). `v` replays it in `trainviz replay`; `q` there comes back to the list, and `ctrl+c`, there or in the list, quits everything. Each run is written to `logs/demo/<scenario>-<rule>.ndjson` and `.kpi.json` (`-out`), and runs from earlier sessions are read back from there, so `v` replays them too.
+`traindemo` lists the scenarios in `scenarios/` (`-dir`) and previews the selected one: its description, the world's schematic (`←` `→` pan, `z` switches layout and overview), and a row per train with its class, entry time, route, stops with their planned stop times and any disruption, the classes coloured by priority as trainviz colours them. `tab` moves the arrow keys to the trains (`esc` back): the picked train's timetable shows beside the schedule, a row per station with its platform, arrival, departure, and planned and actual stop; once the scenario has run under the selected rule, the times and platforms are the run's, and a stop longer than planned is amber. Every precedence rule is shown (the profile's, `thresholds`, `weighted`, `off`), with what the selected one does under the profile's settings; `r` and `R` move between them. `enter` runs the scenario with `trainapp -scenario ... -rule ... -record ... -kpi ...`, drawing its progress in place (`esc` cancels), then sums up the run (trains done, delay, punctuality, reactionary delay, holds). `v` replays it in `trainviz replay`; `q` there comes back to the list, and `ctrl+c`, there or in the list, quits everything. Each run is written to `logs/demo/<scenario>-<rule>.ndjson` and `.kpi.json` (`-out`), and runs from earlier sessions are read back from there, so `v` replays them too; one older than its scenario's files shows as stale ("ran before the last edit"). `e` opens the selected scenario in trainedit and `n` starts a new one from it (see [Edit a scenario](#edit-a-scenario)); when trainedit quits, the list is read again, the saved scenario selected. A scenario file that does not read is listed with its error (`✗`), so `e` can open it to put it right. A scenario running a timetable shows its timed trains.
 
-traindemo does not link the sim: it runs the `trainapp` and `trainviz` binaries, looking next to itself, then in `dist/`, then on `$PATH` (`-bin` names the directory).
+traindemo does not link the sim: it runs the `trainapp`, `trainviz` and `trainedit` binaries, looking next to itself, then in `dist/`, then on `$PATH` (`-bin` names the directory).
+
+### Edit a scenario
+
+```bash
+make edit SCENARIO=scenarios/sl-12.json     # or e in traindemo
+make edit                                   # a new scenario, or n in traindemo
+go run ./cmd/trainedit -new -world tpjkkdi-sl
+```
+
+`trainedit` has three tabs (`1` `2` `3`): the world, the trains and the scenario. `ctrl+s` saves them all, `q` quits (asking about unsaved changes), and `ctrl+c` quits at once.
+
+- **World** draws the world on its schematic, as trainviz does, from its snapshot as it stands, so a half-built world shows too. The arrows move from piece to piece (point, track, signal, station) and `tab` steps through the pieces in one cell; `+` `-` `0`, `shift`+arrows and the mouse zoom and pan, and `/` goes to a station. Letters edit what is picked: `e` extends track from a point (or starts an empty world), `c` splits a track, `j` joins the two tracks at a point, `s` makes a point a switch, `x` (on two tracks in turn) lays a crossover, `b` (on two points) a signalled block section, `g` and `G` put a signal at a track's east or west end, or take it away, `o` makes a point open, a buffer stop or the world's edge, `p` makes a track a platform, `n` adds or renames a station, `t` stamps a template (a halt, a crossing station, or a station of tracks you list, e.g. `1:600 9 2:600 5:600* ~Gd1:700`) joined to the picked point by a block section, `a` sets a track's name, length, speed, direction and lanes, `D` the world's defaults, and `d` deletes. Dragging from an open point draws track (its end sets the direction and lanes). `u` undoes and `ctrl+r` redoes. An edit that would leave a world that cannot be drawn (a track running east to west, lanes that do not add up) is refused; anything else wrong (an open track end, what `Snapshot.Build` reports) is listed under problems, marked red on the schematic and visited with `[` `]`: such a world saves, but does not run. A built-in world is saved as a snapshot beside the scenario (`scenarios/worlds/<name>.json`) the first time it changes.
+- **Schedules** lists the trains, and the picked one's points (`tab`), checked as they change against the schedule file's rules and the world. `a` adds a train along a route (from, to, via, the stations it stops at), `f` refills one's points from a route, `g` adds a pattern of trains (every so many minutes, both ways, classes in turn, numbered like `045{n}U`), `c` copies one later, `s` sorts by entry, `x` disrupts one (a stand or a late entry) and `X` clears its disruptions; on the points, `enter` edits one, `i` inserts, `d` deletes and `K` `J` move it.
+- **Run** shows the scenario's name, description, profile and files (`e` edits a field), the precedence rules (`r` `R`) and runs it as traindemo does (`enter`), from a scratch copy if there are unsaved changes; `v` replays the run. `t` runs it and exports its timetable with its check run, `u` makes the scenario run that timetable (copied to `scenarios/timetables/<name>.json`), and `U` goes back to the schedule.
+
+Saving a world or schedule another scenario uses too (`sl-12` and `sl-12-disrupt` share `schedules/sl-12.json`) asks whether the change is for all of them or for a copy of this scenario's own. Runs go to `logs/demo/` as traindemo's do, so a run made in either shows in the other.
 
 ### Run the tests
 
@@ -494,7 +524,7 @@ The deadlock tests (`railway/sim`) run trains over the single-line and junction 
 ```bash
 go build -o trainapp ./cmd/trainapp
 go build -o trainviz ./cmd/trainviz
-make build-traindemo   # all three into dist/
+make build-traindemo   # all four into dist/
 ```
 
 ## Development

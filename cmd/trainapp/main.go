@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -132,11 +133,12 @@ func main() {
 	demoPerWay := flag.Int("demo", 3, "with no -schedule, how many demo trains to run each way")
 	disruptionsPath := flag.String("disruptions", "", "disruptions to apply to the trains (JSON): extra stands at stations, late entries")
 	kpiPath := flag.String("kpi", "", "also write the KPI report to this file (JSON)")
-	scenarioPath := flag.String("scenario", "", "run a scenario file (JSON): its world, schedule, profile and disruptions, in place of -world, -schedule, -priorities and -disruptions")
+	scenarioPath := flag.String("scenario", "", "run a scenario file (JSON): its world, schedule (or timetable), profile and disruptions, in place of -world, -schedule, -priorities and -disruptions")
 	rule := flag.String("rule", "", "precedence rule in place of the profile's: a hold rule's name (thresholds, weighted), or off to run without precedence")
 	flag.Parse()
 
 	var disruptions []ops.Disruption
+	var plan *timetable.Timetable // the scenario's timetable, if it runs one
 	if *scenarioPath != "" {
 		var clash []string
 		flag.Visit(func(f *flag.Flag) {
@@ -153,6 +155,13 @@ func main() {
 		}
 		*worldName, *schedulePath, *prioritiesPath = sc.WorldName(), sc.SchedulePath(), sc.ProfilePath()
 		disruptions = sc.Disruptions
+		if sc.Timetable != "" {
+			tt, err := timetable.Load(sc.TimetablePath())
+			if err != nil {
+				log.Fatal(err)
+			}
+			plan = &tt
+		}
 	}
 
 	// between lists the stations the demo trains run through between their
@@ -175,7 +184,9 @@ func main() {
 	}
 
 	var trains []*ops.Train
-	if *schedulePath != "" {
+	if plan != nil {
+		trains = plan.TimedTrains()
+	} else if *schedulePath != "" {
 		var err error
 		if trains, err = ops.LoadTrains(*schedulePath); err != nil {
 			log.Fatal(err)
@@ -202,9 +213,9 @@ func main() {
 	}
 
 	// the trains as planned, for their free-running times
-	plan := make([]*ops.Train, len(trains))
+	planned := make([]*ops.Train, len(trains))
 	for i, t := range trains {
-		plan[i] = t.Clone()
+		planned[i] = t.Clone()
 	}
 	if *disruptionsPath != "" {
 		var err error
@@ -228,6 +239,17 @@ func main() {
 	if err := scenario.ApplyRule(s.Priorities, *rule); err != nil {
 		log.Fatal(err)
 	}
+	// a timetable is kept to its plan under the profile's rule, as its
+	// check run was; a rule of its own decides afresh
+	keepPlan := false
+	if plan != nil && *rule == "" {
+		mode, err := checkMode(s.Priorities, *checkPrecedence)
+		if err != nil {
+			log.Fatal(err)
+		}
+		keepPlan = timetable.KeepsPlan(s.Priorities, mode)
+		s.ManualPrecedence = keepPlan
+	}
 	for _, t := range trains {
 		if err := s.AddTrain(t); err != nil {
 			log.Fatal(err)
@@ -236,6 +258,11 @@ func main() {
 
 	if err := s.Init(); err != nil {
 		log.Fatal(err)
+	}
+	if keepPlan {
+		if err := s.ApplyOverrides(plan.PlanOverrides()); err != nil {
+			log.Fatal(err)
+		}
 	}
 	if *overridesPath != "" {
 		overrides, err := sim.LoadOverrides(*overridesPath)
@@ -287,7 +314,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	free, err := kpi.FreeRunning(world, s.Priorities, plan)
+	free, err := kpi.FreeRunning(world, s.Priorities, planned)
 	if err != nil {
 		fmt.Printf("free running: %v\n", err)
 	}
@@ -451,6 +478,20 @@ func runRecorded(s *sim.Sim, path string, prog *progress, coll *kpi.Collector) (
 type checkRun struct {
 	sim  *sim.Sim
 	coll *kpi.Collector
+}
+
+// checkMode is how a timetable's run decides precedence: the profile's
+// check_precedence, or override if set.
+func checkMode(prio *sim.PriorityConfig, override string) (string, error) {
+	var raw json.RawMessage
+	if prio != nil {
+		raw = prio.Timetable
+	}
+	cfg, err := timetable.LoadConfig(raw)
+	if err != nil {
+		return "", err
+	}
+	return cmp.Or(override, cfg.CheckPrecedence), nil
 }
 
 // writeTimetable turns the finished run into a timetable, rounds it, runs it

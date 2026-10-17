@@ -12,6 +12,7 @@ import (
 	"trainapp/units"
 	"trainapp/visualization/record"
 	"trainapp/visualization/schematic"
+	"trainapp/visualization/tui"
 	"trainapp/visualization/vizproto"
 	"trainapp/worlds"
 
@@ -180,7 +181,7 @@ func TestZoomAndStationJump(t *testing.T) {
 	d, _ := schematic.Build(&hello.World)
 	m := newModel(d, newReplay(hello, msgs))
 	m.Update(tea.WindowSizeMsg{Width: 45, Height: 30})
-	if got := zoomSteps[m.step].level; got != schematic.Overview {
+	if got := zoomSteps[m.step].Level; got != schematic.Overview {
 		t.Errorf("a narrow window fits the %s, want the overview", got)
 	}
 	for range len(zoomSteps) {
@@ -432,11 +433,11 @@ func TestTrainsAreColouredByClass(t *testing.T) {
 	for _, k := range r.classes {
 		names = append(names, fmt.Sprintf("%s %d %s", k.name, k.priority, k.color))
 	}
-	want := []string{"Passenger 20 " + classColors[0], "Mail/Express 40 " + classColors[5], "Superfast Express 50 " + classColors[9]}
+	want := []string{"Passenger 20 " + tui.Palette[0], "Mail/Express 40 " + tui.Palette[5], "Superfast Express 50 " + tui.Palette[9]}
 	if !slices.Equal(names, want) {
 		t.Errorf("classes %v, want %v", names, want)
 	}
-	if got := r.classStyle("SF").GetForeground(); got != lipgloss.Color(classColors[9]) {
+	if got := r.classStyle("SF").GetForeground(); got != lipgloss.Color(tui.Palette[9]) {
 		t.Errorf("SF drawn in %v", got)
 	}
 	if got := r.classStyle("XX").GetForeground(); got != bold.GetForeground() {

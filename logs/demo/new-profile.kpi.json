@@ -1,0 +1,565 @@
+{
+  "check": {
+    "trains": 1,
+    "finished": 1,
+    "lateness": {
+      "trains": 1,
+      "total_min": 0,
+      "mean_min": 0,
+      "weighted_mean_min": 0,
+      "punctual": [
+        {
+          "within_min": 1,
+          "trains": 1,
+          "share": 1
+        },
+        {
+          "within_min": 5,
+          "trains": 1,
+          "share": 1
+        },
+        {
+          "within_min": 15,
+          "trains": 1,
+          "share": 1
+        }
+      ],
+      "worst_min": 0
+    },
+    "wait_min": 0,
+    "holds": 0,
+    "held_min": 0,
+    "platform_changes": 0,
+    "utilization": {
+      "from_min": 10.001999999999999,
+      "to_min": 33.001999999999995,
+      "blocks": {
+        "tracks": 1,
+        "mean_occupancy": 0.5931027667984193,
+        "min_occupancy": 0.5931027667984193,
+        "max_occupancy": 0.5931027667984193,
+        "mean_standing": 0.0002173913043480918,
+        "standing_min": 0.005000000000006111
+      },
+      "platforms": {
+        "tracks": 6,
+        "mean_occupancy": 0.06515217391304338,
+        "min_occupancy": 0,
+        "max_occupancy": 0.26095652173913075,
+        "mean_standing": 0.055033596837944565,
+        "standing_min": 7.594636363636349
+      },
+      "stations": [
+        {
+          "stn": "GOC",
+          "platforms": 3,
+          "occupancy": 0.08698550724637692,
+          "standing_min": 5.56563636363637
+        },
+        {
+          "stn": "TPJ",
+          "platforms": 3,
+          "occupancy": 0.043318840579709854,
+          "standing_min": 2.0289999999999786
+        }
+      ],
+      "tracks": [
+        {
+          "track": "gocPf1",
+          "kind": "platform",
+          "stn": "GOC",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocPf1E-gocThE0",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocPf2",
+          "kind": "platform",
+          "stn": "GOC",
+          "pf": "2",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocPf2E-gocThE1",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocPf3",
+          "kind": "platform",
+          "stn": "GOC",
+          "pf": "3",
+          "entries": 1,
+          "occupied_min": 6.002000000000006,
+          "running_min": 0.4363636363636356,
+          "standing_min": 5.56563636363637,
+          "occupancy": 0.26095652173913075,
+          "running": 0.018972332015810247,
+          "standing": 0.24198418972332048,
+          "trains_per_hour": 2.6086956521739135
+        },
+        {
+          "track": "gocPf3E-gocThE0",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 1,
+          "occupied_min": 0.0555454545454559,
+          "running_min": 0.054545454545454675,
+          "standing_min": 0.0010000000000012221,
+          "occupancy": 0.002415019762845909,
+          "running": 0.0023715415019762904,
+          "standing": 0.00004347826086961836,
+          "trains_per_hour": 2.6086956521739135
+        },
+        {
+          "track": "gocThE0-gocThE1",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 1,
+          "occupied_min": 0.0555454545454559,
+          "running_min": 0.054545454545454675,
+          "standing_min": 0.0010000000000012221,
+          "occupancy": 0.002415019762845909,
+          "running": 0.0023715415019762904,
+          "standing": 0.00004347826086961836,
+          "trains_per_hour": 2.6086956521739135
+        },
+        {
+          "track": "slGocLn0",
+          "kind": "block",
+          "entries": 1,
+          "occupied_min": 13.641363636363643,
+          "running_min": 13.636363636363637,
+          "standing_min": 0.005000000000006111,
+          "occupancy": 0.5931027667984193,
+          "running": 0.5928853754940713,
+          "standing": 0.0002173913043480918,
+          "trains_per_hour": 2.6086956521739135
+        },
+        {
+          "track": "tpjPf2",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "2",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf2S-tpjThW1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf3",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "3",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf3S-tpjThW0",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThW0-tpjThW1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 1,
+          "occupied_min": 0.0555454545454559,
+          "running_min": 0.054545454545454675,
+          "standing_min": 0.0010000000000012221,
+          "occupancy": 0.002415019762845909,
+          "running": 0.0023715415019762904,
+          "standing": 0.00004347826086961836,
+          "trains_per_hour": 2.6086956521739135
+        },
+        {
+          "track": "tpjPf1S-tpjThW0",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 1,
+          "occupied_min": 0.2010000000000005,
+          "running_min": 0.1999999999999993,
+          "standing_min": 0.0010000000000012221,
+          "occupancy": 0.008739130434782633,
+          "running": 0.008695652173913014,
+          "standing": 0.00004347826086961836,
+          "trains_per_hour": 2.6086956521739135
+        },
+        {
+          "track": "tpjPf1",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "1",
+          "entries": 1,
+          "occupied_min": 2.9889999999999795,
+          "running_min": 0.9600000000000009,
+          "standing_min": 2.0289999999999786,
+          "occupancy": 0.12995652173912955,
+          "running": 0.041739130434782654,
+          "standing": 0.08821739130434691,
+          "trains_per_hour": 2.6086956521739135
+        }
+      ]
+    },
+    "per_train": [
+      {
+        "train": "T001",
+        "class": "Shatabdi",
+        "priority": 80,
+        "finished": true,
+        "entry_min": 10,
+        "exit_min": 33.001,
+        "journey_min": 23.000999999999998,
+        "late_min": 0,
+        "wait_min": 0
+      }
+    ]
+  },
+  "run": {
+    "trains": 1,
+    "finished": 1,
+    "delay": {
+      "trains": 1,
+      "total_min": 0,
+      "mean_min": 0,
+      "weighted_mean_min": 0,
+      "punctual": [
+        {
+          "within_min": 1,
+          "trains": 1,
+          "share": 1
+        },
+        {
+          "within_min": 5,
+          "trains": 1,
+          "share": 1
+        },
+        {
+          "within_min": 15,
+          "trains": 1,
+          "share": 1
+        }
+      ],
+      "worst_min": 0
+    },
+    "wait_min": 0,
+    "holds": 0,
+    "held_min": 0,
+    "platform_changes": 0,
+    "utilization": {
+      "from_min": 10.001999999999999,
+      "to_min": 31.97700000000001,
+      "blocks": {
+        "tracks": 1,
+        "mean_occupancy": 0.6207674009721791,
+        "min_occupancy": 0.6207674009721791,
+        "max_occupancy": 0.6207674009721791,
+        "mean_standing": 0.00022753128555204132,
+        "standing_min": 0.005000000000006111
+      },
+      "platforms": {
+        "tracks": 6,
+        "mean_occupancy": 0.06041714069017823,
+        "min_occupancy": 0,
+        "max_occupancy": 0.22762229806598389,
+        "mean_standing": 0.0498265935808598,
+        "standing_min": 6.569636363636368
+      },
+      "stations": [
+        {
+          "stn": "GOC",
+          "platforms": 3,
+          "occupancy": 0.07587409935532796,
+          "standing_min": 4.565636363636363
+        },
+        {
+          "stn": "TPJ",
+          "platforms": 3,
+          "occupancy": 0.0449601820250285,
+          "standing_min": 2.004000000000005
+        }
+      ],
+      "tracks": [
+        {
+          "track": "gocPf1",
+          "kind": "platform",
+          "stn": "GOC",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocPf1E-gocThE0",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocPf2",
+          "kind": "platform",
+          "stn": "GOC",
+          "pf": "2",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocPf2E-gocThE1",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocPf3",
+          "kind": "platform",
+          "stn": "GOC",
+          "pf": "3",
+          "entries": 1,
+          "occupied_min": 5.001999999999999,
+          "running_min": 0.4363636363636356,
+          "standing_min": 4.565636363636363,
+          "occupancy": 0.22762229806598389,
+          "running": 0.019857275829972033,
+          "standing": 0.20776502223601187,
+          "trains_per_hour": 2.730375426621159
+        },
+        {
+          "track": "gocPf3E-gocThE0",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 1,
+          "occupied_min": 0.05554545454545412,
+          "running_min": 0.054545454545454675,
+          "standing_min": 0.0009999999999994458,
+          "occupancy": 0.0025276657358568413,
+          "running": 0.002482159478746514,
+          "standing": 0.00004550625711032743,
+          "trains_per_hour": 2.730375426621159
+        },
+        {
+          "track": "gocThE0-gocThE1",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 1,
+          "occupied_min": 0.05554545454545412,
+          "running_min": 0.054545454545454675,
+          "standing_min": 0.0009999999999994458,
+          "occupancy": 0.0025276657358568413,
+          "running": 0.002482159478746514,
+          "standing": 0.00004550625711032743,
+          "trains_per_hour": 2.730375426621159
+        },
+        {
+          "track": "slGocLn0",
+          "kind": "block",
+          "entries": 1,
+          "occupied_min": 13.641363636363643,
+          "running_min": 13.636363636363637,
+          "standing_min": 0.005000000000006111,
+          "occupancy": 0.6207674009721791,
+          "running": 0.620539869686627,
+          "standing": 0.00022753128555204132,
+          "trains_per_hour": 2.730375426621159
+        },
+        {
+          "track": "tpjPf2",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "2",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf2S-tpjThW1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf3",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "3",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf3S-tpjThW0",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThW0-tpjThW1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 1,
+          "occupied_min": 0.0555454545454559,
+          "running_min": 0.054545454545454675,
+          "standing_min": 0.0010000000000012221,
+          "occupancy": 0.0025276657358569224,
+          "running": 0.002482159478746514,
+          "standing": 0.00004550625711040826,
+          "trains_per_hour": 2.730375426621159
+        },
+        {
+          "track": "tpjPf1S-tpjThW0",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 1,
+          "occupied_min": 0.2010000000000005,
+          "running_min": 0.1999999999999993,
+          "standing_min": 0.0010000000000012221,
+          "occupancy": 0.009146757679180906,
+          "running": 0.009101251422070498,
+          "standing": 0.00004550625711040826,
+          "trains_per_hour": 2.730375426621159
+        },
+        {
+          "track": "tpjPf1",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "1",
+          "entries": 1,
+          "occupied_min": 2.9640000000000057,
+          "running_min": 0.9600000000000009,
+          "standing_min": 2.004000000000005,
+          "occupancy": 0.1348805460750855,
+          "running": 0.04368600682593858,
+          "standing": 0.09119453924914693,
+          "trains_per_hour": 2.730375426621159
+        }
+      ]
+    },
+    "per_train": [
+      {
+        "train": "T001",
+        "class": "Shatabdi",
+        "priority": 80,
+        "finished": true,
+        "entry_min": 10,
+        "exit_min": 31.97600000000001,
+        "journey_min": 21.97600000000001,
+        "free_run_min": 21.97600000000001,
+        "delay_min": 0,
+        "wait_min": 0
+      }
+    ]
+  }
+}

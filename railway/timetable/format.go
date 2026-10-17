@@ -5,10 +5,30 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
 )
+
+// Load reads a timetable file, as WriteJSON writes it.
+func Load(path string) (Timetable, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return Timetable{}, err
+	}
+	defer f.Close()
+	dec := json.NewDecoder(f)
+	dec.DisallowUnknownFields()
+	var tt Timetable
+	if err := dec.Decode(&tt); err != nil {
+		return tt, fmt.Errorf("%s: %w", path, err)
+	}
+	if len(tt.Trains) == 0 {
+		return tt, fmt.Errorf("%s: a timetable with no trains", path)
+	}
+	return tt, nil
+}
 
 // WriteJSON writes the timetable as indented JSON.
 func WriteJSON(w io.Writer, tt Timetable) error {

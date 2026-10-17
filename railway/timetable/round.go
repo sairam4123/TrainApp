@@ -47,10 +47,7 @@ func Round(tt Timetable, cfg Config) Timetable {
 			// no pass to halt at: give up rather than move the trains on
 			// for ever
 			for _, a := range cycle {
-				w := &out.Trains[a.i].Warnings
-				if !slices.Contains(*w, unsettled) {
-					*w = append(*w, unsettled)
-				}
+				warnUnsettled(&out.Trains[a.i])
 			}
 			return out
 		}
@@ -68,7 +65,8 @@ const unsettled = "rounding did not settle: the order with other trains may not 
 
 // settle rounds the trains, moving departures on until every order arc
 // holds. If the arcs make a cycle that rounding makes ever longer, it stops
-// and returns the arcs of one.
+// and returns the arcs of one; if it cannot find it, it warns on the trains
+// still moving instead.
 func settle(tt Timetable, cfg Config) (Timetable, []arc) {
 	arcs := orderArcs(tt, cfg)
 	notBefore := map[[2]int]float64{} // train, point -> earliest departure, for the order
@@ -78,31 +76,50 @@ func settle(tt Timetable, cfg Config) (Timetable, []arc) {
 		held[[2]int{a.i, a.k}] = true
 	}
 	var out Timetable
-	var moved map[[2]int]bool
 	// each round settles at least one more departure held back, so a round
 	// for each is enough unless the arcs make a cycle
-	for range len(held) + 2 {
+	rounds := len(held) + 2
+	moved := map[[2]int]bool{} // in the second half of the rounds
+	for n := range rounds {
 		var at [][][2]float64
 		out, at = roundOnce(tt, cfg, notBefore)
-		moved = map[[2]int]bool{}
+		still := false
 		for _, a := range arcs {
 			need := at[a.lead.i][a.lead.k][a.lead.side] + a.w
 			if key := [2]int{a.i, a.k}; need > notBefore[key]+1e-9 {
 				notBefore[key] = need
 				setBy[key] = a
-				moved[key] = true
+				still = true
+				if n >= rounds/2 {
+					moved[key] = true
+				}
 			}
 		}
-		if len(moved) == 0 {
+		if !still {
 			return out, nil
 		}
 	}
-	return out, cycleOf(tt, moved, setBy)
+	cycle := cycleOf(tt, moved, setBy)
+	if cycle == nil {
+		for key := range moved {
+			warnUnsettled(&out.Trains[key[0]])
+		}
+	}
+	return out, cycle
+}
+
+// warnUnsettled warns that rounding gave up on the train: not every order
+// arc on it may hold.
+func warnUnsettled(t *Train) {
+	if !slices.Contains(t.Warnings, unsettled) {
+		t.Warnings = append(t.Warnings, unsettled)
+	}
 }
 
 // cycleOf follows the arcs back from a departure that still moves, through
-// the leader's stop or halt before the time each waits for, until it comes
-// round to one it has seen.
+// the leader's last stop or halt that still moves before the time each waits
+// for, until it comes round to one it has seen. It returns nil if it finds
+// none.
 func cycleOf(tt Timetable, moved map[[2]int]bool, setBy map[[2]int]arc) []arc {
 	keys := slices.SortedFunc(maps.Keys(moved), func(a, b [2]int) int { return cmp.Or(a[0]-b[0], a[1]-b[1]) })
 	key := keys[0]
@@ -123,7 +140,7 @@ func cycleOf(tt Timetable, moved map[[2]int]bool, setBy map[[2]int]arc) []arc {
 			s--
 		}
 		if s < 0 {
-			return path
+			return nil
 		}
 		key = [2]int{a.lead.i, s}
 	}

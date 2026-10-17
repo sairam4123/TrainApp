@@ -9,6 +9,7 @@ import (
 	"time"
 	"trainapp/visualization/schematic"
 	"trainapp/visualization/traingraph"
+	"trainapp/visualization/tui"
 	"trainapp/visualization/vizproto"
 
 	tea "charm.land/bubbletea/v2"
@@ -17,17 +18,7 @@ import (
 )
 
 // zoomSteps run from the overview to the most detailed drawing.
-var zoomSteps = []struct {
-	level schematic.Level
-	zoom  int
-}{
-	{schematic.Overview, 1},
-	{schematic.Layout, 1},
-	{schematic.Layout, 2},
-	{schematic.Layout, 3},
-	{schematic.Detail, 1},
-	{schematic.Detail, 2},
-}
+var zoomSteps = tui.ZoomSteps
 
 // graphScales are the time-distance graph's minutes per column.
 var graphScales = []float64{0.1, 0.25, 0.5, 1, 2, 5, 10, 20}
@@ -154,7 +145,7 @@ func (m *model) selectedTrain() string {
 
 func (m *model) options() schematic.Options {
 	s := zoomSteps[m.step]
-	opt := schematic.Options{Level: s.level, Zoom: s.zoom, Selected: m.selectedTrain()}
+	opt := schematic.Options{Level: s.Level, Zoom: s.Zoom, Selected: m.selectedTrain()}
 	if m.rep != nil {
 		opt.State, opt.Time = m.rep.state, m.rep.t
 	}
@@ -245,7 +236,7 @@ func (m *model) fit() {
 	pw, ph := m.pane()
 	m.step = 0
 	for i := len(zoomSteps) - 1; i > 0; i-- {
-		if zoomSteps[i].level != schematic.Layout {
+		if zoomSteps[i].Level != schematic.Layout {
 			continue
 		}
 		m.step = i
@@ -624,7 +615,7 @@ func (m *model) render() string {
 	}
 	pw, ph := m.pane()
 	s := zoomSteps[m.step]
-	title := fmt.Sprintf("%s, zoom %d", s.level, s.zoom)
+	title := fmt.Sprintf("%s, zoom %d", s.Level, s.Zoom)
 	body := m.frame.View(m.x, m.y, pw, ph, true)
 	if m.showGraph {
 		title = fmt.Sprintf("time-distance, %.3g min per column", m.gPerCol)
@@ -849,10 +840,7 @@ func (m *model) scheduleLines(w, n int) []string {
 }
 
 // clock shows minutes from 0 as HH:MM, as the timetable does.
-func clock(t float64) string {
-	mins := int(math.Round(t))
-	return fmt.Sprintf("%02d:%02d", mins/60, mins%60)
-}
+func clock(t float64) string { return tui.Clock(t) }
 
 func (m *model) eventLines(n int) []string {
 	var out []string

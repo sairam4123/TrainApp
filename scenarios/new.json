@@ -1,0 +1,8 @@
+{
+  "name": "test-sim",
+  "description": "a sim to test edit functionality",
+  "world": "worlds/new.json",
+  "schedule": "schedules/new.json",
+  "timetable": "timetables/new.json",
+  "profile": "../profiles/ir.json"
+}

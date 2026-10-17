@@ -1,0 +1,408 @@
+{
+  "run": {
+    "trains": 1,
+    "finished": 1,
+    "delay": {
+      "trains": 1,
+      "total_min": 0,
+      "mean_min": 0,
+      "weighted_mean_min": 0,
+      "punctual": [
+        {
+          "within_min": 1,
+          "trains": 1,
+          "share": 1
+        },
+        {
+          "within_min": 5,
+          "trains": 1,
+          "share": 1
+        },
+        {
+          "within_min": 15,
+          "trains": 1,
+          "share": 1
+        }
+      ],
+      "worst_min": 0
+    },
+    "wait_min": 0,
+    "holds": 0,
+    "held_min": 0,
+    "platform_changes": 0,
+    "utilization": {
+      "from_min": 1.0019999999999998,
+      "to_min": 45.55663636363634,
+      "blocks": {
+        "tracks": 2,
+        "mean_occupancy": 0.428595330350275,
+        "min_occupancy": 0.24495971238581432,
+        "max_occupancy": 0.6122309483147356,
+        "mean_standing": 0.00011222176653377476,
+        "standing_min": 0.009999999999994458
+      },
+      "platforms": {
+        "tracks": 8,
+        "mean_occupancy": 0.01641166820716541,
+        "min_occupancy": 0,
+        "max_occupancy": 0.06656995190787186,
+        "mean_standing": 0.011269870904160513,
+        "standing_min": 4.016999999999977
+      },
+      "stations": [
+        {
+          "stn": "TPJ",
+          "platforms": 4,
+          "occupancy": 0.01370431808953665,
+          "standing_min": 2.0059999999999993
+        },
+        {
+          "stn": "KRUR",
+          "platforms": 3,
+          "occupancy": 0.02218998396929062,
+          "standing_min": 2.0059999999999896
+        },
+        {
+          "stn": "NMN",
+          "platforms": 1,
+          "occupancy": 0.009906121391304824,
+          "standing_min": 0.004999999999988347
+        }
+      ],
+      "tracks": [
+        {
+          "track": "tpjPf1",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf1E-tpjThE1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf2",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "2",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf2E-tpjThE0",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf3",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "3",
+          "entries": 1,
+          "occupied_min": 2.442363636363636,
+          "running_min": 0.4363636363636365,
+          "standing_min": 2.0059999999999993,
+          "occupancy": 0.0548172723581466,
+          "running": 0.00979389962477123,
+          "standing": 0.04502337273337537,
+          "trains_per_hour": 1.3466611984060435
+        },
+        {
+          "track": "tpjPf4",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "4",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf4E-tpjThE0",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE0-tpjThE2",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf3E-tpjThE1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 1,
+          "occupied_min": 0.055545454545454565,
+          "running_min": 0.054545454545454675,
+          "standing_min": 0.0009999999999998899,
+          "occupancy": 0.001246681806403171,
+          "running": 0.001224237453096406,
+          "standing": 0.00002244435330676492,
+          "trains_per_hour": 1.3466611984060435
+        },
+        {
+          "track": "tpjThE1-tpjThE2",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 1,
+          "occupied_min": 0.055545454545454565,
+          "running_min": 0.054545454545454675,
+          "standing_min": 0.0009999999999998899,
+          "occupancy": 0.001246681806403171,
+          "running": 0.001224237453096406,
+          "standing": 0.00002244435330676492,
+          "trains_per_hour": 1.3466611984060435
+        },
+        {
+          "track": "slLnKrur0",
+          "kind": "block",
+          "entries": 1,
+          "occupied_min": 27.27772727272728,
+          "running_min": 27.272727272727273,
+          "standing_min": 0.005000000000006111,
+          "occupancy": 0.6122309483147356,
+          "running": 0.6121187265482017,
+          "standing": 0.00011222176653397411,
+          "trains_per_hour": 1.3466611984060435
+        },
+        {
+          "track": "krurPf1",
+          "kind": "platform",
+          "stn": "KRUR",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krurPf1E-krurThE0",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krurPf1S-krurThW0",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krurPf2S-krurThW1",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 1,
+          "occupied_min": 0.2010000000000005,
+          "running_min": 0.1999999999999993,
+          "standing_min": 0.0010000000000012221,
+          "occupancy": 0.0045113150146602575,
+          "running": 0.004488870661353462,
+          "standing": 0.00002244435330679482,
+          "trains_per_hour": 1.3466611984060435
+        },
+        {
+          "track": "krurPf3",
+          "kind": "platform",
+          "stn": "KRUR",
+          "pf": "3",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krurPf3E-krurThE0",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krurPf3S-krurThW0",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krurThE0-krurThE1",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krurThW0-krurThW1",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krurPf2",
+          "kind": "platform",
+          "stn": "KRUR",
+          "pf": "2",
+          "entries": 1,
+          "occupied_min": 2.9659999999999904,
+          "running_min": 0.9600000000000009,
+          "standing_min": 2.0059999999999896,
+          "occupancy": 0.06656995190787186,
+          "running": 0.021546579174496715,
+          "standing": 0.04502337273337515,
+          "trains_per_hour": 1.3466611984060435
+        },
+        {
+          "track": "krurPf2E-krurThE1",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 1,
+          "occupied_min": 0.2010000000000005,
+          "running_min": 0.20000000000000284,
+          "standing_min": 0.0009999999999976694,
+          "occupancy": 0.0045113150146602575,
+          "running": 0.004488870661353542,
+          "standing": 0.000022444353306715085,
+          "trains_per_hour": 1.3466611984060435
+        },
+        {
+          "track": "Ed1-krurThE1",
+          "kind": "block",
+          "entries": 1,
+          "occupied_min": 10.914090909090902,
+          "running_min": 10.909090909090914,
+          "standing_min": 0.004999999999988347,
+          "occupancy": 0.24495971238581432,
+          "running": 0.24484749061928074,
+          "standing": 0.00011222176653357542,
+          "trains_per_hour": 1.3466611984060435
+        },
+        {
+          "track": "nmnPf1",
+          "kind": "platform",
+          "stn": "NMN",
+          "pf": "1",
+          "entries": 1,
+          "occupied_min": 0.44136363636362574,
+          "running_min": 0.4363636363636374,
+          "standing_min": 0.004999999999988347,
+          "occupancy": 0.009906121391304824,
+          "running": 0.009793899624771249,
+          "standing": 0.00011222176653357542,
+          "trains_per_hour": 1.3466611984060435
+        }
+      ]
+    },
+    "per_train": [
+      {
+        "train": "T001",
+        "class": "UR Express",
+        "priority": 30,
+        "finished": true,
+        "entry_min": 1,
+        "exit_min": 45.555636363636346,
+        "journey_min": 44.555636363636346,
+        "free_run_min": 44.555636363636346,
+        "delay_min": 0,
+        "wait_min": 0
+      }
+    ]
+  }
+}

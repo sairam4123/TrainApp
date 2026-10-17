@@ -1,9 +1,12 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
-	"trainapp/railway/scenario"
+	"time"
+	"trainapp/visualization/runs"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -11,11 +14,11 @@ import (
 
 func loadPicker(t *testing.T) *picker {
 	t.Helper()
-	scenarios, err := scenario.LoadDir("../../scenarios")
+	p, err := newPicker("../../scenarios", 0, bins{trainapp: "trainapp", trainviz: "trainviz"}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
-	return newPicker(scenarios, 0, "trainapp", "trainviz", "logs/demo")
+	return p
 }
 
 // The screen is always exactly the window, whatever its size, with each
@@ -99,5 +102,59 @@ func TestPickTrainWraps(t *testing.T) {
 		if p.train != k.want {
 			t.Errorf("%s: train %d, want %d", k.key, p.train, k.want)
 		}
+	}
+}
+
+// A scenario that does not read is listed with its error, the others as
+// ever; reading the directory again picks up a new scenario and selects it.
+func TestUnreadableAndReload(t *testing.T) {
+	dir := t.TempDir()
+	write := func(name, body string) string {
+		p := filepath.Join(dir, name)
+		if err := os.WriteFile(p, []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	abs, _ := filepath.Abs("../../scenarios/schedules/sl-6.json")
+	write("a.json", `{"world": "tpjkkdi-sl", "schedule": "`+abs+`", "profile": ""}`)
+	write("b.json", `{"world": "tpjkkdi-sl", "trains": 3}`)
+	p, err := newPicker(dir, 0, bins{}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Update(tea.WindowSizeMsg{Width: 120, Height: 30})
+	if len(p.scenarios) != 2 || p.scenarios[0].Err != nil || p.scenarios[1].Err == nil {
+		t.Fatalf("scenarios: %d, errors %v, %v", len(p.scenarios), p.scenarios[0].Err, p.scenarios[1].Err)
+	}
+	p.choose(1)
+	screen := ansi.Strip(p.render())
+	if !strings.Contains(screen, "does not read") {
+		t.Errorf("the unreadable scenario does not say so:\n%s", screen)
+	}
+	if cmd := p.start(); cmd != nil || !strings.Contains(p.note, "does not read") {
+		t.Errorf("an unreadable scenario starts a run (note %q)", p.note)
+	}
+	c := write("c.json", `{"world": "tpjkkdi-sl", "schedule": "`+abs+`", "profile": ""}`)
+	p.Update(editDoneMsg{saved: c})
+	if len(p.scenarios) != 3 || p.scenarios[p.cursor].Path != c {
+		t.Errorf("after the edit: %d scenarios, %s selected, want %s", len(p.scenarios), p.scenarios[p.cursor].Path, c)
+	}
+}
+
+// A run older than its scenario's files is stale.
+func TestStaleRun(t *testing.T) {
+	p := loadPicker(t)
+	sc := p.scenarios[0]
+	rec, _ := runs.Files(p.outDir, sc, "")
+	if err := os.WriteFile(rec, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	old := time.Now().Add(-24 * 365 * time.Hour)
+	if err := os.Chtimes(rec, old, old); err != nil {
+		t.Fatal(err)
+	}
+	if res := p.result(); res == nil || !res.Stale {
+		t.Errorf("a run from a year ago is not stale: %+v", res)
 	}
 }

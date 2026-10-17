@@ -46,7 +46,20 @@ type Options struct {
 	State    *vizproto.State
 	Time     float64
 	Selected string // train to highlight
+
+	// Marks picks out pieces of the world, by id: a point, track, signal or
+	// station (its code), e.g. an editor's selection and its problems.
+	Marks map[string]Mark
 }
+
+// Mark is how a piece is picked out (Options.Marks).
+type Mark int
+
+const (
+	MarkNone     Mark = iota
+	MarkSelected      // the piece being worked on
+	MarkProblem       // a piece something is wrong with
+)
 
 // minWidth is the fewest columns each kind of track takes at zoom 1.
 var minWidth = map[Kind]int{Line: 8, Platform: 6, Switch: 2}
@@ -131,6 +144,7 @@ func (d *Diagram) Draw(opt Options) *Frame {
 	if opt.Level != Overview {
 		f := d.draw(opt)
 		d.drawState(f, opt)
+		d.drawMarks(f, opt.Marks)
 		return f
 	}
 
@@ -151,6 +165,7 @@ func (d *Diagram) Draw(opt Options) *Frame {
 		}
 	}
 	d.drawState(f, opt)
+	d.drawMarks(f, opt.Marks)
 	return f
 }
 
@@ -171,8 +186,10 @@ func (d *Diagram) draw(opt Options) *Frame {
 		cv:       newCanvas(width, height),
 		points:   make(map[string]pos),
 		stations: make(map[string]pos),
+		labels:   make(map[string]span),
 		trains:   make(map[string]pos),
 		paths:    make(map[string][]pos),
+		signals:  make(map[string]pos),
 	}
 	cv := f.cv
 	for _, pt := range d.order {
@@ -210,7 +227,7 @@ func (d *Diagram) draw(opt Options) *Frame {
 			label = full
 		}
 		f.stations[s.code] = pos{(west + east) / 2, headerRows + top*rowsPerLane}
-		cv.label(label, west, east, headerRows+top*rowsPerLane-1)
+		f.labels[s.code] = cv.label(label, west, east, headerRows+top*rowsPerLane-1)
 	}
 	for _, b := range d.boxes {
 		d.drawBox(f, b, opt.State)
@@ -263,6 +280,7 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 		if t.To == sig.At {
 			p, glyph = path[len(path)-2], '▶'
 		}
+		f.signals[sig.ID] = p
 		s := styleSignal
 		if opt.State != nil {
 			switch {
@@ -541,13 +559,18 @@ type pos struct{ X, Y int }
 
 func (p pos) add(dx, dy int) pos { return pos{p.X + dx, p.Y + dy} }
 
+// span is the cells x1..x2 of row y.
+type span struct{ y, x1, x2 int }
+
 // Frame is a drawn diagram.
 type Frame struct {
 	cv       *canvas
 	points   map[string]pos // every point of the world
 	stations map[string]pos
-	trains   map[string]pos // front of each train drawn
+	labels   map[string]span // where each station's name is written
+	trains   map[string]pos  // front of each train drawn
 	paths    map[string][]pos
+	signals  map[string]pos
 }
 
 func (f *Frame) Width() int  { return f.cv.width }
@@ -702,9 +725,16 @@ type cell struct {
 	style style
 	track bool // a track glyph, coloured by look
 	look  look
+	mark  Mark
 }
 
 func (c cell) sgr() string {
+	switch c.mark {
+	case MarkSelected:
+		return "1;30;46"
+	case MarkProblem:
+		return "1;97;41"
+	}
 	codes := []string{}
 	if s := sgr[c.style]; s != "" {
 		codes = append(codes, s)
@@ -875,19 +905,20 @@ func (t *Track) bend(x1, x2, rise int) (bend, resume int) {
 // label writes a station name centred over west..east on the first row at or
 // above row with room for it, or failing that on the top row, moved east past
 // whatever is there.
-func (cv *canvas) label(label string, west, east, row int) {
+func (cv *canvas) label(label string, west, east, row int) span {
 	runes := []rune(label)
 	start := max(west+(east-west+1-len(runes))/2, 0)
 	for y := min(row, len(cv.cells)-1); y > 0; y-- {
 		if cv.free(start-1, start+len(runes), y) {
 			cv.write(start, y, runes, styleStation)
-			return
+			return span{y, start, start + len(runes) - 1}
 		}
 	}
 	for !cv.free(start-1, start+len(runes), 0) && start < cv.width {
 		start++
 	}
 	cv.write(start, 0, runes, styleStation)
+	return span{0, start, start + len(runes) - 1}
 }
 
 // text writes an id starting at column x on the first of the rows with room
@@ -991,4 +1022,149 @@ func abs(n int) int {
 		return -n
 	}
 	return n
+}
+
+// drawMarks picks out the marked pieces: a track along its path, a point,
+// signal or station name where it is drawn. A point drawn as blank gets a
+// dot, so it shows.
+func (d *Diagram) drawMarks(f *Frame, marks map[string]Mark) {
+	cv := f.cv
+	mark := func(p pos, m Mark) {
+		if cv.in(p.X, p.Y) {
+			cv.cells[p.Y][p.X].mark = m
+		}
+	}
+	for id, m := range marks {
+		if m == MarkNone {
+			continue
+		}
+		if path, ok := f.paths[id]; ok {
+			for _, p := range path {
+				mark(p, m)
+			}
+			continue
+		}
+		if p, ok := f.signals[id]; ok {
+			mark(p, m)
+			continue
+		}
+		if p, ok := f.points[id]; ok {
+			if cv.in(p.X, p.Y) && cv.cells[p.Y][p.X].r == ' ' {
+				cv.cells[p.Y][p.X].r = '•'
+			}
+			mark(p, m)
+			continue
+		}
+		if l, ok := f.labels[id]; ok {
+			for x := l.x1; x <= l.x2; x++ {
+				mark(pos{x, l.y}, m)
+			}
+		}
+	}
+}
+
+// PieceKind is what a piece of a drawn world is.
+type PieceKind int
+
+const (
+	PiecePoint PieceKind = iota + 1
+	PieceTrack
+	PieceSignal
+	PieceStation
+)
+
+// Piece is a point, track or signal of the world, by id, or a station, by
+// its code.
+type Piece struct {
+	Kind PieceKind
+	ID   string
+}
+
+// PiecesAt lists the pieces drawn in cell (x, y), the most specific first:
+// a point, then a signal, then the tracks running through it, then a
+// station whose name is written there.
+func (f *Frame) PiecesAt(x, y int) []Piece {
+	var out []Piece
+	at := pos{x, y}
+	for _, id := range sortedKeys(f.points) {
+		if f.points[id] == at {
+			out = append(out, Piece{PiecePoint, id})
+		}
+	}
+	for _, id := range sortedKeys(f.signals) {
+		if f.signals[id] == at {
+			out = append(out, Piece{PieceSignal, id})
+		}
+	}
+	for _, id := range sortedKeys(f.paths) {
+		if slices.Contains(f.paths[id], at) {
+			out = append(out, Piece{PieceTrack, id})
+		}
+	}
+	for _, code := range sortedKeys(f.labels) {
+		if l := f.labels[code]; l.y == y && x >= l.x1 && x <= l.x2 {
+			out = append(out, Piece{PieceStation, code})
+		}
+	}
+	return out
+}
+
+// At is the most specific piece drawn in cell (x, y) (see PiecesAt).
+func (f *Frame) At(x, y int) (Piece, bool) {
+	if ps := f.PiecesAt(x, y); len(ps) > 0 {
+		return ps[0], true
+	}
+	return Piece{}, false
+}
+
+// Where is the cell a piece is drawn at: a point's or signal's cell, the
+// middle of a track's path, the middle of a station's name.
+func (f *Frame) Where(p Piece) (x, y int, ok bool) {
+	switch p.Kind {
+	case PiecePoint:
+		q, ok := f.points[p.ID]
+		return q.X, q.Y, ok
+	case PieceSignal:
+		q, ok := f.signals[p.ID]
+		return q.X, q.Y, ok
+	case PieceTrack:
+		path := f.paths[p.ID]
+		if len(path) == 0 {
+			return 0, 0, false
+		}
+		q := path[len(path)/2]
+		return q.X, q.Y, true
+	case PieceStation:
+		l, ok := f.labels[p.ID]
+		return (l.x1 + l.x2) / 2, l.y, ok
+	}
+	return 0, 0, false
+}
+
+// Pieces lists every piece drawn, points first, then signals, tracks and
+// stations, each in id order.
+func (f *Frame) Pieces() []Piece {
+	var out []Piece
+	for _, id := range sortedKeys(f.points) {
+		out = append(out, Piece{PiecePoint, id})
+	}
+	for _, id := range sortedKeys(f.signals) {
+		out = append(out, Piece{PieceSignal, id})
+	}
+	for _, id := range sortedKeys(f.paths) {
+		out = append(out, Piece{PieceTrack, id})
+	}
+	for _, code := range sortedKeys(f.labels) {
+		out = append(out, Piece{PieceStation, code})
+	}
+	return out
+}
+
+func sortedKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return keys
 }

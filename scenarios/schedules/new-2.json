@@ -1,0 +1,26 @@
+{
+  "trains": [
+    {
+      "number": "T001",
+      "class": "UR Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "arr": 1,
+          "dwell": 2
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "dwell": 2
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass"
+        }
+      ]
+    }
+  ]
+}

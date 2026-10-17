@@ -3,9 +3,9 @@ package main
 import (
 	"cmp"
 	"fmt"
-	"math"
 	"slices"
 	"sort"
+	"trainapp/visualization/tui"
 	"trainapp/visualization/vizproto"
 
 	"charm.land/lipgloss/v2"
@@ -39,10 +39,6 @@ type classKey struct {
 	priority int
 	color    string
 }
-
-// classColors colour the classes from the lowest priority to the highest:
-// blue to red, leaving out the amber of held trains.
-var classColors = []string{"27", "39", "44", "42", "113", "149", "141", "177", "169", "203"}
 
 func newReplay(hello *vizproto.HelloMsg, msgs []vizproto.Message) *replay {
 	r := &replay{world: &hello.World, msgs: msgs, trackName: map[string]string{}, pfNo: map[string]string{}}
@@ -298,11 +294,7 @@ func (r *replay) rankClasses() {
 		return cmp.Or(cmp.Compare(a.priority, b.priority), cmp.Compare(a.name, b.name))
 	})
 	for i := range r.classes {
-		k := len(classColors) - 1
-		if n := len(r.classes); n > 1 {
-			k = int(math.Round(float64(i) / float64(n-1) * float64(len(classColors)-1)))
-		}
-		r.classes[i].color = classColors[k]
+		r.classes[i].color = tui.PaletteColor(i, len(r.classes))
 	}
 }
 

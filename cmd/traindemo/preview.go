@@ -2,14 +2,15 @@ package main
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
-	"math"
 	"slices"
 	"strings"
 	"trainapp/railway/ops"
 	"trainapp/railway/scenario"
 	"trainapp/railway/sim"
 	"trainapp/visualization/schematic"
+	"trainapp/visualization/tui"
 	"trainapp/worlds"
 
 	"github.com/charmbracelet/x/ansi"
@@ -60,7 +61,13 @@ func newPreviews() *previews {
 	return &previews{diagrams: map[string]*diagramPreview{}, schedules: map[string]*schedulePreview{}, profiles: map[string]*profile{}}
 }
 
+// errUnreadable stands in for a preview of a scenario that does not read.
+var errUnreadable = errors.New("the scenario does not read")
+
 func (p *previews) diagram(sc *scenario.Scenario, level schematic.Level) *diagramPreview {
+	if sc.Err != nil {
+		return &diagramPreview{err: errUnreadable}
+	}
 	key := sc.WorldName() + "|" + level.String()
 	if d, ok := p.diagrams[key]; ok {
 		return d
@@ -109,11 +116,14 @@ func (p *previews) profile(sc *scenario.Scenario) *profile {
 }
 
 func (p *previews) schedule(sc *scenario.Scenario) *schedulePreview {
+	if sc.Err != nil {
+		return &schedulePreview{err: errUnreadable}
+	}
 	if s, ok := p.schedules[sc.Path]; ok {
 		return s
 	}
 	s := &schedulePreview{}
-	trains, err := ops.LoadTrains(sc.SchedulePath())
+	trains, err := sc.Trains()
 	if err != nil {
 		s.err = err
 	} else {
@@ -151,7 +161,7 @@ func trainRows(trains []*ops.Train, disruptions []ops.Disruption) []trainRow {
 			r.disruptions = append(r.disruptions, disruptionText(d, true))
 		}
 		if first.ArrTime >= 0 {
-			r.entry = clock(first.ArrTime)
+			r.entry = tui.Clock(first.ArrTime)
 		}
 		for _, sp := range points[1 : len(points)-1] {
 			if sp.IsPass() {
@@ -179,10 +189,6 @@ func disruptionText(d ops.Disruption, stn bool) string {
 	return fmt.Sprintf("stand +%g", d.Min)
 }
 
-// palette colours the classes from the lowest priority to the highest: blue
-// to red, leaving out amber, as trainviz does.
-var palette = []string{"27", "39", "44", "42", "113", "149", "141", "177", "169", "203"}
-
 // classColors ranks the trains' classes by their priority in the profile,
 // then by name, and spreads the palette over them, as trainviz does.
 func classColors(rows []trainRow, priority map[string]int) ([]string, map[string]string) {
@@ -197,17 +203,7 @@ func classColors(rows []trainRow, priority map[string]int) ([]string, map[string
 	})
 	out := map[string]string{}
 	for i, c := range classes {
-		k := len(palette) - 1
-		if n := len(classes); n > 1 {
-			k = int(math.Round(float64(i) / float64(n-1) * float64(len(palette)-1)))
-		}
-		out[c] = palette[k]
+		out[c] = tui.PaletteColor(i, len(classes))
 	}
 	return classes, out
-}
-
-// clock shows minutes from 0 as HH:MM, as trainviz does.
-func clock(t float64) string {
-	mins := int(math.Round(t))
-	return fmt.Sprintf("%02d:%02d", mins/60, mins%60)
 }

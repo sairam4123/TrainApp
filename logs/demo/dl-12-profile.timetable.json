@@ -1,0 +1,1063 @@
+{
+  "rounding_min": 1,
+  "trains": [
+    {
+      "number": "0451U",
+      "name": "Train1Up",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1,
+          "dep": 7,
+          "dwell": 6,
+          "min_dwell": 5
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 39,
+          "dep": 41,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 32,
+          "via": [
+            {
+              "track": "tpjBp0-tpjPf1E",
+              "in": 7.002000000000001,
+              "out": 7.203000000000001
+            },
+            {
+              "track": "tpjBp0-tpjBp2",
+              "in": 7.203000000000001,
+              "out": 7.258545454545456
+            },
+            {
+              "track": "pdktBp0-tpjBp2",
+              "in": 7.258545454545456,
+              "out": 37.263545454545444
+            },
+            {
+              "track": "pdktBp0-pdktPf1S",
+              "in": 37.263545454545444,
+              "out": 37.464545454545444
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 65,
+          "dep": 70,
+          "dwell": 5,
+          "min_dwell": 5,
+          "run": 24,
+          "via": [
+            {
+              "track": "pdktBp2-pdktPf1E",
+              "in": 41.001999999999995,
+              "out": 41.202999999999996
+            },
+            {
+              "track": "kkdiBp0-pdktBp2",
+              "in": 41.202999999999996,
+              "out": 63.57163636363635
+            },
+            {
+              "track": "kkdiBp0-kkdiBp3",
+              "in": 63.57163636363635,
+              "out": 63.77263636363635
+            },
+            {
+              "track": "kkdiBp3-kkdiPf3S",
+              "in": 63.77263636363635,
+              "out": 63.828181818181804
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0451D",
+      "name": "Train1Down",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 1,
+          "dep": 12,
+          "dwell": 11,
+          "min_dwell": 10
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 36,
+          "dep": 41,
+          "dwell": 5,
+          "min_dwell": 5,
+          "run": 24,
+          "via": [
+            {
+              "track": "kkdiBp3-kkdiPf3S",
+              "in": 12.001999999999999,
+              "out": 12.057545454545453
+            },
+            {
+              "track": "kkdiBp1-kkdiBp3",
+              "in": 12.057545454545453,
+              "out": 12.113090909090907
+            },
+            {
+              "track": "kkdiBp1-pdktBp3",
+              "in": 12.113090909090907,
+              "out": 34.481727272727255
+            },
+            {
+              "track": "pdktBp3-pdktPf3E",
+              "in": 34.481727272727255,
+              "out": 34.53727272727271
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 73,
+          "dep": 83,
+          "dwell": 10,
+          "min_dwell": 10,
+          "run": 32,
+          "via": [
+            {
+              "track": "pdktBp1-pdktPf3S",
+              "in": 41.001999999999995,
+              "out": 41.05754545454545
+            },
+            {
+              "track": "pdktBp1-tpjBp3",
+              "in": 41.05754545454545,
+              "out": 71.06254545454547
+            },
+            {
+              "track": "tpjBp0-tpjBp3",
+              "in": 71.06254545454547,
+              "out": 71.26354545454548
+            },
+            {
+              "track": "tpjBp0-tpjPf2E",
+              "in": 71.26354545454548,
+              "out": 71.31909090909093
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0452U",
+      "name": "Train2Up",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 11,
+          "dep": 100,
+          "dwell": 89,
+          "min_dwell": 5,
+          "halt": {
+            "reason": "overtake",
+            "for": "0453U",
+            "min": 80.65318181818186
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 132,
+          "dep": 134,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 32,
+          "via": [
+            {
+              "track": "tpjBp1-tpjPf4E",
+              "in": 100.00200000000001,
+              "out": 100.20300000000002
+            },
+            {
+              "track": "tpjBp1-tpjBp2",
+              "in": 100.20300000000002,
+              "out": 100.40400000000002
+            },
+            {
+              "track": "pdktBp0-tpjBp2",
+              "in": 100.40400000000002,
+              "out": 130.40900000000005
+            },
+            {
+              "track": "pdktBp0-pdktPf1S",
+              "in": 130.40900000000005,
+              "out": 130.61000000000004
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 158,
+          "dep": 163,
+          "dwell": 5,
+          "min_dwell": 5,
+          "run": 24,
+          "via": [
+            {
+              "track": "pdktBp2-pdktPf1E",
+              "in": 134.002,
+              "out": 134.203
+            },
+            {
+              "track": "kkdiBp0-pdktBp2",
+              "in": 134.203,
+              "out": 156.5716363636364
+            },
+            {
+              "track": "kkdiBp0-kkdiBp2",
+              "in": 156.5716363636364,
+              "out": 156.62718181818187
+            },
+            {
+              "track": "kkdiBp2-kkdiPf1S",
+              "in": 156.62718181818187,
+              "out": 156.82818181818186
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0452D",
+      "name": "Train2Down",
+      "class": "Mail/Express",
+      "priority": 40,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 11,
+          "dep": 85,
+          "dwell": 74,
+          "min_dwell": 10,
+          "halt": {
+            "reason": "overtake",
+            "for": "0456D",
+            "min": 62.487727272727284
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 109,
+          "dep": 134,
+          "dwell": 25,
+          "min_dwell": 5,
+          "run": 24,
+          "halt": {
+            "reason": "technical",
+            "for": "0456D",
+            "min": 17.70990909090912
+          },
+          "via": [
+            {
+              "track": "kkdiBp3-kkdiPf4S",
+              "in": 85.00200000000001,
+              "out": 85.20300000000002
+            },
+            {
+              "track": "kkdiBp1-kkdiBp3",
+              "in": 85.20300000000002,
+              "out": 85.25854545454547
+            },
+            {
+              "track": "kkdiBp1-pdktBp3",
+              "in": 85.25854545454547,
+              "out": 107.62718181818185
+            },
+            {
+              "track": "pdktBp3-pdktPf4E",
+              "in": 107.62718181818185,
+              "out": 107.82818181818186
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 166,
+          "dep": 176,
+          "dwell": 10,
+          "min_dwell": 10,
+          "run": 32,
+          "via": [
+            {
+              "track": "pdktBp1-pdktPf4S",
+              "in": 134.002,
+              "out": 134.203
+            },
+            {
+              "track": "pdktBp1-tpjBp3",
+              "in": 134.203,
+              "out": 164.20800000000003
+            },
+            {
+              "track": "tpjBp1-tpjBp3",
+              "in": 164.20800000000003,
+              "out": 164.2635454545455
+            },
+            {
+              "track": "tpjBp1-tpjPf3E",
+              "in": 164.2635454545455,
+              "out": 164.31909090909096
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0453U",
+      "name": "Train3Up",
+      "class": "Mail/Express",
+      "priority": 40,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 21,
+          "dep": 69,
+          "dwell": 48,
+          "min_dwell": 5,
+          "halt": {
+            "reason": "overtake",
+            "for": "0454U",
+            "min": 40.53409090909092
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 101,
+          "dep": 103,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 32,
+          "via": [
+            {
+              "track": "tpjBp0-tpjPf2E",
+              "in": 69.00200000000001,
+              "out": 69.05754545454546
+            },
+            {
+              "track": "tpjBp0-tpjBp2",
+              "in": 69.05754545454546,
+              "out": 69.11309090909091
+            },
+            {
+              "track": "pdktBp0-tpjBp2",
+              "in": 69.11309090909091,
+              "out": 99.11809090909094
+            },
+            {
+              "track": "pdktBp0-pdktPf1S",
+              "in": 99.11809090909094,
+              "out": 99.31909090909095
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 127,
+          "dep": 132,
+          "dwell": 5,
+          "min_dwell": 5,
+          "run": 24,
+          "via": [
+            {
+              "track": "pdktBp2-pdktPf1E",
+              "in": 103.00200000000001,
+              "out": 103.20300000000002
+            },
+            {
+              "track": "kkdiBp0-pdktBp2",
+              "in": 103.20300000000002,
+              "out": 125.5716363636364
+            },
+            {
+              "track": "kkdiBp0-kkdiBp2",
+              "in": 125.5716363636364,
+              "out": 125.62718181818185
+            },
+            {
+              "track": "kkdiBp2-kkdiPf2S",
+              "in": 125.62718181818185,
+              "out": 125.6827272727273
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0453D",
+      "name": "Train3Down",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 21,
+          "dep": 35,
+          "dwell": 14,
+          "min_dwell": 10,
+          "halt": {
+            "reason": "technical",
+            "for": "0451D",
+            "min": 2.487727272727252
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 59,
+          "dep": 72,
+          "dwell": 13,
+          "min_dwell": 5,
+          "run": 24,
+          "halt": {
+            "reason": "technical",
+            "for": "0451D",
+            "min": 7.437363636363678
+          },
+          "via": [
+            {
+              "track": "kkdiBp3-kkdiPf3S",
+              "in": 35.001999999999995,
+              "out": 35.05754545454545
+            },
+            {
+              "track": "kkdiBp1-kkdiBp3",
+              "in": 35.05754545454545,
+              "out": 35.1130909090909
+            },
+            {
+              "track": "kkdiBp1-pdktBp3",
+              "in": 35.1130909090909,
+              "out": 57.48172727272725
+            },
+            {
+              "track": "pdktBp3-pdktPf4E",
+              "in": 57.48172727272725,
+              "out": 57.68272727272725
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 104,
+          "dep": 114,
+          "dwell": 10,
+          "min_dwell": 10,
+          "run": 32,
+          "via": [
+            {
+              "track": "pdktBp1-pdktPf4S",
+              "in": 72.00200000000001,
+              "out": 72.20300000000002
+            },
+            {
+              "track": "pdktBp1-tpjBp3",
+              "in": 72.20300000000002,
+              "out": 102.20800000000004
+            },
+            {
+              "track": "tpjBp1-tpjBp3",
+              "in": 102.20800000000004,
+              "out": 102.2635454545455
+            },
+            {
+              "track": "tpjBp1-tpjPf4E",
+              "in": 102.2635454545455,
+              "out": 102.4645454545455
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0454U",
+      "name": "Train4Up",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 31,
+          "dep": 38,
+          "dwell": 7,
+          "min_dwell": 5,
+          "halt": {
+            "reason": "technical",
+            "for": "0451U",
+            "min": 0.2695454545454439
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 70,
+          "dep": 72,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 32,
+          "via": [
+            {
+              "track": "tpjBp0-tpjPf1E",
+              "in": 38.001999999999995,
+              "out": 38.202999999999996
+            },
+            {
+              "track": "tpjBp0-tpjBp2",
+              "in": 38.202999999999996,
+              "out": 38.25854545454545
+            },
+            {
+              "track": "pdktBp0-tpjBp2",
+              "in": 38.25854545454545,
+              "out": 68.26354545454546
+            },
+            {
+              "track": "pdktBp0-pdktPf1S",
+              "in": 68.26354545454546,
+              "out": 68.46454545454549
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 96,
+          "dep": 101,
+          "dwell": 5,
+          "min_dwell": 5,
+          "run": 24,
+          "via": [
+            {
+              "track": "pdktBp2-pdktPf1E",
+              "in": 72.00200000000001,
+              "out": 72.20300000000002
+            },
+            {
+              "track": "kkdiBp0-pdktBp2",
+              "in": 72.20300000000002,
+              "out": 94.5716363636364
+            },
+            {
+              "track": "kkdiBp0-kkdiBp3",
+              "in": 94.5716363636364,
+              "out": 94.77263636363641
+            },
+            {
+              "track": "kkdiBp3-kkdiPf4S",
+              "in": 94.77263636363641,
+              "out": 94.97363636363642
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0454D",
+      "name": "Train4Down",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 31,
+          "dep": 131,
+          "dwell": 100,
+          "min_dwell": 10,
+          "halt": {
+            "reason": "overtake",
+            "for": "0456D",
+            "min": 87.74409090909101
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 155,
+          "dep": 196,
+          "dwell": 41,
+          "min_dwell": 5,
+          "run": 24,
+          "halt": {
+            "reason": "technical",
+            "for": "0455D",
+            "min": 32.58063636363639
+          },
+          "via": [
+            {
+              "track": "kkdiBp2-kkdiPf1S",
+              "in": 131.002,
+              "out": 131.203
+            },
+            {
+              "track": "kkdiBp1-kkdiBp2",
+              "in": 131.203,
+              "out": 131.404
+            },
+            {
+              "track": "kkdiBp1-pdktBp3",
+              "in": 131.404,
+              "out": 153.7726363636364
+            },
+            {
+              "track": "pdktBp3-pdktPf4E",
+              "in": 153.7726363636364,
+              "out": 153.9736363636364
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 228,
+          "dep": 238,
+          "dwell": 10,
+          "min_dwell": 10,
+          "run": 32,
+          "via": [
+            {
+              "track": "pdktBp1-pdktPf4S",
+              "in": 196.002,
+              "out": 196.203
+            },
+            {
+              "track": "pdktBp1-tpjBp3",
+              "in": 196.203,
+              "out": 226.20800000000003
+            },
+            {
+              "track": "tpjBp1-tpjBp3",
+              "in": 226.20800000000003,
+              "out": 226.2635454545455
+            },
+            {
+              "track": "tpjBp1-tpjPf3E",
+              "in": 226.2635454545455,
+              "out": 226.31909090909096
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0455U",
+      "name": "Train5Up",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 41,
+          "dep": 162,
+          "dwell": 121,
+          "min_dwell": 5,
+          "halt": {
+            "reason": "cross",
+            "for": "0456U",
+            "min": 111.32772727272742
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 194,
+          "dep": 196,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 32,
+          "via": [
+            {
+              "track": "tpjBp1-tpjPf3E",
+              "in": 162.002,
+              "out": 162.05754545454548
+            },
+            {
+              "track": "tpjBp1-tpjBp2",
+              "in": 162.05754545454548,
+              "out": 162.25854545454547
+            },
+            {
+              "track": "pdktBp0-tpjBp2",
+              "in": 162.25854545454547,
+              "out": 192.2635454545455
+            },
+            {
+              "track": "pdktBp0-pdktPf1S",
+              "in": 192.2635454545455,
+              "out": 192.4645454545455
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 220,
+          "dep": 225,
+          "dwell": 5,
+          "min_dwell": 5,
+          "run": 24,
+          "via": [
+            {
+              "track": "pdktBp2-pdktPf1E",
+              "in": 196.002,
+              "out": 196.203
+            },
+            {
+              "track": "kkdiBp0-pdktBp2",
+              "in": 196.203,
+              "out": 218.5716363636364
+            },
+            {
+              "track": "kkdiBp0-kkdiBp2",
+              "in": 218.5716363636364,
+              "out": 218.62718181818187
+            },
+            {
+              "track": "kkdiBp2-kkdiPf1S",
+              "in": 218.62718181818187,
+              "out": 218.82818181818186
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0455D",
+      "name": "Train5Down",
+      "class": "Mail/Express",
+      "priority": 40,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 41,
+          "dep": 108,
+          "dwell": 67,
+          "min_dwell": 10,
+          "halt": {
+            "reason": "overtake",
+            "for": "0456D",
+            "min": 55.11590909090914
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 132,
+          "dep": 165,
+          "dwell": 33,
+          "min_dwell": 5,
+          "run": 24,
+          "halt": {
+            "reason": "technical",
+            "for": "0452D",
+            "min": 25.436181818181808
+          },
+          "via": [
+            {
+              "track": "kkdiBp2-kkdiPf2S",
+              "in": 108.00200000000001,
+              "out": 108.05754545454546
+            },
+            {
+              "track": "kkdiBp1-kkdiBp2",
+              "in": 108.05754545454546,
+              "out": 108.25854545454547
+            },
+            {
+              "track": "kkdiBp1-pdktBp3",
+              "in": 108.25854545454547,
+              "out": 130.62718181818187
+            },
+            {
+              "track": "pdktBp3-pdktPf3E",
+              "in": 130.62718181818187,
+              "out": 130.68272727272733
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 197,
+          "dep": 207,
+          "dwell": 10,
+          "min_dwell": 10,
+          "run": 32,
+          "via": [
+            {
+              "track": "pdktBp1-pdktPf3S",
+              "in": 165.002,
+              "out": 165.05754545454548
+            },
+            {
+              "track": "pdktBp1-tpjBp3",
+              "in": 165.05754545454548,
+              "out": 195.0625454545455
+            },
+            {
+              "track": "tpjBp1-tpjBp3",
+              "in": 195.0625454545455,
+              "out": 195.11809090909097
+            },
+            {
+              "track": "tpjBp1-tpjPf3E",
+              "in": 195.11809090909097,
+              "out": 195.17363636363643
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0456U",
+      "name": "Train6Up",
+      "class": "Mail/Express",
+      "priority": 40,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 51,
+          "dep": 131,
+          "dwell": 80,
+          "min_dwell": 5,
+          "halt": {
+            "reason": "technical",
+            "for": "0452U",
+            "min": 71.06318181818192
+          }
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 163,
+          "dep": 165,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 32,
+          "via": [
+            {
+              "track": "tpjBp0-tpjPf1E",
+              "in": 131.002,
+              "out": 131.203
+            },
+            {
+              "track": "tpjBp0-tpjBp2",
+              "in": 131.203,
+              "out": 131.25854545454547
+            },
+            {
+              "track": "pdktBp0-tpjBp2",
+              "in": 131.25854545454547,
+              "out": 161.2635454545455
+            },
+            {
+              "track": "pdktBp0-pdktPf1S",
+              "in": 161.2635454545455,
+              "out": 161.4645454545455
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 189,
+          "dep": 194,
+          "dwell": 5,
+          "min_dwell": 5,
+          "run": 24,
+          "via": [
+            {
+              "track": "pdktBp2-pdktPf1E",
+              "in": 165.002,
+              "out": 165.203
+            },
+            {
+              "track": "kkdiBp0-pdktBp2",
+              "in": 165.203,
+              "out": 187.5716363636364
+            },
+            {
+              "track": "kkdiBp0-kkdiBp2",
+              "in": 187.5716363636364,
+              "out": 187.62718181818187
+            },
+            {
+              "track": "kkdiBp2-kkdiPf1S",
+              "in": 187.62718181818187,
+              "out": 187.82818181818186
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "0456D",
+      "name": "Train6Down",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 51,
+          "dep": 62,
+          "dwell": 11,
+          "min_dwell": 10
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 86,
+          "dep": 103,
+          "dwell": 17,
+          "min_dwell": 5,
+          "run": 24,
+          "halt": {
+            "reason": "technical",
+            "for": "0453D",
+            "min": 10.129090909090934
+          },
+          "via": [
+            {
+              "track": "kkdiBp3-kkdiPf3S",
+              "in": 62.001999999999995,
+              "out": 62.05754545454545
+            },
+            {
+              "track": "kkdiBp1-kkdiBp3",
+              "in": 62.05754545454545,
+              "out": 62.1130909090909
+            },
+            {
+              "track": "kkdiBp1-pdktBp3",
+              "in": 62.1130909090909,
+              "out": 84.48172727272728
+            },
+            {
+              "track": "pdktBp3-pdktPf4E",
+              "in": 84.48172727272728,
+              "out": 84.6827272727273
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 135,
+          "dep": 145,
+          "dwell": 10,
+          "min_dwell": 10,
+          "run": 32,
+          "via": [
+            {
+              "track": "pdktBp1-pdktPf4S",
+              "in": 103.00200000000001,
+              "out": 103.20300000000002
+            },
+            {
+              "track": "pdktBp1-tpjBp3",
+              "in": 103.20300000000002,
+              "out": 133.20800000000003
+            },
+            {
+              "track": "tpjBp1-tpjBp3",
+              "in": 133.20800000000003,
+              "out": 133.26354545454552
+            },
+            {
+              "track": "tpjBp1-tpjPf4E",
+              "in": 133.26354545454552,
+              "out": 133.4645454545455
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "check": {
+    "tolerance_min": 1,
+    "precedence": "plan"
+  }
+}

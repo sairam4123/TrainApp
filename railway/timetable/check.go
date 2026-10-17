@@ -49,23 +49,48 @@ type Lateness struct {
 // built on; CheckAuto lets precedence decide everything afresh. Add an
 // Observer if wanted, Run it, then read the result with Report.
 func NewCheckSim(world *infra.World, prio *sim.PriorityConfig, tt Timetable, mode, outputDir string) (*sim.Sim, error) {
-	plan := mode != CheckAuto && prio != nil && prio.Precedence != nil
-	s := &sim.Sim{OutputDir: outputDir, Priorities: prio, ManualPrecedence: plan}
+	s := &sim.Sim{OutputDir: outputDir, Priorities: prio}
 	s.SetWorld(world)
-	for _, t := range tt.TimedTrains() {
-		if err := s.AddTrain(t); err != nil {
-			return nil, err
-		}
+	if err := AddTrains(s, tt, mode); err != nil {
+		return nil, err
 	}
 	if err := s.Init(); err != nil {
 		return nil, err
 	}
-	if plan {
-		if err := s.ApplyOverrides(tt.PlanOverrides()); err != nil {
-			return nil, fmt.Errorf("check run: %w", err)
-		}
+	if err := ApplyPlan(s, tt, mode); err != nil {
+		return nil, fmt.Errorf("check run: %w", err)
 	}
 	return s, nil
+}
+
+// KeepsPlan reports whether a run with these priorities keeps to a
+// timetable's plan under mode (see NewCheckSim): precedence is on and mode
+// is not CheckAuto.
+func KeepsPlan(prio *sim.PriorityConfig, mode string) bool {
+	return mode != CheckAuto && prio != nil && prio.Precedence != nil
+}
+
+// AddTrains adds the timetable's timed trains to a sim that has its world
+// and priorities, and if it keeps to the plan under mode (KeepsPlan) makes
+// precedence leave its decisions to the plan. Call it before Sim.Init, and
+// ApplyPlan after.
+func AddTrains(s *sim.Sim, tt Timetable, mode string) error {
+	s.ManualPrecedence = KeepsPlan(s.Priorities, mode)
+	for _, t := range tt.TimedTrains() {
+		if err := s.AddTrain(t); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ApplyPlan applies the timetable's plan (PlanOverrides) to an initialised
+// sim, if it keeps to the plan under mode.
+func ApplyPlan(s *sim.Sim, tt Timetable, mode string) error {
+	if !KeepsPlan(s.Priorities, mode) {
+		return nil
+	}
+	return s.ApplyOverrides(tt.PlanOverrides())
 }
 
 // Report compares a finished check run with its timetable.

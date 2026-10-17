@@ -1,0 +1,64 @@
+{
+  "rounding_min": 1,
+  "trains": [
+    {
+      "number": "T001",
+      "name": "",
+      "class": "Shatabdi",
+      "priority": 80,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "GOC",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 10,
+          "dep": 16,
+          "dwell": 6,
+          "min_dwell": 2
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 31,
+          "dep": 33,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 15,
+          "via": [
+            {
+              "track": "gocPf3E-gocThE0",
+              "in": 16.002,
+              "out": 16.057545454545455
+            },
+            {
+              "track": "gocThE0-gocThE1",
+              "in": 16.057545454545455,
+              "out": 16.113090909090907
+            },
+            {
+              "track": "gocThE1-tpjThW1",
+              "in": 16.113090909090907,
+              "out": 29.75445454545455
+            },
+            {
+              "track": "tpjThW0-tpjThW1",
+              "in": 29.75445454545455,
+              "out": 29.810000000000006
+            },
+            {
+              "track": "tpjPf1S-tpjThW0",
+              "in": 29.810000000000006,
+              "out": 30.011000000000006
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "check": {
+    "tolerance_min": 1,
+    "precedence": "plan"
+  }
+}

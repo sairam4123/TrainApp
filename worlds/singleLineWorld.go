@@ -5,6 +5,7 @@ import (
 	"trainapp/railway/ids"
 	"trainapp/railway/infra"
 	"trainapp/units"
+	tm "trainapp/worlds/templates"
 )
 
 // Building blocks for single-line worlds. Points are named
@@ -71,24 +72,6 @@ func throat(world *infra.World, code ids.StnCode, side string, ends []*infra.Tra
 	return cur
 }
 
-// singleLine joins two points with a single bidirectional line of the given
-// length, split into blocks equal blocks. There is a signal for each
-// direction at every block boundary and at both ends, so each block is a
-// signal section either way.
-func singleLine(world *infra.World, name string, from, to *infra.TrackPoint, length units.Meters, blocks int) {
-	pts := []*infra.TrackPoint{from}
-	for i := 1; i < blocks; i++ {
-		pts = append(pts, world.NewTrackPoint(ids.PointID{StnCode: ids.StnCode(name), Type: "Bk", Seq: fmt.Sprint(i)}))
-	}
-	pts = append(pts, to)
-	for i := 0; i+1 < len(pts); i++ {
-		a, b := pts[i], pts[i+1]
-		world.TrackGraph.AddTrack(a, b, world.NewTrackSegment(fmt.Sprintf("%s%d", name, i), length/units.Meters(blocks)))
-		world.AddSignal(infra.NewSignal(fmt.Sprintf("%sSig%dF", name, i), b, a)) // running from -> to
-		world.AddSignal(infra.NewSignal(fmt.Sprintf("%sSig%dR", name, i), a, b)) // running to -> from
-	}
-}
-
 // westTerminus builds a terminus whose platforms end at the world boundary on
 // the west; the line leaves eastwards from the returned point.
 func westTerminus(world *infra.World, code ids.StnCode, name string, n int) (*infra.Station, *infra.TrackPoint) {
@@ -145,9 +128,9 @@ func BuildSingleLineWorld(opt SingleLineOptions) *infra.World {
 	_, hltW, hltE := throughStation(world, "HLT", "Halt", 1, false)
 	_, estW := eastTerminus(world, "EST", "East Terminus", opt.TerminusPlatforms)
 
-	singleLine(world, "slWL", wstE, lpaW, units.KM(12), opt.BlocksPerLine)
-	singleLine(world, "slLH", lpaE, hltW, units.KM(8), opt.BlocksPerLine)
-	singleLine(world, "slHE", hltE, estW, units.KM(10), opt.BlocksPerLine)
+	tm.SingleLine(world, "slWL", wstE, lpaW, units.KM(12), opt.BlocksPerLine)
+	tm.SingleLine(world, "slLH", lpaE, hltW, units.KM(8), opt.BlocksPerLine)
+	tm.SingleLine(world, "slHE", hltE, estW, units.KM(10), opt.BlocksPerLine)
 
 	if err := world.Finalize(); err != nil {
 		panic(fmt.Sprintf("BuildSingleLineWorld: %v", err))
@@ -179,10 +162,10 @@ func BuildJunctionWorld(terminusPlatforms int) *infra.World {
 	// the branch climbs above the EJN platforms, which take lanes 0 and down
 	infra.NewSwitch(world, "jctSw", toe, east, north, infra.SwitchLayout{Legs: infra.East, Lanes: -terminusPlatforms})
 
-	singleLine(world, "jlWM", wjnE, midW, units.KM(10), 2)
-	singleLine(world, "jlMJ", midE, toe, units.KM(5), 1)
-	singleLine(world, "jlJE", east, ejnW, units.KM(9), 2)
-	singleLine(world, "jlJN", north, njnW, units.KM(7), 2)
+	tm.SingleLine(world, "jlWM", wjnE, midW, units.KM(10), 2)
+	tm.SingleLine(world, "jlMJ", midE, toe, units.KM(5), 1)
+	tm.SingleLine(world, "jlJE", east, ejnW, units.KM(9), 2)
+	tm.SingleLine(world, "jlJN", north, njnW, units.KM(7), 2)
 
 	if err := world.Finalize(); err != nil {
 		panic(fmt.Sprintf("BuildJunctionWorld: %v", err))

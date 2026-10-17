@@ -98,6 +98,13 @@ func FromWorld(world *infra.World) (*Diagram, error) {
 	return Build(vizproto.FromWorld(world))
 }
 
+// FromSnapshot lays out a world snapshot as it stands, built or not (see
+// vizproto.FromSnapshot), e.g. one being edited. A point with no track is
+// drawn on a lane of its own.
+func FromSnapshot(s *infra.Snapshot) (*Diagram, error) {
+	return Build(vizproto.FromSnapshot(s))
+}
+
 // Build lays out a world. It fails if the tracks do not all run west to east
 // (they form a loop) or if the recorded lanes do not add up around some loop
 // of track.
@@ -205,6 +212,9 @@ func (d *Diagram) orderWestToEast() error {
 	inDegree := make(map[string]int)
 	out := make(map[string][]*Track)
 	used := make(map[string]bool)
+	for id := range d.points {
+		used[id] = true // a point with no track is laid out on its own
+	}
 	for _, t := range d.tracks {
 		used[t.From], used[t.To] = true, true
 		inDegree[t.To]++

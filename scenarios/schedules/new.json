@@ -1,0 +1,24 @@
+{
+  "trains": [
+    {
+      "number": "T001",
+      "class": "Shatabdi",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "GOC",
+          "kind": "stop",
+          "arr": 10,
+          "dep": 15,
+          "min_dwell": 2
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        }
+      ]
+    }
+  ]
+}
