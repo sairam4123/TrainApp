@@ -28,4 +28,5 @@ build-traindemo: build-trainapp build-trainviz build-trainedit ## Build the scen
 demo: build-traindemo ## Pick a scenario, run it and replay it
 	./dist/traindemo
 
-build-demo-win: GOOS=windows GOARCH=amd64 build-traindemo ## Build the scenario demo for Windows
+build-demo-win: ## Build the scenario demo for Windows into dist/windows/, with the trainapp, trainviz and trainedit it runs
+	for c in trainapp trainviz trainedit traindemo; do GOOS=windows GOARCH=amd64 go build -o ./dist/windows/$$c.exe ./cmd/$$c || exit 1; done

@@ -9,15 +9,21 @@
 // It runs trainapp, trainviz and trainedit as they are, so build them first
 // (make build-traindemo builds them all into dist/). Runs are written to
 // logs/demo/: the recording, for trainviz replay, and the KPIs.
+//
+// Without -dir and with no scenarios/ in the working directory, it uses the
+// scenarios built into it, written once to the user cache so trainedit's
+// edits stay.
 package main
 
 import (
 	"errors"
 	"flag"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"slices"
+	"trainapp"
 	"trainapp/visualization/runs"
 
 	tea "charm.land/bubbletea/v2"
@@ -32,6 +38,16 @@ func main() {
 	binDir := flag.String("bin", "", "directory with trainapp, trainviz and trainedit; empty to look next to traindemo, then in dist/, then on $PATH")
 	outDir := flag.String("out", filepath.Join("logs", "demo"), "directory for the runs' recordings and KPIs")
 	flag.Parse()
+
+	if !dirSet() {
+		if _, err := os.Stat(*dir); errors.Is(err, fs.ErrNotExist) {
+			d, err := unpackDemo()
+			if err != nil {
+				log.Fatal(err)
+			}
+			*dir = filepath.Join(d, "scenarios")
+		}
+	}
 
 	ruleIdx := slices.Index(runs.Rules, *rule)
 	if ruleIdx < 0 {
@@ -66,4 +82,25 @@ func main() {
 type bins struct {
 	trainapp, trainviz, trainedit string
 	editErr                       error // why there is no trainedit
+}
+
+// dirSet is whether -dir was given.
+func dirSet() bool {
+	set := false
+	flag.Visit(func(f *flag.Flag) { set = set || f.Name == "dir" })
+	return set
+}
+
+// unpackDemo writes the embedded scenarios and profiles to the user cache
+// once, and keeps them after that so trainedit's edits stay.
+func unpackDemo() (string, error) {
+	cache, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+	d := filepath.Join(cache, "trainapp", "demo")
+	if _, err := os.Stat(d); err == nil {
+		return d, nil
+	}
+	return d, os.CopyFS(d, trainapp.Demo)
 }

@@ -20,6 +20,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -378,8 +379,12 @@ func Interrupted(err error) bool {
 }
 
 // FindBin finds one of the commands: in dir if set, else next to this one,
-// in dist/ or on $PATH. hint says how to build it.
+// in dist/ or on $PATH. hint says how to build it. On Windows it looks for
+// name.exe.
 func FindBin(name, dir, hint string) (string, error) {
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
 	if dir != "" {
 		p := filepath.Join(dir, name)
 		if !IsFile(p) {
