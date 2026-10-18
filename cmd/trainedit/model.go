@@ -52,6 +52,7 @@ type model struct {
 
 	form   *form
 	prompt *prompt
+	panel  panel // a full-screen editor over the tab, if one is open
 	note   string
 	bad    bool // the note is an error
 
@@ -101,7 +102,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		return m, m.key(msg)
 	case tea.MouseMsg:
-		if m.form == nil && m.prompt == nil && m.tab == tabWorld {
+		if m.form == nil && m.prompt == nil && m.panel == nil && m.tab == tabWorld {
 			m.world.mouse(msg)
 		}
 		return m, nil
@@ -131,6 +132,13 @@ func (m *model) key(msg tea.KeyPressMsg) tea.Cmd {
 				m.prompt = nil
 				return k.do()
 			}
+		}
+		return nil
+	}
+	if p := m.panel; p != nil {
+		m.note, m.bad = "", false
+		if p.key(msg) && m.panel == p {
+			m.panel = nil
 		}
 		return nil
 	}
@@ -245,10 +253,12 @@ func (m *model) render() string {
 	}
 	bodyH := max(m.height-3, 1)
 	var body []string
-	switch m.tab {
-	case tabWorld:
+	switch {
+	case m.panel != nil:
+		body = m.panel.render(m.width, bodyH)
+	case m.tab == tabWorld:
 		body = m.world.render(m.width, bodyH)
-	case tabSchedules:
+	case m.tab == tabSchedules:
 		body = m.sched.render(m.width, bodyH)
 	default:
 		body = m.run.render(m.width, bodyH)
@@ -267,6 +277,8 @@ func (m *model) render() string {
 	keys := ""
 	switch {
 	case m.form != nil || m.prompt != nil:
+	case m.panel != nil:
+		keys = m.panel.keyLine()
 	case m.run.running():
 		keys = " esc cancel the run  ctrl+c quit"
 	case m.tab == tabWorld:
@@ -276,7 +288,10 @@ func (m *model) render() string {
 	default:
 		keys = m.run.keyLine()
 	}
-	lines = append(lines, tui.Dim.Render(ansi.Truncate(keys+"  1/2/3 tabs  ctrl+s save  q quit", m.width, "")))
+	if m.panel == nil {
+		keys += "  1/2/3 tabs  ctrl+s save  q quit"
+	}
+	lines = append(lines, tui.Dim.Render(ansi.Truncate(keys, m.width, "")))
 	note := m.note
 	if m.bad {
 		note = tui.Failed.Render(note)

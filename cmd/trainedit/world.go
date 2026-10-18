@@ -12,6 +12,7 @@ import (
 	"trainapp/visualization/schematic"
 	"trainapp/visualization/tui"
 	"trainapp/worlds/edit"
+	"trainapp/worlds/templates"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -181,12 +182,20 @@ func (w *worldTab) key(msg tea.KeyPressMsg) tea.Cmd {
 		cam.Redraw()
 	case "/":
 		w.m.open(newForm("go to a station", func(v values) error {
-			x, y, ok := cam.Frame.Station(v["code"])
+			code := strings.ToUpper(v["code"])
+			x, y, ok := cam.Frame.Station(code)
 			if !ok {
-				return fmt.Errorf("no station %s drawn", strings.ToUpper(v["code"]))
+				if !slices.ContainsFunc(w.m.s.world.S.Stations, func(st infra.SnapshotStation) bool { return st.Code == code }) {
+					return fmt.Errorf("no station %s", code)
+				}
+				// a station with no platforms is not drawn, but can be picked
+				w.sel = schematic.Piece{Kind: schematic.PieceStation, ID: code}
+				cam.Redraw()
+				w.m.say("%s has no platforms, so it is not drawn: t stamps its tracks, p on a track makes one its platform, d deletes it", code)
+				return nil
 			}
 			cam.CentreOn(x, y)
-			w.sel = schematic.Piece{Kind: schematic.PieceStation, ID: strings.ToUpper(v["code"])}
+			w.sel = schematic.Piece{Kind: schematic.PieceStation, ID: code}
 			cam.Redraw()
 			return nil
 		}, text("code", "station code", "")))
@@ -218,8 +227,12 @@ func (w *worldTab) key(msg tea.KeyPressMsg) tea.Cmd {
 		w.switchForm()
 	case "x":
 		w.twoPieces("crossover", schematic.PieceTrack)
+	case "X":
+		w.twoPieces("crossing", schematic.PieceTrack)
+	case "Y":
+		w.junctionForm()
 	case "b":
-		w.twoPieces("block section", schematic.PiecePoint)
+		w.twoPieces("line", schematic.PiecePoint)
 	case "g", "G":
 		w.signal(msg.String() == "g")
 	case "o":
@@ -233,7 +246,7 @@ func (w *worldTab) key(msg tea.KeyPressMsg) tea.Cmd {
 	case "n":
 		w.stationForm()
 	case "t":
-		w.stampForm()
+		w.openBuilder()
 	case "a":
 		w.attrsForm()
 	case "D":
@@ -352,7 +365,7 @@ func (w *worldTab) twoPieces(what string, kind schematic.PieceKind) {
 	if w.pending == nil || w.pendingEdit != what {
 		p := w.sel
 		w.pending, w.pendingEdit = &p, what
-		w.m.say("now select the other %s and press %s again (esc to cancel)", kindName(kind), map[string]string{"crossover": "x", "block section": "b"}[what])
+		w.m.say("now select the other %s and press %s again (esc to cancel)", kindName(kind), map[string]string{"crossover": "x", "crossing": "X", "line": "b"}[what])
 		w.cam.Redraw()
 		return
 	}
@@ -366,19 +379,31 @@ func (w *worldTab) twoPieces(what string, kind schematic.PieceKind) {
 		w.cam.Redraw()
 	}
 	if what == "crossover" {
+		kinds := map[string]string{"down going east": templates.CrossDown, "up going east": templates.CrossUp, "scissors": templates.CrossScissors}
 		w.m.open(newForm("crossover", func(v values) error {
-			down := v["way"] == "down going east"
-			if !w.do("laid a crossover", func(s *infra.Snapshot) error { return edit.Crossover(s, first.ID, second.ID, down) }) {
+			if !w.do("laid a crossover", func(s *infra.Snapshot) error { return edit.Crossover(s, first.ID, second.ID, kinds[v["way"]]) }) {
 				return errors.New(w.m.note)
 			}
 			done()
 			return nil
-		}, choice("way", "diagonal", "down going east", "down going east", "up going east")))
+		}, choice("way", "diagonal", "down going east", "down going east", "up going east", "scissors")))
+		return
+	}
+	if what == "crossing" {
+		w.m.open(newForm("crossing", func(v values) error {
+			if !w.do("laid a "+v["kind"], func(s *infra.Snapshot) error { return edit.Crossing(s, first.ID, second.ID, v["kind"]) }) {
+				return errors.New(w.m.note)
+			}
+			done()
+			return nil
+		}, field{key: "kind", label: "kind", value: edit.CrossingDiamond, choices: edit.Crossings,
+			help: "diamond: the lines cross and swap lanes; a slip also keeps the upper, lower or both straight roads"}))
 		return
 	}
 	s := w.m.s.world.S
 	name := "sl" + titled(codeOf(s, first.ID)) + titled(codeOf(s, second.ID))
-	w.m.open(newForm("block section", func(v values) error {
+	ways := map[string]byte{"both ways": edit.WayBoth, "east": edit.WayEast, "west": edit.WayWest}
+	f := newForm("line", func(v values) error {
 		km, err := parseNum(v, "km", "length")
 		if err != nil {
 			return err
@@ -391,14 +416,26 @@ func (w *worldTab) twoPieces(what string, kind schematic.PieceKind) {
 		if err != nil {
 			return err
 		}
-		if !w.do("laid block section "+v["name"], func(s *infra.Snapshot) error {
-			return edit.BlockSection(s, first.ID, second.ID, v["name"], km*1000, max(blocks, 1), kmph)
+		if !w.do("laid line "+v["name"], func(s *infra.Snapshot) error {
+			if v["join"] == "all open ends beside them" {
+				return edit.LinesBeside(s, first.ID, second.ID, v["name"], v["pattern"], km*1000, max(blocks, 1), kmph)
+			}
+			return edit.Line(s, first.ID, second.ID, v["name"], ways[v["runs"]], km*1000, max(blocks, 1), kmph)
 		}) {
 			return errors.New(w.m.note)
 		}
 		done()
 		return nil
-	}, text("name", "name", name), number("km", "length (km)", 10), number("blocks", "blocks", 1), number("kmph", "speed (km/h)", s.Defaults.RouteKmph)))
+	},
+		text("name", "name", name),
+		number("km", "length (km)", 10),
+		number("blocks", "blocks", 1),
+		number("kmph", "speed (km/h)", s.Defaults.RouteKmph),
+		field{key: "runs", label: "runs", value: "both ways", choices: []string{"both ways", "east", "west"}, help: "the way trains run on it: signals stand for that way only"},
+		field{key: "join", label: "join", value: "these two points", choices: []string{"these two points", "all open ends beside them"}, help: "all: a line from each open end beside one to each beside the other"},
+		field{key: "pattern", label: "lines run", value: "", help: "with all: E, W or B a line, top to bottom; empty for the usual (E W for two)"},
+	)
+	w.m.open(f)
 }
 
 func kindName(k schematic.PieceKind) string {
@@ -567,6 +604,10 @@ func (w *worldTab) platformForm() {
 			}
 		}
 	}
+	taken := w.m.s.platforms(stn)
+	if no == "" {
+		no = nextPlatform(taken)
+	}
 	w.m.open(newForm("platform on "+t, func(v values) error {
 		m, err := parseNum(v, "m", "length")
 		if err != nil {
@@ -582,7 +623,7 @@ func (w *worldTab) platformForm() {
 		return nil
 	},
 		choice("stn", "station", stn, codes...),
-		field{key: "no", label: "platform no", value: no, help: "empty takes the platform off"},
+		field{key: "no", label: "platform no", value: no, help: "empty takes it off; " + stn + " has " + tui.ValueOr(strings.Join(taken, " "), "none yet")},
 		field{key: "m", label: "length (m)", value: strconv.FormatFloat(length, 'f', -1, 64), help: "0 makes it a through track, with nowhere to board"},
 	))
 }
@@ -607,67 +648,73 @@ func (w *worldTab) stationForm() {
 	}, text("code", "code", code), text("name", "name", name)))
 }
 
-func (w *worldTab) stampForm() {
-	s := w.m.s.world.S
-	at := ""
-	if w.sel.Kind == schematic.PiecePoint {
-		at = w.sel.ID
-	} else if len(s.Points) > 0 {
-		w.m.say("no point selected: the station will stand on its own")
+// junctionForm leaves the line at the selected track for a branch. The line's
+// tracks are the plain ones drawn in the selected track's column (or just
+// the selected one).
+func (w *worldTab) junctionForm() {
+	t, ok := w.track()
+	if !ok {
+		return
 	}
-	f := newForm("stamp a station", func(v values) error {
-		spec := edit.StampSpec{Template: v["template"], Code: strings.ToUpper(v["code"]), Name: v["name"], Edge: map[string]string{"none": "", "west": "W", "east": "E"}[v["edge"]]}
-		var err error
-		if spec.PfLengthM, err = parseNum(v, "pf", "platform length"); err != nil {
-			return err
-		}
-		if spec.LineKmph, err = parseNum(v, "kmph", "line speed"); err != nil {
-			return err
-		}
-		if spec.TurnoutKmph, err = parseNum(v, "turnout", "turnout speed"); err != nil {
-			return err
-		}
-		if spec.Template == edit.TemplateStation {
-			if spec.Tracks, err = edit.ParseTracks(v["tracks"]); err != nil {
-				return err
+	s := w.m.s.world.S
+	column := []string{t}
+	if x, _, ok := w.cam.Frame.Where(w.sel); ok {
+		column = nil
+		for y := range w.cam.Frame.Height() {
+			for _, p := range w.cam.Frame.PiecesAt(x, y) {
+				if p.Kind == schematic.PieceTrack && edit.Plain(s, p.ID) && !slices.Contains(column, p.ID) {
+					column = append(column, p.ID)
+				}
 			}
 		}
-		km, err := parseNum(v, "km", "line length")
+		if !slices.Contains(column, t) {
+			column = append(column, t)
+		}
+	}
+	var ways []byte
+	for _, tr := range column {
+		ways = append(ways, cmp.Or(edit.Way(s, tr), edit.WayBoth))
+	}
+	all := fmt.Sprintf("the %d tracks in its column", len(column))
+	w.m.open(newForm("junction at "+t, func(v values) error {
+		spec := edit.JunctionSpec{Mains: []string{t}, Below: v["side"] == "below", East: v["leaves"] == "east",
+			Code: strings.ToUpper(v["code"]), Pattern: v["pattern"], Name: v["name"]}
+		if v["mains"] == all {
+			spec.Mains = column
+		}
+		var err error
+		if spec.Lanes, err = parseInt(v, "lanes", "lanes"); err != nil {
+			return err
+		}
+		if spec.Pairs, err = edit.ParsePairs(v["pairs"]); err != nil {
+			return err
+		}
+		km, err := parseNum(v, "km", "length")
 		if err != nil {
 			return err
 		}
-		spec.LinkM = km * 1000
-		if spec.LinkBlocks, err = parseInt(v, "blocks", "blocks"); err != nil {
+		spec.LengthM = km * 1000
+		if spec.Blocks, err = parseInt(v, "blocks", "blocks"); err != nil {
 			return err
 		}
-		spec.LinkName = v["link"]
-		if !w.do("stamped "+spec.Code, func(s *infra.Snapshot) error { _, err := edit.Stamp(s, at, spec); return err }) {
+		var ends []string
+		if !w.do("laid a junction", func(s *infra.Snapshot) (err error) { ends, err = edit.Junction(s, spec); return }) {
 			return errors.New(w.m.note)
 		}
-		w.selectPiece(schematic.Piece{Kind: schematic.PieceStation, ID: spec.Code})
-		// leave the cursor on its far throat, to stamp the next from there
-		for _, p := range w.m.s.world.S.Points {
-			if p.Stn == spec.Code && !p.DeadEnd && openSide(w.m.s.world.S, p.ID, true) {
-				w.selectPoint(p.ID)
-			}
-		}
+		w.selectPoint(ends[0])
 		return nil
 	},
-		choice("template", "template", edit.TemplateCrossing, edit.Templates...),
-		text("code", "code", ""),
-		text("name", "name", ""),
-		field{key: "pf", label: "platform length (m)", value: "450", help: "halt and crossing station"},
-		field{key: "kmph", label: "line speed (km/h)", value: strconv.FormatFloat(s.Defaults.RouteKmph, 'f', -1, 64), help: "of the main line through a halt or crossing station"},
-		field{key: "tracks", label: "tracks", value: "1:600 3:600*@110 2:600", help: "station: top to bottom"},
-		choice("edge", "world's edge", "none", "none", "west", "east"),
-		field{key: "turnout", label: "turnout speed", value: "0", help: "km/h through the diverging legs; 0 for the world's"},
-		field{key: "km", label: "line to it (km)", value: "10", help: "a block section from the selected point; 0 joins the throat to it"},
+		choice("mains", "the line", all, all, "the selected track only"),
+		choice("side", "branch", "below", "below", "above"),
+		choice("leaves", "leaves going", "east", "east", "west"),
+		field{key: "lanes", label: "lanes", value: "1", help: "how many lanes beyond the line the branch's nearest line runs"},
+		text("code", "junction code", "JCT"),
+		field{key: "pattern", label: "branch lines", value: edit.FormatPattern(ways), help: "E, W or B a line, top to bottom"},
+		field{key: "pairs", label: "leave mains", value: "", help: "the main (1 the top) each branch line leaves; empty: by the way they run"},
+		field{key: "name", label: "branch name", value: "", help: "empty: made from the junction code"},
+		number("km", "first section (km)", 5),
 		number("blocks", "blocks", 1),
-		field{key: "link", label: "line name", value: "", help: "empty: made from the two stations' codes"},
-	)
-	f.notes = []string{"tracks: NO:LENGTH a platform (no length: a through track), ~NAME:LENGTH a siding;",
-		"after it * the straight road, @KMPH its speed, < or > a siding's buffer stop W or E"}
-	w.m.open(f)
+	))
 }
 
 func (w *worldTab) attrsForm() {
@@ -679,7 +726,7 @@ func (w *worldTab) attrsForm() {
 	i := slices.IndexFunc(s.Tracks, func(tr infra.SnapshotTrack) bool { return tr.ID == t })
 	tr := s.Tracks[i]
 	w.m.open(newForm("track "+cmp.Or(tr.Name, tr.ID), func(v values) error {
-		a := edit.TrackAttrs{Name: v["name"], Direction: map[string]string{"both": "", "UP": "UP", "DOWN": "DOWN", "BIDIR": "BIDIR"}[v["dir"]]}
+		a := edit.TrackAttrs{Name: v["name"], Direction: tr.Direction}
 		var err error
 		if a.LengthM, err = parseNum(v, "m", "length"); err != nil {
 			return err
@@ -698,7 +745,6 @@ func (w *worldTab) attrsForm() {
 		text("name", "name", tr.Name),
 		number("m", "length (m)", tr.LengthM),
 		number("kmph", "speed (km/h)", tr.MaxKmph),
-		choice("dir", "direction", cmp.Or(tr.Direction, "both"), "both", "UP", "DOWN", "BIDIR"),
 		field{key: "lanes", label: "lanes", value: strconv.Itoa(tr.Lanes), help: "how many lanes it moves going east (down is positive)"},
 	))
 }
@@ -706,7 +752,7 @@ func (w *worldTab) attrsForm() {
 func (w *worldTab) defaultsForm() {
 	d := w.m.s.world.S.Defaults
 	w.m.open(newForm("world defaults", func(v values) error {
-		var nd infra.SnapshotDefaults
+		nd := infra.SnapshotDefaults{Up: map[string]string{"west": "W", "east": "E"}[v["up"]]}
 		var err error
 		for _, f := range []struct {
 			key string
@@ -726,6 +772,7 @@ func (w *worldTab) defaultsForm() {
 		number("pf", "platform speed (km/h)", d.PlatformKmph),
 		number("pfm", "platform length (m)", d.PlatformLengthM),
 		number("route", "line speed (km/h)", d.RouteKmph),
+		field{key: "up", label: "UP runs", value: upRuns(d.Up), choices: []string{"west", "east"}, help: "labels one-way lines UP or DOWN; the sim goes by their signals"},
 	))
 }
 
@@ -841,9 +888,9 @@ func (w *worldTab) render(width, h int) []string {
 func (w *worldTab) selKeys() string {
 	switch w.sel.Kind {
 	case schematic.PiecePoint:
-		return "e extend  s switch  j join  o end  g/G signal east/west  b block section  t stamp here  d delete"
+		return "e extend  s switch  j join  o end  g/G signal east/west  b line  t stamp here  d delete"
 	case schematic.PieceTrack:
-		return "c split  a attributes  p platform  x crossover  g/G signal east/west  d delete"
+		return "c split  a attributes  p platform  x crossover  X diamond/slip  Y junction  g/G signal east/west  d delete"
 	case schematic.PieceSignal:
 		return "g take it away  d delete"
 	case schematic.PieceStation:
@@ -853,7 +900,7 @@ func (w *worldTab) selKeys() string {
 }
 
 func (w *worldTab) keyLine() string {
-	return " ←→↑↓ pick  tab cycle  t stamp  e extend  n station  D defaults  u undo  ctrl+r redo  [ ] problems  +/- zoom  0 fit  shift+←→↑↓ pan  / station"
+	return " ←→↑↓ pick  tab cycle  t build station  e extend  n station  D defaults  u undo  ctrl+r redo  [ ] problems  +/- zoom  0 fit  shift+←→↑↓ pan  / station"
 }
 
 func worldLabel(s *session) string {
@@ -930,3 +977,22 @@ func titled(code string) string {
 }
 
 func abs(n int) int { return max(n, -n) }
+
+// nextPlatform is the number after the highest of a station's platforms.
+func nextPlatform(taken []string) string {
+	next := 1
+	for _, no := range taken {
+		if n, err := strconv.Atoi(no); err == nil {
+			next = max(next, n+1)
+		}
+	}
+	return strconv.Itoa(next)
+}
+
+// upRuns is the way the world's UP runs, as the defaults form shows it.
+func upRuns(up string) string {
+	if up == "E" {
+		return "east"
+	}
+	return "west"
+}

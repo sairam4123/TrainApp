@@ -18,6 +18,36 @@ type field struct {
 	value      string
 	choices    []string // empty for free text
 	help       string
+	// pos is where the cursor is in free text, in runes, once moved; until
+	// then it is at the end
+	pos   int
+	moved bool
+	// off is a cell that does not apply, drawn as a dash and passed over;
+	// fixed is one drawn as it is and passed over, e.g. a row's name
+	off, fixed bool
+	// filter is what has been typed into a choice to pick one by
+	filter string
+}
+
+// cursor is the cursor's place in the field's text.
+func (fd *field) cursor() int {
+	n := len([]rune(fd.value))
+	if !fd.moved || fd.pos > n {
+		return n
+	}
+	return max(fd.pos, 0)
+}
+
+// moveTo puts the cursor at a place in the text; past the end is the end.
+func (fd *field) moveTo(at int) {
+	fd.pos, fd.moved = max(at, 0), at < len([]rune(fd.value))
+}
+
+// insert types text at the cursor.
+func (fd *field) insert(text string) {
+	r, at := []rune(fd.value), fd.cursor()
+	fd.value = string(r[:at]) + text + string(r[at:])
+	fd.moveTo(at + len([]rune(text)))
 }
 
 // form is a modal dialog of fields. enter accepts it, running ok with the
@@ -77,51 +107,102 @@ func (f *form) key(msg tea.KeyPressMsg) bool {
 		f.cur = (f.cur + len(f.fields) - 1) % len(f.fields)
 	case "down", "tab":
 		f.cur = (f.cur + 1) % len(f.fields)
-	case "left", "right", "space":
-		if len(fl.choices) > 0 {
-			i := slices.Index(fl.choices, fl.value)
-			step := 1
-			if msg.String() == "left" {
-				step = len(fl.choices) - 1
-			}
-			fl.value = fl.choices[(i+step)%len(fl.choices)]
-		} else if msg.String() == "space" {
-			fl.value += " "
-		}
-	case "backspace":
-		if r := []rune(fl.value); len(r) > 0 && len(fl.choices) == 0 {
-			fl.value = string(r[:len(r)-1])
-		}
-	case "ctrl+u":
-		if len(fl.choices) == 0 {
-			fl.value = ""
-		}
 	default:
-		if msg.Text != "" && len(fl.choices) == 0 {
-			fl.value += msg.Text
-		}
+		fl.edit(msg)
 	}
 	f.err = ""
 	return false
 }
 
-// lines draws the form, w cells wide inside its border.
-func (f *form) lines(w int) []string {
+// edit takes a key that edits the field: in a choice, ← → and space choose,
+// and typing picks the choice that starts with what is typed; in text, ← →
+// home end move the cursor, and typing, backspace and delete work at it.
+func (fd *field) edit(msg tea.KeyPressMsg) {
+	if len(fd.choices) > 0 && msg.Text != "" && msg.String() != "space" {
+		fd.pick(msg.Text)
+		return
+	}
+	fd.filter = ""
+	switch msg.String() {
+	case "left", "right", "space":
+		switch {
+		case len(fd.choices) > 0:
+			i := slices.Index(fd.choices, fd.value)
+			step := 1
+			if msg.String() == "left" {
+				step = len(fd.choices) - 1
+			}
+			fd.value = fd.choices[(i+step)%len(fd.choices)]
+		case msg.String() == "space":
+			fd.insert(" ")
+		case msg.String() == "left":
+			fd.moveTo(fd.cursor() - 1)
+		default:
+			fd.moveTo(fd.cursor() + 1)
+		}
+	case "home", "ctrl+a":
+		fd.pos, fd.moved = 0, true
+	case "end", "ctrl+e":
+		fd.moved = false
+	case "backspace":
+		if r, at := []rune(fd.value), fd.cursor(); at > 0 && len(fd.choices) == 0 {
+			fd.value = string(r[:at-1]) + string(r[at:])
+			fd.moveTo(at - 1)
+		}
+	case "delete":
+		if r, at := []rune(fd.value), fd.cursor(); at < len(r) && len(fd.choices) == 0 {
+			fd.value = string(r[:at]) + string(r[at+1:])
+			fd.moveTo(at)
+		}
+	case "ctrl+u":
+		if len(fd.choices) == 0 {
+			fd.value, fd.moved = "", false
+		}
+	default:
+		if msg.Text != "" && len(fd.choices) == 0 {
+			fd.insert(msg.Text)
+		}
+	}
+}
+
+// pick narrows a choice to the first that starts with what has been typed
+// (any case), starting again from what was just typed if none does.
+func (fd *field) pick(text string) {
+	match := func(prefix string) bool {
+		i := slices.IndexFunc(fd.choices, func(c string) bool { return strings.HasPrefix(strings.ToLower(c), strings.ToLower(prefix)) })
+		if i >= 0 {
+			fd.value = fd.choices[i]
+		}
+		return i >= 0
+	}
+	if match(fd.filter + text) {
+		fd.filter += text
+		return
+	}
+	fd.filter = ""
+	if match(text) {
+		fd.filter = text
+	}
+}
+
+// lines draws the form, w cells wide inside its border, and says which line
+// the current field is on.
+func (f *form) lines(w int) (out []string, cur int) {
 	lw := 0
 	for _, fd := range f.fields {
 		lw = max(lw, ansi.StringWidth(fd.label))
 	}
-	var out []string
 	for i, fd := range f.fields {
 		v := fd.value
 		if len(fd.choices) > 0 {
 			v = "◀ " + v + " ▶"
+		} else if i == f.cur {
+			r, at := []rune(v), fd.cursor()
+			v = string(r[:at]) + "▏" + string(r[at:])
 		}
 		line := " " + tui.Fit(fd.label, lw+2) + v
 		if i == f.cur {
-			if len(fd.choices) == 0 {
-				line += "▏"
-			}
+			cur = len(out)
 			line = tui.Accent.Render(tui.Fit(line, w))
 		}
 		out = append(out, line)
@@ -140,8 +221,8 @@ func (f *form) lines(w int) []string {
 			out = append(out, tui.Failed.Render(" "+l))
 		}
 	}
-	out = append(out, "", tui.Dim.Render(" enter ok  esc cancel  ↑↓ field  ←→ choose"))
-	return out
+	out = append(out, "", tui.Dim.Render(" enter ok  esc cancel  ↑↓ field  ←→ choose, or move in text"))
+	return out, cur
 }
 
 // overlay draws box lines over the middle of the screen's lines.
@@ -163,10 +244,19 @@ func overlay(screen []string, box []string, width int) []string {
 	return out
 }
 
-// drawForm is the form in its box, sized to fit the screen.
+// drawForm is the form in its box, sized to fit the screen. A form taller
+// than the screen scrolls to keep the current field, its help and the keys
+// at the bottom in sight.
 func drawForm(f *form, width, height int) []string {
 	w := min(max(64, width/2), width-4)
-	lines := f.lines(w - 2)
+	lines, cur := f.lines(w - 2)
+	if inner := height - 2; len(lines) > inner && inner > 4 {
+		keys := lines[len(lines)-1]
+		body := lines[:len(lines)-2]
+		room := inner - 1
+		top := min(max(cur-room/2, 0), max(len(body)-room, 0))
+		lines = append(slices.Clone(body[top:min(top+room, len(body))]), keys)
+	}
 	return tui.Box(f.title, true, lines, w, min(len(lines)+2, height))
 }
 

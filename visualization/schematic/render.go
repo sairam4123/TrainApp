@@ -59,7 +59,15 @@ const (
 	MarkNone     Mark = iota
 	MarkSelected      // the piece being worked on
 	MarkProblem       // a piece something is wrong with
+	MarkRoute         // a piece of the way a train runs, e.g. one being planned
 )
+
+// over reports whether mark m is drawn over mark o where two pieces share a
+// cell: a problem over the selection over a route.
+func (m Mark) over(o Mark) bool {
+	rank := map[Mark]int{MarkNone: 0, MarkRoute: 1, MarkSelected: 2, MarkProblem: 3}
+	return rank[m] >= rank[o]
+}
 
 // minWidth is the fewest columns each kind of track takes at zoom 1.
 var minWidth = map[Kind]int{Line: 8, Platform: 6, Switch: 2}
@@ -734,6 +742,8 @@ func (c cell) sgr() string {
 		return "1;30;46"
 	case MarkProblem:
 		return "1;97;41"
+	case MarkRoute:
+		return "1;36"
 	}
 	codes := []string{}
 	if s := sgr[c.style]; s != "" {
@@ -1030,7 +1040,7 @@ func abs(n int) int {
 func (d *Diagram) drawMarks(f *Frame, marks map[string]Mark) {
 	cv := f.cv
 	mark := func(p pos, m Mark) {
-		if cv.in(p.X, p.Y) {
+		if cv.in(p.X, p.Y) && m.over(cv.cells[p.Y][p.X].mark) {
 			cv.cells[p.Y][p.X].mark = m
 		}
 	}

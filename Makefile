@@ -27,3 +27,5 @@ build-traindemo: build-trainapp build-trainviz build-trainedit ## Build the scen
 
 demo: build-traindemo ## Pick a scenario, run it and replay it
 	./dist/traindemo
+
+build-demo-win: GOOS=windows GOARCH=amd64 build-traindemo ## Build the scenario demo for Windows

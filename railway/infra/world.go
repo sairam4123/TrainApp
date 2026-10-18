@@ -18,6 +18,10 @@ type WorldData struct {
 	DefaultPfLength   units.Meters
 
 	DefaultRouteSpeed units.MetersPerMin
+
+	// Up is the way ("E" or "W") the world's UP direction runs, for labelling
+	// lines; empty reads as west. The sim does not use it.
+	Up string
 }
 
 // World is the static railway: topology, stations, switch blocks and signals.

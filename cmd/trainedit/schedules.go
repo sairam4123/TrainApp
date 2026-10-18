@@ -230,77 +230,33 @@ func (t *schedTab) indexOf(number string) int {
 	return slices.IndexFunc(t.trains(), func(tr ops.TrainSpec) bool { return tr.Number == number })
 }
 
-// routeFields are a route's fields: from, to, via, stops, entry and dwell.
-func (t *schedTab) routeFields(from, to string) []field {
-	codes := t.stationChoices("")
-	if from == "" {
-		from = codes[0]
-	}
-	if to == "" {
-		to = codes[len(codes)-1]
-	}
-	return []field{
-		choice("from", "from", from, codes...),
-		choice("to", "to", to, codes...),
-		field{key: "via", label: "via", help: "a station to go by, where there is more than one way"},
-		field{key: "stops", label: "stops", help: "stations it stops at on the way, e.g. PDKT TYM; it passes the rest"},
-		field{key: "entry", label: "enters at", value: "00:10", help: "HH:MM, or minutes"},
-		number("dwell", "dwell (min)", 2),
-	}
-}
-
-// routePoints reads route fields into points.
-func (t *schedTab) routePoints(v values) ([]ops.PointSpec, error) {
-	way, err := route(t.m.s.world.S, v["from"], v["to"], strings.ToUpper(v["via"]))
-	if err != nil {
-		return nil, err
-	}
-	stops := map[string]bool{}
-	for _, c := range strings.Fields(strings.ToUpper(v["stops"])) {
-		if !slices.Contains(way, c) {
-			return nil, fmt.Errorf("%s is not on the way", c)
-		}
-		stops[c] = true
-	}
-	at, err := parseTime(v["entry"], "entry")
-	if err != nil {
-		return nil, err
-	}
-	if at == nil {
-		return nil, errors.New("a train needs an entry time")
-	}
-	dwell, err := parseNum(v, "dwell", "dwell")
-	if err != nil {
-		return nil, err
-	}
-	return fillPoints(way, stops, *at, dwell), nil
-}
-
+// addForm opens the route picker for a new train.
 func (t *schedTab) addForm() {
 	if len(t.m.s.stationCodes()) < 2 {
 		t.m.fail("the world needs two stations for a train to run between")
 		return
 	}
 	classes := t.classChoices("")
-	fields := append([]field{text("number", "number", t.freeNumber()), choice("class", "class", tui.At(classes, 1), classes...), number("kmph", "max speed (km/h)", 110)}, t.routeFields("", "")...)
-	t.m.open(newForm("new train", func(v values) error {
+	head := [][]field{{text("number", "number", t.freeNumber()), choice("class", "class", tui.At(classes, 1), classes...), number("kmph", "max km/h", 110)}}
+	t.m.openRoutePicker("new train", head, "", "", 10, 2, nil, nil, func(r pickedRoute) error {
+		v := r.head
 		if v["number"] == "" || t.indexOf(v["number"]) >= 0 {
 			return fmt.Errorf("train number %q is empty or taken", v["number"])
 		}
-		pts, err := t.routePoints(v)
+		kmph, err := parseNum(v, "kmph", "speed")
 		if err != nil {
 			return err
 		}
-		kmph, err := parseNum(v, "kmph", "speed")
+		pts, err := r.points(r.way.stations, true)
 		if err != nil {
 			return err
 		}
 		t.m.s.sched.Trains = append(t.m.s.sched.Trains, ops.TrainSpec{Number: v["number"], Class: v["class"], MaxSpeedKmph: kmph, Points: pts})
 		t.train = len(t.m.s.sched.Trains) - 1
 		t.changed()
-		t.m.say("added %s: tab goes to its points", v["number"])
+		t.m.say("added %s, %s: tab goes to its points", v["number"], strings.Join(r.way.stations, " "))
 		return nil
-	}, fields...))
+	})
 }
 
 // freeNumber is a train number not taken yet.
@@ -343,6 +299,8 @@ func (t *schedTab) copyForm() {
 	}, text("number", "number", t.freeNumber()), field{key: "shift", label: "later by (min)", value: "30", help: "moves its times"}))
 }
 
+// fillForm opens the route picker on a train's route, to lay its points
+// out again.
 func (t *schedTab) fillForm() {
 	tr, ok := t.cur()
 	if !ok {
@@ -353,52 +311,48 @@ func (t *schedTab) fillForm() {
 	if n := len(tr.Points); n > 0 {
 		from, to = tr.Points[0].Stn, tr.Points[n-1].Stn
 	}
-	fields := t.routeFields(from, to)
+	at := 10.0
 	if e := entry(*tr); e >= 0 {
-		fields[4].value = showTime(ptr(e))
+		at = e
 	}
-	t.m.open(newForm("fill "+tr.Number+" from its route", func(v values) error {
-		pts, err := t.routePoints(v)
+	var stations []string
+	for _, p := range tr.Points {
+		stations = append(stations, p.Stn)
+	}
+	t.m.openRoutePicker("route of "+tr.Number, nil, from, to, at, 2, stations, stopsOf(*tr), func(r pickedRoute) error {
+		pts, err := r.points(r.way.stations, true)
 		if err != nil {
 			return err
 		}
 		tr.Points = pts
 		t.row = 0
 		t.changed()
-		t.m.say("%s runs %s to %s: %d points", tr.Number, v["from"], v["to"], len(pts))
+		t.m.say("%s runs %s: %d points", tr.Number, strings.Join(r.way.stations, " "), len(pts))
 		return nil
-	}, fields...))
+	})
 }
 
+// patternForm opens the route picker for a pattern of trains.
 func (t *schedTab) patternForm() {
 	if len(t.m.s.stationCodes()) < 2 {
 		t.m.fail("the world needs two stations for a train to run between")
 		return
 	}
-	fields := t.routeFields("", "")
-	fields[4].label = "first enters at"
 	classes := t.m.s.classes()
-	fields = append(fields,
-		number("interval", "every (min)", 60),
-		number("count", "trains each way", 3),
-		choice("both", "both ways", "yes", "yes", "no"),
-		field{key: "offset", label: "return offset (min)", value: "30", help: "the first train back enters this much after the first one out"},
-		field{key: "classes", label: "classes", value: strings.Join(classes[:min(len(classes), 1)], ", "), help: "comma-separated; the trains take them in turn"},
-		field{key: "up", label: "numbers out", value: "T{n}U", help: "{n} is the train's place in the run: 1, 2, ..."},
-		text("down", "numbers back", "T{n}D"),
-		number("kmph", "max speed (km/h)", 110),
-	)
-	t.m.open(newForm("pattern of trains", func(v values) error {
-		at, err := parseTime(v["entry"], "first entry")
-		if err != nil || at == nil {
-			return cmp.Or(err, errors.New("the pattern needs a first entry"))
-		}
-		pt := pattern{from: v["from"], to: v["to"], via: strings.ToUpper(v["via"]), stops: strings.Fields(strings.ToUpper(v["stops"])),
-			first: *at, both: v["both"] == "yes", upNumber: v["up"], downNumber: v["down"]}
+	head := [][]field{
+		{number("interval", "every (min)", 60), number("count", "trains each way", 3), choice("both", "both ways", "yes", "yes", "no")},
+		{field{key: "offset", label: "back after (min)", value: "30"}, number("kmph", "max km/h", 110)},
+		{field{key: "classes", label: "classes", value: strings.Join(classes[:min(len(classes), 1)], ", ")}},
+		{field{key: "up", label: "numbers out", value: "T{n}U"}, text("down", "back", "T{n}D")},
+	}
+	t.m.openRoutePicker("pattern of trains", head, "", "", 10, 2, nil, nil, func(r pickedRoute) error {
+		v := r.head
+		pt := pattern{route: r, both: v["both"] == "yes", upNumber: v["up"], downNumber: v["down"]}
+		var err error
 		for _, f := range []struct {
 			key string
 			to  *float64
-		}{{"interval", &pt.interval}, {"dwell", &pt.dwell}, {"offset", &pt.offset}, {"kmph", &pt.kmph}} {
+		}{{"interval", &pt.interval}, {"offset", &pt.offset}, {"kmph", &pt.kmph}} {
 			if *f.to, err = parseNum(v, f.key, f.key); err != nil {
 				return err
 			}
@@ -411,7 +365,7 @@ func (t *schedTab) patternForm() {
 				pt.classes = append(pt.classes, c)
 			}
 		}
-		trains, err := pt.expand(t.m.s.world.S)
+		trains, err := pt.expand()
 		if err != nil {
 			return err
 		}
@@ -422,17 +376,24 @@ func (t *schedTab) patternForm() {
 		}
 		t.m.s.sched.Trains = append(t.m.s.sched.Trains, trains...)
 		t.changed()
-		t.m.say("added %d trains", len(trains))
+		t.m.say("added %d trains, %s", len(trains), strings.Join(r.way.stations, " "))
 		return nil
-	}, fields...))
+	})
 }
 
 func (t *schedTab) pointForm(k int, inserted bool) {
 	tr, _ := t.cur()
 	p := tr.Points[k]
-	pfs := strings.Join(t.m.s.platforms(p.Stn), " ")
+	pfChoices := append([]string{"any"}, t.m.s.platforms(p.Stn)...)
+	if p.Pf != "" && !slices.Contains(pfChoices, p.Pf) {
+		pfChoices = append(pfChoices, p.Pf)
+	}
 	f := newForm(fmt.Sprintf("%s point %d", tr.Number, k+1), func(v values) error {
-		np := ops.PointSpec{Stn: v["stn"], Kind: ops.SchedulePointKind(v["kind"]), Pf: v["pf"]}
+		pf := v["pf"]
+		if pf == "any" {
+			pf = ""
+		}
+		np := ops.PointSpec{Stn: v["stn"], Kind: ops.SchedulePointKind(v["kind"]), Pf: pf}
 		var err error
 		for _, f := range []struct {
 			key, what string
@@ -464,7 +425,7 @@ func (t *schedTab) pointForm(k int, inserted bool) {
 	},
 		choice("stn", "station", p.Stn, t.stationChoices(p.Stn)...),
 		choice("kind", "kind", string(p.Kind), string(ops.SpStop), string(ops.SpPass)),
-		field{key: "pf", label: "platform", value: p.Pf, help: "empty for the dispatcher to pick; " + tui.ValueOr(pfs, "the station's platforms")},
+		field{key: "pf", label: "platform", value: tui.ValueOr(p.Pf, "any"), choices: pfChoices, help: "any: the dispatcher picks"},
 		field{key: "arr", label: "arr", value: showTime(p.Arr), help: "HH:MM or minutes; the first point's is the entry"},
 		field{key: "dep", label: "dep", value: showTime(p.Dep), help: "a stop to keep to times: arr and dep"},
 		field{key: "dwell", label: "dwell (min)", value: showNum(p.Dwell), help: "a stop that leaves once it has stood this long"},
@@ -632,7 +593,7 @@ func (t *schedTab) render(width, h int) []string {
 
 func (t *schedTab) keyLine() string {
 	if t.points {
-		return " ↑↓ point  enter edit  i/I insert after/before  d delete  K/J move  f fill from route  x disrupt  tab trains"
+		return " ↑↓ point  enter edit  i/I insert after/before  d delete  K/J move  f re-route  x disrupt  tab trains"
 	}
-	return " ↑↓ train  tab points  a add  enter edit  c copy  d delete  s sort  f fill from route  g pattern  x disrupt  X clear its disruptions"
+	return " ↑↓ train  tab points  a add  enter edit  c copy  d delete  s sort  f re-route  g pattern  x disrupt  X clear its disruptions"
 }

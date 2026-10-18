@@ -89,3 +89,25 @@ func TestPick(t *testing.T) {
 		t.Errorf("at krmgPf1S: %+v", p)
 	}
 }
+
+// A route is drawn in its own colour, under a selection or a problem where
+// they share a cell.
+func TestMarkRoute(t *testing.T) {
+	d, err := FromWorld(worlds.BuildTpjKkdiSingleLineWorld())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tr := d.Tracks()[0]
+	f := d.Draw(Options{Level: Layout, Zoom: 1, Marks: map[string]Mark{tr.ID: MarkRoute}})
+	if !strings.Contains(strings.Join(f.Lines(true), "\n"), "\x1b[1;36m") {
+		t.Error("a route is not drawn in its colour")
+	}
+	for _, c := range []struct {
+		m, o Mark
+		want bool
+	}{{MarkSelected, MarkRoute, true}, {MarkRoute, MarkSelected, false}, {MarkProblem, MarkSelected, true}, {MarkRoute, MarkNone, true}} {
+		if got := c.m.over(c.o); got != c.want {
+			t.Errorf("%d over %d: %v", c.m, c.o, got)
+		}
+	}
+}

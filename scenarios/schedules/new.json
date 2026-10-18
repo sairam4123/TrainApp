@@ -8,8 +8,8 @@
         {
           "stn": "GOC",
           "kind": "stop",
-          "arr": 10,
-          "dep": 15,
+          "arr": 1,
+          "dep": 5,
           "min_dwell": 2
         },
         {

@@ -39,6 +39,9 @@ type Track struct {
 	Lanes  int     `json:"lanes,omitempty"`
 	Kind   string  `json:"kind"`
 	Length float64 `json:"length"` // meters
+	// Direction is the line's UP or DOWN label, if it has one; only a label,
+	// the way trains run on it is its signals'.
+	Direction string `json:"direction,omitempty"`
 }
 
 type SwitchBlock struct {
@@ -112,6 +115,8 @@ func FromWorld(w *infra.World) *World {
 			Lanes:  edge.Lanes,
 			Kind:   kind,
 			Length: float64(trk.Length),
+
+			Direction: string(trk.Direction),
 		})
 	}
 	// in the world's id order, which the layout uses to break ties

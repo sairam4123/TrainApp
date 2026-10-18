@@ -63,7 +63,16 @@ func TestPreviews(t *testing.T) {
 func TestPickTrain(t *testing.T) {
 	p := loadPicker(t)
 	p.Update(tea.WindowSizeMsg{Width: 120, Height: 30})
-	p.choose(3) // sl-24
+	sl24 := -1
+	for i, sc := range p.scenarios {
+		if sc.Name == "sl-24" {
+			sl24 = i
+		}
+	}
+	if sl24 < 0 {
+		t.Fatal("no sl-24 scenario")
+	}
+	p.choose(sl24)
 	p.key("tab")
 	for range 20 {
 		p.key("down")
@@ -77,9 +86,10 @@ func TestPickTrain(t *testing.T) {
 	}
 	p.key("esc")
 	p.key("down")
-	if p.focus != focusList || p.cursor != 4 || p.train != 0 {
-		t.Errorf("after esc, down: focus %d, scenario %d, train %d", p.focus, p.cursor, p.train)
+	if next := (sl24 + 1) % len(p.scenarios); p.focus != focusList || p.cursor != next || p.train != 0 {
+		t.Errorf("after esc, down: focus %d, scenario %d (want %d), train %d", p.focus, p.cursor, next, p.train)
 	}
+	p.choose(len(p.scenarios) - 1)
 	p.key("down") // past the last scenario, round to the first
 	if p.cursor != 0 {
 		t.Errorf("down from the last scenario: scenario %d, want 0", p.cursor)

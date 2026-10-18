@@ -9,6 +9,7 @@ import (
 	"trainapp/railway/ids"
 	"trainapp/railway/infra"
 	"trainapp/visualization/schematic"
+	"trainapp/worlds/templates"
 )
 
 // The edits. Each takes the snapshot and what is selected, changes the
@@ -56,8 +57,10 @@ func Extend(s *infra.Snapshot, at string, east bool, lengthM, kmph float64, lane
 
 // Split puts a new point in a track, westM from its west end, and returns
 // it. The halves share the length; the west half keeps the track's name and
-// any lane change, and signals at either end stay where they are. A switch
-// leg or a platform cannot be split.
+// any lane change, and signals at either end stay where they are. The sim
+// reads a track's way from the signals at its own ends, so a signalled
+// track's halves each get a signal at the new point for each way it ran:
+// they run as it did. A switch leg or a platform cannot be split.
 func Split(s *infra.Snapshot, track string, westM float64) (string, error) {
 	i := trackIndex(s, track)
 	if i < 0 {
@@ -72,6 +75,7 @@ func Split(s *infra.Snapshot, track string, westM float64) (string, error) {
 	case !(westM > 0 && westM < t.LengthM):
 		return "", fmt.Errorf("split %s between 0 and %g m from its west end", trackName(t), t.LengthM)
 	}
+	way := Way(s, track)
 	np := newPoint(s, commonCode(s, t.From, t.To), "Ed")
 	west, east := t, t
 	west.To, west.LengthM = np, westM
@@ -91,7 +95,23 @@ func Split(s *infra.Snapshot, track string, westM float64) (string, error) {
 			sig.Facing = np
 		}
 	}
+	if way == WayEast || way == WayBoth {
+		addSignal(s, np, t.From, "E")
+	}
+	if way == WayWest || way == WayBoth {
+		addSignal(s, np, t.To, "W")
+	}
 	return np, nil
+}
+
+// addSignal stands a signal at a point for trains coming from facing,
+// running dir ("E" or "W"), named after the point.
+func addSignal(s *infra.Snapshot, at, facing, dir string) {
+	id := at + "Sig" + dir
+	for n := 2; signalIndex(s, id) >= 0; n++ {
+		id = at + "Sig" + dir + strconv.Itoa(n)
+	}
+	s.Signals = append(s.Signals, infra.SnapshotSignal{ID: id, At: at, Facing: facing})
 }
 
 // Join takes a point out of the line it is on: it must have one track each
@@ -183,13 +203,19 @@ func AddSwitch(s *infra.Snapshot, toe string, east bool, lanes int) (string, err
 	return div, nil
 }
 
-// Crossover lays a crossover between two parallel plain tracks on different
-// lanes: each is split in the middle, a diagonal joins the two new points
-// and a switch at each end of it lets a train over. With down the diagonal
-// runs from the upper track down to the lower one going east, else up.
-func Crossover(s *infra.Snapshot, a, b string, down bool) error {
+// Crossover lays a crossover of a kind between two parallel plain tracks on
+// different lanes. A single crossover (templates.CrossDown or CrossUp)
+// splits each in the middle and joins the two new points with a diagonal,
+// running from the upper track down to the lower one going east (or up),
+// with a switch at each end of it to let a train over. A scissors crossover
+// (CrossScissors) splits each in three and lays both diagonals, crossing at
+// a diamond, with four switches.
+func Crossover(s *infra.Snapshot, a, b, kind string) error {
 	if a == b {
 		return errors.New("a crossover needs two tracks")
+	}
+	if kind != templates.CrossDown && kind != templates.CrossUp && kind != templates.CrossScissors {
+		return fmt.Errorf("crossover %q, want %s, %s or %s", kind, templates.CrossDown, templates.CrossUp, templates.CrossScissors)
 	}
 	d, err := schematic.FromSnapshot(s)
 	if err != nil {
@@ -213,6 +239,52 @@ func Crossover(s *infra.Snapshot, a, b string, down bool) error {
 	if la > lb {
 		upper, lower, la, lb = lower, upper, lb, la
 	}
+	lanes := lb - la
+	swLen := cmp.Or(s.Defaults.SwitchLengthM, 100)
+	swKmph := cmp.Or(s.Defaults.SwitchKmph, 30)
+	diagonal := func(from, to string, lanes int) string {
+		addTrack(s, infra.SnapshotTrack{From: from, To: to, Lanes: lanes, LengthM: swLen, MaxKmph: swKmph})
+		return s.Tracks[len(s.Tracks)-1].ID
+	}
+	// level is the plain track the other way from a diagonal's end
+	level := func(at, diag string, east bool) string {
+		w, e := tracksAt(s, at)
+		ts := w
+		if east {
+			ts = e
+		}
+		for _, k := range ts {
+			if s.Tracks[k].ID != diag {
+				return s.Tracks[k].ID
+			}
+		}
+		return ""
+	}
+	addSwitch := func(code string, tracks ...string) {
+		s.Switches = append(s.Switches, infra.SnapshotSwitch{
+			ID: newID(s, ids.PointID{StnCode: ids.StnCode(code), Type: "EdSw"}), Tracks: tracks, Default: tracks[0],
+		})
+	}
+	if kind == templates.CrossScissors {
+		aU, bU, err := splitMiddle(s, upper.ID)
+		if err != nil {
+			return err
+		}
+		aL, bL, err := splitMiddle(s, lower.ID)
+		if err != nil {
+			return err
+		}
+		down, up := diagonal(aU, bL, lanes), diagonal(aL, bU, -lanes)
+		code := commonCode(s, aU, bL)
+		s.Switches = append(s.Switches, infra.SnapshotSwitch{
+			ID: newID(s, ids.PointID{StnCode: ids.StnCode(code), Type: "EdDp"}), Tracks: []string{down, up}, Default: down,
+		})
+		addSwitch(code, level(aU, down, true), down)
+		addSwitch(code, level(bL, down, false), down)
+		addSwitch(code, level(aL, up, true), up)
+		addSwitch(code, level(bU, up, false), up)
+		return nil
+	}
 	pu, err := Split(s, upper.ID, upper.LengthM/2)
 	if err != nil {
 		return err
@@ -221,33 +293,114 @@ func Crossover(s *infra.Snapshot, a, b string, down bool) error {
 	if err != nil {
 		return err
 	}
-	from, to, lanes := pu, pl, lb-la
-	if !down {
-		from, to, lanes = pl, pu, la-lb
+	from, to, l := pu, pl, lanes
+	if kind == templates.CrossUp {
+		from, to, l = pl, pu, -lanes
 	}
-	swLen := cmp.Or(s.Defaults.SwitchLengthM, 100)
-	addTrack(s, infra.SnapshotTrack{From: from, To: to, Lanes: lanes, LengthM: swLen, MaxKmph: cmp.Or(s.Defaults.SwitchKmph, 30)})
-	diag := s.Tracks[len(s.Tracks)-1].ID
+	diag := diagonal(from, to, l)
 	// at the west end the legs leave eastwards, at the east end they arrive
-	_, eastOfFrom := tracksAt(s, from)
-	westOfTo, _ := tracksAt(s, to)
-	var legW, legE string
-	for _, k := range eastOfFrom {
-		if s.Tracks[k].ID != diag {
-			legW = s.Tracks[k].ID
-		}
-	}
-	for _, k := range westOfTo {
-		if s.Tracks[k].ID != diag {
-			legE = s.Tracks[k].ID
-		}
-	}
 	code := commonCode(s, from, to)
-	for _, leg := range []string{legW, legE} {
-		s.Switches = append(s.Switches, infra.SnapshotSwitch{
-			ID: newID(s, ids.PointID{StnCode: ids.StnCode(code), Type: "EdSw"}), Tracks: []string{leg, diag}, Default: leg,
-		})
+	addSwitch(code, level(from, diag, true), diag)
+	addSwitch(code, level(to, diag, false), diag)
+	return nil
+}
+
+// splitMiddle splits a short middle out of a track, the world's switch
+// length long (or a third of the track, if that is shorter), and returns its
+// west and east ends.
+func splitMiddle(s *infra.Snapshot, track string) (a, b string, err error) {
+	t := s.Tracks[trackIndex(s, track)]
+	mid := min(cmp.Or(s.Defaults.SwitchLengthM, 100), t.LengthM/3)
+	if a, err = Split(s, track, (t.LengthM-mid)/2); err != nil {
+		return "", "", err
 	}
+	if b, err = Split(s, s.Tracks[trackBetween(s, a, t.To)].ID, mid); err != nil {
+		return "", "", err
+	}
+	return a, b, nil
+}
+
+// Crossings of two lines (Crossing), in the order a form offers them.
+const (
+	CrossingDiamond    = "diamond"
+	CrossingSlipUpper  = "single slip, upper"
+	CrossingSlipLower  = "single slip, lower"
+	CrossingDoubleSlip = "double slip"
+)
+
+var Crossings = []string{CrossingDiamond, CrossingSlipUpper, CrossingSlipLower, CrossingDoubleSlip}
+
+// Crossing makes two parallel plain tracks on different lanes cross: a
+// short middle is split out of each, and in its place each track's west part
+// runs on into the other's east part over a diamond, so the two lines swap
+// lanes. A slip switch (infra.NewSingleSlip, NewDoubleSlip) also keeps the
+// upper track's straight road, the lower's or both, as slip routes. The
+// diamond and its slips are one switch block: one route over it at a time.
+func Crossing(s *infra.Snapshot, a, b, kind string) error {
+	if !slices.Contains(Crossings, kind) {
+		return fmt.Errorf("crossing %q, want one of %v", kind, Crossings)
+	}
+	if a == b {
+		return errors.New("a crossing needs two tracks")
+	}
+	d, err := schematic.FromSnapshot(s)
+	if err != nil {
+		return err
+	}
+	ta, tb := trackIndex(s, a), trackIndex(s, b)
+	if ta < 0 || tb < 0 {
+		return errors.New("a crossing needs two tracks")
+	}
+	upper, lower := s.Tracks[ta], s.Tracks[tb]
+	for _, t := range []infra.SnapshotTrack{upper, lower} {
+		if t.Lanes != 0 || inSwitch(s, t.ID) || platformOf(s, t.ID) != "" {
+			return fmt.Errorf("%s must be a plain level track, not a switch leg, a platform or a diagonal", trackName(t))
+		}
+	}
+	la, _ := d.Lane(upper.From)
+	lb, _ := d.Lane(lower.From)
+	if la == lb {
+		return errors.New("the two tracks are on the same lane")
+	}
+	if la > lb {
+		upper, lower, la, lb = lower, upper, lb, la
+	}
+	aU, bU, err := splitMiddle(s, upper.ID)
+	if err != nil {
+		return err
+	}
+	aL, bL, err := splitMiddle(s, lower.ID)
+	if err != nil {
+		return err
+	}
+	midU, midL := s.Tracks[trackBetween(s, aU, bU)], s.Tracks[trackBetween(s, aL, bL)]
+	swKmph := cmp.Or(s.Defaults.SwitchKmph, 30)
+	addTrack(s, infra.SnapshotTrack{From: aU, To: bL, Lanes: lb - la, LengthM: midU.LengthM, MaxKmph: swKmph})
+	down := s.Tracks[len(s.Tracks)-1].ID
+	addTrack(s, infra.SnapshotTrack{From: aL, To: bU, Lanes: la - lb, LengthM: midL.LengthM, MaxKmph: swKmph})
+	up := s.Tracks[len(s.Tracks)-1].ID
+	block := []string{down, up}
+	for _, mid := range []struct {
+		t    infra.SnapshotTrack
+		keep bool
+	}{
+		{midU, kind == CrossingSlipUpper || kind == CrossingDoubleSlip},
+		{midL, kind == CrossingSlipLower || kind == CrossingDoubleSlip},
+	} {
+		if !mid.keep {
+			removeTracks(s, mid.t.ID)
+			s.Signals = slices.DeleteFunc(s.Signals, func(sig infra.SnapshotSignal) bool {
+				return (sig.At == mid.t.From && sig.Facing == mid.t.To) || (sig.At == mid.t.To && sig.Facing == mid.t.From)
+			})
+			continue
+		}
+		s.Tracks[trackIndex(s, mid.t.ID)].MaxKmph = swKmph
+		block = append(block, mid.t.ID)
+	}
+	code := commonCode(s, aU, bL)
+	s.Switches = append(s.Switches, infra.SnapshotSwitch{
+		ID: newID(s, ids.PointID{StnCode: ids.StnCode(code), Type: "EdDp"}), Tracks: block, Default: down,
+	})
 	return nil
 }
 
@@ -270,77 +423,55 @@ func ToggleSignal(s *infra.Snapshot, track string, east bool) error {
 			return nil
 		}
 	}
-	id := at + "Sig" + dir
-	for n := 2; signalIndex(s, id) >= 0; n++ {
-		id = at + "Sig" + dir + strconv.Itoa(n)
-	}
-	s.Signals = append(s.Signals, infra.SnapshotSignal{ID: id, At: at, Facing: facing})
+	addSignal(s, at, facing, dir)
 	return nil
 }
 
 // BlockSection joins two open points with a single line lengthM long, split
 // into blocks equal blocks, signalled both ways at every block boundary and
-// both ends, as worlds/templates.SingleLine builds it: points {name, Bk, i},
-// tracks name0, name1, ... and signals nameSig0F, nameSig0R, ... a and b may
-// be given either way round; the line runs east from whichever of them has
-// no track east. Ends of the world at either are opened up.
+// both ends: Line, both ways.
 func BlockSection(s *infra.Snapshot, a, b, name string, lengthM float64, blocks int, kmph float64) error {
+	return Line(s, a, b, name, WayBoth, lengthM, blocks, kmph)
+}
+
+// Line joins two open points with one line running way (WayEast, WayWest or
+// WayBoth), as Lines lays one. a and b may be given either way round; the
+// line runs east from whichever of them has no track east.
+func Line(s *infra.Snapshot, a, b, name string, way byte, lengthM float64, blocks int, kmph float64) error {
+	from, to, err := westEast(s, a, b)
+	if err != nil {
+		return err
+	}
+	return Lines(s, []string{from}, []string{to}, name, string(way), lengthM, blocks, kmph)
+}
+
+// LinesBeside joins the open ends beside a to those beside b (OpenBeside),
+// top to bottom, a line each, running as pattern says (empty for
+// DefaultPattern). There must be as many each side.
+func LinesBeside(s *infra.Snapshot, a, b, name, pattern string, lengthM float64, blocks int, kmph float64) error {
+	from, to, err := westEast(s, a, b)
+	if err != nil {
+		return err
+	}
+	west, east := OpenBeside(s, from, true), OpenBeside(s, to, false)
+	if len(west) != len(east) {
+		return fmt.Errorf("%d open ends beside %s, %d beside %s: join them a line at a time", len(west), from, len(east), to)
+	}
+	return Lines(s, west, east, name, cmp.Or(pattern, DefaultPattern(len(west))), lengthM, blocks, kmph)
+}
+
+// westEast orders two points to be a line's west and east ends.
+func westEast(s *infra.Snapshot, a, b string) (string, string, error) {
 	if pointIndex(s, a) < 0 || pointIndex(s, b) < 0 || a == b {
-		return errors.New("a block section joins two points")
+		return "", "", errors.New("a line joins two points")
 	}
-	if name == "" {
-		return errors.New("a block section needs a name")
-	}
-	if !(lengthM > 0) || blocks < 1 {
-		return errors.New("a block section needs a length and at least one block")
-	}
-	from, to := a, b
 	switch {
 	case open(s, a, true) && open(s, b, false):
+		return a, b, nil
 	case open(s, b, true) && open(s, a, false):
-		from, to = b, a
-	default:
-		return fmt.Errorf("one of %s and %s needs no track east, the other no track west", a, b)
+		return b, a, nil
 	}
-	for _, sig := range s.Signals {
-		if sig.ID == name+"Sig0F" {
-			return fmt.Errorf("the name %s is taken", name)
-		}
-	}
-	lanes := 0
-	if d, err := schematic.FromSnapshot(s); err == nil && connected(s, from, to) {
-		lf, _ := d.Lane(from)
-		lt, _ := d.Lane(to)
-		lanes = lt - lf
-	}
-	for _, p := range []string{from, to} {
-		k := pointIndex(s, p)
-		s.Points[k].DeadEnd, s.Points[k].Boundary = false, false
-	}
-	pts := []string{from}
-	for i := 1; i < blocks; i++ {
-		p := infra.SnapshotPoint{Stn: name, Type: "Bk", Seq: strconv.Itoa(i)}
-		if pointIndex(s, pointID(p).String()) >= 0 {
-			return fmt.Errorf("the name %s is taken", name)
-		}
-		p.ID = pointID(p).String()
-		s.Points = append(s.Points, p)
-		pts = append(pts, p.ID)
-	}
-	pts = append(pts, to)
-	kmph = cmp.Or(kmph, s.Defaults.RouteKmph)
-	for i := 0; i+1 < len(pts); i++ {
-		t := infra.SnapshotTrack{Name: fmt.Sprintf("%s%d", name, i), From: pts[i], To: pts[i+1], LengthM: lengthM / float64(blocks), MaxKmph: kmph}
-		if i == 0 {
-			t.Lanes = lanes
-		}
-		addTrack(s, t)
-		s.Signals = append(s.Signals,
-			infra.SnapshotSignal{ID: fmt.Sprintf("%sSig%dF", name, i), At: pts[i+1], Facing: pts[i]},
-			infra.SnapshotSignal{ID: fmt.Sprintf("%sSig%dR", name, i), At: pts[i], Facing: pts[i+1]},
-		)
-	}
-	return nil
+	return "", "", fmt.Errorf("one of %s and %s needs no track east, the other no track west", a, b)
 }
 
 // SetEnd makes a point an end of the world (EndBuffer, EndBoundary) or not
@@ -556,6 +687,9 @@ func SetDefaults(s *infra.Snapshot, d infra.SnapshotDefaults) error {
 	}
 	if !(d.SwitchLengthM > 0 && d.PlatformLengthM > 0) {
 		return errors.New("lengths must be positive")
+	}
+	if d.Up != "" && d.Up != "E" && d.Up != "W" {
+		return fmt.Errorf("UP runs %q, want E or W", d.Up)
 	}
 	s.Defaults = d
 	return nil

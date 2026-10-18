@@ -42,6 +42,10 @@ type SnapshotDefaults struct {
 	PlatformKmph    float64 `json:"platform_kmph"`
 	PlatformLengthM float64 `json:"platform_length_m"`
 	RouteKmph       float64 `json:"route_kmph"`
+	// Up is the way ("E" or "W") the UP direction runs, which trainedit
+	// labels one-way lines by (SnapshotTrack.Direction); empty reads as west.
+	// The sim does not use it.
+	Up string `json:"up,omitempty"`
 }
 
 // SnapshotPoint is a track point, given by the parts of its id. Stn puts the
@@ -114,6 +118,7 @@ func (w *World) Snapshot() (*Snapshot, error) {
 			PlatformKmph:    d.DefaultPfMaxSpeed.InKMPH(),
 			PlatformLengthM: float64(d.DefaultPfLength),
 			RouteKmph:       d.DefaultRouteSpeed.InKMPH(),
+			Up:              d.Up,
 		},
 		Points:   []SnapshotPoint{},
 		Tracks:   []SnapshotTrack{},
@@ -177,6 +182,7 @@ func (s *Snapshot) Build() (*World, error) {
 		DefaultPfMaxSpeed: units.KMPH(d.PlatformKmph),
 		DefaultPfLength:   units.M(d.PlatformLengthM),
 		DefaultRouteSpeed: units.KMPH(d.RouteKmph),
+		Up:                d.Up,
 	})
 
 	var errs []error

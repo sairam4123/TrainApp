@@ -204,7 +204,7 @@ func TestSwitchAndCrossover(t *testing.T) {
 			lower = tr.ID
 		}
 	}
-	do(t, d, func(s *infra.Snapshot) error { return Crossover(s, upper, lower, true) })
+	do(t, d, func(s *infra.Snapshot) error { return Crossover(s, upper, lower, tm.CrossDown) })
 	if n := len(d.S.Switches); n != 4 {
 		t.Errorf("%d switches after the crossover, want 4", n)
 	}

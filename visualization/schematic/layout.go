@@ -35,6 +35,8 @@ type Track struct {
 	Length   float64
 	PfNo     string // platform number, for a platform
 	Class    string // main, through or loop, for a platform (empty if unknown)
+	// Direction is a line's UP or DOWN label, drawn with its length.
+	Direction string
 
 	span int // fixed width, for a box
 
@@ -52,9 +54,9 @@ func (t *Track) label(level Level) string {
 	named := level == Detail && t.Name != t.ID
 	switch {
 	case t.Kind == Line && named:
-		return t.Name + " (" + formatLength(t.Length) + ")"
+		return t.Name + " (" + t.lengthLabel() + ")"
 	case t.Kind == Line:
-		return "(" + formatLength(t.Length) + ")"
+		return "(" + t.lengthLabel() + ")"
 	case named && (t.Class == "main" || t.Class == "through"):
 		return t.Name + " (" + t.Class + ")"
 	case named:
@@ -65,6 +67,15 @@ func (t *Track) label(level Level) string {
 		return "Pf" + t.PfNo
 	}
 	return ""
+}
+
+// lengthLabel is a line's length, and its UP or DOWN label if it has one.
+func (t *Track) lengthLabel() string {
+	switch t.Direction {
+	case string(infra.Up), string(infra.Down):
+		return formatLength(t.Length) + " " + t.Direction
+	}
+	return formatLength(t.Length)
 }
 
 // station is a station and the tracks of its platforms.
@@ -120,7 +131,7 @@ func Build(w *vizproto.World) (*Diagram, error) {
 				return nil, fmt.Errorf("schematic: track %s ends at unknown point %s", wt.ID, end)
 			}
 		}
-		t := &Track{ID: wt.ID, Name: wt.Name, From: wt.From, To: wt.To, Lanes: wt.Lanes, Length: wt.Length}
+		t := &Track{ID: wt.ID, Name: wt.Name, From: wt.From, To: wt.To, Lanes: wt.Lanes, Length: wt.Length, Direction: wt.Direction}
 		switch wt.Kind {
 		case vizproto.KindPlatform:
 			t.Kind = Platform
@@ -146,6 +157,7 @@ func Build(w *vizproto.World) (*Diagram, error) {
 	}
 	d.switches = w.Switches
 	d.signals = w.Signals
+	d.groupCrossings()
 
 	if err := d.finish(); err != nil {
 		return nil, err
@@ -175,6 +187,46 @@ func newDiagram() *Diagram {
 func (d *Diagram) addTrack(t *Track) {
 	d.tracks = append(d.tracks, t)
 	d.track[t.ID] = t
+}
+
+// groupCrossings keeps each crossing's two west ends in one column and its
+// two east ends in another, so its legs meet in an X: two tracks of a switch
+// block (a diamond or slip) that change lanes opposite ways. Otherwise a long
+// line into one of its ends pushes that end east alone, and the legs are
+// drawn as two diagonals side by side.
+func (d *Diagram) groupCrossings() {
+	for _, sb := range d.switches {
+		for i, a := range sb.Tracks {
+			for _, b := range sb.Tracks[i+1:] {
+				ta, tb := d.track[a], d.track[b]
+				if ta == nil || tb == nil || ta.Lanes == 0 || ta.Lanes != -tb.Lanes {
+					continue
+				}
+				d.sameColumn(ta.From, tb.From, sb.ID+"/west")
+				d.sameColumn(ta.To, tb.To, sb.ID+"/east")
+			}
+		}
+	}
+}
+
+// sameColumn puts points a and b in one group, joining any groups they are
+// already in, and naming it name if neither is.
+func (d *Diagram) sameColumn(a, b, name string) {
+	ga, gb := d.group[a], d.group[b]
+	switch {
+	case ga == "" && gb == "":
+		d.group[a], d.group[b] = name, name
+	case ga == "":
+		d.group[a] = gb
+	case gb == "" || ga == gb:
+		d.group[b] = ga
+	default:
+		for id, g := range d.group {
+			if g == gb {
+				d.group[id] = ga
+			}
+		}
+	}
 }
 
 // finish marks branching ends and orders the points west to east.
