@@ -297,12 +297,14 @@
       "seq": "1"
     },
     {
-      "id": "Ed4",
+      "id": "gocEd4",
+      "stn": "GOC",
       "type": "Ed",
       "seq": "4"
     },
     {
-      "id": "Ed3",
+      "id": "gocEd3",
+      "stn": "GOC",
       "type": "Ed",
       "seq": "3"
     },
@@ -713,15 +715,15 @@
       "lanes": 1
     },
     {
-      "id": "Ed3-tpjXoW0U",
-      "from": "Ed3",
+      "id": "gocEd3-tpjXoW0U",
+      "from": "gocEd3",
       "to": "tpjXoW0U",
       "length_m": 11000,
       "max_kmph": 110
     },
     {
-      "id": "Ed4-tpjXoW0L",
-      "from": "Ed4",
+      "id": "gocEd4-tpjXoW0L",
+      "from": "gocEd4",
       "to": "tpjXoW0L",
       "length_m": 11000,
       "max_kmph": 110
@@ -789,31 +791,31 @@
       "lanes": -1
     },
     {
-      "id": "Ed4-gocThE0",
+      "id": "gocEd4-gocThE0",
       "from": "gocThE0",
-      "to": "Ed4",
+      "to": "gocEd4",
       "length_m": 100,
       "max_kmph": 30,
       "lanes": 1
     },
     {
-      "id": "Ed3-gocThE0",
+      "id": "gocEd3-gocThE0",
       "from": "gocThE0",
-      "to": "Ed3",
+      "to": "gocEd3",
       "length_m": 100,
       "max_kmph": 110
     },
     {
-      "id": "Ed4-gocThE1",
+      "id": "gocEd4-gocThE1",
       "from": "gocThE1",
-      "to": "Ed4",
+      "to": "gocEd4",
       "length_m": 100,
       "max_kmph": 110
     },
     {
-      "id": "Ed3-gocThE1",
+      "id": "gocEd3-gocThE1",
       "from": "gocThE1",
-      "to": "Ed3",
+      "to": "gocEd3",
       "length_m": 100,
       "max_kmph": 30,
       "lanes": -1
@@ -1169,42 +1171,42 @@
     {
       "id": "gocXoE0D",
       "tracks": [
-        "Ed4-gocThE0",
-        "Ed3-gocThE1"
+        "gocEd4-gocThE0",
+        "gocEd3-gocThE1"
       ],
-      "default": "Ed4-gocThE0"
+      "default": "gocEd4-gocThE0"
     },
     {
       "id": "gocXoE0A",
       "tracks": [
-        "Ed3-gocThE0",
-        "Ed4-gocThE0"
+        "gocEd3-gocThE0",
+        "gocEd4-gocThE0"
       ],
-      "default": "Ed3-gocThE0"
+      "default": "gocEd3-gocThE0"
     },
     {
       "id": "gocXoE0B",
       "tracks": [
-        "Ed4-gocThE1",
-        "Ed4-gocThE0"
+        "gocEd4-gocThE1",
+        "gocEd4-gocThE0"
       ],
-      "default": "Ed4-gocThE1"
+      "default": "gocEd4-gocThE1"
     },
     {
       "id": "gocXoE0C",
       "tracks": [
-        "Ed4-gocThE1",
-        "Ed3-gocThE1"
+        "gocEd4-gocThE1",
+        "gocEd3-gocThE1"
       ],
-      "default": "Ed4-gocThE1"
+      "default": "gocEd4-gocThE1"
     },
     {
       "id": "gocXoE0E",
       "tracks": [
-        "Ed3-gocThE0",
-        "Ed3-gocThE1"
+        "gocEd3-gocThE0",
+        "gocEd3-gocThE1"
       ],
-      "default": "Ed3-gocThE0"
+      "default": "gocEd3-gocThE0"
     },
     {
       "id": "kkdiSwW0",
@@ -1267,11 +1269,11 @@
     {
       "id": "tpjXoW0USigE",
       "at": "tpjXoW0U",
-      "facing": "Ed3"
+      "facing": "gocEd3"
     },
     {
       "id": "Ed4SigW",
-      "at": "Ed4",
+      "at": "gocEd4",
       "facing": "tpjXoW0L"
     },
     {
@@ -1306,19 +1308,19 @@
           "length_m": 600
         },
         {
+          "no": "4",
+          "track": "gocPf4E-gocPf4S",
+          "length_m": 600
+        },
+        {
           "no": "2",
           "track": "gocPf2E-gocPf2S",
-          "length_m": 600
+          "length_m": 0
         },
         {
           "no": "3",
           "track": "gocPf3E-gocPf3S",
-          "length_m": 600
-        },
-        {
-          "no": "4",
-          "track": "gocPf4E-gocPf4S",
-          "length_m": 600
+          "length_m": 0
         }
       ]
     },

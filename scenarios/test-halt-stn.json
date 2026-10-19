@@ -1,0 +1,6 @@
+{
+  "name": "test-halt-stn",
+  "world": "worlds/test-halt-stn.json",
+  "schedule": "schedules/test-halt-stn.json",
+  "profile": "../profiles/ir.json"
+}

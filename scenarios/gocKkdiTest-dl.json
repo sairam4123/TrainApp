@@ -1,0 +1,6 @@
+{
+  "name": "gocKkdiTest-dl",
+  "world": "worlds/gocKkdiTest-dl.json",
+  "schedule": "schedules/gocKkdiTest-dl.json",
+  "profile": "../profiles/ir.json"
+}

@@ -34,12 +34,12 @@
       "from_min": 10.001999999999999,
       "to_min": 70.99118181818179,
       "blocks": {
-        "tracks": 18,
-        "mean_occupancy": 0.06310060949706432,
+        "tracks": 14,
+        "mean_occupancy": 0.08093419590913187,
         "min_occupancy": 0,
         "max_occupancy": 0.5368537788370817,
-        "mean_standing": 0.00004918905141148304,
-        "standing_min": 0.053999999999978954
+        "mean_standing": 0.00005972956242822998,
+        "standing_min": 0.050999999999980616
       },
       "platforms": {
         "tracks": 16,
@@ -76,6 +76,45 @@
         }
       ],
       "tracks": [
+        {
+          "track": "gocEd3-gocThE1",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocEd4-gocThE0",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocEd4-gocThE1",
+          "kind": "throat",
+          "stn": "GOC",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
         {
           "track": "gocPf1",
           "kind": "platform",
@@ -185,8 +224,9 @@
           "trains_per_hour": 0.9837810282300442
         },
         {
-          "track": "Ed3-gocThE0",
-          "kind": "block",
+          "track": "gocEd3-gocThE0",
+          "kind": "throat",
+          "stn": "GOC",
           "entries": 3,
           "occupied_min": 0.16663636363636236,
           "running_min": 0.16363636363636402,
@@ -197,7 +237,7 @@
           "trains_per_hour": 2.9513430846901327
         },
         {
-          "track": "Ed3-tpjXoW0U",
+          "track": "gocEd3-tpjXoW0U",
           "kind": "block",
           "entries": 3,
           "occupied_min": 18.015,
@@ -889,54 +929,6 @@
           "trains_per_hour": 0
         },
         {
-          "track": "Ed3-gocThE1",
-          "kind": "block",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
-        },
-        {
-          "track": "Ed4-gocThE0",
-          "kind": "block",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
-        },
-        {
-          "track": "Ed4-gocThE1",
-          "kind": "block",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
-        },
-        {
-          "track": "Ed4-tpjXoW0L",
-          "kind": "block",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
-        },
-        {
           "track": "Ed5-kkdiThW1",
           "kind": "block",
           "entries": 0,
@@ -974,6 +966,18 @@
         },
         {
           "track": "Ed6-pdktXoE0L",
+          "kind": "block",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "gocEd4-tpjXoW0L",
           "kind": "block",
           "entries": 0,
           "occupied_min": 0,
