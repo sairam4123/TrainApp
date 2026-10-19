@@ -241,9 +241,23 @@ func TestRefused(t *testing.T) {
 			addTrack(s, infra.SnapshotTrack{From: c, To: a, LengthM: 1, MaxKmph: 1})
 			return nil
 		},
-		"split a nothing":  func(s *infra.Snapshot) error { _, err := Split(s, "nope", 1); return err },
-		"bad speed":        func(s *infra.Snapshot) error { return SetTrack(s, s.Tracks[0].ID, TrackAttrs{LengthM: 1}) },
-		"switch, no lanes": func(s *infra.Snapshot) error { _, err := AddSwitch(s, a, true, 0); return err },
+		"split a nothing":      func(s *infra.Snapshot) error { _, err := Split(s, "nope", 1); return err },
+		"bad speed":            func(s *infra.Snapshot) error { return SetTrack(s, s.Tracks[0].ID, TrackAttrs{LengthM: 1}) },
+		"switch, no lanes":     func(s *infra.Snapshot) error { _, err := AddSwitch(s, a, true, 0); return err },
+		"join, nothing facing": func(s *infra.Snapshot) error { return Join(s, b) },
+		"join, facing on another lane": func(s *infra.Snapshot) error {
+			c := AddPoint(s)
+			if _, err := Extend(s, c, true, 1000, 0, 0); err != nil {
+				return err
+			}
+			return Join(s, b)
+		},
+		"join a buffer stop": func(s *infra.Snapshot) error {
+			if err := SetEnd(s, b, EndBuffer); err != nil {
+				return err
+			}
+			return Join(s, b)
+		},
 	} {
 		if err := d.Do(edit); err == nil {
 			t.Errorf("%s: not refused", name)

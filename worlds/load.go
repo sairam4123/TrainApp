@@ -6,6 +6,9 @@ import (
 	"trainapp/railway/infra"
 )
 
+// Builtin names the worlds Load builds by name.
+var Builtin = []string{"tpjkkdi", "tpjkkdi-sl"}
+
 // Load builds a world by name: tpjkkdi (the double line), tpjkkdi-sl (the
 // real single line) or a world snapshot file (.json).
 func Load(name string) (*infra.World, error) {

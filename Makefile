@@ -9,8 +9,8 @@ build-trainviz: ## Build the viz
 build-trainedit: ## Build the editor
 	go build -o ./dist/trainedit ./cmd/trainedit
 
-edit: build-trainapp build-trainviz build-trainedit ## Edit a scenario (SCENARIO=scenarios/sl-12.json), or start a new one
-	./dist/trainedit $(if $(SCENARIO),-scenario $(SCENARIO),-new)
+edit: build-trainapp build-trainviz build-trainedit ## Edit a scenario (SCENARIO=scenarios/sl-12.json), or start a new one (on WORLD=tpjkkdi-sl, or picked when it opens)
+	./dist/trainedit $(if $(SCENARIO),-scenario $(SCENARIO),-new $(if $(filter command line environment,$(origin WORLD)),-world $(WORLD)))
 
 run: ## Run the project
 	go run ./cmd/trainapp -record logs/run.ndjson -world $(WORLD)

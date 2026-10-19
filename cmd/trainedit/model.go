@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"trainapp/visualization/tui"
+	"trainapp/worlds"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -74,8 +76,47 @@ func newModel(s *session, cfg config) *model {
 		m.tab = tabRun
 	case s.isNew && len(s.world.S.Points) == 0:
 		m.say("a new world: t stamps a station, or e starts a line from a point")
+		m.newScenarioForm()
 	}
 	return m
+}
+
+// newScenarioForm asks a new scenario's name and the world it starts on: an
+// empty one, a built-in one, or a world snapshot in the scenario directory's
+// worlds/ (which it then shares).
+func (m *model) newScenarioForm() {
+	s := m.s
+	choices := append([]string{"empty"}, worlds.Builtin...)
+	snaps, _ := filepath.Glob(filepath.Join(s.dir, "worlds", "*.json"))
+	for _, p := range snaps {
+		choices = append(choices, filepath.Join("worlds", filepath.Base(p)))
+	}
+	f := newForm("new scenario", func(v values) error {
+		if err := s.rename(v["name"]); err != nil {
+			return err
+		}
+		switch w := v["world"]; {
+		case w == "empty":
+		case slices.Contains(worlds.Builtin, w):
+			if err := s.setWorld(w); err != nil {
+				return err
+			}
+		default:
+			if err := s.setWorld(filepath.Join(s.dir, w)); err != nil {
+				return err
+			}
+		}
+		m.world.changed()
+		if v["world"] != "empty" {
+			m.say("on %s: 2 adds its trains", v["world"])
+		}
+		return nil
+	},
+		text("name", "name", s.sc.Name),
+		field{key: "world", label: "world", value: "empty", choices: choices, help: "a file in worlds/ is shared with the scenarios using it"},
+	)
+	f.notes = []string{"esc starts it on an empty world"}
+	m.open(f)
 }
 
 func (m *model) Init() tea.Cmd { return nil }
@@ -268,10 +309,10 @@ func (m *model) render() string {
 	}
 	body = body[:bodyH]
 	if m.form != nil {
-		body = overlay(body, drawForm(m.form, m.width, bodyH), m.width)
+		body = overlay(body, drawForm(m.form, m.width, bodyH), m.width, m.form.top)
 	}
 	if m.prompt != nil {
-		body = overlay(body, m.drawPrompt(), m.width)
+		body = overlay(body, m.drawPrompt(), m.width, false)
 	}
 	lines := append([]string{m.header()}, body...)
 	keys := ""

@@ -184,3 +184,25 @@ func TestAcceptanceJunction(t *testing.T) {
 	w.stamp(branch[0], edit.StampSpec{Template: edit.TemplateStation, Code: "NJN", Edge: "E", Tracks: terminus})
 	w.run(repeat(2, []string{"WJN", "MID", "NJN"}, []string{"NJN", "MID", "WJN"}, []string{"WJN", "MID", "EJN"}, []string{"EJN", "MID", "WJN"})...)
 }
+
+// A station's two lines extended, the next station stamped onto the first:
+// j at the second's end joins it to the station's line facing it.
+func TestAcceptanceJoinFacingEnd(t *testing.T) {
+	w := newDrawing(t)
+	tracks, err := edit.ParseTracks("1:600 2:600* 3:600* 4:600")
+	if err != nil {
+		t.Fatal(err)
+	}
+	w.stamp("", edit.StampSpec{Template: edit.TemplateStation, Code: "AAA", Edge: "W", Tracks: tracks, EastCrossovers: []string{"scissors"}})
+	var lineEnds []string
+	for _, end := range w.ends("AAA", true) {
+		w.do(func(s *infra.Snapshot) error {
+			p, err := edit.Extend(s, end, true, 11000, 0, 0)
+			lineEnds = append(lineEnds, p)
+			return err
+		})
+	}
+	w.stamp(lineEnds[0], edit.StampSpec{Template: edit.TemplateStation, Code: "BBB", Edge: "E", Tracks: tracks, WestCrossovers: []string{"scissors"}})
+	w.do(func(s *infra.Snapshot) error { return edit.Join(s, lineEnds[1]) })
+	w.run(repeat(2, []string{"AAA", "BBB"}, []string{"BBB", "AAA"})...)
+}

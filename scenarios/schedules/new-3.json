@@ -1,0 +1,94 @@
+{
+  "trains": [
+    {
+      "number": "T001",
+      "class": "Passenger",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "GOC",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 10,
+          "dwell": 2
+        },
+        {
+          "stn": "TPJ",
+          "kind": "pass",
+          "pf": "1"
+        },
+        {
+          "stn": "PDKT",
+          "kind": "pass",
+          "pf": "1"
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        }
+      ]
+    },
+    {
+      "number": "T002",
+      "class": "VB Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "GOC",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 20
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        },
+        {
+          "stn": "KKDI",
+          "kind": "pass",
+          "pf": "4"
+        }
+      ]
+    },
+    {
+      "number": "T003",
+      "class": "VB Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "GOC",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 40
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "dwell": 2
+        },
+        {
+          "stn": "KKDI",
+          "kind": "pass",
+          "pf": "4"
+        }
+      ]
+    }
+  ]
+}

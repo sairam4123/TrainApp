@@ -1,8 +1,9 @@
 // Command traindemo picks a scenario to show, with previews of its world and
 // schedule, runs it with trainapp, drawing its progress, and replays it with
 // trainviz. Quitting trainviz with q comes back to the picker; ctrl+c quits
-// everything. e opens the selected scenario in trainedit, and n starts a new
-// one from it; the picker reads the scenarios again when trainedit quits.
+// everything. e opens the selected scenario in trainedit, c starts a new one
+// as a copy of it, and n a new one on a world picked in trainedit; the picker
+// reads the scenarios again when trainedit quits.
 //
 //	traindemo [-dir scenarios] [-rule thresholds] [-bin dist]
 //

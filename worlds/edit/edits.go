@@ -117,9 +117,13 @@ func addSignal(s *infra.Snapshot, at, facing, dir string) {
 // Join takes a point out of the line it is on: it must have one track each
 // side, neither a switch leg nor a platform. The two become one, their
 // lengths added and lane changes kept, at the lower of their speeds.
-// Signals standing at the point go with it.
+// Signals standing at the point go with it. At an open end, it joins the
+// end to the one facing it instead (joinFacing).
 func Join(s *infra.Snapshot, at string) error {
 	west, east := tracksAt(s, at)
+	if (len(west) == 0) != (len(east) == 0) {
+		return joinFacing(s, at, len(east) == 0)
+	}
 	if len(west) != 1 || len(east) != 1 {
 		return fmt.Errorf("%s needs one track each side to join them", at)
 	}
@@ -147,6 +151,33 @@ func Join(s *infra.Snapshot, at string) error {
 	}
 	removePoint(s, at)
 	return nil
+}
+
+// joinFacing makes an open end (with no track east, or west) and the nearest
+// open end facing it on the same lane one point, as a station stamped onto an
+// end is joined: the facing end folds into at. Ends of the world are not
+// joined.
+func joinFacing(s *infra.Snapshot, at string, east bool) error {
+	if s.Points[pointIndex(s, at)].DeadEnd {
+		return fmt.Errorf("%s is an end of the world: open it first", at)
+	}
+	d, err := schematic.FromSnapshot(s)
+	if err != nil {
+		return err
+	}
+	lane, _ := d.Lane(at)
+	order := d.Order()
+	if !east {
+		slices.Reverse(order)
+	}
+	for _, p := range order[slices.Index(order, at)+1:] {
+		if l, _ := d.Lane(p); l != lane || s.Points[pointIndex(s, p)].DeadEnd || !open(s, p, !east) || open(s, p, east) {
+			continue
+		}
+		mergePoint(s, p, at)
+		return nil
+	}
+	return fmt.Errorf("no open end %s of %s faces it on its lane", side(east), at)
 }
 
 // AddSwitch makes toe a switch: a diverging leg leaves it to the east (or

@@ -250,6 +250,11 @@ func (d *Diagram) Lane(pt string) (int, bool) {
 	return l, ok
 }
 
+// Order returns the points west to east: every track's From before its To.
+func (d *Diagram) Order() []string {
+	return slices.Clone(d.order)
+}
+
 // Tracks returns the tracks in the world's order.
 func (d *Diagram) Tracks() []*Track {
 	return slices.Clone(d.tracks)

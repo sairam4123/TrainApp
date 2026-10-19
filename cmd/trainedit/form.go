@@ -61,6 +61,17 @@ type form struct {
 	cancel func() // run when the form is backed out of, if set
 	err    string
 	notes  []string // lines under the fields, e.g. a format
+	top    bool     // drawn at the top, not the middle, to keep what is under it in sight
+}
+
+// value is a field's value, trimmed.
+func (f *form) value(key string) string {
+	for _, fd := range f.fields {
+		if fd.key == key {
+			return strings.TrimSpace(fd.value)
+		}
+	}
+	return ""
 }
 
 // values are a form's answers, by field key.
@@ -226,13 +237,16 @@ func (f *form) lines(w int) (out []string, cur int) {
 }
 
 // overlay draws box lines over the middle of the screen's lines.
-func overlay(screen []string, box []string, width int) []string {
+func overlay(screen []string, box []string, width int, top bool) []string {
 	bw := 0
 	for _, l := range box {
 		bw = max(bw, ansi.StringWidth(l))
 	}
 	x := max((width-bw)/2, 0)
 	y := max((len(screen)-len(box))/2, 0)
+	if top {
+		y = 0
+	}
 	out := slices.Clone(screen)
 	for i, l := range box {
 		if y+i >= len(out) {

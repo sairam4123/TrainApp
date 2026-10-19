@@ -1,7 +1,8 @@
 // Command trainedit edits a scenario: its world on the lane schematic
 // trainviz draws, its trains, and the scenario itself, which it runs with
 // trainapp and replays with trainviz as traindemo does. traindemo opens it
-// with e (the selected scenario) and n (a new one).
+// with e (the selected scenario), c (a copy of it) and n (a new one). A new
+// scenario without -from or -world asks for its name and world.
 //
 //	trainedit -scenario scenarios/sl-12.json      edit a scenario
 //	trainedit -new [-from scenarios/sl-12.json]   a new scenario in -dir, from another's files

@@ -1,0 +1,6 @@
+{
+  "name": "new-3",
+  "world": "worlds/new-3.json",
+  "schedule": "schedules/new-3.json",
+  "profile": "../profiles/ir.json"
+}

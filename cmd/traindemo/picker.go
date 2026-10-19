@@ -227,9 +227,11 @@ func (p *picker) key(key string) tea.Cmd {
 	case "v":
 		return p.view()
 	case "e":
-		return p.edit(false)
+		return p.edit(false, false)
+	case "c":
+		return p.edit(true, true)
 	case "n":
-		return p.edit(true)
+		return p.edit(true, false)
 	case "tab", "shift+tab":
 		p.focus = 1 - p.focus
 	case "up", "k":
@@ -314,8 +316,9 @@ func (p *picker) view() tea.Cmd {
 }
 
 // edit hands the terminal to trainedit on the selected scenario, or on a new
-// one made from it; the scenarios are read again when it quits.
-func (p *picker) edit(fresh bool) tea.Cmd {
+// one, made from it if from says so (else trainedit asks for its world); the
+// scenarios are read again when it quits.
+func (p *picker) edit(fresh, from bool) tea.Cmd {
 	if p.bins.trainedit == "" {
 		p.note = "no trainedit: " + p.bins.editErr.Error()
 		return nil
@@ -330,7 +333,7 @@ func (p *picker) edit(fresh bool) tea.Cmd {
 	args := []string{"-saved-to", saved.Name(), "-out", p.outDir, "-bin", filepath.Dir(p.bins.trainapp)}
 	if fresh {
 		args = append(args, "-new", "-dir", p.dir)
-		if sc.Err == nil {
+		if from && sc.Err == nil {
 			args = append(args, "-from", sc.Path)
 		}
 	} else {
@@ -510,9 +513,9 @@ func (p *picker) render() string {
 }
 
 func (p *picker) keyLine() string {
-	keys := " ↑↓ scenario  tab trains  enter run  v replay  e edit  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn schedule  q quit"
+	keys := " ↑↓ scenario  tab trains  enter run  v replay  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn schedule  q quit"
 	if p.focus == focusTrains {
-		keys = " ↑↓ train  tab/esc scenarios  enter run  v replay  e edit  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn page  q quit"
+		keys = " ↑↓ train  tab/esc scenarios  enter run  v replay  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn page  q quit"
 	}
 	if p.run != nil {
 		keys = " esc cancel the run  ctrl+c quit"

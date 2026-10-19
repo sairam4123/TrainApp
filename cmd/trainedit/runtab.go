@@ -113,7 +113,15 @@ func (r *runTab) editField() {
 	s := r.m.s
 	switch r.scenarioFields()[r.field].label {
 	case "name":
-		r.m.open(newForm("scenario name", func(v values) error { return s.rename(v["name"]) }, text("name", "name", s.sc.Name)))
+		r.m.open(newForm("scenario name", func(v values) error {
+			if err := s.rename(v["name"]); err != nil {
+				return err
+			}
+			if s.moveTo != "" {
+				r.m.say("renamed: saving moves it to %s, with its own world, schedule and timetable files", s.moveTo)
+			}
+			return nil
+		}, field{key: "name", label: "name", value: s.sc.Name, help: "the file is named after it too, once saved"}))
 	case "description":
 		r.m.open(newForm("description", func(v values) error {
 			s.sc.Description, s.scDirty = v["text"], true

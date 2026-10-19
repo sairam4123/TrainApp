@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,6 +11,7 @@ import (
 	"trainapp/railway/infra"
 	"trainapp/railway/ops"
 	"trainapp/railway/scenario"
+	"trainapp/railway/sim"
 	"trainapp/units"
 	"trainapp/visualization/schematic"
 	"trainapp/worlds"
@@ -273,6 +275,7 @@ func TestNewScenarioFromNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := newModel(s, config{outDir: t.TempDir()})
+	press(m, "esc") // on an empty world
 	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
 
 	// a terminus at the west edge, on its own
@@ -418,6 +421,7 @@ func TestDrawTrack(t *testing.T) {
 	dir := copyScenarios(t)
 	s, _ := newSession(dir, "")
 	m := newModel(s, config{outDir: t.TempDir()})
+	press(m, "esc") // on an empty world
 	m.Update(tea.WindowSizeMsg{Width: 120, Height: 36})
 	press(m, "e") // starts the world at a point
 	setField(t, m, "m", "2000")
@@ -456,6 +460,7 @@ func TestDoubleLineByKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := newModel(s, config{outDir: t.TempDir()})
+	press(m, "esc") // on an empty world
 	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
 	stamp := func(fields ...string) { t.Helper(); buildStation(t, m, fields...) }
 	stamp("code", "AAA", "tracks", "1:600 2:600* 3:600* 4:600", "edge", "west", "ecross", "scissors")
@@ -575,6 +580,7 @@ func TestJunctionByKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := newModel(s, config{outDir: t.TempDir()})
+	press(m, "esc") // on an empty world
 	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
 	buildStation(t, m, "code", "AAA", "tracks", "1:600* 2:600", "edge", "west")
 	buildStation(t, m, "code", "BBB", "tracks", "1:600* 2:600", "edge", "east", "km", "12")
@@ -606,6 +612,7 @@ func TestEmptyStationByKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := newModel(s, config{outDir: t.TempDir()})
+	press(m, "esc") // on an empty world
 	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
 	press(m, "n")
 	setField(t, m, "code", "AAA")
@@ -862,6 +869,7 @@ func TestBuilder(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := newModel(s, config{outDir: t.TempDir()})
+	press(m, "esc") // on an empty world
 	m.Update(tea.WindowSizeMsg{Width: 150, Height: 40})
 	press(m, "t")
 	setCell(t, m, "start", "double line")
@@ -925,6 +933,7 @@ func TestBuilderJunctionStation(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := newModel(s, config{outDir: t.TempDir()})
+	press(m, "esc") // on an empty world
 	m.Update(tea.WindowSizeMsg{Width: 150, Height: 40})
 	press(m, "t")
 	setCell(t, m, "start", "double line")
@@ -964,6 +973,7 @@ func TestBuilderSameNumberTwice(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := newModel(s, config{outDir: t.TempDir()})
+	press(m, "esc") // on an empty world
 	m.Update(tea.WindowSizeMsg{Width: 150, Height: 40})
 	press(m, "t")
 	setCell(t, m, "start", "crossing")
@@ -978,5 +988,388 @@ func TestBuilderSameNumberTwice(t *testing.T) {
 	press(m, "enter")
 	if m.panel == nil || len(m.s.world.S.Stations) != 0 {
 		t.Error("stamped with two platform 1s")
+	}
+}
+
+// A train's path runs over the platform it names at a station, the shortest
+// way otherwise, and none runs over a platform the track does not reach.
+func TestTrainPath(t *testing.T) {
+	s, err := worlds.BuildTpjKkdiWorld().Snapshot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	runs := 0
+	for _, pf := range platformNos(s, "PDKT") {
+		for _, east := range []bool{true, false} {
+			stns := []string{"TPJ", "PDKT", "KKDI"}
+			if !east {
+				slices.Reverse(stns)
+			}
+			pts := []ops.PointSpec{{Stn: stns[0]}, {Stn: "PDKT", Pf: pf}, {Stn: stns[2]}}
+			path, err := trainPath(s, pts)
+			if err != nil {
+				continue
+			}
+			runs++
+			tr := s.Tracks[slices.IndexFunc(s.Tracks, func(tr infra.SnapshotTrack) bool { return tr.ID == pfTrack(s, "PDKT", pf) })]
+			from, to := tr.From, tr.To
+			if !east {
+				from, to = to, from
+			}
+			if i := slices.Index(path, from); i < 0 || i+1 >= len(path) || path[i+1] != to {
+				t.Errorf("%v: the path does not run over PDKT platform %s: %v", stns, pf, path)
+			}
+			g := newTrackGraph(s)
+			if g.code[path[0]] != stns[0] || g.code[path[len(path)-1]] != stns[2] {
+				t.Errorf("%v: the path runs %s to %s", stns, path[0], path[len(path)-1])
+			}
+		}
+	}
+	if runs < 2 {
+		t.Errorf("only %d runs over PDKT's platforms", runs)
+	}
+	if _, err := trainPath(s, []ops.PointSpec{{Stn: "TPJ"}, {Stn: "KKDI"}, {Stn: "PDKT"}}); err == nil {
+		t.Error("a path that reverses")
+	}
+}
+
+// platformNos is a station's platform numbers.
+func platformNos(s *infra.Snapshot, code string) []string {
+	var out []string
+	for _, st := range s.Stations {
+		for _, pf := range st.Platforms {
+			if st.Code == code {
+				out = append(out, pf.No)
+			}
+		}
+	}
+	return out
+}
+
+// The schedules tab draws the picked train's way, and the point form's
+// platform as it is picked, the form at the top to keep it in sight.
+func TestSchedulesDrawTheWay(t *testing.T) {
+	m := modelOn(t, twoWaysWorld(t))
+	press(m, "a")
+	setCell(t, m, "from", "AAA")
+	setCell(t, m, "to", "DDD")
+	press(m, "enter")
+	if m.panel != nil {
+		t.Fatalf("not added: %s", m.note)
+	}
+	out := ansi.Strip(m.render())
+	if !strings.Contains(out, "the way · ") || !strings.Contains(out, "BBB") {
+		t.Fatalf("no way drawn:\n%s", out)
+	}
+	press(m, "tab", "down", "enter")
+	if m.form == nil || m.sched.editing != m.form {
+		t.Fatal("no point form")
+	}
+	toField(t, m, "pf")
+	setField(t, m, "pf", "1")
+	lines := strings.Split(m.render(), "\n")
+	if !strings.Contains(ansi.Strip(lines[1]), "point 2") {
+		t.Errorf("the point form is not at the top: %q", ansi.Strip(lines[1]))
+	}
+	if !strings.Contains(ansi.Strip(strings.Join(lines, "\n")), "the way · ") {
+		t.Error("the way is hidden under the form")
+	}
+}
+
+// Space stops or passes the picked station whichever of its cells is
+// picked, and leaves its platform as it is.
+func TestRoutePickerSpaceStops(t *testing.T) {
+	m := modelOn(t, twoWaysWorld(t))
+	press(m, "a")
+	setCell(t, m, "from", "AAA")
+	setCell(t, m, "to", "DDD")
+	r := m.panel.(*routePicker)
+	via := r.ways[0].stations[1]
+	setCell(t, m, "pf:"+via, "1")
+	for _, want := range []string{"■", "·"} {
+		press(m, "space")
+		if v, _ := cellValue(r.sh.table, "stop:"+via); v != want {
+			t.Errorf("space: %s is %q, want %q", via, v, want)
+		}
+		if v, _ := cellValue(r.sh.table, "pf:"+via); v != "1" {
+			t.Errorf("space changed the platform to %q", v)
+		}
+	}
+}
+
+// Space makes an end a pass too: the train enters, or leaves, running
+// through, and runs so.
+func TestRoutePickerEndsPass(t *testing.T) {
+	m := modelOn(t, twoWaysWorld(t))
+	press(m, "a")
+	setCell(t, m, "from", "AAA")
+	setCell(t, m, "to", "DDD")
+	for _, end := range []string{"AAA", "DDD"} {
+		setCell(t, m, "pf:"+end, "any")
+		press(m, "space")
+	}
+	r := m.panel.(*routePicker)
+	if !r.sh.table[0][2].off {
+		t.Error("a passed end still takes a dwell")
+	}
+	press(m, "enter")
+	if m.panel != nil {
+		t.Fatalf("not added: %s", m.note)
+	}
+	tr := m.s.sched.Trains[len(m.s.sched.Trains)-1]
+	first, last := tr.Points[0], tr.Points[len(tr.Points)-1]
+	if first.Kind != ops.SpPass || last.Kind != ops.SpPass || first.Arr == nil {
+		t.Fatalf("ends %+v and %+v, want passes, the first timed", first, last)
+	}
+	if ps := checkTrain(m.s.world.S, tr); len(ps) > 0 {
+		t.Errorf("problems: %v", ps)
+	}
+
+	// it runs through both (classless: the sim here has no priorities)
+	world, err := m.s.world.S.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+	classless := tr
+	classless.Class = ""
+	train, err := classless.Train()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := &sim.Sim{OutputDir: t.TempDir()}
+	s.SetWorld(world)
+	if err := s.AddTrain(train); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Run(); err != nil {
+		t.Fatal(err)
+	}
+	if st := s.Status(); len(st) != 1 || st[0].Phase != "exited" {
+		t.Errorf("the train ended %+v", st)
+	}
+
+	// re-routing starts from its passes
+	press(m, "f")
+	r = m.panel.(*routePicker)
+	for _, end := range []string{"AAA", "DDD"} {
+		if v, _ := cellValue(r.sh.table, "stop:"+end); v != "·" {
+			t.Errorf("re-routing makes %s a stop", end)
+		}
+	}
+}
+
+// Editing a train opens the picker on it, as adding does: its details in
+// the head, each station's times in the table. Accepted as it is, the
+// train comes back the same; times typed in are kept to.
+func TestEditTrainInPicker(t *testing.T) {
+	m := modelOn(t, twoWaysWorld(t))
+	press(m, "a")
+	setCell(t, m, "from", "AAA")
+	setCell(t, m, "to", "DDD")
+	r := m.panel.(*routePicker)
+	via := r.ways[0].stations[1]
+	setCell(t, m, "name", "Express")
+	setCell(t, m, "priority", "2")
+	setCell(t, m, "entry", "08:00")
+	setCell(t, m, "stop:"+via, "■")
+	setCell(t, m, "arr:"+via, "08:10")
+	setCell(t, m, "dep:"+via, "08:15")
+	setCell(t, m, "min:"+via, "1")
+	setCell(t, m, "arr:DDD", "08:30")
+	setCell(t, m, "dep:DDD", "08:32")
+	press(m, "enter")
+	if m.panel != nil {
+		t.Fatalf("not added: %s", m.note)
+	}
+	tr := m.s.sched.Trains[len(m.s.sched.Trains)-1]
+	p := tr.Points[1]
+	if tr.Name != "Express" || tr.Priority != 2 || p.Kind != ops.SpStop || p.Arr == nil || *p.Arr != 490 || p.Dep == nil || *p.Dep != 495 ||
+		p.Dwell != nil || p.MinDwell == nil || *p.MinDwell != 1 || tr.Points[2].Arr == nil || *tr.Points[2].Arr != 510 {
+		t.Fatalf("the train as added: %+v %+v", tr, p)
+	}
+	if ps := checkTrain(m.s.world.S, tr); len(ps) > 0 {
+		t.Errorf("problems: %v", ps)
+	}
+
+	m.sched.train = len(m.s.sched.Trains) - 1
+	press(m, "enter")
+	r, ok := m.panel.(*routePicker)
+	if !ok {
+		t.Fatal("enter does not open the picker on the train")
+	}
+	if v, _ := cellValue(r.sh.head, "name"); v != "Express" {
+		t.Errorf("the head has the name %q", v)
+	}
+	press(m, "enter")
+	if m.panel != nil {
+		t.Fatalf("not saved: %s", m.note)
+	}
+	again := m.s.sched.Trains[m.sched.train]
+	if a, b := mustJSON(t, tr), mustJSON(t, again); a != b {
+		t.Errorf("edited unchanged, the train changed:\n%s\n%s", a, b)
+	}
+
+	// a stop keeps to its dep or stands its dwell, not both; an arr with no
+	// dep is the entry's alone
+	press(m, "enter")
+	setCell(t, m, "dwell:"+via, "3")
+	press(m, "enter")
+	if m.panel == nil {
+		t.Error("a dwell and a dep at one stop")
+	}
+	setCell(t, m, "dwell:"+via, "")
+	setCell(t, m, "dep:"+via, "")
+	press(m, "enter")
+	if m.panel == nil {
+		t.Error("an arr without a dep at a stop past the first")
+	}
+}
+
+// A pattern's trains keep to their times as much later as they enter; the
+// trains back take none.
+func TestPatternShiftsTimes(t *testing.T) {
+	m := modelOn(t, twoWaysWorld(t))
+	press(m, "g")
+	setCell(t, m, "from", "AAA")
+	setCell(t, m, "to", "DDD")
+	setCell(t, m, "interval", "60")
+	setCell(t, m, "count", "2")
+	setCell(t, m, "entry", "08:00")
+	setCell(t, m, "arr:DDD", "08:30")
+	setCell(t, m, "dep:DDD", "08:32")
+	press(m, "enter")
+	if m.panel != nil {
+		t.Fatalf("not added: %s", m.note)
+	}
+	var arrs []float64
+	for _, tr := range m.s.sched.Trains {
+		last := tr.Points[len(tr.Points)-1]
+		switch {
+		case last.Stn == "DDD" && last.Arr != nil:
+			arrs = append(arrs, *last.Arr)
+		case last.Stn == "AAA" && last.Arr != nil:
+			t.Errorf("%s back is timed", tr.Number)
+		}
+	}
+	if !slices.Equal(arrs, []float64{510, 570}) {
+		t.Errorf("arrivals at DDD %v, want 510 and 570", arrs)
+	}
+}
+
+func mustJSON(t *testing.T, v any) string {
+	t.Helper()
+	b, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+// Renaming a saved scenario moves its file when it is saved, with the
+// world and schedule files made for it; files other scenarios use stay.
+func TestRenameMovesFiles(t *testing.T) {
+	dir := copyScenarios(t)
+	s, err := newSession(dir, filepath.Join(dir, "sl-6.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.rename("solo"); err != nil {
+		t.Fatal(err)
+	}
+	s.world.Dirty, s.schedDirty = true, true // its own world and schedule
+	if err := s.save(map[string]bool{"world": true, "schedule": true}); err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range []string{"solo.json", "worlds/solo.json", "schedules/solo.json"} {
+		if !fileExists(filepath.Join(dir, p)) {
+			t.Fatalf("no %s to start from", p)
+		}
+	}
+
+	if err := s.rename("sl-12"); err == nil {
+		t.Error("renamed onto another scenario's file")
+	}
+	if err := s.rename("duo"); err != nil {
+		t.Fatal(err)
+	}
+	if !fileExists(filepath.Join(dir, "solo.json")) {
+		t.Fatal("moved before it was saved")
+	}
+	if err := s.save(nil); err != nil {
+		t.Fatal(err)
+	}
+	for p, want := range map[string]bool{
+		"solo.json": false, "worlds/solo.json": false, "schedules/solo.json": false,
+		"duo.json": true, "worlds/duo.json": true, "schedules/duo.json": true,
+	} {
+		if fileExists(filepath.Join(dir, p)) != want {
+			t.Errorf("%s there: %v, want %v", p, !want, want)
+		}
+	}
+	sc, err := scenario.Load(filepath.Join(dir, "duo.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if sc.Name != "duo" || sc.World != "worlds/duo.json" || sc.Schedule != "schedules/duo.json" {
+		t.Errorf("the moved scenario: %+v", sc)
+	}
+
+	// a scenario sharing its schedule leaves it where it is
+	m := openModel(t, filepath.Join(dir, "sl-12-disrupt.json"))
+	shared := m.s.sc.SchedulePath()
+	if err := m.s.rename("sl-12-late"); err != nil {
+		t.Fatal(err)
+	}
+	press(m, "ctrl+s")
+	if m.s.dirty() {
+		t.Fatalf("not saved: %s", m.note)
+	}
+	sc, err = scenario.Load(filepath.Join(dir, "sl-12-late.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !samePath(sc.SchedulePath(), shared) || !fileExists(shared) || fileExists(filepath.Join(dir, "sl-12-disrupt.json")) {
+		t.Errorf("the shared schedule moved, or the old file stayed: %s", sc.SchedulePath())
+	}
+	if _, err := scenario.Load(filepath.Join(dir, "sl-12.json")); err != nil {
+		t.Errorf("the scenario sharing it no longer loads: %v", err)
+	}
+}
+
+// A new scenario on an empty world asks its name and the world to start
+// on: a built-in one, or a snapshot in worlds/ that it then shares.
+func TestNewScenarioPicksWorld(t *testing.T) {
+	dir := copyScenarios(t)
+	if err := writeJSON(filepath.Join(dir, "worlds", "two-ways.json"), twoWaysWorld(t)); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct{ world, ref, stn string }{
+		{"tpjkkdi-sl", "tpjkkdi-sl", "PDKT"},
+		{"worlds/two-ways.json", "worlds/two-ways.json", "CCC"},
+	} {
+		s, err := newSession(dir, "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		m := newModel(s, config{outDir: t.TempDir()})
+		m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
+		if m.form == nil || m.form.title != "new scenario" {
+			t.Fatal("no new scenario form")
+		}
+		setField(t, m, "name", "on-"+strings.TrimSuffix(filepath.Base(c.world), ".json"))
+		setField(t, m, "world", c.world)
+		press(m, "enter")
+		if m.form != nil {
+			t.Fatalf("%s: not taken: %s", c.world, m.form.err)
+		}
+		if m.s.sc.World != c.ref || !slices.Contains(m.s.stationCodes(), c.stn) || m.world.diagram == nil {
+			t.Errorf("%s: the world is %q with stations %v", c.world, m.s.sc.World, m.s.stationCodes())
+		}
+		if m.s.sc.Name != "on-"+strings.TrimSuffix(filepath.Base(c.world), ".json") {
+			t.Errorf("named %s", m.s.sc.Name)
+		}
 	}
 }

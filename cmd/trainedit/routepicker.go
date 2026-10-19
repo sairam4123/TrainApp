@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"trainapp/railway/infra"
 	"trainapp/railway/ops"
 	"trainapp/visualization/schematic"
 	"trainapp/visualization/tui"
@@ -16,17 +17,31 @@ import (
 // the caller's fields (a train's number, a pattern's interval, ...), then
 // from, to, when it enters and its dwell; the ways between from and to are
 // a choice; and the table is the chosen way's stations, each with whether
-// the train stops there, how long, and on which platform. Beside it the
-// world's schematic draws the way.
+// the train stops there, its times, how long, and on which platform.
+// Beside it the world's schematic draws the way.
 
 // maxWays is how many ways the picker offers, shortest first.
 const maxWays = 6
 
-// stopChoice is what is picked for a station of a way.
+// stopChoice is what is picked for a station of a way. A station between
+// the ends passes unless it is a stop; an end stops unless it is a pass.
 type stopChoice struct {
-	stop  bool
-	dwell string // minutes, empty for the route's dwell
-	pf    string // empty for any
+	stop    bool   // a stop, between the ends
+	endPass bool   // a pass, at an end: the train enters or leaves running
+	dwell   string // minutes, empty for the route's dwell
+	pf      string // empty for any
+	// arr and dep time a stop, keeping to them, with min its least dwell
+	// when late; arr alone times a pass. Empty for untimed.
+	arr, dep, min string
+}
+
+// stops reports whether the train stops at a station of a way, an end or
+// not.
+func (c stopChoice) stops(end bool) bool {
+	if end {
+		return !c.endPass
+	}
+	return c.stop
 }
 
 // pickedRoute is a route as picked: the head's values by key, the way, and
@@ -37,34 +52,70 @@ type pickedRoute struct {
 	entry float64
 	dwell float64
 	stops map[string]stopChoice
+	// picked is the entry as picked: a train entering later (a pattern's)
+	// keeps its times as much later
+	picked float64
 }
 
-// points are the route's schedule points: a stop at each end and wherever
-// picked, a pass elsewhere; the first enters at entry.
-func (r pickedRoute) points(stations []string, platforms bool) ([]ops.PointSpec, error) {
-	var out []ops.PointSpec
+// points are the route's schedule points: a stop at each end (unless it is
+// picked to pass) and wherever picked, a pass elsewhere; the first enters
+// at entry. A stop keeps to its arr and dep if it has a dep, else stands
+// its dwell (the route's, unless it has its own). out is the way as picked:
+// a train running it back takes no platforms or times.
+func (r pickedRoute) points(stations []string, out bool) ([]ops.PointSpec, error) {
+	var pts []ops.PointSpec
 	for i, stn := range stations {
 		c := r.stops[stn]
 		p := ops.PointSpec{Stn: stn, Kind: ops.SpPass}
-		if i == 0 || i == len(stations)-1 || c.stop {
-			p.Kind, p.Dwell = ops.SpStop, ptr(r.dwell)
-			if c.dwell != "" {
-				d, err := parseNum(values{"d": c.dwell}, "d", "the dwell at "+stn)
+		var err error
+		at := func(text, what string) *float64 {
+			if err != nil || !out {
+				return nil
+			}
+			var t *float64
+			if t, err = parseTime(text, what+" at "+stn); t != nil {
+				t = ptr(*t + r.entry - r.picked)
+			}
+			return t
+		}
+		p.Arr = at(c.arr, "arr")
+		if c.stops(i == 0 || i == len(stations)-1) {
+			p.Kind = ops.SpStop
+			if p.Dep = at(c.dep, "dep"); p.Dep == nil {
+				p.Dwell = ptr(r.dwell)
+				if c.dwell != "" {
+					d, err := parseNum(values{"d": c.dwell}, "d", "the dwell at "+stn)
+					if err != nil {
+						return nil, err
+					}
+					p.Dwell = ptr(d)
+				}
+			} else if c.dwell != "" {
+				return nil, fmt.Errorf("%s: a stop keeps to its dep or stands its dwell, not both", stn)
+			}
+			if out && c.min != "" {
+				m, err := parseNum(values{"m": c.min}, "m", "the min dwell at "+stn)
 				if err != nil {
 					return nil, err
 				}
-				p.Dwell = ptr(d)
+				p.MinDwell = ptr(m)
 			}
 		}
-		if platforms {
+		if err != nil {
+			return nil, err
+		}
+		if out {
 			p.Pf = c.pf
 		}
 		if i == 0 {
 			p.Arr = ptr(r.entry)
 		}
-		out = append(out, p)
+		if _, err := p.Point(i == 0); err != nil {
+			return nil, fmt.Errorf("%s: %w", stn, err)
+		}
+		pts = append(pts, p)
 	}
-	return out, nil
+	return pts, nil
 }
 
 type routePicker struct {
@@ -108,7 +159,7 @@ func (m *model) openRoutePicker(title string, head [][]field, from, to string, e
 		},
 		[]field{{key: "way", label: "way", fixed: true}},
 	)
-	r.sh.cols = []column{{"stop", 5}, {"station", 9}, {"dwell", 6}, {"platform", 10}}
+	r.sh.cols = []column{{"stop", 5}, {"station", 9}, {"arr", 7}, {"dep", 7}, {"dwell", 6}, {"min", 5}, {"platform", 10}}
 	r.refresh()
 	r.sh.fix()
 	m.panel = r
@@ -160,26 +211,52 @@ func (r *routePicker) refresh() {
 		c := r.kept[stn]
 		end := i == 0 || i == len(w.stations)-1
 		stop := choice("stop:"+stn, "", "·", "·", "■")
-		if c.stop || end {
+		if c.stops(end) {
 			stop.value = "■"
 		}
-		stop.fixed = end
-		dwell := field{key: "dwell:" + stn, value: c.dwell, off: stop.value != "■"}
+		stops := stop.value == "■"
 		pfs := append([]string{"any"}, r.m.s.platforms(stn)...)
-		pf := choice("pf:"+stn, "", tui.ValueOr(c.pf, "any"), pfs...)
-		r.sh.table = append(r.sh.table, []field{stop, {key: "stn:" + stn, value: stn, fixed: true}, dwell, pf})
+		r.sh.table = append(r.sh.table, []field{
+			stop,
+			{key: "stn:" + stn, value: stn, fixed: true},
+			{key: "arr:" + stn, value: c.arr, off: i == 0}, // the first's is the entry
+			{key: "dep:" + stn, value: c.dep, off: !stops},
+			{key: "dwell:" + stn, value: c.dwell, off: !stops},
+			{key: "min:" + stn, value: c.min, off: !stops},
+			choice("pf:"+stn, "", tui.ValueOr(c.pf, "any"), pfs...),
+		})
 	}
+}
+
+// rowValue is the value of a table row's cell whose key starts with kind
+// (e.g. "pf:"), trimmed.
+func rowValue(cells []field, kind string) string {
+	for _, f := range cells {
+		if strings.HasPrefix(f.key, kind) {
+			return strings.TrimSpace(f.value)
+		}
+	}
+	return ""
 }
 
 // keep notes what the table has picked at each station.
 func (r *routePicker) keep() {
-	for _, cells := range r.sh.table {
+	for i, cells := range r.sh.table {
 		stn := strings.TrimPrefix(cells[0].key, "stop:")
-		pf := cells[3].value
-		if pf == "any" {
-			pf = ""
+		c := r.kept[stn] // what it is in the middle, or at an end, kept for when it moves
+		c.dwell, c.pf, c.dep, c.min = rowValue(cells, "dwell:"), rowValue(cells, "pf:"), rowValue(cells, "dep:"), rowValue(cells, "min:")
+		if i > 0 {
+			c.arr = rowValue(cells, "arr:")
 		}
-		r.kept[stn] = stopChoice{stop: cells[0].value == "■" && !cells[0].fixed, dwell: strings.TrimSpace(cells[2].value), pf: pf}
+		if c.pf == "any" {
+			c.pf = ""
+		}
+		if i == 0 || i == len(r.sh.table)-1 {
+			c.endPass = cells[0].value == "·"
+		} else {
+			c.stop = cells[0].value == "■"
+		}
+		r.kept[stn] = c
 	}
 }
 
@@ -206,6 +283,15 @@ func (r *routePicker) key(msg tea.KeyPressMsg) bool {
 			return false
 		}
 		return true
+	case "space":
+		// a station's stop or pass, whichever of its cells is picked
+		if r.sh.sec == 1 && r.sh.row < len(r.sh.table) {
+			stop := &r.sh.table[r.sh.row][0]
+			stop.value = map[string]string{"■": "·", "·": "■"}[stop.value]
+			r.refresh()
+			r.sh.fix()
+			return false
+		}
 	}
 	if r.sh.key(msg) {
 		r.refresh()
@@ -237,7 +323,7 @@ func (r *routePicker) accept() error {
 	if err != nil {
 		return err
 	}
-	return r.ok(pickedRoute{head: v, way: w, entry: *at, dwell: dwell, stops: r.kept})
+	return r.ok(pickedRoute{head: v, way: w, entry: *at, picked: *at, dwell: dwell, stops: r.kept})
 }
 
 func (r *routePicker) render(w, h int) []string {
@@ -251,25 +337,63 @@ func (r *routePicker) preview(w, h int) []string {
 	if d == nil {
 		return nil
 	}
+	s := r.m.s.world.S
 	marks := map[string]schematic.Mark{}
 	way, ok := r.way()
 	if ok {
-		track := map[[2]string]string{}
-		for _, t := range r.m.s.world.S.Tracks {
-			track[[2]string{t.From, t.To}], track[[2]string{t.To, t.From}] = t.ID, t.ID
+		// over the platforms picked, if the track allows
+		var pts []ops.PointSpec
+		for _, stn := range way.stations {
+			pts = append(pts, ops.PointSpec{Stn: stn, Pf: r.kept[stn].pf})
 		}
-		for i := 0; i+1 < len(way.points); i++ {
-			marks[track[[2]string{way.points[i], way.points[i+1]}]] = schematic.MarkRoute
+		path, err := trainPath(s, pts)
+		if err != nil {
+			path = way.points
 		}
+		markWay(s, path, marks)
 	}
 	focus := ""
 	if r.sh.sec == 1 && r.sh.row < len(r.sh.table) {
-		focus = r.sh.table[r.sh.row][1].value
+		row := r.sh.table[r.sh.row]
+		focus = rowValue(row, "stn:")
 		marks[focus] = schematic.MarkSelected
+		if strings.HasPrefix(row[r.sh.col].key, "pf:") { // the platform being picked
+			if t := pfTrack(s, focus, rowValue(row, "pf:")); t != "" {
+				marks[t] = schematic.MarkSelected
+			}
+		}
 	} else if ok {
 		focus = way.stations[0]
 	}
-	f := d.Draw(schematic.Options{Level: schematic.Layout, Zoom: 1, Marks: marks})
+	return viewAround(d.Draw(schematic.Options{Level: schematic.Layout, Zoom: 1, Marks: marks}), focus, w, h)
+}
+
+// markWay marks the tracks between a way's points as a route.
+func markWay(s *infra.Snapshot, points []string, marks map[string]schematic.Mark) {
+	track := map[[2]string]string{}
+	for _, t := range s.Tracks {
+		track[[2]string{t.From, t.To}], track[[2]string{t.To, t.From}] = t.ID, t.ID
+	}
+	for i := 0; i+1 < len(points); i++ {
+		marks[track[[2]string{points[i], points[i+1]}]] = schematic.MarkRoute
+	}
+}
+
+// pfTrack is the track of a station's platform (or through track) no, empty
+// if there is none.
+func pfTrack(s *infra.Snapshot, stn, no string) string {
+	for _, st := range s.Stations {
+		for _, pf := range st.Platforms {
+			if st.Code == stn && pf.No == no {
+				return pf.Track
+			}
+		}
+	}
+	return ""
+}
+
+// viewAround is w by h of a drawn frame, scrolled to show the station focus.
+func viewAround(f *schematic.Frame, focus string, w, h int) []string {
 	x, y := 0, 0
 	if fx, fy, found := f.Station(focus); found {
 		x = min(max(fx-w/2, 0), max(f.Width()-w, 0))
@@ -286,8 +410,14 @@ func (r *routePicker) keyLine() string {
 // from.
 func stopsOf(tr ops.TrainSpec) map[string]stopChoice {
 	out := map[string]stopChoice{}
-	for _, p := range tr.Points {
-		out[p.Stn] = stopChoice{stop: p.Kind == ops.SpStop, dwell: showNum(p.Dwell), pf: p.Pf}
+	for i, p := range tr.Points {
+		end := i == 0 || i == len(tr.Points)-1
+		c := stopChoice{stop: p.Kind == ops.SpStop, endPass: end && p.Kind == ops.SpPass, dwell: showNum(p.Dwell), pf: p.Pf,
+			dep: showTime(p.Dep), min: showNum(p.MinDwell)}
+		if i > 0 { // the first's is the entry
+			c.arr = showTime(p.Arr)
+		}
+		out[p.Stn] = c
 	}
 	return out
 }

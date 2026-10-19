@@ -2,6 +2,7 @@ package main
 
 import (
 	"cmp"
+	"container/heap"
 	"errors"
 	"fmt"
 	"maps"
@@ -156,15 +157,30 @@ type hop struct {
 	m  float64
 }
 
-func newTrackGraph(s *infra.Snapshot) *trackGraph {
+func newTrackGraph(s *infra.Snapshot) *trackGraph { return buildGraph(s, false) }
+
+// newRunGraph is the track graph with no track run against its signals: a
+// track signalled one way only (a line of a double line) runs that way.
+func newRunGraph(s *infra.Snapshot) *trackGraph { return buildGraph(s, true) }
+
+func buildGraph(s *infra.Snapshot, bySignals bool) *trackGraph {
 	g := &trackGraph{code: map[string]string{}, east: map[string][]hop{}, west: map[string][]hop{}}
 	for _, p := range s.Points {
 		g.code[p.ID] = p.Stn
 		g.points = append(g.points, p.ID)
 	}
+	signal := map[[2]string]bool{} // at, facing
+	for _, sig := range s.Signals {
+		signal[[2]string{sig.At, sig.Facing}] = true
+	}
 	for _, t := range s.Tracks {
-		g.east[t.From] = append(g.east[t.From], hop{t.To, t.LengthM})
-		g.west[t.To] = append(g.west[t.To], hop{t.From, t.LengthM})
+		east, west := signal[[2]string{t.To, t.From}], signal[[2]string{t.From, t.To}]
+		if !bySignals || east || !west {
+			g.east[t.From] = append(g.east[t.From], hop{t.To, t.LengthM})
+		}
+		if !bySignals || west || !east {
+			g.west[t.To] = append(g.west[t.To], hop{t.From, t.LengthM})
+		}
 	}
 	return g
 }
@@ -310,4 +326,137 @@ func entry(t ops.TrainSpec) float64 {
 		return *t.Points[0].Arr
 	}
 	return -1
+}
+
+// trainPath is the points a train runs over: from its first station to its
+// last through each it names, over the platform it names there, the
+// shortest way between, never against a track's signals. A train never
+// reverses, so it runs east all along or west all along, whichever the
+// track allows.
+func trainPath(s *infra.Snapshot, points []ops.PointSpec) ([]string, error) {
+	g := newRunGraph(s)
+	pfs := map[[2]string]infra.SnapshotTrack{} // station, platform no
+	tracks := map[string]infra.SnapshotTrack{}
+	for _, t := range s.Tracks {
+		tracks[t.ID] = t
+	}
+	for _, st := range s.Stations {
+		for _, pf := range st.Platforms {
+			pfs[[2]string{st.Code, pf.No}] = tracks[pf.Track]
+		}
+	}
+	errs := map[bool]error{}
+	for _, east := range []bool{true, false} {
+		path, err := g.through(points, pfs, east)
+		if err == nil {
+			return path, nil
+		}
+		errs[east] = err
+	}
+	// say what stops it running the way its stations go
+	bare := slices.Clone(points)
+	for k := range bare {
+		bare[k].Pf = ""
+	}
+	if _, err := g.through(bare, pfs, false); err == nil {
+		return nil, errs[false]
+	}
+	return nil, errs[true]
+}
+
+// through is trainPath running one way.
+func (g *trackGraph) through(points []ops.PointSpec, pfs map[[2]string]infra.SnapshotTrack, east bool) ([]string, error) {
+	var path, starts []string
+	for i, p := range points {
+		at := func(q string) bool { return g.code[q] == p.Stn }
+		pf, onPf := pfs[[2]string{p.Stn, p.Pf}]
+		entry, exit := pf.From, pf.To
+		if !east {
+			entry, exit = exit, entry
+		}
+		if onPf {
+			at = func(q string) bool { return q == entry }
+		}
+		switch {
+		case i == 0 && onPf:
+			path, starts = []string{entry, exit}, []string{exit}
+			continue
+		case i == 0:
+			for _, q := range g.points {
+				if at(q) {
+					starts = append(starts, q)
+				}
+			}
+			continue
+		}
+		seg := g.shortest(starts, east, at)
+		if seg == nil {
+			to := p.Stn
+			if onPf {
+				to += " platform " + p.Pf
+			}
+			return nil, fmt.Errorf("no way from %s to %s running %s", points[i-1].Stn, to, map[bool]string{true: "east", false: "west"}[east])
+		}
+		if len(path) > 0 {
+			seg = seg[1:]
+		}
+		path = append(path, seg...)
+		if onPf {
+			path = append(path, exit)
+		}
+		starts = path[len(path)-1:]
+	}
+	return path, nil
+}
+
+// shortest is the shortest run east (or west) from one of the starts to a
+// point at says is there, the points it runs over; nil if there is none.
+func (g *trackGraph) shortest(starts []string, east bool, at func(string) bool) []string {
+	for _, p := range starts {
+		if at(p) {
+			return []string{p}
+		}
+	}
+	dist, prev := map[string]float64{}, map[string]string{}
+	q := &hopQueue{}
+	for _, p := range starts {
+		dist[p] = 0
+		heap.Push(q, hop{p, 0})
+	}
+	for q.Len() > 0 {
+		h := heap.Pop(q).(hop)
+		if h.m > dist[h.to] {
+			continue
+		}
+		if at(h.to) {
+			path := []string{h.to}
+			for p := h.to; !slices.Contains(starts, p); {
+				p = prev[p]
+				path = append(path, p)
+			}
+			slices.Reverse(path)
+			return path
+		}
+		for _, n := range g.next(h.to, east) {
+			if d, seen := dist[n.to]; !seen || h.m+n.m < d {
+				dist[n.to], prev[n.to] = h.m+n.m, h.to
+				heap.Push(q, hop{n.to, h.m + n.m})
+			}
+		}
+	}
+	return nil
+}
+
+// hopQueue is points by how far they are, nearest first.
+type hopQueue []hop
+
+func (q hopQueue) Len() int           { return len(q) }
+func (q hopQueue) Less(i, j int) bool { return q[i].m < q[j].m }
+func (q hopQueue) Swap(i, j int)      { q[i], q[j] = q[j], q[i] }
+func (q *hopQueue) Push(x any)        { *q = append(*q, x.(hop)) }
+func (q *hopQueue) Pop() any {
+	old := *q
+	h := old[len(old)-1]
+	*q = old[:len(old)-1]
+	return h
 }

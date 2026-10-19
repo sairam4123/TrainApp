@@ -26,6 +26,9 @@ type session struct {
 	sc    *scenario.Scenario
 	isNew bool // not saved yet: its path follows its name
 	dir   string
+	// moveTo is the file a saved scenario moves to on the next save, after
+	// a rename; empty if it stays
+	moveTo string
 
 	world   *edit.Doc
 	builtin bool // the world is a built-in one; saving it makes a snapshot
@@ -204,20 +207,74 @@ func (s *session) dirty() bool {
 	return s.world.Dirty || s.schedDirty || s.scDirty
 }
 
-// rename names the scenario; a new one's file follows its name.
+// rename names the scenario, and its file follows: a new one's at once, a
+// saved one's when it is next saved (save).
 func (s *session) rename(name string) error {
 	if name == "" || strings.ContainsAny(name, `/\`) {
 		return fmt.Errorf("name %q: a scenario needs a name that can be a file name", name)
 	}
-	if s.isNew {
-		if name != s.sc.Name && fileExists(filepath.Join(s.dir, name+".json")) {
-			return fmt.Errorf("there is a scenario %s already", name)
-		}
-		s.sc.Path = filepath.Join(s.dir, name+".json")
+	path := filepath.Join(s.dir, name+".json")
+	if !samePath(path, s.sc.Path) && fileExists(path) {
+		return fmt.Errorf("there is a scenario %s already", name)
+	}
+	switch {
+	case s.isNew:
+		s.sc.Path = path
+	case samePath(path, s.sc.Path):
+		s.moveTo = ""
+	default:
+		s.moveTo = path
 	}
 	s.sc.Name = name
 	s.scDirty = true
 	return nil
+}
+
+// move moves a saved scenario's file to moveTo, with the world, schedule
+// and timetable files made for it (named after its file, in worlds/,
+// schedules/ and timetables/ beside it) that no other scenario uses. The
+// scenario is saved at its new path, and its old file goes.
+func (s *session) move() error {
+	sc, old := s.sc, s.sc.Path
+	if fileExists(s.moveTo) {
+		return fmt.Errorf("there is a scenario %s already", filepath.Base(s.moveTo))
+	}
+	base := strings.TrimSuffix(filepath.Base(old), ".json")
+	own := func(path, sub string) bool {
+		name := strings.TrimSuffix(filepath.Base(path), ".json")
+		n, numbered := strings.CutPrefix(name, base+"-")
+		_, err := strconv.Atoi(n)
+		return path != "" && fileExists(path) && samePath(filepath.Dir(path), filepath.Join(s.dir, sub)) &&
+			(name == base || numbered && err == nil) && len(s.sharers(path)) == 0
+	}
+	var moves [][2]string // from, to
+	var refs []*string
+	for _, f := range []struct {
+		ref  *string
+		path string
+		sub  string
+	}{
+		{&sc.World, sc.WorldName(), "worlds"},
+		{&sc.Schedule, sc.SchedulePath(), "schedules"},
+		{&sc.Timetable, sc.TimetablePath(), "timetables"},
+	} {
+		if *f.ref != "" && filepath.Ext(*f.ref) == ".json" && own(f.path, f.sub) {
+			moves = append(moves, [2]string{f.path, freePath(filepath.Join(s.dir, f.sub), sc.Name)})
+			refs = append(refs, f.ref)
+		}
+	}
+	for k, m := range moves {
+		if err := os.Rename(m[0], m[1]); err != nil {
+			return err
+		}
+		*refs[k] = sc.Ref(m[1])
+	}
+	sc.Path = s.moveTo
+	if err := sc.Save(); err != nil {
+		return err
+	}
+	s.moveTo = ""
+	return os.Remove(old)
 }
 
 // sharers are the other scenarios in the scenario's directory that use the
@@ -304,7 +361,11 @@ func (s *session) save(copies map[string]bool) error {
 	if err := os.MkdirAll(filepath.Dir(sc.Path), 0o755); err != nil {
 		return err
 	}
-	if err := sc.Save(); err != nil {
+	if s.moveTo != "" {
+		if err := s.move(); err != nil {
+			return err
+		}
+	} else if err := sc.Save(); err != nil {
 		return err
 	}
 	s.scDirty, s.isNew, s.openErr = false, false, nil

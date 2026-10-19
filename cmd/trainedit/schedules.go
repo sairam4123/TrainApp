@@ -9,6 +9,7 @@ import (
 	"strings"
 	"trainapp/railway/ids"
 	"trainapp/railway/ops"
+	"trainapp/visualization/schematic"
 	"trainapp/visualization/tui"
 
 	tea "charm.land/bubbletea/v2"
@@ -25,6 +26,10 @@ type schedTab struct {
 	row    int
 	top    int // first train shown
 	rowTop int // first point shown
+	// editing is the point form open, if one is, and the point it edits:
+	// the way drawn follows what it has picked
+	editing *form
+	editK   int
 }
 
 func newSchedTab(m *model) *schedTab { return &schedTab{m: m} }
@@ -76,8 +81,8 @@ func (t *schedTab) key(msg tea.KeyPressMsg) tea.Cmd {
 		}
 	case "a":
 		t.addForm()
-	case "enter", "E":
-		t.trainForm()
+	case "enter", "E", "f":
+		t.editForm()
 	case "c":
 		t.copyForm()
 	case "d", "delete":
@@ -93,8 +98,6 @@ func (t *schedTab) key(msg tea.KeyPressMsg) tea.Cmd {
 		})
 		t.changed()
 		t.m.say("sorted by entry time")
-	case "f":
-		t.fillForm()
 	case "g":
 		t.patternForm()
 	case "x":
@@ -155,7 +158,7 @@ func (t *schedTab) pointKey(k string) tea.Cmd {
 			t.changed()
 		}
 	case "f":
-		t.fillForm()
+		t.editForm()
 	case "x":
 		t.disruptionForm()
 	}
@@ -193,37 +196,38 @@ func (t *schedTab) classChoices(cur string) []string {
 	return cs
 }
 
-func (t *schedTab) trainForm() {
-	tr, ok := t.cur()
-	if !ok {
-		t.addForm()
-		return
+// trainHead is the route picker's head for a train: its number, class,
+// speed, name and priority.
+func (t *schedTab) trainHead(tr ops.TrainSpec) [][]field {
+	return [][]field{
+		{text("number", "number", tr.Number), choice("class", "class", tr.Class, t.classChoices(tr.Class)...), number("kmph", "max km/h", tr.MaxSpeedKmph)},
+		{text("name", "name", tr.Name), field{key: "priority", label: "priority", value: strconv.Itoa(tr.Priority)}},
 	}
-	t.m.open(newForm("train "+tr.Number, func(v values) error {
-		if v["number"] == "" {
-			return errors.New("a train needs a number")
-		}
-		if i := t.indexOf(v["number"]); i >= 0 && i != t.train {
-			return fmt.Errorf("there is a train %s already", v["number"])
-		}
-		pri, err := parseInt(v, "priority", "priority")
-		if err != nil {
-			return err
-		}
-		kmph, err := parseNum(v, "kmph", "speed")
-		if err != nil {
-			return err
-		}
-		tr.Number, tr.Name, tr.Class, tr.Priority, tr.MaxSpeedKmph = v["number"], v["name"], v["class"], pri, kmph
-		t.changed()
-		return nil
-	},
-		text("number", "number", tr.Number),
-		text("name", "name", tr.Name),
-		choice("class", "class", tr.Class, t.classChoices(tr.Class)...),
-		field{key: "priority", label: "priority", value: strconv.Itoa(tr.Priority), help: "added to the class's; 0 for the class's own"},
-		number("kmph", "max speed (km/h)", tr.MaxSpeedKmph),
-	))
+}
+
+// fromHead is a train as the picker's head (trainHead) and route have it;
+// self is its place in the list, -1 for a new train.
+func (t *schedTab) fromHead(r pickedRoute, self int) (ops.TrainSpec, error) {
+	v := r.head
+	if v["number"] == "" {
+		return ops.TrainSpec{}, errors.New("a train needs a number")
+	}
+	if i := t.indexOf(v["number"]); i >= 0 && i != self {
+		return ops.TrainSpec{}, fmt.Errorf("there is a train %s already", v["number"])
+	}
+	pri, err := parseInt(v, "priority", "priority")
+	if err != nil {
+		return ops.TrainSpec{}, err
+	}
+	kmph, err := parseNum(v, "kmph", "speed")
+	if err != nil {
+		return ops.TrainSpec{}, err
+	}
+	pts, err := r.points(r.way.stations, true)
+	if err != nil {
+		return ops.TrainSpec{}, err
+	}
+	return ops.TrainSpec{Number: v["number"], Name: v["name"], Class: v["class"], Priority: pri, MaxSpeedKmph: kmph, Points: pts}, nil
 }
 
 func (t *schedTab) indexOf(number string) int {
@@ -236,25 +240,16 @@ func (t *schedTab) addForm() {
 		t.m.fail("the world needs two stations for a train to run between")
 		return
 	}
-	classes := t.classChoices("")
-	head := [][]field{{text("number", "number", t.freeNumber()), choice("class", "class", tui.At(classes, 1), classes...), number("kmph", "max km/h", 110)}}
+	head := t.trainHead(ops.TrainSpec{Number: t.freeNumber(), Class: tui.At(t.classChoices(""), 1), MaxSpeedKmph: 110})
 	t.m.openRoutePicker("new train", head, "", "", 10, 2, nil, nil, func(r pickedRoute) error {
-		v := r.head
-		if v["number"] == "" || t.indexOf(v["number"]) >= 0 {
-			return fmt.Errorf("train number %q is empty or taken", v["number"])
-		}
-		kmph, err := parseNum(v, "kmph", "speed")
+		tr, err := t.fromHead(r, -1)
 		if err != nil {
 			return err
 		}
-		pts, err := r.points(r.way.stations, true)
-		if err != nil {
-			return err
-		}
-		t.m.s.sched.Trains = append(t.m.s.sched.Trains, ops.TrainSpec{Number: v["number"], Class: v["class"], MaxSpeedKmph: kmph, Points: pts})
+		t.m.s.sched.Trains = append(t.m.s.sched.Trains, tr)
 		t.train = len(t.m.s.sched.Trains) - 1
 		t.changed()
-		t.m.say("added %s, %s: tab goes to its points", v["number"], strings.Join(r.way.stations, " "))
+		t.m.say("added %s, %s: tab goes to its points", tr.Number, strings.Join(r.way.stations, " "))
 		return nil
 	})
 }
@@ -299,12 +294,12 @@ func (t *schedTab) copyForm() {
 	}, text("number", "number", t.freeNumber()), field{key: "shift", label: "later by (min)", value: "30", help: "moves its times"}))
 }
 
-// fillForm opens the route picker on a train's route, to lay its points
-// out again.
-func (t *schedTab) fillForm() {
+// editForm opens the route picker on a train, as it is: its details, its
+// route and each station's stop, times and platform.
+func (t *schedTab) editForm() {
 	tr, ok := t.cur()
 	if !ok {
-		t.m.fail("pick a train, or a adds one")
+		t.addForm()
 		return
 	}
 	from, to := "", ""
@@ -319,15 +314,23 @@ func (t *schedTab) fillForm() {
 	for _, p := range tr.Points {
 		stations = append(stations, p.Stn)
 	}
-	t.m.openRoutePicker("route of "+tr.Number, nil, from, to, at, 2, stations, stopsOf(*tr), func(r pickedRoute) error {
-		pts, err := r.points(r.way.stations, true)
+	self := t.train
+	t.m.openRoutePicker("train "+tr.Number, t.trainHead(*tr), from, to, at, 2, stations, stopsOf(*tr), func(r pickedRoute) error {
+		nt, err := t.fromHead(r, self)
 		if err != nil {
 			return err
 		}
-		tr.Points = pts
+		if nt.Number != tr.Number {
+			for k := range t.m.s.sc.Disruptions { // its disruptions go with it
+				if d := &t.m.s.sc.Disruptions[k]; d.Train == tr.Number {
+					d.Train, t.m.s.scDirty = nt.Number, true
+				}
+			}
+		}
+		*tr = nt
 		t.row = 0
 		t.changed()
-		t.m.say("%s runs %s: %d points", tr.Number, strings.Join(r.way.stations, " "), len(pts))
+		t.m.say("%s runs %s: %d points", tr.Number, strings.Join(r.way.stations, " "), len(nt.Points))
 		return nil
 	})
 }
@@ -432,6 +435,8 @@ func (t *schedTab) pointForm(k int, inserted bool) {
 		field{key: "min", label: "min dwell (min)", value: showNum(p.MinDwell), help: "with arr and dep: how long it stands even when late"},
 	)
 	f.notes = []string{"a stop gives a dwell, or an arr and a dep; a pass only an arr, if it is timed"}
+	f.top = true // the way stays in sight under it
+	t.editing, t.editK = f, k
 	if inserted {
 		// backing out of a new point takes it away again
 		f.cancel = func() {
@@ -505,7 +510,8 @@ func (t *schedTab) render(width, h int) []string {
 			banner = append(banner, tui.Accent.Render(" "+l))
 		}
 	}
-	bh := h - len(banner)
+	way := t.wayPane(width, h-len(banner))
+	bh := h - len(banner) - len(way)
 
 	// the train list
 	trains := t.trains()
@@ -588,12 +594,55 @@ func (t *schedTab) render(width, h int) []string {
 		}
 	}
 	right := tui.Box(rtitle, t.points, body, rw, bh)
-	return append(banner, tui.Side([]int{lw, rw}, left, right)...)
+	return slices.Concat(banner, tui.Side([]int{lw, rw}, left, right), way)
+}
+
+// wayPane is the picked train's way drawn on the world, under the trains,
+// at most half of h: the point picked (or being edited) selected, with its
+// platform or through track.
+func (t *schedTab) wayPane(width, h int) []string {
+	d := t.m.world.diagram
+	tr, ok := t.cur()
+	if d == nil || !ok || len(tr.Points) == 0 || h < 16 {
+		return nil
+	}
+	s := t.m.s.world.S
+	pts := slices.Clone(tr.Points)
+	k := -1
+	if t.points {
+		k = t.row
+	}
+	if f := t.editing; f != nil && t.m.form == f && t.editK < len(pts) {
+		k = t.editK
+		pts[k].Stn, pts[k].Pf = f.value("stn"), f.value("pf")
+		if pts[k].Pf == "any" {
+			pts[k].Pf = ""
+		}
+	}
+	marks := map[string]schematic.Mark{}
+	var note []string
+	if path, err := trainPath(s, pts); err != nil {
+		note = []string{tui.Failed.Render(" ✗ " + err.Error())}
+	} else {
+		markWay(s, path, marks)
+	}
+	focus := pts[0].Stn
+	if k >= 0 && k < len(pts) {
+		focus = pts[k].Stn
+		marks[focus] = schematic.MarkSelected
+		if pf := pfTrack(s, focus, pts[k].Pf); pf != "" {
+			marks[pf] = schematic.MarkSelected
+		}
+	}
+	f := d.Draw(schematic.Options{Level: schematic.Layout, Zoom: 1, Marks: marks})
+	ph := min(f.Height()+len(note)+2, h/2)
+	body := append(note, viewAround(f, focus, width-2, ph-2-len(note))...)
+	return tui.Box("the way · "+tr.Number, false, body, width, ph)
 }
 
 func (t *schedTab) keyLine() string {
 	if t.points {
-		return " ↑↓ point  enter edit  i/I insert after/before  d delete  K/J move  f re-route  x disrupt  tab trains"
+		return " ↑↓ point  enter edit  i/I insert after/before  d delete  K/J move  f edit the train  x disrupt  tab trains"
 	}
-	return " ↑↓ train  tab points  a add  enter edit  c copy  d delete  s sort  f re-route  g pattern  x disrupt  X clear its disruptions"
+	return " ↑↓ train  tab points  a add  enter/f edit  c copy  d delete  s sort  g pattern  x disrupt  X clear its disruptions"
 }
