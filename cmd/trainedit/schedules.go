@@ -320,6 +320,7 @@ func (t *schedTab) editForm() {
 		if err != nil {
 			return err
 		}
+		nt.Stock = tr.Stock // the picker does not edit it
 		if nt.Number != tr.Number {
 			for k := range t.m.s.sc.Disruptions { // its disruptions go with it
 				if d := &t.m.s.sc.Disruptions[k]; d.Train == tr.Number {

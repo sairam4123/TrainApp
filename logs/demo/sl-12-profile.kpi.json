@@ -1978,6 +1978,95 @@
             "from_min": 61.04681818181804,
             "min": 4.808181818181836
           }
+        ],
+        "calls": [
+          {
+            "stn": "TPJ",
+            "arr_min": 1.001,
+            "dep_min": 6.966,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 16.09572727272727,
+            "dep_min": 16.098727272727274,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 24.637181818181837,
+            "dep_min": 24.64018181818184,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 31.87500000000004,
+            "dep_min": 31.878000000000043,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 38.02636363636367,
+            "dep_min": 52.35354545454536,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 12.325181818181697
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 55.587181818181705,
+            "dep_min": 55.5901818181817,
+            "delay_min": 12.325181818181697,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 61.04481818181804,
+            "dep_min": 65.85499999999988,
+            "delay_min": 12.325181818181697,
+            "approach_min": 0,
+            "station_min": 4.807181818181846
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 71.61527272727264,
+            "dep_min": 71.61827272727265,
+            "delay_min": 17.80145454545452,
+            "approach_min": 0.6690909090909756,
+            "station_min": 2.1316282072803006e-14
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 74.7201818181818,
+            "dep_min": 74.72318181818181,
+            "delay_min": 17.94690909090916,
+            "approach_min": 0.14545454545461922,
+            "station_min": 2.1316282072803006e-14
+          },
+          {
+            "stn": "KKDI",
+            "arr_min": 79.86890909090916,
+            "dep_min": 84.86990909090916,
+            "delay_min": 17.946909090909287,
+            "approach_min": 1.0658141036401503e-13,
+            "station_min": 0
+          }
         ]
       },
       {
@@ -2012,6 +2101,95 @@
             "at": "KRUR",
             "from_min": 77.48063636363636,
             "min": 4.74354545454554
+          }
+        ],
+        "calls": [
+          {
+            "stn": "KKDI",
+            "arr_min": 1.001,
+            "dep_min": 11.965999999999998,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 15.44063636363635,
+            "dep_min": 15.44363636363635,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 18.40009090909091,
+            "dep_min": 18.403090909090913,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 23.494272727272747,
+            "dep_min": 23.49727272727275,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 28.95190909090913,
+            "dep_min": 28.954909090909133,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 33.11418181818186,
+            "dep_min": 41.326545454545425,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 3.2103636363635673
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 48.54599999999995,
+            "dep_min": 69.48481818181814,
+            "delay_min": 3.879454545454479,
+            "approach_min": 0.6690909090909116,
+            "station_min": 20.9358181818182
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 77.47863636363637,
+            "dep_min": 82.2241818181819,
+            "delay_min": 25.574272727272756,
+            "approach_min": 0.7590000000000785,
+            "station_min": 4.742545454545542
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 90.85254545454559,
+            "dep_min": 90.8555454545456,
+            "delay_min": 30.406727272727466,
+            "approach_min": 0.08990909090916688,
+            "station_min": 2.1316282072803006e-14
+          },
+          {
+            "stn": "TPJ",
+            "arr_min": 98.55945454545473,
+            "dep_min": 108.56045454545473,
+            "delay_min": 29.604727272727487,
+            "approach_min": -0.8019999999999996,
+            "station_min": 0
           }
         ]
       },
@@ -2055,6 +2233,95 @@
             "from_min": 66.62209090909079,
             "min": 10.76863636363646
           }
+        ],
+        "calls": [
+          {
+            "stn": "TPJ",
+            "arr_min": 11.001,
+            "dep_min": 16.966,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 26.095727272727288,
+            "dep_min": 26.09872727272729,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 34.63718181818182,
+            "dep_min": 34.640181818181816,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 41.874999999999964,
+            "dep_min": 48.25263636363631,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 6.374636363636355
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 54.400999999999925,
+            "dep_min": 56.89690909090897,
+            "delay_min": 6.374636363636355,
+            "approach_min": 0,
+            "station_min": 0.49390909090904955
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 60.13054545454531,
+            "dep_min": 60.4963636363635,
+            "delay_min": 6.868545454545405,
+            "approach_min": 0,
+            "station_min": 0.3628181818181915
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 66.62009090909079,
+            "dep_min": 77.39072727272725,
+            "delay_min": 7.900454545454551,
+            "approach_min": 0.6690909090909543,
+            "station_min": 10.767636363636463
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 82.62736363636365,
+            "dep_min": 82.63036363636367,
+            "delay_min": 18.813545454545633,
+            "approach_min": 0.14545454545461922,
+            "station_min": 2.1316282072803006e-14
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 85.58681818181826,
+            "dep_min": 85.58981818181827,
+            "delay_min": 18.813545454545675,
+            "approach_min": 2.1316282072803006e-14,
+            "station_min": 0
+          },
+          {
+            "stn": "KKDI",
+            "arr_min": 90.73554545454562,
+            "dep_min": 95.73654545454562,
+            "delay_min": 18.813545454545675,
+            "approach_min": 0,
+            "station_min": 0
+          }
         ]
       },
       {
@@ -2089,6 +2356,95 @@
             "at": "KRUR",
             "from_min": 70.64881818181814,
             "min": 3.4954545454546206
+          }
+        ],
+        "calls": [
+          {
+            "stn": "KKDI",
+            "arr_min": 11.001,
+            "dep_min": 21.966,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 25.78609090909092,
+            "dep_min": 25.789090909090923,
+            "delay_min": 0.3454545454545439,
+            "approach_min": 0.3454545454545439,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 28.745545454545486,
+            "dep_min": 28.74854545454549,
+            "delay_min": 0.3454545454545439,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 33.839727272727295,
+            "dep_min": 33.84272727272729,
+            "delay_min": 0.3454545454545439,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 39.29736363636363,
+            "dep_min": 39.30036363636362,
+            "delay_min": 0.3454545454545439,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 43.25863636363633,
+            "dep_min": 53.96363636363629,
+            "delay_min": 0.1444545454545434,
+            "approach_min": -0.2010000000000005,
+            "station_min": 5.702999999999967
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 60.3129999999999,
+            "dep_min": 62.79845454545448,
+            "delay_min": 5.64645454545451,
+            "approach_min": -0.2010000000000005,
+            "station_min": 2.482454545454587
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 70.64681818181815,
+            "dep_min": 74.14427272727276,
+            "delay_min": 8.742454545454613,
+            "approach_min": 0.6135454545455161,
+            "station_min": 3.494454545454623
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 82.77263636363645,
+            "dep_min": 82.77563636363647,
+            "delay_min": 12.326818181818354,
+            "approach_min": 0.08990909090911714,
+            "station_min": 0
+          },
+          {
+            "stn": "TPJ",
+            "arr_min": 91.28154545454561,
+            "dep_min": 101.28254545454561,
+            "delay_min": 12.326818181818354,
+            "approach_min": 0,
+            "station_min": 0
           }
         ]
       },
@@ -2139,6 +2495,95 @@
             "from_min": 87.04918181818196,
             "min": 1.4665454545454253
           }
+        ],
+        "calls": [
+          {
+            "stn": "TPJ",
+            "arr_min": 21.001,
+            "dep_min": 28.197090909090935,
+            "delay_min": 1.231090909090927,
+            "approach_min": 0,
+            "station_min": 1.231090909090927
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 37.32681818181819,
+            "dep_min": 37.85163636363633,
+            "delay_min": 1.2310909090909234,
+            "approach_min": -3.552713678800501e-15,
+            "station_min": 0.5218181818181478
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 46.39009090909085,
+            "dep_min": 46.393090909090844,
+            "delay_min": 1.7529090909090712,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 54.24145454545445,
+            "dep_min": 59.820090909090816,
+            "delay_min": 2.3664545454545305,
+            "approach_min": 0.6135454545454593,
+            "station_min": 5.57563636363637
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 66.78299999999994,
+            "dep_min": 83.61254545454555,
+            "delay_min": 8.756636363636417,
+            "approach_min": 0.8145454545455166,
+            "station_min": 14.827545454545614
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 87.04718181818197,
+            "dep_min": 88.51572727272739,
+            "delay_min": 23.785181818182103,
+            "approach_min": 0.20100000000007157,
+            "station_min": 1.4655454545454276
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 93.97036363636379,
+            "dep_min": 93.9733636363638,
+            "delay_min": 25.250727272727545,
+            "approach_min": 1.4210854715202004e-14,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 99.06454545454565,
+            "dep_min": 99.06754545454567,
+            "delay_min": 25.250727272727545,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 102.02400000000026,
+            "dep_min": 102.02700000000027,
+            "delay_min": 25.250727272727545,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KKDI",
+            "arr_min": 106.02527272727303,
+            "dep_min": 111.02627272727304,
+            "delay_min": 24.103272727272966,
+            "approach_min": -1.147454545454579,
+            "station_min": 0
+          }
         ]
       },
       {
@@ -2174,6 +2619,95 @@
             "from_min": 78.53227272727278,
             "min": 5.577909090909117
           }
+        ],
+        "calls": [
+          {
+            "stn": "KKDI",
+            "arr_min": 21.001,
+            "dep_min": 31.966000000000008,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 35.44063636363635,
+            "dep_min": 35.443636363636344,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 38.40009090909087,
+            "dep_min": 38.85999999999999,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0.4569090909091287
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 43.95118181818178,
+            "dep_min": 43.95418181818177,
+            "delay_min": 0.4569090909091287,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 49.40881818181811,
+            "dep_min": 49.411818181818106,
+            "delay_min": 0.4569090909091287,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 53.57109090909081,
+            "dep_min": 71.36636363636363,
+            "delay_min": 0.4569090909091287,
+            "approach_min": 0,
+            "station_min": 12.793272727272821
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 78.53027272727279,
+            "dep_min": 84.1101818181819,
+            "delay_min": 13.863727272727445,
+            "approach_min": 0.6135454545454948,
+            "station_min": 5.576909090909098
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 91.43490909090922,
+            "dep_min": 91.43790909090923,
+            "delay_min": 19.530545454545646,
+            "approach_min": 0.08990909090910293,
+            "station_min": 0
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 99.97636363636381,
+            "dep_min": 99.97936363636383,
+            "delay_min": 19.530545454545646,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "TPJ",
+            "arr_min": 108.48527272727297,
+            "dep_min": 118.48627272727298,
+            "delay_min": 19.530545454545646,
+            "approach_min": 0,
+            "station_min": 0
+          }
         ]
       },
       {
@@ -2208,6 +2742,95 @@
             "at": "PDKT",
             "from_min": 73.80472727272728,
             "min": 6.568181818181841
+          }
+        ],
+        "calls": [
+          {
+            "stn": "TPJ",
+            "arr_min": 31.001,
+            "dep_min": 37.53345454545458,
+            "delay_min": 0.5674545454545807,
+            "approach_min": 0,
+            "station_min": 0.5674545454545807
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 46.66318181818181,
+            "dep_min": 46.666181818181805,
+            "delay_min": 0.5674545454545807,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 55.818181818181785,
+            "dep_min": 55.82118181818178,
+            "delay_min": 1.18100000000004,
+            "approach_min": 0.6135454545454593,
+            "station_min": 0
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 63.75945454545448,
+            "dep_min": 65.56545454545449,
+            "delay_min": 1.8844545454545951,
+            "approach_min": 0.7034545454545551,
+            "station_min": 1.8030000000000115
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 71.80372727272727,
+            "dep_min": 80.37290909090912,
+            "delay_min": 3.777363636363731,
+            "approach_min": 0.08990909090912425,
+            "station_min": 6.567181818181837
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 83.60654545454553,
+            "dep_min": 83.60954545454554,
+            "delay_min": 10.344545454545568,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 89.06418181818194,
+            "dep_min": 89.06718181818195,
+            "delay_min": 10.344545454545568,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 94.1583636363638,
+            "dep_min": 94.16136363636382,
+            "delay_min": 10.344545454545568,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 97.11781818181841,
+            "dep_min": 97.12081818181842,
+            "delay_min": 10.344545454545568,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KKDI",
+            "arr_min": 102.26654545454576,
+            "dep_min": 107.26754545454577,
+            "delay_min": 10.344545454545568,
+            "approach_min": 0,
+            "station_min": 0
           }
         ]
       },
@@ -2251,6 +2874,95 @@
             "from_min": 98.73681818181834,
             "min": 0.6910909090909314
           }
+        ],
+        "calls": [
+          {
+            "stn": "KKDI",
+            "arr_min": 31.001,
+            "dep_min": 41.966,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 45.84163636363633,
+            "dep_min": 45.844636363636326,
+            "delay_min": 0.40099999999999625,
+            "approach_min": 0.40099999999999625,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 48.80109090909085,
+            "dep_min": 48.97145454545448,
+            "delay_min": 0.40099999999999625,
+            "approach_min": 0,
+            "station_min": 0.16736363636363194
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 54.676181818181725,
+            "dep_min": 65.45809090909079,
+            "delay_min": 1.1819090909090875,
+            "approach_min": 0.6135454545454593,
+            "station_min": 10.778909090909067
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 71.00263636363628,
+            "dep_min": 71.0056363636363,
+            "delay_min": 12.050727272727315,
+            "approach_min": 0.08990909090915977,
+            "station_min": 2.1316282072803006e-14
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 75.16490909090908,
+            "dep_min": 80.16690909090909,
+            "delay_min": 12.050727272727407,
+            "approach_min": 7.105427357601002e-14,
+            "station_min": 7.105427357601002e-15
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 86.71727272727279,
+            "dep_min": 90.88645454545467,
+            "delay_min": 12.050727272727414,
+            "approach_min": 0,
+            "station_min": 4.166181818181869
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 98.73481818181834,
+            "dep_min": 99.42790909090927,
+            "delay_min": 16.830454545454742,
+            "approach_min": 0.6135454545454593,
+            "station_min": 0.6900909090909124
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 108.05627272727295,
+            "dep_min": 108.05927272727297,
+            "delay_min": 17.610454545454758,
+            "approach_min": 0.08990909090910293,
+            "station_min": 0
+          },
+          {
+            "stn": "TPJ",
+            "arr_min": 115.76318181818209,
+            "dep_min": 125.7641818181821,
+            "delay_min": 16.808454545454737,
+            "approach_min": -0.8020000000000209,
+            "station_min": 0
+          }
         ]
       },
       {
@@ -2278,6 +2990,95 @@
             "at": "KRUR",
             "from_min": 66.59490909090901,
             "min": 31.17890909090933
+          }
+        ],
+        "calls": [
+          {
+            "stn": "TPJ",
+            "arr_min": 41.001,
+            "dep_min": 48.25263636363631,
+            "delay_min": 1.286636363636326,
+            "approach_min": 0,
+            "station_min": 1.286636363636326
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 57.38236363636354,
+            "dep_min": 57.385363636363536,
+            "delay_min": 1.286636363636326,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 66.59290909090902,
+            "dep_min": 97.77381818181834,
+            "delay_min": 1.9557272727272448,
+            "approach_min": 0.6690909090909187,
+            "station_min": 31.17790909090931
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 105.15409090909111,
+            "dep_min": 105.15709090909112,
+            "delay_min": 33.27909090909111,
+            "approach_min": 0.14545454545455527,
+            "station_min": 0
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 111.30545454545481,
+            "dep_min": 113.30745454545482,
+            "delay_min": 33.27909090909111,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 116.54109090909122,
+            "dep_min": 116.54409090909124,
+            "delay_min": 33.27909090909111,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 121.99872727272763,
+            "dep_min": 122.00172727272765,
+            "delay_min": 33.27909090909111,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 127.0929090909095,
+            "dep_min": 127.09590909090952,
+            "delay_min": 33.27909090909111,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 130.0523636363641,
+            "dep_min": 130.05536363636412,
+            "delay_min": 33.27909090909111,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KKDI",
+            "arr_min": 135.20109090909148,
+            "dep_min": 140.20209090909148,
+            "delay_min": 33.279090909091124,
+            "approach_min": 1.4210854715202004e-14,
+            "station_min": 0
           }
         ]
       },
@@ -2328,6 +3129,95 @@
             "from_min": 99.5032727272729,
             "min": 5.157909090909115
           }
+        ],
+        "calls": [
+          {
+            "stn": "KKDI",
+            "arr_min": 41.001,
+            "dep_min": 53.514181818181726,
+            "delay_min": 1.5481818181817388,
+            "approach_min": 0,
+            "station_min": 1.5481818181817388
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 57.334272727272605,
+            "dep_min": 57.3372727272726,
+            "delay_min": 1.8936363636362827,
+            "approach_min": 0.3454545454545439,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 60.96281818181804,
+            "dep_min": 60.96581818181803,
+            "delay_min": 2.5627272727271944,
+            "approach_min": 0.6690909090909116,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 66.81599999999987,
+            "dep_min": 70.56527272727264,
+            "delay_min": 3.3217272727272515,
+            "approach_min": 0.7590000000000572,
+            "station_min": 3.7462727272727747
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 76.10981818181814,
+            "dep_min": 76.11281818181816,
+            "delay_min": 7.157909090909143,
+            "approach_min": 0.08990909090911714,
+            "station_min": 0
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 81.59045454545458,
+            "dep_min": 92.33736363636375,
+            "delay_min": 8.476272727272786,
+            "approach_min": 1.3183636363636424,
+            "station_min": 5.744909090909161
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 99.5012727272729,
+            "dep_min": 104.66118181818202,
+            "delay_min": 14.834727272727406,
+            "approach_min": 0.6135454545454593,
+            "station_min": 5.156909090909096
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 111.98590909090933,
+            "dep_min": 111.98890909090935,
+            "delay_min": 20.081545454545605,
+            "approach_min": 0.08990909090910293,
+            "station_min": 0
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 120.52736363636393,
+            "dep_min": 120.53036363636394,
+            "delay_min": 20.081545454545605,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "TPJ",
+            "arr_min": 129.03627272727311,
+            "dep_min": 139.03727272727312,
+            "delay_min": 20.081545454545633,
+            "approach_min": 2.842170943040401e-14,
+            "station_min": 0
+          }
         ]
       },
       {
@@ -2362,6 +3252,95 @@
             "at": "PDKT",
             "from_min": 95.29936363636375,
             "min": 6.868363636363782
+          }
+        ],
+        "calls": [
+          {
+            "stn": "TPJ",
+            "arr_min": 51.001,
+            "dep_min": 56.96599999999999,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 66.09572727272726,
+            "dep_min": 66.09872727272727,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 74.63718181818186,
+            "dep_min": 77.36827272727278,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 2.728090909090909
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 85.2721818181819,
+            "dep_min": 86.27990909090914,
+            "delay_min": 3.3971818181818207,
+            "approach_min": 0.6690909090909116,
+            "station_min": 1.004727272727223
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 93.29836363636375,
+            "dep_min": 102.16772727272753,
+            "delay_min": 5.271999999999963,
+            "approach_min": 0.8700909090909192,
+            "station_min": 6.867363636363777
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 105.60236363636395,
+            "dep_min": 105.60536363636396,
+            "delay_min": 12.340363636363747,
+            "approach_min": 0.20100000000000762,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 111.06000000000036,
+            "dep_min": 111.06300000000037,
+            "delay_min": 12.340363636363747,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 116.15418181818222,
+            "dep_min": 116.15718181818224,
+            "delay_min": 12.340363636363747,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 119.11363636363683,
+            "dep_min": 119.11663636363684,
+            "delay_min": 12.340363636363747,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KKDI",
+            "arr_min": 124.26236363636419,
+            "dep_min": 129.26336363636418,
+            "delay_min": 12.340363636363747,
+            "approach_min": 0,
+            "station_min": -1.4210854715202004e-14
           }
         ]
       },
@@ -2398,6 +3377,95 @@
             "from_min": 108.18527272727299,
             "min": 2.6828181818181775
           }
+        ],
+        "calls": [
+          {
+            "stn": "KKDI",
+            "arr_min": 51.001,
+            "dep_min": 65.37536363636356,
+            "delay_min": 3.4093636363635724,
+            "approach_min": 0,
+            "station_min": 3.4093636363635724
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 68.84999999999997,
+            "dep_min": 68.85299999999998,
+            "delay_min": 3.4093636363635937,
+            "approach_min": 2.1316282072803006e-14,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 72.47854545454548,
+            "dep_min": 72.4815454545455,
+            "delay_min": 4.078454545454505,
+            "approach_min": 0.6690909090909116,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 78.33172727272736,
+            "dep_min": 93.47745454545469,
+            "delay_min": 4.83745454545452,
+            "approach_min": 0.7590000000000146,
+            "station_min": 15.142727272727313
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 99.02200000000019,
+            "dep_min": 99.0250000000002,
+            "delay_min": 20.070090909090936,
+            "approach_min": 0.08990909090910293,
+            "station_min": 0
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 103.18427272727298,
+            "dep_min": 110.86809090909117,
+            "delay_min": 20.070090909090936,
+            "approach_min": 0,
+            "station_min": 2.6818181818181728
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 117.41845454545486,
+            "dep_min": 117.42145454545488,
+            "delay_min": 22.75190909090911,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 124.65627272727309,
+            "dep_min": 124.6592727272731,
+            "delay_min": 22.75190909090911,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 133.19772727272772,
+            "dep_min": 133.20072727272773,
+            "delay_min": 22.751909090909137,
+            "approach_min": 2.842170943040401e-14,
+            "station_min": 0
+          },
+          {
+            "stn": "TPJ",
+            "arr_min": 141.70663636363693,
+            "dep_min": 151.70763636363694,
+            "delay_min": 22.751909090909194,
+            "approach_min": 5.684341886080802e-14,
+            "station_min": 1.4210854715202004e-14
+          }
         ]
       }
     ],
@@ -2421,6 +3489,353 @@
         "over_min": 60,
         "name": "very late",
         "color": "196"
+      }
+    ],
+    "station_delays": [
+      {
+        "stn": "TPJ",
+        "calls": 12,
+        "stops": 12,
+        "passes": 0,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 4,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 6,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 7,
+            "share": 0.5833333333333334
+          }
+        ],
+        "mean_min": 10.349098484848573,
+        "worst": "0451D",
+        "worst_min": 29.604727272727487,
+        "approach_min": -1.6039999999999353,
+        "station_min": 3.085181818181848
+      },
+      {
+        "stn": "KRMG",
+        "calls": 12,
+        "stops": 0,
+        "passes": 12,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 4,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 6,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 7,
+            "share": 0.5833333333333334
+          }
+        ],
+        "mean_min": 10.482765151515233,
+        "worst": "0451D",
+        "worst_min": 30.406727272727466,
+        "approach_min": 0.2697272727274118,
+        "station_min": 0.5218181818181691
+      },
+      {
+        "stn": "KRUR",
+        "calls": 12,
+        "stops": 0,
+        "passes": 12,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 3,
+            "share": 0.25
+          },
+          {
+            "within_min": 5,
+            "trains": 6,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 7,
+            "share": 0.5833333333333334
+          }
+        ],
+        "mean_min": 9.866734848484903,
+        "worst": "0451D",
+        "worst_min": 25.574272727272756,
+        "approach_min": 3.4485454545456378,
+        "station_min": 42.8330909090913
+      },
+      {
+        "stn": "VEL",
+        "calls": 12,
+        "stops": 0,
+        "passes": 12,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 2,
+            "share": 0.16666666666666666
+          },
+          {
+            "within_min": 5,
+            "trains": 6,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 10,
+            "share": 0.8333333333333334
+          }
+        ],
+        "mean_min": 9.496181818181869,
+        "worst": "0455U",
+        "worst_min": 33.27909090909111,
+        "approach_min": 3.8267272727273465,
+        "station_min": 53.07627272727281
+      },
+      {
+        "stn": "PDKT",
+        "calls": 12,
+        "stops": 12,
+        "passes": 0,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 4,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 5,
+            "share": 0.4166666666666667
+          },
+          {
+            "within_min": 15,
+            "trains": 10,
+            "share": 0.8333333333333334
+          }
+        ],
+        "mean_min": 8.221515151515197,
+        "worst": "0455U",
+        "worst_min": 33.27909090909111,
+        "approach_min": 2.891909090909273,
+        "station_min": 71.21454545454567
+      },
+      {
+        "stn": "NMN",
+        "calls": 12,
+        "stops": 0,
+        "passes": 12,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 3,
+            "share": 0.25
+          },
+          {
+            "within_min": 5,
+            "trains": 3,
+            "share": 0.25
+          },
+          {
+            "within_min": 15,
+            "trains": 9,
+            "share": 0.75
+          }
+        ],
+        "mean_min": 11.58533333333339,
+        "worst": "0455U",
+        "worst_min": 33.27909090909111,
+        "approach_min": 0.671727272727459,
+        "station_min": 1.8283636363636404
+      },
+      {
+        "stn": "TYM",
+        "calls": 12,
+        "stops": 0,
+        "passes": 12,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 3,
+            "share": 0.25
+          },
+          {
+            "within_min": 5,
+            "trains": 6,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 10,
+            "share": 0.8333333333333334
+          }
+        ],
+        "mean_min": 9.298651515151564,
+        "worst": "0455U",
+        "worst_min": 33.27909090909111,
+        "approach_min": 2.8006363636364995,
+        "station_min": 45.242727272727464
+      },
+      {
+        "stn": "CTND",
+        "calls": 12,
+        "stops": 0,
+        "passes": 12,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 4,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 6,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 8,
+            "share": 0.6666666666666666
+          }
+        ],
+        "mean_min": 10.434780303030363,
+        "worst": "0455U",
+        "worst_min": 33.27909090909111,
+        "approach_min": 2.152727272727418,
+        "station_min": 0.6242727272728033
+      },
+      {
+        "stn": "KTYR",
+        "calls": 12,
+        "stops": 0,
+        "passes": 12,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 4,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 6,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 8,
+            "share": 0.6666666666666666
+          }
+        ],
+        "mean_min": 10.335386363636436,
+        "worst": "0455U",
+        "worst_min": 33.27909090909111,
+        "approach_min": 1.237363636363746,
+        "station_min": 2.1316282072803006e-14
+      },
+      {
+        "stn": "KKDI",
+        "calls": 12,
+        "stops": 12,
+        "passes": 0,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 4,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 6,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 8,
+            "share": 0.6666666666666666
+          }
+        ],
+        "mean_min": 10.148772727272807,
+        "worst": "0455U",
+        "worst_min": 33.279090909091124,
+        "approach_min": -1.1474545454544582,
+        "station_min": 4.957545454545297
+      }
+    ],
+    "block_delays": [
+      {
+        "track": "slTpjKrmg0",
+        "trains": 12,
+        "gained_min": -1.0658141036401503e-14,
+        "worst": "0451D",
+        "worst_min": 7.105427357601002e-15
+      },
+      {
+        "track": "slKrmgKrur0",
+        "trains": 12,
+        "gained_min": 4.263256414560601e-14,
+        "worst": "0451D",
+        "worst_min": 3.552713678800501e-14
+      },
+      {
+        "track": "slKrurVel0",
+        "trains": 12,
+        "gained_min": 7.815970093361102e-14,
+        "worst": "0452D",
+        "worst_min": 4.263256414560601e-14
+      },
+      {
+        "track": "slVelPdkt0",
+        "trains": 12,
+        "gained_min": 5.684341886080802e-14,
+        "worst": "0453U",
+        "worst_min": 4.263256414560601e-14
+      },
+      {
+        "track": "slPdktNmn0",
+        "trains": 12,
+        "gained_min": 1.3183636363637135,
+        "worst": "0455D",
+        "worst_min": 1.3183636363636424
+      },
+      {
+        "track": "slNmnTym0",
+        "trains": 12,
+        "gained_min": 5.684341886080802e-14,
+        "worst": "0452U",
+        "worst_min": 2.842170943040401e-14
+      },
+      {
+        "track": "slTymCtnd0",
+        "trains": 12,
+        "gained_min": 1.0658141036401503e-13,
+        "worst": "0451U",
+        "worst_min": 3.552713678800501e-14
+      },
+      {
+        "track": "slCtndKtyr0",
+        "trains": 12,
+        "gained_min": 4.263256414560601e-14,
+        "worst": "0451U",
+        "worst_min": 3.552713678800501e-14
+      },
+      {
+        "track": "slKtyrKkdi0",
+        "trains": 12,
+        "gained_min": 3.552713678800501e-14,
+        "worst": "0451U",
+        "worst_min": 4.263256414560601e-14
       }
     ]
   }

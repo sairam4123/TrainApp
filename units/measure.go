@@ -46,3 +46,16 @@ func (v MetersPerMin) InKMPH() float64 {
 func MilesPH(speed float64) MetersPerMin {
 	return MetersPerMin(speed * MPH_MPM_CONV_FACTOR)
 }
+
+// MetersPerMin2 is an acceleration, in the sim's units.
+type MetersPerMin2 float64
+
+// MS2 is an acceleration given in m/s².
+func MS2(a float64) MetersPerMin2 {
+	return MetersPerMin2(a * 3600)
+}
+
+// InMS2 is the acceleration in m/s².
+func (a MetersPerMin2) InMS2() float64 {
+	return float64(a) / 3600
+}

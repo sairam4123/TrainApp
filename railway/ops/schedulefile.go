@@ -20,6 +20,9 @@ import (
 //	    {"stn": "KRMG", "kind": "pass"},
 //	    {"stn": "PDKT", "kind": "stop", "arr": 40, "dep": 42, "min_dwell": 1}]}]}
 //
+// A train may give a "stock", e.g. {"coaches": 24}, overriding its class's
+// rolling stock in the profile (see Stock).
+//
 // A stop gives either a dwell, and the train leaves once it has stood that
 // long, or an arr and a dep to keep to, with an optional min_dwell it stands
 // even when late. A pass may give an arr, the time it is due through;
@@ -42,6 +45,7 @@ type TrainSpec struct {
 	Class        string      `json:"class,omitempty"`
 	Priority     int         `json:"priority,omitempty"`
 	MaxSpeedKmph float64     `json:"max_speed_kmph"`
+	Stock        *Stock      `json:"stock,omitempty"`
 	Points       []PointSpec `json:"points"`
 }
 
@@ -121,9 +125,14 @@ func ReadTrains(r io.Reader) ([]*Train, error) {
 func (spec TrainSpec) Train() (*Train, error) {
 	t := &Train{
 		Number: spec.Number, Name: spec.Name, Class: spec.Class, Priority: spec.Priority,
-		MaxSpeed: units.KMPH(spec.MaxSpeedKmph),
+		MaxSpeed: units.KMPH(spec.MaxSpeedKmph), Stock: spec.Stock,
 	}
 	var errs []error
+	if spec.Stock != nil {
+		if err := spec.Stock.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("stock: %w", err))
+		}
+	}
 	if len(spec.Points) == 0 {
 		errs = append(errs, errors.New("no points"))
 	} else if spec.Points[0].Arr == nil {
@@ -229,7 +238,7 @@ func WriteSchedule(w io.Writer, file ScheduleFile) error {
 func SpecOf(t *Train) (TrainSpec, error) {
 	spec := TrainSpec{
 		Number: t.Number, Name: t.Name, Class: t.Class, Priority: t.Priority,
-		MaxSpeedKmph: t.MaxSpeed.InKMPH(), Points: []PointSpec{},
+		MaxSpeedKmph: t.MaxSpeed.InKMPH(), Stock: t.Stock, Points: []PointSpec{},
 	}
 	for _, sp := range t.schedule {
 		p := PointSpec{Stn: string(sp.StnCode), Pf: sp.SpPfNo, Kind: SpStop}

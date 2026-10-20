@@ -51,5 +51,20 @@
       {"over_min": 15, "name": "late", "color": "203"},
       {"over_min": 60, "name": "very late", "color": "196"}
     ]
+  },
+  "rolling_stock": {
+    "reference_kmph": 160,
+    "classes": {
+      "VB Express":        { "hp": 6120, "efficiency": 0.85, "loco_length_m": 0, "coaches": 16, "coach_length_m": 24, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "Rajdhani":          { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "Shatabdi":          { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "Duronto":           { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "Garibrath":         { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "Superfast Express": { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "Mail/Express":      { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "UR Express":        { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "Passenger":         { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 },
+      "Special Express":   { "hp": 6120, "efficiency": 0.85, "loco_length_m": 21, "coaches": 20, "coach_length_m": 23.5, "coach_tonnes": 55, "brake_ms2": 0.5 }
+    }
   }
 }

@@ -50,6 +50,9 @@ type PriorityConfig struct {
 	// KPI holds the KPI report's settings, which share the profile file too.
 	// The sim does not read them; see package kpi.
 	KPI json.RawMessage `json:"kpi,omitempty"`
+	// RollingStock gives each class's makeup, from which trains' length,
+	// acceleration and braking are worked out (see initStock).
+	RollingStock *ops.RollingStock `json:"rolling_stock,omitempty"`
 }
 
 // DelayBand adjusts the priority of trains running more than OverMin minutes
@@ -112,6 +115,11 @@ func (c *PriorityConfig) Validate() error {
 			errs = append(errs, fmt.Errorf("precedence: %w", err))
 		}
 	}
+	if c.RollingStock != nil {
+		if err := c.RollingStock.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("rolling_stock: %w", err))
+		}
+	}
 	return errors.Join(errs...)
 }
 
@@ -152,6 +160,31 @@ func (s *Sim) initPriorities() error {
 		t.Priority = p
 	}
 	return nil
+}
+
+// initStock works out each train's length, acceleration and braking from its
+// class's rolling stock and its own Stock. A train with neither keeps zeros.
+func (s *Sim) initStock() error {
+	var rs *ops.RollingStock
+	if s.Priorities != nil {
+		rs = s.Priorities.RollingStock
+	}
+	var errs []error
+	for _, t := range s.trains {
+		if t.Stock != nil {
+			if err := t.Stock.Validate(); err != nil {
+				errs = append(errs, fmt.Errorf("train %s: stock: %w", t.Number, err))
+				continue
+			}
+		}
+		c, err := rs.ConsistOf(t)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("train %s: stock: %w", t.Number, err))
+			continue
+		}
+		t.Length, t.Accel, t.Brake = c.Length, c.Accel, c.Brake
+	}
+	return errors.Join(errs...)
 }
 
 // delayAdjust is the priority adjustment for a train running delay late.

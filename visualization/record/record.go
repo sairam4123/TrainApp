@@ -162,7 +162,7 @@ func (r *Recorder) diff(ev *des.Event[ops.RailwayEvent]) {
 			msg.Track = edge.Track.Id.String()
 			msg.From, msg.To = step.From.Id.String(), step.To.Id.String()
 			msg.TStart = round(r.sim.CurTime())
-			msg.TEnd = round(r.sim.CurTime() + float64(edge.Track.TravelTime(train.MaxSpeed)))
+			msg.TEnd = round(st.EdgeExit)
 		}
 		if !seen || !sameTrain(prev, msg) {
 			r.trains[train.Number] = msg

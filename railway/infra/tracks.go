@@ -30,6 +30,7 @@ type TrackSegment struct {
 // TravelTime is the time to run the whole segment at the lower of the train's
 // and the track's speed limit. It panics if that speed is not positive or the
 // length is negative, since either means the world or train was set up wrong.
+// A train's run time comes from motion.Plan, which uses this.
 func (t *TrackSegment) TravelTime(trainMaxSpeed units.MetersPerMin) units.Minutes {
 	maxSpeed := math.Min(float64(trainMaxSpeed), float64(t.MaxSpeed))
 	if !(maxSpeed > 0) || t.Length < 0 {

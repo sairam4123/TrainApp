@@ -5,7 +5,9 @@ import (
 	"trainapp/des"
 	"trainapp/railway/infra"
 	"trainapp/railway/interlocking"
+	"trainapp/railway/motion"
 	"trainapp/railway/ops"
+	"trainapp/units"
 )
 
 type trainPhase int
@@ -45,6 +47,7 @@ type TrainController struct {
 
 	// for the look-ahead (projection.go)
 	since     float64 // when the front entered the track it is on
+	edgeExit  float64 // when the front is due to leave it, while running
 	arrivedAt float64 // when it last arrived at a stop
 	dwellEnd  float64 // when its current dwell ends
 }
@@ -118,7 +121,10 @@ func (tc *TrainController) OnEvent(event ops.RailwayEvent, data any) {
 			return
 		}
 		tc.recordVia(curTrack)
-		sim.ScheduleEventAfter(curTrack.TravelTime(train.MaxSpeed), ops.TrackTravelEnd, train, train.ID())
+		step, _ := train.Route().Head()
+		run := motion.Plan(train, []infra.Step{step}, false).Times[0]
+		tc.edgeExit = tc.since + run
+		sim.ScheduleEventAfter(units.Min(run), ops.TrackTravelEnd, train, train.ID())
 
 	case ops.TrackTravelEnd:
 		ma := train.Authority()

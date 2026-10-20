@@ -23,6 +23,7 @@ import (
 	"trainapp/des"
 	"trainapp/railway/ids"
 	"trainapp/railway/infra"
+	"trainapp/railway/motion"
 	"trainapp/railway/ops"
 	"trainapp/railway/sim"
 	"trainapp/units"
@@ -129,7 +130,9 @@ type Train struct {
 	Class        string  `json:"class,omitempty"`
 	Priority     int     `json:"priority,omitempty"`
 	MaxSpeedKmph float64 `json:"max_speed_kmph"`
-	Points       []Point `json:"points"`
+	// Stock is the train's own rolling stock override, if it has one.
+	Stock  *ops.Stock `json:"stock,omitempty"`
+	Points []Point    `json:"points"`
 	// Warnings are what makes the timetable doubtful for this train: it
 	// could not enter on time, or did not finish.
 	Warnings []string `json:"warnings,omitempty"`
@@ -199,7 +202,7 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 		t := st.Train
 		tr := Train{
 			Number: t.Number, Name: t.Name, Class: t.Class, Priority: t.Priority,
-			MaxSpeedKmph: float64(t.MaxSpeed) * 60 / 1000,
+			MaxSpeedKmph: float64(t.MaxSpeed) * 60 / 1000, Stock: t.Stock,
 		}
 		sched := t.Schedule()
 		for k, sp := range sched {
@@ -304,7 +307,13 @@ func entryRun(w *infra.World, t *ops.Train, sp *ops.SchedulePoint) float64 {
 	if trk == nil {
 		return 0
 	}
-	return float64(trk.TravelTime(t.MaxSpeed))
+	edge, ok := w.TrackGraph.Edge(trk)
+	if !ok {
+		return 0
+	}
+	// which way it runs the platform does not matter to the time
+	step := infra.Step{Edge: edge, From: edge.From, To: edge.To}
+	return motion.Plan(t, []infra.Step{step}, true).Times[0]
 }
 
 // fill works out each point's dwell and running time from its times.
@@ -329,7 +338,7 @@ func (tt Timetable) TimedTrains() []*ops.Train {
 	for _, tr := range tt.Trains {
 		t := &ops.Train{
 			Number: tr.Number, Name: tr.Name, Class: tr.Class, Priority: tr.Priority,
-			MaxSpeed: units.KMPH(tr.MaxSpeedKmph),
+			MaxSpeed: units.KMPH(tr.MaxSpeedKmph), Stock: tr.Stock,
 		}
 		for _, p := range tr.Points {
 			if !p.Reached() || p.Dep < 0 {

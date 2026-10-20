@@ -93,6 +93,9 @@ func (s *Sim) Init() error {
 	if err := s.initPriorities(); err != nil {
 		return err
 	}
+	if err := s.initStock(); err != nil {
+		return err
+	}
 	if err := s.checkSchedules(); err != nil {
 		return err
 	}
@@ -341,6 +344,9 @@ type TrainStatus struct {
 	Delay    units.Minutes // how late it is running now
 	// HeldFor lists the trains it is held back for (see precedence.go).
 	HeldFor []ids.TrainID
+	// EdgeExit is when the front is due to leave the track it is on. It is
+	// set while the train is running.
+	EdgeExit float64
 }
 
 // Status reports every train's phase, in the order the trains were added.
@@ -350,6 +356,9 @@ func (s *Sim) Status() []TrainStatus {
 		st := TrainStatus{Train: t, Phase: phaseOutside.String(), Priority: t.Priority}
 		if tc, ok := s.trainCtrllers[t.ID()]; ok {
 			st.Phase = tc.phase.String()
+			if tc.phase == phaseRunning {
+				st.EdgeExit = tc.edgeExit
+			}
 			st.Priority = s.Priority(t.ID())
 			st.Delay = t.Delay(s.CurTime())
 		}

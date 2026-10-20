@@ -186,7 +186,9 @@ func (w *World) mainLineFrom(stn *Station, entry Position) (*Platform, []ids.Tra
 // quickestToPlatforms is the quickest time from entry to each platform track
 // of the station, and the tracks of that way (ending with the platform
 // track), using only tracks in the station's area no slower than floor. It
-// does not run through one platform to reach another.
+// does not run through one platform to reach another. Times are at the track
+// speeds, with no train: they only rank platforms, and are not run times
+// (see package motion).
 func (w *World) quickestToPlatforms(stn *Station, entry Position, floor float64) (map[ids.TrackID]float64, map[ids.TrackID][]ids.TrackID) {
 	type node struct {
 		pos  Position

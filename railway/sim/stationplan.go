@@ -198,7 +198,9 @@ func stationPart(stn *infra.Station, steps []infra.Step) ([]infra.Step, ids.Trac
 }
 
 // throatTime is the time spent on the steps in the station's area, other
-// than on the platform track pf itself, at the track speeds.
+// than on the platform track pf itself, at the track speeds. It only ranks
+// platforms, with no train in it, so it does not use the run-time model
+// (motion.Plan).
 func throatTime(stn *infra.Station, pf *infra.Platform, steps []infra.Step) float64 {
 	total := 0.0
 	for _, st := range steps {

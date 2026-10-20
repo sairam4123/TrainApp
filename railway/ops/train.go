@@ -26,6 +26,16 @@ type Train struct {
 	// first. Set from Class when the sim's config knows it.
 	Priority int
 
+	// Stock is the train's own makeup, overriding its class's (see
+	// RollingStock.ConsistOf); nil if it has none.
+	Stock *Stock
+	// Length, Accel and Brake are worked out from the class's stock and
+	// Stock when the sim starts. 0 means no length, and instant acceleration
+	// or braking.
+	Length units.Meters
+	Accel  units.MetersPerMin2
+	Brake  units.MetersPerMin2
+
 	route *interlocking.Route // route the front of the train is on
 	ma    *MovementAuthority  // authority on route
 }
@@ -66,7 +76,8 @@ func (t *Train) Schedule() []*SchedulePoint {
 // Clone is a fresh copy of the train as planned, ready to run in another
 // sim: the same schedule and any disruptions on it, with nothing run yet.
 func (t *Train) Clone() *Train {
-	c := &Train{Name: t.Name, Number: t.Number, MaxSpeed: t.MaxSpeed, Class: t.Class, Priority: t.Priority}
+	c := &Train{Name: t.Name, Number: t.Number, MaxSpeed: t.MaxSpeed, Class: t.Class, Priority: t.Priority,
+		Stock: t.Stock, Length: t.Length, Accel: t.Accel, Brake: t.Brake}
 	for _, sp := range t.schedule {
 		cp := *sp
 		cp.ActArrTime, cp.ActDeptTime, cp.ActPfNo = -1, -1, ""
