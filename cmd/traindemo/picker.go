@@ -226,6 +226,10 @@ func (p *picker) key(key string) tea.Cmd {
 		return p.start()
 	case "v":
 		return p.view()
+	case "d":
+		return p.view("-page", "delay")
+	case "o":
+		return p.view("-page", "occupancy")
 	case "e":
 		return p.edit(false, false)
 	case "c":
@@ -299,8 +303,9 @@ func (p *picker) setTrain(i int) {
 }
 
 // view replays the selected scenario's run under the selected rule in
-// trainviz, even one that failed, such as a deadlock.
-func (p *picker) view() tea.Cmd {
+// trainviz, even one that failed, such as a deadlock; args go to trainviz,
+// e.g. to open on its delay page.
+func (p *picker) view(args ...string) tea.Cmd {
 	sc := p.scenarios[p.cursor]
 	if sc.Err != nil {
 		p.note = "the scenario does not read: e opens it in trainedit"
@@ -312,7 +317,7 @@ func (p *picker) view() tea.Cmd {
 		return nil
 	}
 	p.viewing = p.resultKey()
-	return runs.Replay(p.bins.trainviz, rec, func(err error) tea.Msg { return vizDoneMsg{err} })
+	return runs.Replay(p.bins.trainviz, rec, func(err error) tea.Msg { return vizDoneMsg{err} }, args...)
 }
 
 // edit hands the terminal to trainedit on the selected scenario, or on a new
@@ -513,9 +518,9 @@ func (p *picker) render() string {
 }
 
 func (p *picker) keyLine() string {
-	keys := " ↑↓ scenario  tab trains  enter run  v replay  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn schedule  q quit"
+	keys := " ↑↓ scenario  tab trains  enter run  v replay  d delay  o occupancy  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn schedule  q quit"
 	if p.focus == focusTrains {
-		keys = " ↑↓ train  tab/esc scenarios  enter run  v replay  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn page  q quit"
+		keys = " ↑↓ train  tab/esc scenarios  enter run  v replay  d delay  o occupancy  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn page  q quit"
 	}
 	if p.run != nil {
 		keys = " esc cancel the run  ctrl+c quit"

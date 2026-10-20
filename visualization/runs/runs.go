@@ -367,9 +367,10 @@ func (r *Run) Finish(err error) *Result {
 }
 
 // Replay opens the recording in trainviz, handing it the terminal; done
-// makes the message for when it quits.
-func Replay(trainviz, rec string, done func(error) tea.Msg) tea.Cmd {
-	return tea.ExecProcess(exec.Command(trainviz, "replay", rec), done)
+// makes the message for when it quits. args go to trainviz replay before
+// the recording, e.g. "-page", "delay".
+func Replay(trainviz, rec string, done func(error) tea.Msg, args ...string) tea.Cmd {
+	return tea.ExecProcess(exec.Command(trainviz, append(append([]string{"replay"}, args...), rec)...), done)
 }
 
 // Interrupted reports whether a command was quit with ctrl+c.

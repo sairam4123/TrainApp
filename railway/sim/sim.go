@@ -120,7 +120,7 @@ func (s *Sim) Init() error {
 			train: train,
 		}
 		first := train.Schedule()[0]
-		if err := s.des.Add(first.ArrTime-des.MinDeltaTime, ops.WorldEntered, train, train.Number); err != nil {
+		if _, err := s.des.Add(first.ArrTime-des.MinDeltaTime, ops.WorldEntered, train, train.Number); err != nil {
 			return fmt.Errorf("train %s: %w", train.Number, err)
 		}
 	}
@@ -168,18 +168,29 @@ func (s *Sim) NextEvent() (des.Event[ops.RailwayEvent], bool) {
 
 // ScheduleEventAfter schedules an event delta minutes from now. Deltas below
 // des.MinDeltaTime are raised to it, so nothing is ever scheduled in the past.
-func (s *Sim) ScheduleEventAfter(delta units.Minutes, evtype ops.RailwayEvent, data any, trainId ids.TrainID) {
-	s.ScheduleEventAt(s.CurTime()+max(float64(delta), des.MinDeltaTime), evtype, data, trainId)
+// The id it returns can be passed to CancelEvent.
+func (s *Sim) ScheduleEventAfter(delta units.Minutes, evtype ops.RailwayEvent, data any, trainId ids.TrainID) des.EventID {
+	return s.ScheduleEventAt(s.CurTime()+max(float64(delta), des.MinDeltaTime), evtype, data, trainId)
 }
 
-func (s *Sim) ScheduleEventNext(evtype ops.RailwayEvent, data any, trainId ids.TrainID) {
-	s.ScheduleEventAfter(des.MinDeltaTime, evtype, data, trainId)
+func (s *Sim) ScheduleEventNext(evtype ops.RailwayEvent, data any, trainId ids.TrainID) des.EventID {
+	return s.ScheduleEventAfter(des.MinDeltaTime, evtype, data, trainId)
 }
 
-func (s *Sim) ScheduleEventAt(time float64, evType ops.RailwayEvent, data any, trainId ids.TrainID) {
-	if err := s.des.Add(time, evType, data, trainId.Number); err != nil {
+// ScheduleEventAt schedules an event at the given time. It fails the run, and
+// returns the zero id, if the time is invalid.
+func (s *Sim) ScheduleEventAt(time float64, evType ops.RailwayEvent, data any, trainId ids.TrainID) des.EventID {
+	id, err := s.des.Add(time, evType, data, trainId.Number)
+	if err != nil {
 		s.fail(err)
 	}
+	return id
+}
+
+// CancelEvent stops a scheduled event from being handled; it is never logged
+// or seen by observers. It reports whether the event was still pending.
+func (s *Sim) CancelEvent(id des.EventID) bool {
+	return s.des.Cancel(id)
 }
 
 func (s *Sim) CurTime() float64 {

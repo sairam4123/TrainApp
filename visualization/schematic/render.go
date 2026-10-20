@@ -50,6 +50,22 @@ type Options struct {
 	// Marks picks out pieces of the world, by id: a point, track, signal or
 	// station (its code), e.g. an editor's selection and its problems.
 	Marks map[string]Mark
+
+	// Heat, if set and State is not, colours tracks by a figure for each,
+	// by track id, e.g. how busy it was over a run. Tracks it leaves out
+	// are drawn faint.
+	Heat map[string]Heat
+	// StationNotes, without State, add a figure after a station's code, by
+	// code, in its colour, e.g. "PDKT 42%". Not drawn at the overview level.
+	StationNotes map[string]Heat
+}
+
+// Heat is how a track is drawn by its figure (Options.Heat).
+type Heat struct {
+	Color string  // an ANSI 256-colour number, e.g. "42"
+	Level float64 // where two tracks share a cell, the higher one is drawn
+	// Label, if set, replaces a line's length, e.g. "66%" for "(55km)".
+	Label string
 }
 
 // Mark is how a piece is picked out (Options.Marks).
@@ -206,7 +222,8 @@ func (d *Diagram) draw(opt Options) *Frame {
 
 	for _, t := range d.tracks {
 		if t.Kind != box {
-			f.paths[t.ID] = cv.track(t, opt.Level, d.look(t, opt.State), col[t.From], row(t.From), col[t.To], row(t.To))
+			text, heated := trackLabel(t, opt)
+			f.paths[t.ID] = cv.track(t, text, heated, d.look(t, opt), col[t.From], row(t.From), col[t.To], row(t.To))
 		}
 	}
 	trackWest := make(map[string]bool) // a track ends at the point from the west
@@ -231,11 +248,24 @@ func (d *Diagram) draw(opt Options) *Frame {
 			top = min(top, d.lane[t.From])
 		}
 		label := s.code
-		if full := label + " " + s.name; utf8.RuneCountInString(full) <= east-west+1 {
+		note, noted := opt.StationNotes[s.code]
+		noted = noted && note.Label != "" && opt.State == nil
+		switch full := label + " " + s.name; {
+		case noted:
+			label += " " + note.Label
+		case utf8.RuneCountInString(full) <= east-west+1:
 			label = full
 		}
 		f.stations[s.code] = pos{(west + east) / 2, headerRows + top*rowsPerLane}
-		f.labels[s.code] = cv.label(label, west, east, headerRows+top*rowsPerLane-1)
+		sp := cv.label(label, west, east, headerRows+top*rowsPerLane-1)
+		f.labels[s.code] = sp
+		if noted && note.Color != "" {
+			for x := sp.x2 - utf8.RuneCountInString(note.Label) + 1; x <= sp.x2; x++ {
+				if cv.in(x, sp.y) {
+					cv.cells[sp.y][x].look = look{heated: true, heat: note.Color}
+				}
+			}
+		}
 	}
 	for _, b := range d.boxes {
 		d.drawBox(f, b, opt.State)
@@ -246,11 +276,33 @@ func (d *Diagram) draw(opt Options) *Frame {
 	return f
 }
 
+// trackLabel is the label drawn on the track: its own, or for a line its
+// heat label if it has one, which heated reports.
+func trackLabel(t *Track, opt Options) (text string, heated bool) {
+	h, ok := opt.Heat[t.ID]
+	if opt.State != nil || !ok || h.Label == "" || t.Kind != Line {
+		return t.label(opt.Level), false
+	}
+	if opt.Level == Detail && t.Name != t.ID {
+		return t.Name + " " + h.Label, true
+	}
+	return h.Label, true
+}
+
 // look is how a track is drawn for the state: by who holds it, faint if a
-// switch is set against it, bright if a switch is locked for it.
-func (d *Diagram) look(t *Track, st *vizproto.State) look {
+// switch is set against it, bright if a switch is locked for it. Without
+// state it is drawn by its heat, if there is any.
+func (d *Diagram) look(t *Track, opt Options) look {
+	st := opt.State
 	if st == nil {
-		return look{}
+		if opt.Heat == nil {
+			return look{}
+		}
+		h, ok := opt.Heat[t.ID]
+		if !ok {
+			return look{heated: true, faint: true}
+		}
+		return look{heated: true, heat: h.Color, level: h.Level}
 	}
 	l := look{state: free}
 	switch r, o := st.TrackHolder(t.ID); {
@@ -670,6 +722,7 @@ const (
 	stylePlatformLabel
 	styleMainLabel // a main line's platform label, underlined
 	styleLength
+	styleHeatLabel // a heat label (Options.Heat), in white
 	styleEnd
 	styleStation
 	styleID
@@ -688,6 +741,7 @@ var sgr = map[style]string{
 	stylePlatformLabel: "1;33",
 	styleMainLabel:     "1;33;4",
 	styleLength:        "2",
+	styleHeatLabel:     "1;97",
 	styleEnd:           "2",
 	styleStation:       "1;36",
 	styleID:            "2",
@@ -713,10 +767,24 @@ const (
 type look struct {
 	state         holdState
 	faint, locked bool
+	// drawn by heat (Options.Heat): in colour heat, ranked by level; faint
+	// if the track has none
+	heated bool
+	heat   string
+	level  float64
 }
 
 // rank orders looks for a cell two tracks share: occupied beats reserved
 // beats free, and a leg a switch is set for beats one it is not.
+//
+// Heated looks are ranked by their level.
+func (l look) over(o look) bool {
+	if l.heated && o.heated && l.faint == o.faint {
+		return l.level > o.level
+	}
+	return l.rank() > o.rank()
+}
+
 func (l look) rank() int {
 	r := int(l.state) * 4
 	if !l.faint {
@@ -749,7 +817,17 @@ func (c cell) sgr() string {
 	if s := sgr[c.style]; s != "" {
 		codes = append(codes, s)
 	}
-	if c.track {
+	if !c.track && c.look.heat != "" {
+		codes = append(codes, "38;5;"+c.look.heat) // a station note
+	}
+	if c.track && c.look.heated {
+		switch {
+		case c.look.faint:
+			codes = append(codes, "90", "2")
+		case c.look.heat != "":
+			codes = append(codes, "38;5;"+c.look.heat)
+		}
+	} else if c.track {
 		switch c.look.state {
 		case free:
 			codes = append(codes, "90")
@@ -803,7 +881,7 @@ func (cv *canvas) draw(x, y int, r rune, s style, track bool, l look) {
 		return
 	}
 	c := &cv.cells[y][x]
-	if track && c.track && c.look.rank() > l.rank() {
+	if track && c.track && c.look.over(l) {
 		l = c.look
 	}
 	switch {
@@ -840,7 +918,7 @@ func isDiagonal(r rune) bool { return r == '╱' || r == '╲' || r == '╳' }
 // the track branches off others (e.g. at a switch toe), or is centred when it
 // branches at both ends or neither (a crossover, where the two legs meet in
 // an X).
-func (cv *canvas) track(t *Track, level Level, l look, x1, y1, x2, y2 int) []pos {
+func (cv *canvas) track(t *Track, text string, heated bool, l look, x1, y1, x2, y2 int) []pos {
 	// a through track has no platform, so it is drawn as plain track
 	glyph, s := '─', styleTrack
 	if t.Kind == Platform && t.Class != "through" {
@@ -867,12 +945,13 @@ func (cv *canvas) track(t *Track, level Level, l look, x1, y1, x2, y2 int) []pos
 		path = append(path, pos{x, y2})
 	}
 
-	text := t.label(level)
 	if text == "" {
 		return path
 	}
 	ls := styleLength
 	switch {
+	case heated:
+		ls = styleHeatLabel
 	case t.Kind == Platform && t.Class == "main":
 		ls = styleMainLabel
 	case t.Kind == Platform:
@@ -947,7 +1026,7 @@ func (cv *canvas) text(id string, x int, rows ...int) {
 // a train drawn over part of it leaves no pieces behind.
 func (cv *canvas) unlabel(x, y, n int) {
 	isLabel := func(x int) bool {
-		return cv.in(x, y) && (cv.cells[y][x].style == styleLength || cv.cells[y][x].style == stylePlatformLabel)
+		return cv.in(x, y) && (cv.cells[y][x].style == styleLength || cv.cells[y][x].style == styleHeatLabel || cv.cells[y][x].style == stylePlatformLabel)
 	}
 	for i := x; i < x+n; i++ {
 		if !isLabel(i) {

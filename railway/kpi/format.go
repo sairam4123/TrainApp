@@ -33,11 +33,24 @@ func Print(w io.Writer, title string, r *Report) error {
 		100*b.MeanOccupancy, 100*b.MinOccupancy, 100*b.MaxOccupancy, 100*b.MeanStanding, b.StandingMin)
 
 	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', tabwriter.AlignRight)
-	fmt.Fprintln(tw, "    block\toccupied\trunning\tstanding\ttrains/h\t")
+	fmt.Fprint(tw, "    block\toccupied\trunning\tstanding\ttrains/h\t")
+	if len(u.Bands) > 0 {
+		fmt.Fprint(tw, "band\t")
+	}
+	fmt.Fprintln(tw)
 	for _, tu := range u.Tracks {
-		if tu.Kind == KindBlock && tu.Entries > 0 {
-			fmt.Fprintf(tw, "    %s\t%.0f%%\t%.0f%%\t%.1f%%\t%.1f\t\n", tu.Track, 100*tu.Occupancy, 100*tu.Running, 100*tu.Standing, tu.TrainsPerHour)
+		if tu.Kind != KindBlock || tu.Entries == 0 {
+			continue
 		}
+		fmt.Fprintf(tw, "    %s\t%.0f%%\t%.0f%%\t%.1f%%\t%.1f\t", tu.Track, 100*tu.Occupancy, 100*tu.Running, 100*tu.Standing, tu.TrainsPerHour)
+		if len(u.Bands) > 0 {
+			name := "-"
+			if b := u.Band(tu.Occupancy); b >= 0 {
+				name = u.Bands[b].Name
+			}
+			fmt.Fprint(tw, name+"\t")
+		}
+		fmt.Fprintln(tw)
 	}
 	if err := tw.Flush(); err != nil {
 		return err
@@ -46,8 +59,34 @@ func Print(w io.Writer, title string, r *Report) error {
 	for i, su := range u.Stations {
 		parts[i] = fmt.Sprintf("%s %.0f%%", su.Stn, 100*su.Occupancy)
 	}
-	_, err := fmt.Fprintf(w, "  platform tracks occupied: %s\n", strings.Join(parts, ", "))
-	return err
+	if _, err := fmt.Fprintf(w, "  platform tracks occupied: %s\n", strings.Join(parts, ", ")); err != nil {
+		return err
+	}
+	return printStations(w, r.StationDelays)
+}
+
+// printStations is the delay at each station: how many calls were on time,
+// how late they were, and the delay gained on the way there and standing
+// there.
+func printStations(w io.Writer, stations []StationDelay) error {
+	if len(stations) == 0 {
+		return nil
+	}
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', tabwriter.AlignRight)
+	fmt.Fprint(tw, "    station\tcalls\t")
+	for _, p := range stations[0].Punctual {
+		fmt.Fprintf(tw, "≤%g min\t", p.WithinMin)
+	}
+	fmt.Fprintln(tw, "mean\tworst\tgained before\tgained at\t")
+	for _, sd := range stations {
+		fmt.Fprintf(tw, "    %s\t%d\t", sd.Stn, sd.Calls)
+		for _, p := range sd.Punctual {
+			fmt.Fprintf(tw, "%.0f%%\t", 100*p.Share)
+		}
+		fmt.Fprintf(tw, "%.1f\t%.1f\t%.1f\t%.1f\t\n", sd.MeanMin, sd.WorstMin, sd.ApproachMin, sd.StationMin)
+	}
+	fmt.Fprintln(w, "  delay at the stations, in minutes against free running:")
+	return tw.Flush()
 }
 
 func printStats(w io.Writer, name string, st *Stats) {

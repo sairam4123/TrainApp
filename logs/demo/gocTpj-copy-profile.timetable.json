@@ -1,0 +1,584 @@
+{
+  "rounding_min": 1,
+  "trains": [
+    {
+      "number": "T001",
+      "name": "TBM-MS Exp",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 1,
+          "dep": 3,
+          "dwell": 2,
+          "min_dwell": 1
+        },
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 16,
+          "dep": 17,
+          "dwell": 1,
+          "min_dwell": 1,
+          "run": 13,
+          "via": [
+            {
+              "track": "msPf4E-msThE3",
+              "in": 3.002,
+              "out": 3.0575454545454543
+            },
+            {
+              "track": "msThE3-msThE4",
+              "in": 3.0575454545454543,
+              "out": 3.113090909090909
+            },
+            {
+              "track": "msThE4-msXoE0L",
+              "in": 3.113090909090909,
+              "out": 3.1686363636363635
+            },
+            {
+              "track": "msXoE0L-tbmXoW0L",
+              "in": 3.1686363636363635,
+              "out": 14.08272727272727
+            },
+            {
+              "track": "tbmThW3-tbmXoW0L",
+              "in": 14.08272727272727,
+              "out": 14.138272727272724
+            },
+            {
+              "track": "tbmPf3S-tbmThW3",
+              "in": 14.138272727272724,
+              "out": 14.339272727272723
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "T1U",
+      "name": "",
+      "class": "VB Express",
+      "priority": 100,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 10,
+          "dep": 15,
+          "dwell": 5,
+          "min_dwell": 2,
+          "halt": {
+            "reason": "technical",
+            "for": "T001",
+            "min": 1.0887272727272705
+          }
+        },
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 28,
+          "dep": 30,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 13,
+          "via": [
+            {
+              "track": "msPf4E-msThE3",
+              "in": 15.001999999999999,
+              "out": 15.057545454545453
+            },
+            {
+              "track": "msThE3-msThE4",
+              "in": 15.057545454545453,
+              "out": 15.113090909090907
+            },
+            {
+              "track": "msThE4-msXoE0L",
+              "in": 15.113090909090907,
+              "out": 15.168636363636361
+            },
+            {
+              "track": "msXoE0L-tbmXoW0L",
+              "in": 15.168636363636361,
+              "out": 26.082727272727276
+            },
+            {
+              "track": "tbmThW3-tbmXoW0L",
+              "in": 26.082727272727276,
+              "out": 26.138272727272735
+            },
+            {
+              "track": "tbmPf3S-tbmThW3",
+              "in": 26.138272727272735,
+              "out": 26.339272727272736
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "T2U",
+      "name": "",
+      "class": "VB Express",
+      "priority": 100,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 20,
+          "dep": 27,
+          "dwell": 7,
+          "min_dwell": 2,
+          "halt": {
+            "reason": "technical",
+            "for": "T1U",
+            "min": 2.1724545454545456
+          }
+        },
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 40,
+          "dep": 42,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 13,
+          "via": [
+            {
+              "track": "msPf4E-msThE3",
+              "in": 27.002000000000002,
+              "out": 27.05754545454546
+            },
+            {
+              "track": "msThE3-msThE4",
+              "in": 27.05754545454546,
+              "out": 27.113090909090914
+            },
+            {
+              "track": "msThE4-msXoE0L",
+              "in": 27.113090909090914,
+              "out": 27.16863636363637
+            },
+            {
+              "track": "msXoE0L-tbmXoW0L",
+              "in": 27.16863636363637,
+              "out": 38.08272727272727
+            },
+            {
+              "track": "tbmThW3-tbmXoW0L",
+              "in": 38.08272727272727,
+              "out": 38.13827272727272
+            },
+            {
+              "track": "tbmPf3S-tbmThW3",
+              "in": 38.13827272727272,
+              "out": 38.33927272727272
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "T3U",
+      "name": "",
+      "class": "VB Express",
+      "priority": 100,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 30,
+          "dep": 39,
+          "dwell": 9,
+          "min_dwell": 2,
+          "halt": {
+            "reason": "technical",
+            "for": "T2U",
+            "min": 3.2561818181818154
+          }
+        },
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 52,
+          "dep": 54,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 13,
+          "via": [
+            {
+              "track": "msPf4E-msThE3",
+              "in": 39.001999999999995,
+              "out": 39.05754545454545
+            },
+            {
+              "track": "msThE3-msThE4",
+              "in": 39.05754545454545,
+              "out": 39.1130909090909
+            },
+            {
+              "track": "msThE4-msXoE0L",
+              "in": 39.1130909090909,
+              "out": 39.16863636363635
+            },
+            {
+              "track": "msXoE0L-tbmXoW0L",
+              "in": 39.16863636363635,
+              "out": 50.08272727272725
+            },
+            {
+              "track": "tbmThW3-tbmXoW0L",
+              "in": 50.08272727272725,
+              "out": 50.1382727272727
+            },
+            {
+              "track": "tbmPf3S-tbmThW3",
+              "in": 50.1382727272727,
+              "out": 50.3392727272727
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "T1D",
+      "name": "",
+      "class": "VB Express",
+      "priority": 100,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 40,
+          "dep": 43,
+          "dwell": 3,
+          "min_dwell": 2
+        },
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 55,
+          "dep": 57,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 12,
+          "via": [
+            {
+              "track": "tbmPf2S-tbmThW1",
+              "in": 43.001999999999995,
+              "out": 43.202999999999996
+            },
+            {
+              "track": "Ed1-tbmThW1",
+              "in": 43.202999999999996,
+              "out": 43.25854545454545
+            },
+            {
+              "track": "Ed1-msXoE0U",
+              "in": 43.25854545454545,
+              "out": 54.17263636363635
+            },
+            {
+              "track": "msThE1-msXoE0U",
+              "in": 54.17263636363635,
+              "out": 54.2281818181818
+            },
+            {
+              "track": "msThE0-msThE1",
+              "in": 54.2281818181818,
+              "out": 54.283727272727255
+            },
+            {
+              "track": "msPf2E-msThE0",
+              "in": 54.283727272727255,
+              "out": 54.33927272727271
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "T4U",
+      "name": "",
+      "class": "VB Express",
+      "priority": 100,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 40,
+          "dep": 51,
+          "dwell": 11,
+          "min_dwell": 2,
+          "halt": {
+            "reason": "technical",
+            "for": "T3U",
+            "min": 4.33990909090906
+          }
+        },
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 64,
+          "dep": 66,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 13,
+          "via": [
+            {
+              "track": "msPf4E-msThE3",
+              "in": 51.001999999999995,
+              "out": 51.05754545454545
+            },
+            {
+              "track": "msThE3-msThE4",
+              "in": 51.05754545454545,
+              "out": 51.1130909090909
+            },
+            {
+              "track": "msThE4-msXoE0L",
+              "in": 51.1130909090909,
+              "out": 51.16863636363635
+            },
+            {
+              "track": "msXoE0L-tbmXoW0L",
+              "in": 51.16863636363635,
+              "out": 62.08272727272725
+            },
+            {
+              "track": "tbmThW3-tbmXoW0L",
+              "in": 62.08272727272725,
+              "out": 62.1382727272727
+            },
+            {
+              "track": "tbmPf3S-tbmThW3",
+              "in": 62.1382727272727,
+              "out": 62.3392727272727
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "T2D",
+      "name": "",
+      "class": "VB Express",
+      "priority": 100,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 50,
+          "dep": 55,
+          "dwell": 5,
+          "min_dwell": 2,
+          "halt": {
+            "reason": "technical",
+            "for": "T1D",
+            "min": 1.1786363636363362
+          }
+        },
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 67,
+          "dep": 69,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 12,
+          "via": [
+            {
+              "track": "tbmPf2S-tbmThW1",
+              "in": 55.001999999999995,
+              "out": 55.202999999999996
+            },
+            {
+              "track": "Ed1-tbmThW1",
+              "in": 55.202999999999996,
+              "out": 55.25854545454545
+            },
+            {
+              "track": "Ed1-msXoE0U",
+              "in": 55.25854545454545,
+              "out": 66.17263636363639
+            },
+            {
+              "track": "msThE1-msXoE0U",
+              "in": 66.17263636363639,
+              "out": 66.22818181818184
+            },
+            {
+              "track": "msThE0-msThE1",
+              "in": 66.22818181818184,
+              "out": 66.28372727272729
+            },
+            {
+              "track": "msPf2E-msThE0",
+              "in": 66.28372727272729,
+              "out": 66.33927272727274
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "T3D",
+      "name": "",
+      "class": "VB Express",
+      "priority": 100,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 60,
+          "dep": 67,
+          "dwell": 7,
+          "min_dwell": 2,
+          "halt": {
+            "reason": "technical",
+            "for": "T2D",
+            "min": 2.3522727272727266
+          }
+        },
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 79,
+          "dep": 81,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 12,
+          "via": [
+            {
+              "track": "tbmPf2S-tbmThW1",
+              "in": 67.00200000000001,
+              "out": 67.20300000000002
+            },
+            {
+              "track": "Ed1-tbmThW1",
+              "in": 67.20300000000002,
+              "out": 67.25854545454547
+            },
+            {
+              "track": "Ed1-msXoE0U",
+              "in": 67.25854545454547,
+              "out": 78.1726363636364
+            },
+            {
+              "track": "msThE1-msXoE0U",
+              "in": 78.1726363636364,
+              "out": 78.22818181818185
+            },
+            {
+              "track": "msThE0-msThE1",
+              "in": 78.22818181818185,
+              "out": 78.2837272727273
+            },
+            {
+              "track": "msPf2E-msThE0",
+              "in": 78.2837272727273,
+              "out": 78.33927272727276
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "T4D",
+      "name": "",
+      "class": "VB Express",
+      "priority": 100,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 70,
+          "dep": 79,
+          "dwell": 9,
+          "min_dwell": 2,
+          "halt": {
+            "reason": "technical",
+            "for": "T3D",
+            "min": 3.525909090909124
+          }
+        },
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 91,
+          "dep": 93,
+          "dwell": 2,
+          "min_dwell": 2,
+          "run": 12,
+          "via": [
+            {
+              "track": "tbmPf2S-tbmThW1",
+              "in": 79.00200000000001,
+              "out": 79.20300000000002
+            },
+            {
+              "track": "Ed1-tbmThW1",
+              "in": 79.20300000000002,
+              "out": 79.25854545454547
+            },
+            {
+              "track": "Ed1-msXoE0U",
+              "in": 79.25854545454547,
+              "out": 90.1726363636364
+            },
+            {
+              "track": "msThE1-msXoE0U",
+              "in": 90.1726363636364,
+              "out": 90.22818181818185
+            },
+            {
+              "track": "msThE0-msThE1",
+              "in": 90.22818181818185,
+              "out": 90.2837272727273
+            },
+            {
+              "track": "msPf2E-msThE0",
+              "in": 90.2837272727273,
+              "out": 90.33927272727276
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "check": {
+    "tolerance_min": 1,
+    "precedence": "plan"
+  }
+}

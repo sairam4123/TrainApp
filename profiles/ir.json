@@ -38,6 +38,18 @@
     "check_precedence": "plan"
   },
   "kpi": {
-    "punctual_within_min": [1, 5, 15]
+    "punctual_within_min": [1, 5, 15],
+    "capacity_color_band": [
+      {"over_pct": 0, "name": "light", "color": "39"},
+      {"over_pct": 40, "name": "moderate", "color": "42"},
+      {"over_pct": 60, "name": "heavy", "color": "214"},
+      {"over_pct": 75, "name": "saturated", "color": "203"}
+    ],
+    "delay_color_band": [
+      {"over_min": 0, "name": "on time", "color": "42"},
+      {"over_min": 5, "name": "slightly late", "color": "214"},
+      {"over_min": 15, "name": "late", "color": "203"},
+      {"over_min": 60, "name": "very late", "color": "196"}
+    ]
   }
 }

@@ -114,7 +114,8 @@ func (s *Sim) OverrideAt(at float64, o Override) error {
 	if err := s.checkOverride(o); err != nil {
 		return err
 	}
-	return s.des.Add(at, ops.PrecedenceOverride, o, "")
+	_, err := s.des.Add(at, ops.PrecedenceOverride, o, "")
+	return err
 }
 
 func (s *Sim) checkOverride(o Override) error {

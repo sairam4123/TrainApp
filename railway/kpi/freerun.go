@@ -15,6 +15,17 @@ type FreeRun struct {
 	EntryMin   float64 `json:"entry_min"`
 	ExitMin    float64 `json:"exit_min"`
 	JourneyMin float64 `json:"journey_min"`
+	// Calls are when it reached and left each point of its schedule.
+	Calls []FreeCall `json:"calls"`
+}
+
+// FreeCall is a free-running train at one point of its schedule: when it
+// arrived and left, and how long it took over each track of the way there,
+// by track id.
+type FreeCall struct {
+	ArrMin float64            `json:"arr_min"`
+	DepMin float64            `json:"dep_min"`
+	Via    map[string]float64 `json:"via,omitempty"`
 }
 
 // FreeRunning runs each train alone over the world, with the same profile,
@@ -51,7 +62,20 @@ func FreeRunning(world *infra.World, prio *sim.PriorityConfig, trains []*ops.Tra
 		}
 		sched := alone.Schedule()
 		entry, exit := sched[0].ArrTime, sched[len(sched)-1].ActDeptTime
-		out[t.Number] = FreeRun{EntryMin: entry, ExitMin: exit, JourneyMin: exit - entry}
+		fr := FreeRun{EntryMin: entry, ExitMin: exit, JourneyMin: exit - entry}
+		for _, sp := range sched {
+			fc := FreeCall{ArrMin: sp.ActArrTime, DepMin: sp.ActDeptTime}
+			for _, v := range sp.Via {
+				if v.Out >= 0 {
+					if fc.Via == nil {
+						fc.Via = map[string]float64{}
+					}
+					fc.Via[v.Track] += v.Out - v.In
+				}
+			}
+			fr.Calls = append(fr.Calls, fc)
+		}
+		out[t.Number] = fr
 	}
 	return out, errors.Join(errs...)
 }

@@ -1,0 +1,24 @@
+{
+  "trains": [
+    {
+      "number": "T001",
+      "name": "TBM-MS Exp",
+      "class": "Superfast Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "MS",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 1,
+          "dwell": 1
+        },
+        {
+          "stn": "TBM",
+          "kind": "stop",
+          "dwell": 1
+        }
+      ]
+    }
+  ]
+}

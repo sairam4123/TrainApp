@@ -200,5 +200,6 @@ func (s *Sim) SetPriorityAt(at float64, id ids.TrainID, priority int) error {
 	if _, ok := s.trainCtrllers[id]; !ok {
 		return fmt.Errorf("sim: SetPriorityAt for unknown train %s", id)
 	}
-	return s.des.Add(at, ops.PriorityChanged, priorityChange{to: priority}, id.Number)
+	_, err := s.des.Add(at, ops.PriorityChanged, priorityChange{to: priority}, id.Number)
+	return err
 }

@@ -8,6 +8,10 @@ import (
 
 const MinDeltaTime = 0.001
 
+// EventID identifies a scheduled event, so it can be cancelled. The zero
+// value is never issued.
+type EventID uint64
+
 type Event[T comparable] struct {
 	Time      float64
 	CreatedAt float64
@@ -16,6 +20,11 @@ type Event[T comparable] struct {
 	TrainID   string
 
 	seq uint64 // insertion order, breaks ties between events at the same time
+}
+
+// ID is the id Add returned for the event.
+func (e Event[T]) ID() EventID {
+	return EventID(e.seq)
 }
 
 type EventQueue[T comparable] []Event[T]
@@ -57,22 +66,29 @@ type DES[T comparable] struct {
 	CurTime float64
 
 	nextSeq uint64
+	// pending holds the ids of the queued events that have not been
+	// cancelled. A cancelled event stays in eq until it reaches the front,
+	// where NextEvent drops it.
+	pending map[EventID]struct{}
 }
 
 func (d *DES[T]) Init() {
 	heap.Init(&d.eq)
+	d.pending = map[EventID]struct{}{}
 }
 
-// Add schedules an event. It returns an error, and schedules nothing, when the
-// time is not finite or is less than MinDeltaTime after the current time.
-func (d *DES[T]) Add(eventTime float64, evtype T, data any, trainId string) error {
+// Add schedules an event and returns its id. It returns an error, and
+// schedules nothing, when the time is not finite or is less than MinDeltaTime
+// after the current time.
+func (d *DES[T]) Add(eventTime float64, evtype T, data any, trainId string) (EventID, error) {
 	if math.IsNaN(eventTime) || math.IsInf(eventTime, 0) {
-		return fmt.Errorf("des: event %v for %q has non-finite time %v", evtype, trainId, eventTime)
+		return 0, fmt.Errorf("des: event %v for %q has non-finite time %v", evtype, trainId, eventTime)
 	}
 	if eventTime < d.CurTime+MinDeltaTime {
-		return fmt.Errorf("des: event %v for %q at %.4f is before the earliest allowed time %.4f", evtype, trainId, eventTime, d.CurTime+MinDeltaTime)
+		return 0, fmt.Errorf("des: event %v for %q at %.4f is before the earliest allowed time %.4f", evtype, trainId, eventTime, d.CurTime+MinDeltaTime)
 	}
 
+	d.nextSeq++
 	heap.Push(&d.eq, Event[T]{
 		Time:      eventTime,
 		CreatedAt: d.CurTime,
@@ -81,19 +97,39 @@ func (d *DES[T]) Add(eventTime float64, evtype T, data any, trainId string) erro
 		TrainID:   trainId,
 		seq:       d.nextSeq,
 	})
-	d.nextSeq++
-	return nil
+	id := EventID(d.nextSeq)
+	d.pending[id] = struct{}{}
+	return id, nil
 }
 
-func (d *DES[T]) Len() int {
-	return d.eq.Len()
-}
-
-func (d *DES[T]) NextEvent() (Event[T], bool) {
-	if d.eq.Len() <= 0 {
-		return Event[T]{}, false
+// Cancel stops a scheduled event from being delivered. It reports whether the
+// event was still pending: false if it has already been delivered or
+// cancelled, or was never scheduled.
+func (d *DES[T]) Cancel(id EventID) bool {
+	if _, ok := d.pending[id]; !ok {
+		return false
 	}
-	event := heap.Pop(&d.eq).(Event[T])
-	d.CurTime = event.Time
-	return event, true
+	delete(d.pending, id)
+	return true
+}
+
+// Len is the number of events still to be delivered, not counting cancelled
+// ones.
+func (d *DES[T]) Len() int {
+	return len(d.pending)
+}
+
+// NextEvent delivers the earliest pending event and moves the clock to its
+// time. Cancelled events are skipped and do not move the clock.
+func (d *DES[T]) NextEvent() (Event[T], bool) {
+	for d.eq.Len() > 0 {
+		event := heap.Pop(&d.eq).(Event[T])
+		if _, ok := d.pending[event.ID()]; !ok {
+			continue // cancelled
+		}
+		delete(d.pending, event.ID())
+		d.CurTime = event.Time
+		return event, true
+	}
+	return Event[T]{}, false
 }

@@ -18,11 +18,14 @@ package kpi
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"trainapp/des"
+	"trainapp/railway/kpi/report"
 	"trainapp/railway/ops"
 	"trainapp/railway/sim"
 	"trainapp/units"
@@ -33,7 +36,43 @@ type Config struct {
 	// PunctualWithinMin are the delays, in minutes, punctuality is reported
 	// within: the share of trains no later than each.
 	PunctualWithinMin []float64 `json:"punctual_within_min"`
+	// CapacityColorBand names how busy a track was, by its occupancy, and
+	// the colour trainviz draws it in. Empty for none.
+	CapacityColorBand []CapacityBand `json:"capacity_color_band,omitempty"`
+	// DelayColorBand does the same for how late a train was. Empty for none.
+	DelayColorBand []DelayBand `json:"delay_color_band,omitempty"`
 }
+
+// The report's types live in package report, which the viewers read it
+// with without linking the sim.
+type (
+	Report       = report.Report
+	Stats        = report.Stats
+	Punctuality  = report.Punctuality
+	Split        = report.Split
+	Wait         = report.Wait
+	Train        = report.Train
+	Utilization  = report.Utilization
+	Summary      = report.Summary
+	StationUse   = report.StationUse
+	TrackUse     = report.TrackUse
+	CapacityBand = report.CapacityBand
+	DelayBand    = report.DelayBand
+	Call         = report.Call
+	StationDelay = report.StationDelay
+	BlockDelay   = report.BlockDelay
+)
+
+// Track kinds and wait kinds, as in package report.
+const (
+	KindBlock    = report.KindBlock
+	KindPlatform = report.KindPlatform
+	KindThroat   = report.KindThroat
+
+	WaitEntry   = report.WaitEntry
+	WaitSignal  = report.WaitSignal
+	WaitStation = report.WaitStation
+)
 
 // DefaultConfig is used when the profile has no kpi section.
 func DefaultConfig() Config {
@@ -68,6 +107,38 @@ func (c Config) Validate() error {
 			return errors.New("kpi: punctual_within_min must not be negative")
 		}
 	}
+	return errors.Join(
+		validateBands("capacity_color_band", "over_pct", len(c.CapacityColorBand), func(i int) (float64, string, string) {
+			b := c.CapacityColorBand[i]
+			return b.OverPct, b.Name, b.Color
+		}),
+		validateBands("delay_color_band", "over_min", len(c.DelayColorBand), func(i int) (float64, string, string) {
+			b := c.DelayColorBand[i]
+			return b.OverMin, b.Name, b.Color
+		}))
+}
+
+// validateBands checks the n bands of field: each from a different place,
+// not negative, named, and coloured by an ANSI 256-colour number if at all.
+func validateBands(field, over string, n int, band func(int) (from float64, name, color string)) error {
+	seen := map[float64]bool{}
+	for i := range n {
+		from, name, color := band(i)
+		switch {
+		case !(from >= 0):
+			return fmt.Errorf("kpi: %s %s must not be negative", field, over)
+		case seen[from]:
+			return fmt.Errorf("kpi: %s has two bands from %g", field, from)
+		case name == "":
+			return fmt.Errorf("kpi: %s needs a name for each band", field)
+		}
+		seen[from] = true
+		if color != "" {
+			if c, err := strconv.Atoi(color); err != nil || c < 0 || c > 255 {
+				return fmt.Errorf("kpi: %s %s: color %q is not an ANSI 256-colour number", field, name, color)
+			}
+		}
+	}
 	return nil
 }
 
@@ -79,92 +150,6 @@ type Options struct {
 	Free map[string]FreeRun
 	// Disruptions are those applied to the run.
 	Disruptions []ops.Disruption
-}
-
-// Report is a run's KPIs.
-type Report struct {
-	Trains     int      `json:"trains"`
-	Finished   int      `json:"finished"`
-	Unfinished []string `json:"unfinished,omitempty"`
-	// Delay is against free-running time; nil without Options.Free.
-	Delay *Stats `json:"delay,omitempty"`
-	// Lateness is against the timetable, for timed trains; nil if none.
-	Lateness *Stats `json:"lateness,omitempty"`
-	// Disruption splits the delay; nil without disruptions.
-	Disruption *Split `json:"disruption,omitempty"`
-	// LongestWait is the longest single wait of any train; nil if none.
-	LongestWait *Wait   `json:"longest_wait,omitempty"`
-	WaitMin     float64 `json:"wait_min"` // every train's waits, in all
-	// Holds and PlatformChanges are precedence's decisions; HeldMin is how
-	// long the holds lasted in all.
-	Holds           int         `json:"holds"`
-	HeldMin         float64     `json:"held_min"`
-	PlatformChanges int         `json:"platform_changes"`
-	Utilization     Utilization `json:"utilization"`
-	PerTrain        []Train     `json:"per_train"`
-}
-
-// Stats sums up the delays of the finished trains it counts.
-type Stats struct {
-	Trains   int     `json:"trains"`
-	TotalMin float64 `json:"total_min"`
-	MeanMin  float64 `json:"mean_min"`
-	// WeightedMeanMin weights each train's delay by its base priority (all
-	// alike if no train has one).
-	WeightedMeanMin float64       `json:"weighted_mean_min"`
-	Punctual        []Punctuality `json:"punctual"`
-	// Worst is the train with the largest delay, empty if none has any.
-	Worst    string  `json:"worst,omitempty"`
-	WorstMin float64 `json:"worst_min"`
-}
-
-// Punctuality is the share of trains, 0 to 1, no later than WithinMin.
-type Punctuality struct {
-	WithinMin float64 `json:"within_min"`
-	Trains    int     `json:"trains"`
-	Share     float64 `json:"share"`
-}
-
-// Split is the delay against free-running time, split into the disruptions'
-// own minutes and the rest.
-type Split struct {
-	PrimaryMin     float64 `json:"primary_min"`
-	ReactionaryMin float64 `json:"reactionary_min"`
-}
-
-// Wait kinds.
-const (
-	WaitEntry   = "entry"   // waiting to enter the world
-	WaitSignal  = "signal"  // stopped at a signal
-	WaitStation = "station" // standing at a station past its dwell, e.g. held for another train
-)
-
-// Wait is a train standing longer than its schedule asks.
-type Wait struct {
-	Train   string  `json:"train"`
-	Kind    string  `json:"kind"`
-	At      string  `json:"at"` // the station, or for a signal the track stood on
-	FromMin float64 `json:"from_min"`
-	Min     float64 `json:"min"`
-}
-
-// Train is one train's KPIs. Times are -1 and the measures nil where the
-// train never got that far.
-type Train struct {
-	Train    string `json:"train"`
-	Class    string `json:"class,omitempty"`
-	Priority int    `json:"priority"`
-	Finished bool   `json:"finished"`
-	// EntryMin is the planned entry, before any disruption.
-	EntryMin   float64  `json:"entry_min"`
-	ExitMin    float64  `json:"exit_min"`
-	JourneyMin float64  `json:"journey_min"`
-	FreeRunMin *float64 `json:"free_run_min,omitempty"`
-	DelayMin   *float64 `json:"delay_min,omitempty"`
-	LateMin    *float64 `json:"late_min,omitempty"`
-	PrimaryMin float64  `json:"primary_min,omitempty"`
-	WaitMin    float64  `json:"wait_min"`
-	Waits      []Wait   `json:"waits,omitempty"`
 }
 
 // minWait is the shortest stand counted as a wait: shorter ones are the
@@ -179,12 +164,19 @@ func Compute(s *sim.Sim, c *Collector, opts Options) *Report {
 		order = append(order, st.Train.Number)
 	}
 	r := &Report{Utilization: c.utilization(s.World(), end, order)}
+	r.Utilization.Bands = slices.SortedFunc(slices.Values(opts.Config.CapacityColorBand), func(a, b CapacityBand) int {
+		return cmp.Compare(a.OverPct, b.OverPct)
+	})
+	r.DelayBands = slices.SortedFunc(slices.Values(opts.Config.DelayColorBand), func(a, b DelayBand) int {
+		return cmp.Compare(a.OverMin, b.OverMin)
+	})
 
 	primary := map[string]float64{}
 	for _, d := range opts.Disruptions {
 		primary[d.Train] += d.Min
 	}
 
+	var trains []*ops.Train
 	for _, st := range s.Status() {
 		t := st.Train
 		sched := t.Schedule()
@@ -210,6 +202,12 @@ func Compute(s *sim.Sim, c *Collector, opts Options) *Report {
 			r.Unfinished = append(r.Unfinished, t.Number)
 		}
 		tk.Waits = waits(t, s.MinStop(), c.arrivedAt(t.Number), end)
+		var fr *FreeRun
+		if hasFree {
+			fr = &free
+		}
+		tk.Calls = callsOf(t, fr)
+		trains = append(trains, t)
 		for _, w := range tk.Waits {
 			tk.WaitMin += w.Min
 			if r.LongestWait == nil || w.Min > r.LongestWait.Min {
@@ -220,6 +218,10 @@ func Compute(s *sim.Sim, c *Collector, opts Options) *Report {
 		r.PerTrain = append(r.PerTrain, tk)
 	}
 
+	if opts.Free != nil {
+		r.StationDelays = stationDelays(r.PerTrain, r.Utilization.Stations, opts.Config)
+		r.BlockDelays = blockDelays(s.World(), trains, opts.Free, r.Utilization.Tracks)
+	}
 	r.Delay = stats(r.PerTrain, func(t Train) *float64 { return t.DelayMin }, opts.Config)
 	r.Lateness = stats(r.PerTrain, func(t Train) *float64 { return t.LateMin }, opts.Config)
 	if len(opts.Disruptions) > 0 && r.Delay != nil {

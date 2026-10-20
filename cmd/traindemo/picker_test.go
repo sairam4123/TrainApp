@@ -168,3 +168,24 @@ func TestStaleRun(t *testing.T) {
 		t.Errorf("a run from a year ago is not stale: %+v", res)
 	}
 }
+
+// d and o open trainviz on the run's delay and occupancy pages, once there
+// is a run.
+func TestKPIPageKeys(t *testing.T) {
+	p := loadPicker(t)
+	for _, key := range []string{"d", "o"} {
+		p.note = ""
+		if cmd := p.key(key); cmd != nil || !strings.Contains(p.note, "nothing to replay yet") {
+			t.Errorf("%s without a run: note %q", key, p.note)
+		}
+	}
+	rec, _ := runs.Files(p.outDir, p.scenarios[0], runs.Rules[p.rule])
+	if err := os.WriteFile(rec, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"d", "o"} {
+		if cmd := p.key(key); cmd == nil || p.viewing == "" {
+			t.Errorf("%s with a run does not open trainviz", key)
+		}
+	}
+}

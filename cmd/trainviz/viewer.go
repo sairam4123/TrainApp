@@ -40,6 +40,24 @@ var (
 
 type tickMsg time.Time
 
+// page is what the viewer shows.
+type page int
+
+const (
+	pageSchematic page = iota
+	pageGraph          // the time-distance graph
+	pageDelay          // the run's delays, from its KPIs
+	pageOccupancy      // how busy each track was, from its KPIs
+)
+
+// pageNames name the pages for -page.
+var pageNames = map[string]page{
+	"schematic": pageSchematic,
+	"graph":     pageGraph,
+	"delay":     pageDelay,
+	"occupancy": pageOccupancy,
+}
+
 // bottomPane is what the pane below the schematic shows.
 type bottomPane int
 
@@ -81,20 +99,29 @@ type model struct {
 	lastGlide  time.Time
 	bottom     bottomPane
 
+	page page
+
 	// the time-distance graph, shown in place of the schematic
-	graph     *traingraph.Graph // nil without a recording or a single line
-	noGraph   string            // why there is no graph
-	showGraph bool
-	gFrom     float64 // time at the graph's left edge
-	gPerCol   float64 // minutes per column
-	gFitted   bool
-	planned   bool // mark planned times on the graph
+	graph   *traingraph.Graph // nil without a recording or a single line
+	noGraph string            // why there is no graph
+	gFrom   float64           // time at the graph's left edge
+	gPerCol float64           // minutes per column
+	gFitted bool
+	planned bool // mark planned times on the graph
+
+	st *stats // the run's KPIs, for the delay and occupancy pages
+
+	name string // the recording's, on the tab bar
 
 	interrupted bool // quit with ctrl+c rather than q
 }
 
 func newModel(d *schematic.Diagram, rep *replay) *model {
-	m := &model{d: d, rep: rep, step: 1, speed: 2, selected: -1, noGraph: "the graph needs a recording (trainviz replay)"}
+	m := &model{d: d, rep: rep, step: 1, speed: 2, selected: -1, noGraph: "the graph needs a recording (trainviz replay)",
+		st: newStats("no KPIs for this recording: run trainapp with -kpi")}
+	if rep == nil {
+		m.st.missing = "the KPI pages need a recording (trainviz replay)"
+	}
 	if rep != nil {
 		if cor, err := d.Corridor(); err != nil {
 			m.noGraph = "no time-distance graph: " + strings.TrimPrefix(err.Error(), "schematic: ")
@@ -109,31 +136,67 @@ func newModel(d *schematic.Diagram, rep *replay) *model {
 func (m *model) Init() tea.Cmd { return nil }
 
 // layout of the screen: the schematic pane and, for a replay, the trains
-// pane beside it and the events pane, timeline and key line below.
+// pane beside it and the events pane, timeline and key line below. The
+// KPI pages' tables take the screen but for the key line; their schematics
+// have their keys beside them.
 func (m *model) sideWidth() int {
-	if m.rep == nil || m.width < 100 {
+	switch {
+	case m.rep == nil || m.width < 100 || m.fullPage():
 		return 0
+	case m.kpiMap():
+		return 38
 	}
 	return 34
 }
 
 func (m *model) eventsHeight() int {
-	if m.rep == nil || m.height < 20 {
+	if m.rep == nil || m.height < 20 || m.kpiPage() {
 		return 0
 	}
 	return 7
 }
 
 func (m *model) bottomLines() int {
-	if m.rep == nil {
+	if m.rep == nil || m.kpiPage() {
 		return 1
 	}
 	return 2
 }
 
+// kpiPage is whether a page of the run's KPIs shows.
+func (m *model) kpiPage() bool { return m.page == pageDelay || m.page == pageOccupancy }
+
+// fullPage is whether the page is text across the whole screen rather than
+// a drawing.
+func (m *model) fullPage() bool {
+	return m.kpiPage() && !m.kpiMap()
+}
+
+// kpiMap is whether a KPI page shows its schematic: the occupancy page
+// unless it shows its tables, the delay page if it shows its schematic.
+func (m *model) kpiMap() bool {
+	switch {
+	case m.st.rep == nil:
+		return false
+	case m.page == pageOccupancy:
+		return !m.st.table
+	case m.page == pageDelay:
+		return m.st.dMap
+	}
+	return false
+}
+
 // pane is the size of the schematic inside its border.
 func (m *model) pane() (w, h int) {
-	return max(m.width-m.sideWidth()-2, 1), max(m.height-m.eventsHeight()-m.bottomLines()-2, 1)
+	return max(m.width-m.sideWidth()-2, 1), max(m.height-m.headerLines()-m.eventsHeight()-m.bottomLines()-2, 1)
+}
+
+// headerLines is the tab bar's: a replay has the pages to choose from.
+func (m *model) headerLines() int {
+	if m.rep == nil {
+		return 0
+	}
+	return 1
 }
 
 func (m *model) selectedTrain() string {
@@ -146,7 +209,16 @@ func (m *model) selectedTrain() string {
 func (m *model) options() schematic.Options {
 	s := zoomSteps[m.step]
 	opt := schematic.Options{Level: s.Level, Zoom: s.Zoom, Selected: m.selectedTrain()}
-	if m.rep != nil {
+	switch {
+	case m.page == pageOccupancy:
+		opt.Selected, opt.Heat = "", m.st.heat()
+		if m.st.focus != "" {
+			opt.Marks = map[string]schematic.Mark{m.st.focus: schematic.MarkSelected}
+		}
+	case m.page == pageDelay:
+		opt.Selected = ""
+		opt.Heat, opt.StationNotes = m.st.delayHeat()
+	case m.rep != nil:
 		opt.State, opt.Time = m.rep.state, m.rep.t
 	}
 	return opt
@@ -271,7 +343,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.fitted = true
 			m.fit()
 		}
-		if m.showGraph {
+		if m.page == pageGraph {
 			m.fitGraph()
 		}
 		m.redraw()
@@ -300,8 +372,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.key(msg)
 
 	case tea.MouseWheelMsg:
-		sx, sy := msg.X-1, msg.Y-1
-		if m.showGraph {
+		sx, sy := msg.X-1, msg.Y-1-m.headerLines()
+		if m.fullPage() {
+			m.scrollPage(map[bool]int{true: -3, false: 3}[msg.Button == tea.MouseWheelUp])
+			break
+		}
+		if m.page == pageGraph {
 			m.zoomGraph(msg.Button == tea.MouseWheelUp, sx)
 			break
 		}
@@ -316,17 +392,26 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Button != tea.MouseLeft {
 			break
 		}
-		if m.rep != nil && msg.Y == m.height-2 {
+		if msg.Y == 0 && m.headerLines() == 1 {
+			if p, ok := m.tabAt(msg.X); ok {
+				m.setPage(p)
+			}
+			break
+		}
+		if m.rep != nil && m.bottomLines() == 2 && msg.Y == m.height-2 {
 			m.seekTimeline(msg.X)
 			break
 		}
-		if pw, ph := m.pane(); m.showGraph && msg.X >= 1 && msg.X <= pw && msg.Y >= 1 && msg.Y <= ph {
+		if m.fullPage() {
+			break
+		}
+		if pw, ph := m.pane(); m.page == pageGraph && msg.X >= 1 && msg.X <= pw && msg.Y-m.headerLines() >= 1 && msg.Y-m.headerLines() <= ph {
 			m.seekGraph(msg.X - 1)
 		}
 		m.dragging, m.dragX, m.dragY = true, msg.X, msg.Y
 
 	case tea.MouseMotionMsg:
-		if m.dragging && m.showGraph {
+		if m.dragging && m.page == pageGraph {
 			m.gFrom -= float64(msg.X-m.dragX) * m.gPerCol
 			m.dragX, m.dragY = msg.X, msg.Y
 		} else if m.dragging {
@@ -345,19 +430,37 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) key(msg tea.KeyPressMsg) tea.Cmd {
 	m.note = ""
 	pw, ph := m.pane()
-	if msg.String() == "g" {
-		m.toggleGraph()
-		return nil
-	}
-	if m.showGraph && m.graphKey(msg.String()) {
-		return nil
-	}
 	switch msg.String() {
 	case "q":
 		return tea.Quit
 	case "ctrl+c":
 		m.interrupted = true
 		return tea.Quit
+	case "g":
+		m.toggleGraph()
+		return nil
+	case "1", "f1":
+		m.setPage(pageSchematic)
+		return nil
+	case "2", "f2":
+		m.setPage(pageGraph)
+		return nil
+	case "3", "f3":
+		m.setPage(pageDelay)
+		return nil
+	case "4", "f4":
+		m.setPage(pageOccupancy)
+		return nil
+	}
+	if m.page == pageGraph && m.graphKey(msg.String()) {
+		return nil
+	}
+	if m.kpiPage() {
+		if m.kpiKey(msg.String()) || m.fullPage() {
+			return nil
+		}
+	}
+	switch msg.String() {
 	case "+", "=":
 		m.zoomTo(m.step+1, pw/2, ph/2)
 	case "-", "_":
@@ -375,7 +478,7 @@ func (m *model) key(msg tea.KeyPressMsg) tea.Cmd {
 	case "/":
 		m.searching, m.query = true, ""
 	}
-	if m.rep != nil {
+	if m.rep != nil && !m.kpiPage() {
 		m.replayKey(msg.String())
 		if m.playing || m.gliding {
 			return m.tick()
@@ -495,14 +598,30 @@ func (m *model) seekTimeline(x int) {
 }
 
 func (m *model) toggleGraph() {
-	if m.graph == nil {
+	if m.page == pageGraph {
+		m.setPage(pageSchematic)
+		return
+	}
+	m.setPage(pageGraph)
+}
+
+// setPage shows page p. Playback stops on the KPI pages, which are of the
+// whole run.
+func (m *model) setPage(p page) {
+	if p == pageGraph && m.graph == nil {
 		m.note = m.noGraph
 		return
 	}
-	m.showGraph = !m.showGraph
-	if m.showGraph && !m.gFitted {
-		m.fitGraph()
+	m.page = p
+	switch p {
+	case pageGraph:
+		if !m.gFitted {
+			m.fitGraph()
+		}
+	case pageDelay, pageOccupancy:
+		m.playing = false
 	}
+	m.redraw()
 }
 
 // graphKey handles the keys that work differently on the graph, and reports
@@ -592,7 +711,7 @@ func (m *model) seekGraph(col int) {
 // keepCursor scrolls the graph to keep the replay time in view, but not to
 // before the run starts.
 func (m *model) keepCursor() {
-	if !m.showGraph || m.graph == nil {
+	if m.page != pageGraph || m.graph == nil {
 		return
 	}
 	o := m.graphOptions()
@@ -613,19 +732,40 @@ func (m *model) render() string {
 	if m.width == 0 {
 		return ""
 	}
+	var head []string
+	if m.headerLines() == 1 {
+		head = []string{m.header()}
+	}
+	if m.fullPage() {
+		return strings.Join(append(append(head, m.pageBody()...), m.keyLine()), "\n")
+	}
 	pw, ph := m.pane()
 	s := zoomSteps[m.step]
-	title := fmt.Sprintf("%s, zoom %d", s.Level, s.Zoom)
+	title := fmt.Sprintf("schematic · %s, zoom %d", s.Level, s.Zoom)
 	body := m.frame.View(m.x, m.y, pw, ph, true)
-	if m.showGraph {
-		title = fmt.Sprintf("time-distance, %.3g min per column", m.gPerCol)
+	switch m.page {
+	case pageOccupancy:
+		title = fmt.Sprintf("occupancy · %s · %s, zoom %d", metrics[m.st.metric].name, s.Level, s.Zoom)
+	case pageDelay:
+		title = fmt.Sprintf("delay · stations by %s · blocks by delay gained · %s, zoom %d", delayMetrics[m.st.dMetric].name, s.Level, s.Zoom)
+	}
+	if m.page == pageGraph {
+		title = fmt.Sprintf("time-distance graph · %.3g min a column", m.gPerCol)
 		if m.planned {
-			title += ", ◆ planned"
+			title += " · ◆ planned"
 		}
 		body = m.graph.Draw(m.graphOptions())
 	}
 	lines := box(title, body, pw+2, ph+2)
-	if sw := m.sideWidth(); sw > 0 {
+	if sw := m.sideWidth(); sw > 0 && m.kpiMap() {
+		side := m.st.sideLines(sw, ph+2)
+		if m.page == pageDelay {
+			side = m.st.delaySide(sw, ph+2)
+		}
+		for i := range lines {
+			lines[i] += side[i]
+		}
+	} else if sw > 0 {
 		side := box("trains", m.trainLines(sw-2, ph), sw, ph+2)
 		for i := range lines {
 			lines[i] += side[i]
@@ -635,24 +775,24 @@ func (m *model) render() string {
 		title, body := "events", m.eventLines(eh-2)
 		switch {
 		case m.bottom == paneDecisions:
-			title, body = "decisions (enter: next)", m.decisionLines(eh-2)
+			title, body = "decisions", m.decisionLines(eh-2)
 		case m.bottom == paneSchedule:
 			title, body = "schedule", m.scheduleLines(m.width-2, eh-2)
 			if t := m.selectedTrain(); t != "" {
-				title += " " + t
+				title += " · " + t
 			}
 		default:
 			if t := m.selectedTrain(); t != "" {
-				title += " " + t
+				title += " · " + t
 			}
 		}
 		lines = append(lines, box(title, body, m.width, eh)...)
 	}
-	if m.rep != nil {
+	if m.rep != nil && m.bottomLines() == 2 {
 		lines = append(lines, m.timeline())
 	}
 	lines = append(lines, m.keyLine())
-	return strings.Join(lines, "\n")
+	return strings.Join(append(head, lines...), "\n")
 }
 
 func (m *model) trainLines(w, h int) []string {
@@ -687,10 +827,10 @@ func (m *model) trainLines(w, h int) []string {
 		rest := max(w-ansi.StringWidth(n), 0)
 		out = append(out, fit(number.Render(n)+style.Render(fit(text, rest)), w))
 		for _, d := range r.state.ActiveDecisions(n) {
-			out = append(out, dim.Render(fit("   "+decisionSummary(d), w)))
+			out = append(out, subLines(decisionSummary(d), w)...)
 		}
 		if ok && tr.Waiting != nil && tr.Waiting.BlockedBy != "" && !tr.Waiting.Held() {
-			out = append(out, dim.Render(fit("   blocked by "+tr.Waiting.BlockedBy, w)))
+			out = append(out, subLines("blocked by "+tr.Waiting.BlockedBy, w)...)
 		}
 	}
 	// a key to the class colours, highest priority first, if there is room
@@ -709,6 +849,17 @@ func (m *model) trainLines(w, h int) []string {
 		out = out[at-h+1:]
 	}
 	return out
+}
+
+// subLines are text under a train in the trains pane, w wide: indented,
+// dim, and wrapped onto a second line rather than cut.
+func subLines(text string, w int) []string {
+	const indent = "   "
+	lines := tui.Wrap(text, max(w-len(indent), 1), 2)
+	for i, l := range lines {
+		lines[i] = dim.Render(fit(indent+l, w))
+	}
+	return lines
 }
 
 // decisionSummary says what a decision does, e.g. "held at PDKT for 0451U
@@ -881,23 +1032,98 @@ func (m *model) keyLine() string {
 	if m.searching {
 		return " station: " + m.query + "_"
 	}
-	keys := "+/- zoom  hjkl pan  0 fit  / station  q quit"
-	if m.showGraph {
-		keys = "+/- time zoom  h l pan  0 fit  p planned  click seek  g schematic  q quit"
+	own, shared := m.keys()
+	if m.note != "" {
+		own = " " + bold.Render(m.note) + "  " + dim.Render(own)
+	} else if m.rep != nil && m.rep.failure != "" && m.rep.t >= m.rep.end {
+		own = " " + bold.Render("run failed: "+m.rep.failure)
+	} else {
+		own = dim.Render(own)
 	}
-	if m.rep != nil {
-		keys = "space play  [ ] speed  , . step  tab train  ⇧←→ train events  f follow  d decisions  s schedule  " + keys
-		if !m.showGraph {
-			keys = strings.Replace(keys, "q quit", "g graph  q quit", 1)
+	// the page's own keys give way, so the shared ones always show
+	room := max(m.width-ansi.StringWidth(shared), 0)
+	return ansi.Truncate(own, room, "…") + dim.Render(shared)
+}
+
+// keys are the page's own keys and those every page shares, as the other
+// apps list theirs: moving, then acting, then what to show.
+func (m *model) keys() (own, shared string) {
+	play := "  space play  [ ] speed  , . step  tab train  ⇧←→ train events  f follow"
+	var keys string
+	switch {
+	case m.rep == nil:
+		return " +/- zoom  hjkl pan  0 fit  / station", "  q quit"
+	case m.page == pageGraph:
+		keys = " +/- time zoom  h l pan  0 fit  click seek  p planned" + play
+	case m.page == pageDelay && m.st.rep != nil && m.st.dMap:
+		keys = " +/- zoom  hjkl pan  0 fit  / station  m metric  v tables"
+	case m.page == pageDelay && m.st.rep != nil:
+		keys = " ↑↓ row  tab table  pgup/pgdn page  enter show  c sort  b filter  v schematic"
+	case m.page == pageOccupancy && m.st.rep != nil && m.st.table:
+		keys = " ↑↓ row  tab table  pgup/pgdn page  enter show  c sort  t throats  v schematic"
+	case m.page == pageOccupancy && m.st.rep != nil:
+		keys = " +/- zoom  hjkl pan  0 fit  / station  m metric  v tables"
+		if m.st.focus != "" {
+			keys += "  esc let go of the track"
+		}
+	case m.kpiPage():
+		keys = ""
+	default:
+		keys = " +/- zoom  hjkl pan  0 fit  / station" + play + "  d decisions  s schedule"
+		if m.bottom == paneDecisions {
+			keys += "  enter next decision"
 		}
 	}
-	line := dim.Render(" " + keys)
-	if m.note != "" {
-		line = " " + bold.Render(m.note) + "  " + line
-	} else if m.rep != nil && m.rep.failure != "" && m.rep.t >= m.rep.end {
-		line = " " + bold.Render("run failed: "+m.rep.failure)
+	return keys, "  1-4 tabs  q quit"
+}
+
+// tabNames name the pages on the tab bar.
+var tabNames = []string{"Schematic", "Graph", "Delay", "Occupancy"}
+
+// tabLabel is page p's label on the tab bar.
+func (m *model) tabLabel(p page) string {
+	label := fmt.Sprintf(" %d %s ", p+1, tabNames[p])
+	switch {
+	case p == pageOccupancy && m.st.table:
+		label = fmt.Sprintf(" %d %s · tables ", p+1, tabNames[p])
+	case p == pageDelay && m.st.dMap:
+		label = fmt.Sprintf(" %d %s · schematic ", p+1, tabNames[p])
 	}
-	return ansi.Truncate(line, m.width, "")
+	return label
+}
+
+// header is the tab bar, as trainedit's, and the recording's name.
+func (m *model) header() string {
+	var sb strings.Builder
+	for p := range page(len(tabNames)) {
+		label := m.tabLabel(p)
+		switch {
+		case p == m.page:
+			sb.WriteString(tui.Accent.Bold(true).Reverse(true).Render(label))
+		case p == pageGraph && m.graph == nil:
+			sb.WriteString(dim.Render(label))
+		default:
+			sb.WriteString(label)
+		}
+	}
+	sb.WriteString("   " + bold.Render("trainviz"))
+	if m.name != "" {
+		sb.WriteString(" · " + m.name)
+	}
+	return ansi.Truncate(sb.String(), m.width, "")
+}
+
+// tabAt is the page whose tab is at column x of the tab bar.
+func (m *model) tabAt(x int) (page, bool) {
+	at := 0
+	for p := range page(len(tabNames)) {
+		w := ansi.StringWidth(m.tabLabel(p))
+		if x >= at && x < at+w {
+			return p, true
+		}
+		at += w
+	}
+	return 0, false
 }
 
 // box draws a single-line border with a title around lines, w by h cells.

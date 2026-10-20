@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"trainapp/railway/ids"
+	"trainapp/railway/kpi"
 	"trainapp/railway/ops"
 	"trainapp/railway/sim"
 	"trainapp/units"
@@ -24,6 +25,14 @@ import (
 // recording runs the main scenario (as cmd/trainapp does) and returns its
 // recording. Only the test uses the sim; trainviz itself reads the stream.
 func recording(t *testing.T) (*vizproto.HelloMsg, []vizproto.Message) {
+	t.Helper()
+	hello, msgs, _ := recordingWithKPIs(t, kpi.DefaultConfig())
+	return hello, msgs
+}
+
+// recordingWithKPIs is recording with the run's KPIs, as trainapp -kpi
+// works them out.
+func recordingWithKPIs(t *testing.T, cfg kpi.Config) (*vizproto.HelloMsg, []vizproto.Message, *kpi.Report) {
 	t.Helper()
 	s := &sim.Sim{OutputDir: t.TempDir()}
 	s.SetWorld(worlds.BuildTpjKkdiWorld())
@@ -45,6 +54,10 @@ func recording(t *testing.T) (*vizproto.HelloMsg, []vizproto.Message) {
 			}
 		}
 	}
+	var plan []*ops.Train
+	for _, st := range s.Status() {
+		plan = append(plan, st.Train.Clone())
+	}
 	if err := s.Init(); err != nil {
 		t.Fatal(err)
 	}
@@ -53,7 +66,8 @@ func recording(t *testing.T) (*vizproto.HelloMsg, []vizproto.Message) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s.Observer = rec
+	coll := kpi.NewCollector()
+	s.Observer = sim.Observers{coll, rec}
 	if err := rec.Close(s.Run()); err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +75,11 @@ func recording(t *testing.T) (*vizproto.HelloMsg, []vizproto.Message) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return hello, msgs
+	free, err := kpi.FreeRunning(s.World(), nil, plan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return hello, msgs, kpi.Compute(s, coll, kpi.Options{Config: cfg, Free: free})
 }
 
 func newReplayModel(t *testing.T) *model {
@@ -83,6 +101,8 @@ func press(m *model, keys ...string) {
 			msg = tea.KeyPressMsg{Code: tea.KeySpace, Text: " "}
 		case "tab":
 			msg = tea.KeyPressMsg{Code: tea.KeyTab}
+		case "shift+tab":
+			msg = tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift}
 		case "shift+right":
 			msg = tea.KeyPressMsg{Code: tea.KeyRight, Mod: tea.ModShift}
 		case "shift+left":
@@ -263,7 +283,7 @@ func TestHeldTrainsAndDecisionsAreShown(t *testing.T) {
 	press(m, "d", "enter") // the first decision: P moved to the loop
 	press(m, "enter")      // the second: P held for X
 	got := screen(m)
-	for _, want := range []string{"held at LPA for X (overtake", "pf 1→2 at LPA (booked for X)", "decisions (enter: next)", "P▶⏸"} {
+	for _, want := range []string{"held at LPA for X (overtake", "pf 1→2 at LPA (booked for X)", "decisions", "P▶⏸"} {
 		if !strings.Contains(got, want) {
 			t.Errorf("screen lacks %q:\n%s", want, got)
 		}
@@ -281,7 +301,7 @@ func TestHeldTrainsAndDecisionsAreShown(t *testing.T) {
 func TestGraphView(t *testing.T) {
 	m := newReplayModel(t)
 	press(m, "g")
-	if !m.showGraph {
+	if m.page != pageGraph {
 		t.Fatalf("g did not show the graph: %s", m.note)
 	}
 	s := screen(m)
@@ -329,7 +349,7 @@ func TestGraphView(t *testing.T) {
 	}
 
 	press(m, "g")
-	if m.showGraph || !strings.Contains(screen(m), "layout, zoom") {
+	if m.page == pageGraph || !strings.Contains(screen(m), "layout, zoom") {
 		t.Error("g did not go back to the schematic")
 	}
 }
@@ -360,8 +380,8 @@ func TestNoGraphForAJunction(t *testing.T) {
 	m := newModel(d, newReplay(hello, msgs))
 	m.Update(tea.WindowSizeMsg{Width: 140, Height: 40})
 	press(m, "g")
-	if m.showGraph || !strings.Contains(screen(m), "single line") {
-		t.Errorf("junction world: graph shown %v, note %q", m.showGraph, m.note)
+	if m.page == pageGraph || !strings.Contains(screen(m), "single line") {
+		t.Errorf("junction world: graph shown %v, note %q", m.page == pageGraph, m.note)
 	}
 }
 
@@ -377,7 +397,7 @@ func TestScheduleIsShown(t *testing.T) {
 	m.rep.seek(60)
 	m.redraw()
 	s := screen(m)
-	for _, want := range []string{"schedule 0451U", "kind", "stop", "00:02", "00:12"} {
+	for _, want := range []string{"schedule · 0451U", "kind", "stop", "00:02", "00:12"} {
 		if !strings.Contains(s, want) {
 			t.Errorf("schedule lacks %q:\n%s", want, s)
 		}
@@ -388,7 +408,7 @@ func TestScheduleIsShown(t *testing.T) {
 	}
 
 	press(m, "s")
-	if s := screen(m); !strings.Contains(s, "events 0451U") {
+	if s := screen(m); !strings.Contains(s, "events · 0451U") {
 		t.Errorf("s again does not go back to the events:\n%s", s)
 	}
 }
@@ -507,3 +527,20 @@ func TestFollowGlides(t *testing.T) {
 }
 
 func abs(n int) int { return max(n, -n) }
+
+// A decision under a train in the trains pane wraps rather than being cut.
+func TestTrainSubLinesWrap(t *testing.T) {
+	lines := subLines("held at LPA for 0451U (overtake, +6.2m)", 24)
+	if len(lines) != 2 {
+		t.Fatalf("%d lines: %q", len(lines), lines)
+	}
+	got := strings.Join(strings.Fields(ansi.Strip(strings.Join(lines, " "))), " ")
+	if got != "held at LPA for 0451U (overtake, +6.2m)" {
+		t.Errorf("wrapped to %q", got)
+	}
+	for _, l := range lines {
+		if w := ansi.StringWidth(l); w != 24 {
+			t.Errorf("line %q is %d wide", ansi.Strip(l), w)
+		}
+	}
+}

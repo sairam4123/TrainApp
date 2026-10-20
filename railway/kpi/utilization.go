@@ -7,65 +7,6 @@ import (
 	"trainapp/railway/infra"
 )
 
-// Track kinds.
-const (
-	KindBlock    = "block"    // a running line between stations, outside every station's area
-	KindPlatform = "platform" // a station's platform track, loops and main lines alike
-	KindThroat   = "throat"   // any other track in a station's area: points and approaches
-)
-
-// Utilization is how much of the run each track was occupied, from the
-// first train entering the world to the last leaving it (the window).
-type Utilization struct {
-	FromMin   float64      `json:"from_min"`
-	ToMin     float64      `json:"to_min"`
-	Blocks    Summary      `json:"blocks"`
-	Platforms Summary      `json:"platforms"`
-	Stations  []StationUse `json:"stations"`
-	Tracks    []TrackUse   `json:"tracks"`
-}
-
-// Summary sums up the tracks of one kind. Occupancies are shares of the
-// window, 0 to 1.
-type Summary struct {
-	Tracks        int     `json:"tracks"`
-	MeanOccupancy float64 `json:"mean_occupancy"`
-	MinOccupancy  float64 `json:"min_occupancy"`
-	MaxOccupancy  float64 `json:"max_occupancy"`
-	// MeanStanding is the share of the window a train stood on one of the
-	// tracks, on average; StandingMin the minutes trains stood on them in
-	// all. On blocks, that is trains standing in section.
-	MeanStanding float64 `json:"mean_standing"`
-	StandingMin  float64 `json:"standing_min"`
-}
-
-// StationUse is how busy a station's platform tracks were.
-type StationUse struct {
-	Stn       string  `json:"stn"`
-	Platforms int     `json:"platforms"`
-	Occupancy float64 `json:"occupancy"` // mean over its platform tracks
-	// StandingMin is the minutes trains stood on its platform tracks: their
-	// dwells and their waits.
-	StandingMin float64 `json:"standing_min"`
-}
-
-// TrackUse is how one track was used. A train is running on it until its
-// front reaches the far end, then standing until it leaves.
-type TrackUse struct {
-	Track         string  `json:"track"`
-	Kind          string  `json:"kind"` // KindBlock, KindPlatform or KindThroat
-	Stn           string  `json:"stn,omitempty"`
-	Pf            string  `json:"pf,omitempty"`
-	Entries       int     `json:"entries"`
-	OccupiedMin   float64 `json:"occupied_min"`
-	RunningMin    float64 `json:"running_min"`
-	StandingMin   float64 `json:"standing_min"`
-	Occupancy     float64 `json:"occupancy"`
-	Running       float64 `json:"running"`
-	Standing      float64 `json:"standing"`
-	TrainsPerHour float64 `json:"trains_per_hour"`
-}
-
 type place struct {
 	kind string
 	stn  *infra.Station
