@@ -131,8 +131,11 @@ type Train struct {
 	Priority     int     `json:"priority,omitempty"`
 	MaxSpeedKmph float64 `json:"max_speed_kmph"`
 	// Stock is the train's own rolling stock override, if it has one.
-	Stock  *ops.Stock `json:"stock,omitempty"`
-	Points []Point    `json:"points"`
+	Stock *ops.Stock `json:"stock,omitempty"`
+	// EntryKmph is the speed the train comes into the world at, if slower
+	// than line speed (ops.Train.EntrySpeed).
+	EntryKmph float64 `json:"entry_kmph,omitempty"`
+	Points    []Point `json:"points"`
 	// Warnings are what makes the timetable doubtful for this train: it
 	// could not enter on time, or did not finish.
 	Warnings []string `json:"warnings,omitempty"`
@@ -202,7 +205,7 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 		t := st.Train
 		tr := Train{
 			Number: t.Number, Name: t.Name, Class: t.Class, Priority: t.Priority,
-			MaxSpeedKmph: float64(t.MaxSpeed) * 60 / 1000, Stock: t.Stock,
+			MaxSpeedKmph: float64(t.MaxSpeed) * 60 / 1000, Stock: t.Stock, EntryKmph: t.EntrySpeed.InKMPH(),
 		}
 		sched := t.Schedule()
 		for k, sp := range sched {
@@ -313,7 +316,7 @@ func entryRun(w *infra.World, t *ops.Train, sp *ops.SchedulePoint) float64 {
 	}
 	// which way it runs the platform does not matter to the time
 	step := infra.Step{Edge: edge, From: edge.From, To: edge.To}
-	return motion.Plan(t, []infra.Step{step}, true).Times[0]
+	return motion.Plan(t, motion.Way{Steps: []infra.Step{step}, Speed: t.EntersAt(), Stop: true}).Time(0)
 }
 
 // fill works out each point's dwell and running time from its times.
@@ -338,7 +341,7 @@ func (tt Timetable) TimedTrains() []*ops.Train {
 	for _, tr := range tt.Trains {
 		t := &ops.Train{
 			Number: tr.Number, Name: tr.Name, Class: tr.Class, Priority: tr.Priority,
-			MaxSpeed: units.KMPH(tr.MaxSpeedKmph), Stock: tr.Stock,
+			MaxSpeed: units.KMPH(tr.MaxSpeedKmph), Stock: tr.Stock, EntrySpeed: units.KMPH(tr.EntryKmph),
 		}
 		for _, p := range tr.Points {
 			if !p.Reached() || p.Dep < 0 {

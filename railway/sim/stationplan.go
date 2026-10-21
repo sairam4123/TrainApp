@@ -32,6 +32,7 @@ const (
 	reasonThrough      = "through_track"  // a stopping train on a through track
 	reasonPassing      = "passing"        // a faster track for a train running through
 	reasonStanding     = "standing"       // a loop for a train running through that is expected to stand
+	reasonTooShort     = "too_short"      // the train is longer than the platform (fit.go)
 	reasonOverride     = "override"       // an operator pinned it
 )
 
@@ -49,8 +50,20 @@ func plainStay(sp *ops.SchedulePoint) float64 {
 }
 
 // rank orders a candidate for train t at stop k: lower is better. stay is how
-// long the train is expected to stand there.
+// long the train is expected to stand there. A pinned platform comes first;
+// then every candidate the train fits better comes before one it fits worse
+// (fit.go), and within a fit the station's rules order them.
 func (p *precedence) rank(t *ops.Train, k int, stn *infra.Station, c candidate, stay float64) int {
+	r := p.trackRank(t, k, stn, c, stay)
+	if r < 0 {
+		return r // pinned
+	}
+	return r + 10*int(fitOf(t, t.Schedule()[k], c.pf))
+}
+
+// trackRank orders a candidate by the station's rules alone, from 0 to 9, or
+// -1 if an operator pinned it.
+func (p *precedence) trackRank(t *ops.Train, k int, stn *infra.Station, c candidate, stay float64) int {
 	sp := t.Schedule()[k]
 	if pf, ok := p.pinned[pinKey{t.ID(), stn.Code}]; ok && pf == c.pf.PfNo {
 		return -1
@@ -288,7 +301,9 @@ func (p *precedence) buildPlan(stn *infra.Station) *stationPlan {
 		if !ok || v.arr > end || v.dep < now {
 			continue
 		}
-		a := &assignment{stop: v.stop, from: v.arr - hw, to: v.dep + hw, stay: v.dep - v.arr}
+		// the platform track stays taken after it leaves, until its rear is off
+		linger := pr.slots[v.slot].clear - pr.slots[v.slot].exit
+		a := &assignment{stop: v.stop, from: v.arr - hw, to: v.dep + linger + hw, stay: v.dep - v.arr}
 		pl.assign[t.ID()] = a
 		if v.committed && v.pf != nil {
 			a.pf, a.fixed = v.pf, true
@@ -307,7 +322,7 @@ func (p *precedence) buildPlan(stn *infra.Station) *stationPlan {
 		hold := max(p.predictedHold(t, pr, v), p.predictedReception(t, pr, v))
 		if !t.Schedule()[v.stop].IsPass() || p.standing(a.stay+hold) {
 			a.stay += hold
-			a.to = v.arr + a.stay + hw
+			a.to = v.arr + a.stay + linger + hw
 		}
 		a.ranked = p.rankCandidates(t, v.stop, stn, cands, a.stay)
 		open = append(open, due{t, v, a, s.Priority(t.ID()), i})
@@ -387,11 +402,8 @@ func (p *precedence) lineTaken(t *ops.Train, pr *projection, v visit) float64 {
 			continue
 		}
 		free := math.Inf(1)
-		for _, hs := range p.project(s.trainCtrllers[holder].train).slots {
-			if hs.track() == k.track() {
-				free = hs.exit + hw
-				break
-			}
+		if clear, ok := p.project(s.trainCtrllers[holder].train).clearOf(k.track()); ok {
+			free = clear + hw
 		}
 		if math.IsInf(free, 1) {
 			wait = max(wait, 2*minStand)
@@ -554,6 +566,9 @@ func (p *precedence) changeReason(t *ops.Train, k int, stn *infra.Station, pf *i
 	}
 	if b, ok := p.bookingAgainst(t.ID(), pl, a, tt.pf); ok {
 		return reasonBooked, b.train
+	}
+	if fitOf(t, sp, tt.pf) > fitOf(t, sp, got.pf) {
+		return reasonTooShort, ids.TrainID{}
 	}
 	class := stn.TrackClass(tt.pf.Id)
 	switch {

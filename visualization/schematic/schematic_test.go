@@ -375,3 +375,166 @@ func TestSignalPassedFromBehindHasNoAspect(t *testing.T) {
 		t.Errorf("eastbound train on the block: signal drawn ≡, want an aspect")
 	}
 }
+
+// heavyAt lists the indices of the path's cells drawn heavy.
+func heavyAt(f *Frame, path []pos) []int {
+	var out []int
+	for i, p := range path {
+		if f.cv.cells[p.Y][p.X].r == '━' {
+			out = append(out, i)
+		}
+	}
+	return out
+}
+
+func TestTrainBodyIsDrawn(t *testing.T) {
+	w := vizproto.FromWorld(worlds.BuildTpjKkdiWorld())
+	var line vizproto.Track
+	for _, trk := range w.Tracks {
+		if trk.Name == "bsTpjPdkt0" {
+			line = trk
+		}
+	}
+	draw := func(length, time float64, alsoOccupied ...string) (*Frame, []pos) {
+		cw := *w
+		cw.Trains = []vizproto.Train{{Number: "0451U", LengthM: length}}
+		d, err := Build(&cw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		st := vizproto.NewState()
+		for _, id := range append([]string{line.ID}, alsoOccupied...) {
+			st.Apply(&vizproto.TrackMsg{Track: id, ReservedBy: "0451U", OccupiedBy: "0451U"})
+		}
+		st.Apply(&vizproto.TrainMsg{Train: "0451U", Track: line.ID, From: line.From, To: line.To, TStart: 0, TEnd: 100, Phase: "running"})
+		// zoomed in, so the line is long enough for the body to show beside
+		// the train's label
+		f := d.Draw(Options{Level: Layout, Zoom: 6, State: st, Time: time})
+		return f, f.paths[line.ID]
+	}
+
+	// halfway along, a quarter of the line long: the body covers 25% to 50%
+	f, path := draw(line.Length/4, 50)
+	last := float64(len(path) - 1)
+	got := heavyAt(f, path)
+	if len(got) == 0 {
+		t.Fatal("no body drawn")
+	}
+	for _, i := range got {
+		if fr := float64(i) / last; fr < 0.25-1/last || fr > 0.5+1/last {
+			t.Errorf("cell %d (%.2f along) drawn heavy, want only 0.25 to 0.50", i, fr)
+		}
+	}
+
+	// no length (an older recording): no body
+	if f, path := draw(0, 50); len(heavyAt(f, path)) != 0 {
+		t.Error("a train with no length drew a body")
+	}
+
+	// entering: 10% along with nothing occupied behind, the body stops at the
+	// start of the track
+	f, path = draw(line.Length/4, 10)
+	for _, i := range heavyAt(f, path) {
+		if fr := float64(i) / last; fr > 0.1+1/last {
+			t.Errorf("entering: cell %d (%.2f along) drawn heavy, want none past 0.10", i, fr)
+		}
+	}
+
+	// longer than what it has run of the line: the rest is on the track
+	// behind, ending at the joint
+	for _, prev := range w.Tracks {
+		if prev.ID == line.ID || (prev.To != line.From && prev.From != line.From) {
+			continue
+		}
+		f, _ := draw(line.Length/10+prev.Length/2, 10, prev.ID)
+		pp := f.paths[prev.ID]
+		plain := slices.ContainsFunc(pp, func(p pos) bool { r := f.cv.cells[p.Y][p.X].r; return r == '─' || r == '━' })
+		if plain && len(heavyAt(f, pp)) == 0 {
+			t.Errorf("nothing drawn on %s, the occupied track behind the front's", prev.ID)
+		}
+	}
+}
+
+// The selected train's label shows its speed, from its keys, while it runs;
+// another train's, or one with no keys, does not.
+func TestSelectedTrainShowsItsSpeed(t *testing.T) {
+	w := vizproto.FromWorld(worlds.BuildTpjKkdiWorld())
+	var line vizproto.Track
+	for _, trk := range w.Tracks {
+		if trk.Name == "bsTpjPdkt0" {
+			line = trk
+		}
+	}
+	d, err := Build(w)
+	if err != nil {
+		t.Fatal(err)
+	}
+	draw := func(selected string, keys []vizproto.Key) string {
+		st := vizproto.NewState()
+		st.Apply(&vizproto.TrainMsg{Train: "0451U", Track: line.ID, From: line.From, To: line.To, TStart: 0, TEnd: 100, Phase: "running", Keys: keys})
+		f := d.Draw(Options{Level: Layout, Zoom: 6, State: st, Time: 50, Selected: selected})
+		return strings.Join(f.Lines(false), "\n")
+	}
+	keys := []vizproto.Key{{T: 0, Frac: 0, Kmph: 0}, {T: 40, Frac: 0.4, Kmph: 87}, {T: 100, Frac: 1, Kmph: 87}}
+	if got := draw("0451U", keys); !strings.Contains(got, "0451U▶ 87") {
+		t.Errorf("selected, running at 87 km/h: no \"0451U▶ 87\" in\n%s", got)
+	}
+	for _, c := range []struct {
+		selected string
+		keys     []vizproto.Key
+	}{{"", keys}, {"0451U", nil}} {
+		if got := draw(c.selected, c.keys); strings.Contains(got, "0451U▶ ") {
+			t.Errorf("selected %q, %d keys: a speed shown in\n%s", c.selected, len(c.keys), got)
+		}
+	}
+}
+
+// A train with a length has a couple of coaches drawn behind its label,
+// however short it is at the zoom; one with none (an older recording) not.
+func TestCoachesBehindTheLabel(t *testing.T) {
+	w := vizproto.FromWorld(worlds.BuildTpjKkdiWorld())
+	var line vizproto.Track
+	for _, trk := range w.Tracks {
+		if trk.Name == "bsTpjPdkt0" {
+			line = trk
+		}
+	}
+	draw := func(length float64, from, to string) string {
+		cw := *w
+		cw.Trains = []vizproto.Train{{Number: "0451U", LengthM: length}}
+		d, err := Build(&cw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		st := vizproto.NewState()
+		st.Apply(&vizproto.TrainMsg{Train: "0451U", Track: line.ID, From: from, To: to, TStart: 0, TEnd: 100, Phase: "running"})
+		return strings.Join(d.Draw(Options{Level: Layout, State: st, Time: 50}).Lines(false), "\n")
+	}
+	// two coaches within reach behind the label: they may step over a
+	// signal on the line
+	behind := func(got, label string, east bool) string {
+		for _, row := range strings.Split(got, "\n") {
+			r := []rune(row)
+			i := strings.Index(row, label)
+			if i < 0 {
+				continue
+			}
+			at := len([]rune(row[:i]))
+			if east {
+				return string(r[max(at-coachMarks-coachSkip, 0):at])
+			}
+			end := at + len([]rune(label))
+			return string(r[end:min(end+coachMarks+coachSkip, len(r))])
+		}
+		return ""
+	}
+	if got := draw(491, line.From, line.To); strings.Count(behind(got, "0451U▶", true), "▬") != 2 {
+		t.Errorf("running east: not two coaches behind the label in\n%s", got)
+	}
+	if got := draw(491, line.To, line.From); strings.Count(behind(got, "◀0451U", false), "▬") != 2 {
+		t.Errorf("running west: not two coaches behind the label in\n%s", got)
+	}
+	if got := draw(0, line.From, line.To); strings.Contains(got, "▬") {
+		t.Errorf("no length: coaches drawn in\n%s", got)
+	}
+}

@@ -36,8 +36,19 @@ type Train struct {
 	Accel  units.MetersPerMin2
 	Brake  units.MetersPerMin2
 
+	// EntrySpeed is how fast the train comes into the world, if slower than
+	// line speed (its schedule's entry_kmph); 0 for line speed. See
+	// EntersAt.
+	EntrySpeed units.MetersPerMin
+	// slowEntry is a slow_entry disruption's speed, 0 for none (see
+	// Disruption).
+	slowEntry units.MetersPerMin
+
 	route *interlocking.Route // route the front of the train is on
 	ma    *MovementAuthority  // authority on route
+
+	body []BodyStep // the steps it occupies, oldest first (see Body)
+	odo  float64    // m its front has run since it entered the world
 }
 
 func (t *Train) ID() ids.TrainID {
@@ -77,7 +88,7 @@ func (t *Train) Schedule() []*SchedulePoint {
 // sim: the same schedule and any disruptions on it, with nothing run yet.
 func (t *Train) Clone() *Train {
 	c := &Train{Name: t.Name, Number: t.Number, MaxSpeed: t.MaxSpeed, Class: t.Class, Priority: t.Priority,
-		Stock: t.Stock, Length: t.Length, Accel: t.Accel, Brake: t.Brake}
+		Stock: t.Stock, Length: t.Length, Accel: t.Accel, Brake: t.Brake, EntrySpeed: t.EntrySpeed, slowEntry: t.slowEntry}
 	for _, sp := range t.schedule {
 		cp := *sp
 		cp.ActArrTime, cp.ActDeptTime, cp.ActPfNo = -1, -1, ""
@@ -85,6 +96,20 @@ func (t *Train) Clone() *Train {
 		c.schedule = append(c.schedule, &cp)
 	}
 	return c
+}
+
+// EntersAt is how fast the train comes into the world: the lowest of its top
+// speed, its EntrySpeed and a slow_entry disruption's, those that are set.
+// Its run-time curve then holds it to its first track's limit, and to what it
+// can stop from by the end of its first platform.
+func (t *Train) EntersAt() units.MetersPerMin {
+	v := t.MaxSpeed
+	for _, lower := range []units.MetersPerMin{t.EntrySpeed, t.slowEntry} {
+		if lower > 0 {
+			v = min(v, lower)
+		}
+	}
+	return v
 }
 
 // StopIndex is the index of the schedule point the train is at or heading to.
@@ -167,6 +192,7 @@ func (t *Train) Authorize(ma *MovementAuthority) error {
 func (t *Train) ClearMovement() {
 	t.route = nil
 	t.ma = nil
+	t.clearBody()
 }
 
 // CurrentTrack is the track the front of the train is on, nil if none.

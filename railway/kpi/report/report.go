@@ -69,6 +69,12 @@ type TrackUse struct {
 	Running       float64 `json:"running"`
 	Standing      float64 `json:"standing"`
 	TrainsPerHour float64 `json:"trains_per_hour"`
+	// Section is the section a block is part of, named as Loss.At; empty
+	// for other tracks.
+	Section string `json:"section,omitempty"`
+	// Split is what the occupied minutes went on, by cause: CauseFree and
+	// CauseDwell are needed, the rest lost. They sum to OccupiedMin.
+	Split []Share `json:"split,omitempty"`
 }
 
 // Report is a run's KPIs.
@@ -100,6 +106,76 @@ type Report struct {
 	// free-running times.
 	StationDelays []StationDelay `json:"station_delays,omitempty"`
 	BlockDelays   []BlockDelay   `json:"block_delays,omitempty"`
+	// ParetoPct is the profile's pareto_pct: the share of the minutes, in
+	// percent, a Pareto chart marks off its vital few at. 0 in older files;
+	// see Pareto.
+	ParetoPct float64 `json:"pareto_pct,omitempty"`
+}
+
+// DefaultParetoPct is where a Pareto chart is cut without pareto_pct.
+const DefaultParetoPct = 80
+
+// Pareto is ParetoPct, or DefaultParetoPct if the file has none.
+func (r *Report) Pareto() float64 {
+	if r.ParetoPct > 0 {
+		return r.ParetoPct
+	}
+	return DefaultParetoPct
+}
+
+// Causes: why a train lost time, or what a track's occupied time went on.
+const (
+	CauseDisruption = "disruption"   // primary delay: Kind is the disruption's kind
+	CauseHeld       = "held"         // a precedence hold: Kind is the hold's kind
+	CauseSignal     = "signal stop"  // stopped at a signal, not held
+	CauseStation    = "station wait" // standing past the dwell, not held
+	CauseEntry      = "entry"        // waiting to enter the world, not held
+	CauseRunning    = "running"      // a delay: slower running (Kind RunSection) or a longer dwell (RunDwell) than running free
+
+	// for occupancy only
+	CauseFree   = "free running"   // the time running free takes: needed
+	CauseDwell  = "dwell"          // the planned dwell: needed
+	CauseSlower = "slower running" // running, or standing on the line, beyond that
+)
+
+// Kinds of CauseRunning.
+const (
+	RunSection = "section"
+	RunDwell   = "dwell"
+)
+
+// Where a loss happened.
+const (
+	WhereStation = "station"
+	WhereSection = "section"
+	WhereEntry   = "entry"
+)
+
+// Loss is a piece of a train's delay: where, why, and how many minutes. A
+// finished train's losses sum to its DelayMin; Min is negative where it
+// made up time.
+type Loss struct {
+	Cause string `json:"cause"`
+	// Kind is the hold's or the disruption's kind, e.g. "overtake" or
+	// "stand"; for CauseRunning, RunSection or RunDwell.
+	Kind string `json:"kind,omitempty"`
+	// For is the train waited for, or made way for.
+	For   string `json:"for,omitempty"`
+	Where string `json:"where"` // WhereStation, WhereSection or WhereEntry
+	// At is the station, the section ("PDKT–KKDI" on a single line, else
+	// "PDKT→KKDI"), or for an entry the station entered at.
+	At string `json:"at"`
+	// Track is the track it happened on, by name; empty for an entry.
+	Track   string  `json:"track,omitempty"`
+	FromMin float64 `json:"from_min"`
+	Min     float64 `json:"min"`
+}
+
+// Share is a part of a track's occupied minutes, by cause.
+type Share struct {
+	Cause string  `json:"cause"`
+	Kind  string  `json:"kind,omitempty"`
+	Min   float64 `json:"min"`
 }
 
 // Call is a train at one point of its schedule. Times are -1 and the
@@ -205,6 +281,10 @@ type Wait struct {
 	At      string  `json:"at"` // the station, or for a signal the track stood on
 	FromMin float64 `json:"from_min"`
 	Min     float64 `json:"min"`
+	// Cause is why: CauseHeld, CauseSignal, CauseStation or CauseEntry, by
+	// most of its minutes; For the train it waited for or made way for.
+	Cause string `json:"cause,omitempty"`
+	For   string `json:"for,omitempty"`
 }
 
 // Train is one train's KPIs. Times are -1 and the measures nil where the
@@ -225,6 +305,8 @@ type Train struct {
 	WaitMin    float64  `json:"wait_min"`
 	Waits      []Wait   `json:"waits,omitempty"`
 	Calls      []Call   `json:"calls,omitempty"`
+	// Losses split DelayMin by place and cause; empty without it.
+	Losses []Loss `json:"losses,omitempty"`
 }
 
 // CapacityBand is how busy a track is that was occupied OverPct percent of

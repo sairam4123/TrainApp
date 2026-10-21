@@ -70,8 +70,10 @@ func (disp *Dispatcher) stopAfter(train *ops.Train, headingTo int, route *interl
 // headingTo is the index of the stop the train is at or will run to next.
 func headingTo(tc *TrainController) int {
 	k := tc.train.StopIndex()
-	if tc.phase == phaseReady {
-		k++ // dwell is over; any route it is granted leads to the next stop
+	if tc.phase == phaseReady || tc.passing {
+		// dwell is over, or it runs through a pass: any route it is
+		// granted leads to the next stop
+		k++
 	}
 	return k
 }
@@ -140,6 +142,9 @@ func (disp *Dispatcher) participants(requester *TrainController, route *interloc
 				if pos.Via != nil {
 					p.holds[pos.Via.Track.Id] = true
 				}
+			}
+			for _, trk := range disp.footprint(t, r) {
+				p.holds[trk.Id] = true
 			}
 		} else {
 			for _, trk := range disp.ilk.Holdings(t.ID()) {
@@ -297,13 +302,80 @@ func (ck *safetyCheck) blocked(st *checkState, i int) func(infra.Step) bool {
 	}
 }
 
-// moveTo has train i move on by n stops to end: it stands there and gives up
-// what it held.
-func (st *checkState) moveTo(i, n int, end infra.Position) {
+// moveTo has train i move on by n stops to end: it stands there, holding
+// holds, and gives up what it held before.
+func (st *checkState) moveTo(i, n int, end infra.Position, holds map[ids.TrackID]bool) {
 	st.pos[i] = []infra.Position{end}
 	st.remaining[i] = st.remaining[i][n:]
-	st.holds[i] = map[ids.TrackID]bool{end.Via.Track.Id: true}
+	st.holds[i] = holds
 	st.advanced[i] += n
+}
+
+// standingHolds is what train t holds standing at end once the check has
+// moved it there: the track it ends on and, if it is longer than that track,
+// every track its tail could be on behind it. The check does not know which
+// way it came in, so it takes them all, which is only ever more cautious.
+func (ck *safetyCheck) standingHolds(t *ops.Train, end infra.Position) map[ids.TrackID]bool {
+	holds := map[ids.TrackID]bool{end.Via.Track.Id: true}
+	if need := float64(t.Length - end.Via.Track.Length); need > 0 {
+		behind(ck.disp.world.TrackGraph, end.Via.Other(end.At), end.Via, need, holds)
+	}
+	return holds
+}
+
+// behind adds every track a train's tail could be on, need metres back from
+// point from, where it ran onto via.
+func behind(g *infra.TrackGraph, from *infra.TrackPoint, via *infra.GraphEdge, need float64, holds map[ids.TrackID]bool) {
+	for _, e := range g.EdgesAt(from) {
+		if e == via || !g.TransitionAllowed(from, e, via) || holds[e.Track.Id] {
+			continue
+		}
+		holds[e.Track.Id] = true
+		if rest := need - float64(e.Track.Length); rest > 0 {
+			behind(g, e.Other(from), e, rest, holds)
+		}
+	}
+}
+
+// footprint is what train t stands on once it has run route r to its end,
+// besides the track it ends on: the tracks under its last Length metres. The
+// way there is the steps its tail is on now, then the rest of its current
+// route, then r. With no route to run, it is what the train occupies now. A
+// train with no length has none.
+func (disp *Dispatcher) footprint(t *ops.Train, r *interlocking.Route) []*infra.TrackSegment {
+	if t.Length <= 0 {
+		return nil
+	}
+	if r == nil || r.End() == 0 {
+		var out []*infra.TrackSegment
+		for _, b := range t.Body() {
+			out = append(out, b.Step.Edge.Track)
+		}
+		return out
+	}
+	var way []infra.Step
+	for _, b := range t.Body() {
+		if b.Route != r {
+			way = append(way, b.Step)
+		}
+	}
+	if cur := t.Route(); cur != nil && cur != r {
+		for i := cur.Entered(); i < cur.End(); i++ {
+			way = append(way, cur.Step(i))
+		}
+	}
+	for i := range r.End() {
+		way = append(way, r.Step(i))
+	}
+	// the rear exactly on a boundary still holds the step behind it, as the
+	// controller does (freeCleared)
+	var out []*infra.TrackSegment
+	covered := 0.0
+	for i := len(way) - 1; i >= 0 && covered <= float64(t.Length); i-- {
+		out = append(out, way[i].Edge.Track)
+		covered += float64(way[i].Edge.Track.Length)
+	}
+	return out
 }
 
 // solve finishes every train it can, which only ever frees track. If some
@@ -389,7 +461,7 @@ func (ck *safetyCheck) search(st *checkState, depth int) bool {
 			}
 			ck.budget--
 			next := st.clone()
-			next.moveTo(i, n, end)
+			next.moveTo(i, n, end, ck.standingHolds(ck.parts[i].train, end))
 			ck.finishAll(next)
 			if !slices.Contains(next.finished, false) || ck.search(next, depth-1) {
 				return true

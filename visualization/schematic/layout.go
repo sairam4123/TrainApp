@@ -99,6 +99,8 @@ type Diagram struct {
 	signals  []vizproto.Signal
 	lanes    int // lanes 0..lanes-1 are in use
 
+	trainLen map[string]float64 // metres, by train number; trains without one are left out
+
 	overview *Diagram // the world with stations collapsed; nil for an overview itself
 	boxes    []*stationBox
 	inBox    map[string]*stationBox // original point -> its box
@@ -139,6 +141,15 @@ func Build(w *vizproto.World) (*Diagram, error) {
 			t.Kind = Switch
 		}
 		d.addTrack(t)
+	}
+
+	for _, wt := range w.Trains {
+		if wt.LengthM > 0 {
+			if d.trainLen == nil {
+				d.trainLen = map[string]float64{}
+			}
+			d.trainLen[wt.Number] = wt.LengthM
+		}
 	}
 
 	for _, ws := range w.Stations {

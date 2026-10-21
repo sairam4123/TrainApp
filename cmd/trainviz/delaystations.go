@@ -355,7 +355,9 @@ func (m *model) delayMapKey(key string) bool {
 	switch key {
 	case "m":
 		s.dMetric = (s.dMetric + 1) % len(delayMetrics)
-	case "v", "esc":
+	case "v":
+		s.dMap, s.dCauses = false, true
+	case "esc":
 		s.dMap = false
 	default:
 		return false

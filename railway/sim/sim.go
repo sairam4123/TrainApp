@@ -347,6 +347,18 @@ type TrainStatus struct {
 	// EdgeExit is when the front is due to leave the track it is on. It is
 	// set while the train is running.
 	EdgeExit float64
+	// Keys are the front's place and speed on the track it is on where its
+	// acceleration changes, from when the speed curve's part of the track
+	// begins (see Key). Set while a train that accelerates or brakes runs
+	// along a track.
+	Keys []Key
+}
+
+// Key is a running train's front at time T: Frac of the way along its track
+// and running at Kmph. Its acceleration is constant from one key to the
+// next.
+type Key struct {
+	T, Frac, Kmph float64
 }
 
 // Status reports every train's phase, in the order the trains were added.
@@ -358,6 +370,7 @@ func (s *Sim) Status() []TrainStatus {
 			st.Phase = tc.phase.String()
 			if tc.phase == phaseRunning {
 				st.EdgeExit = tc.edgeExit
+				st.Keys = tc.keys()
 			}
 			st.Priority = s.Priority(t.ID())
 			st.Delay = t.Delay(s.CurTime())

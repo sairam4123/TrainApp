@@ -176,7 +176,11 @@ func TestDelaySchematic(t *testing.T) {
 		t.Errorf("m does not change the metric:\n%s", screen(m))
 	}
 	press(m, "v")
-	if m.st.dMap || !strings.Contains(screen(m), "trains · by delay") {
+	if m.st.dMap || !m.st.dCauses {
+		t.Errorf("v does not go on to the causes:\n%s", screen(m))
+	}
+	press(m, "v")
+	if m.st.dCauses || !strings.Contains(screen(m), "trains · by delay") {
 		t.Errorf("v does not go back to the tables:\n%s", screen(m))
 	}
 }

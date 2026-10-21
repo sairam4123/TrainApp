@@ -4,7 +4,7 @@
 4. ~~Refactor Simulation into discrete parts, TrainController, Logging and Debug Dumping (TrainController and Dispatcher done; logging/dumping still live in sim.go)~~
 ~~5. Implement movement authority and MOVEMENT_AUTHORITY_END, SCHEDULE_END, etc. (ma/ScheduleEnd exist, but MovementAuthorized/MovementAuthorityEnded still empty stubs)~~
 ~~6. Rework reservation requests with priority requests & train priority.~~ (waiting requests are woken highest priority first, then FIFO; priority = class priority from a JSON config + delay bands, changeable with Sim.SetPriorityAt; see sim/priority.go)
-7. Update physics, currently extremely simple constant speed calculation. t = d/s
+~~7. Update physics, currently extremely simple constant speed calculation. t = d/s~~ (constant acceleration and braking, a lower limit held until the rear clears; tractive effort and gradients deferred. See railway/motion and docs/trainapp/length_dynamics/phase3.md)
 8. Temporary Speed Restrictions and Permanent Speed Restrictions
 9. Level crossings & caution orders
 ~~10. Implement RequestPathToStation, currently just panics. Fall back to last signal if platform reservation fails, only if another exit exists, else keep queued.~~
@@ -19,7 +19,7 @@
 19. Model reversals so trains can change direction at termini and junctions.
 ~~20. Precedence: hold a lower-priority train (e.g. in a loop) so an approaching higher-priority one can overtake or cross. Priority (6) only orders trains already waiting on the same track. Must not fight the safety check.~~ (look-ahead, station plan, holds and platform moves, overrides; see sim/precedence.go and docs/trainapp/precedence/plan.md)
 21. Train length: free a track only once the rear has cleared it (also stops switches unlocking under the tail). Needs several routes per train and a platform length check. Pairs with 7.
-22. Signal aspects and requesting the next section on approach, once trains brake (7).
+22. Signal aspects and requesting the next section on approach, once trains brake (7). Requesting on approach is built (TRACK_APPROACH, docs/trainapp/length_dynamics/phase3.md); signal aspects are not.
 23. Overlap: hold track and switches beyond a stop signal. Needs a length-based carve-out of the next segment; only matters with 21 or 24.
 24. SPADs and other failures: not modelled on purpose, they make a run probabilistic (see README). Would need a seeded random source and braking (7).
 25. Automatic signals on plain line could skip the safety check (see 18).

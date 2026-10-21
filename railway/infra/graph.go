@@ -90,6 +90,12 @@ func (graph *TrackGraph) GetPoint(id ids.PointID) (*TrackPoint, bool) {
 	return pt, ok
 }
 
+// EdgesAt lists the edges that meet at pt, once the graph is finalized. The
+// slice is the graph's own; callers must not change it.
+func (graph *TrackGraph) EdgesAt(pt *TrackPoint) []*GraphEdge {
+	return graph.adjacency[pt.Id]
+}
+
 func (graph *TrackGraph) Edge(track *TrackSegment) (*GraphEdge, bool) {
 	edge, ok := graph.Edges[track.Id]
 	return edge, ok

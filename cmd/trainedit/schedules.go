@@ -320,7 +320,7 @@ func (t *schedTab) editForm() {
 		if err != nil {
 			return err
 		}
-		nt.Stock = tr.Stock // the picker does not edit it
+		nt.Stock, nt.EntryKmph = tr.Stock, tr.EntryKmph // the picker does not edit them
 		if nt.Number != tr.Number {
 			for k := range t.m.s.sc.Disruptions { // its disruptions go with it
 				if d := &t.m.s.sc.Disruptions[k]; d.Train == tr.Number {
@@ -463,11 +463,20 @@ func (t *schedTab) disruptionForm() {
 		stns = []string{""}
 	}
 	t.m.open(newForm("disrupt "+tr.Number, func(v values) error {
-		mins, err := parseNum(v, "min", "minutes")
-		if err != nil {
-			return err
+		d := ops.Disruption{Train: tr.Number, Kind: v["kind"]}
+		if d.Kind == ops.DisruptSlowEntry {
+			kmph, err := parseNum(v, "kmph", "km/h")
+			if err != nil {
+				return err
+			}
+			d.Kmph = kmph
+		} else {
+			mins, err := parseNum(v, "min", "minutes")
+			if err != nil {
+				return err
+			}
+			d.Min = mins
 		}
-		d := ops.Disruption{Train: tr.Number, Kind: v["kind"], Min: mins}
 		if d.Kind == ops.DisruptStand {
 			d.Stn = ids.StnCode(v["stn"])
 		}
@@ -483,15 +492,19 @@ func (t *schedTab) disruptionForm() {
 		t.m.say("%s: %s", tr.Number, describeDisruption(d))
 		return nil
 	},
-		choice("kind", "kind", ops.DisruptStand, ops.DisruptStand, ops.DisruptLateEntry),
+		choice("kind", "kind", ops.DisruptStand, ops.DisruptStand, ops.DisruptLateEntry, ops.DisruptSlowEntry),
 		choice("stn", "where (a stand)", stns[0], stns...),
 		number("min", "minutes", 15),
+		number("kmph", "km/h (a slow entry)", 30),
 	))
 }
 
 func describeDisruption(d ops.Disruption) string {
-	if d.Kind == ops.DisruptStand {
+	switch d.Kind {
+	case ops.DisruptStand:
 		return fmt.Sprintf("stands %g min longer at %s", d.Min, d.Stn)
+	case ops.DisruptSlowEntry:
+		return fmt.Sprintf("enters at %g km/h", d.Kmph)
 	}
 	return fmt.Sprintf("enters %g min late", d.Min)
 }

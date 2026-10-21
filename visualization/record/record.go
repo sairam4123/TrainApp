@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"math"
+	"slices"
 	"strings"
 	"trainapp/des"
 	"trainapp/railway/infra"
@@ -40,7 +41,7 @@ func New(w io.Writer, s *sim.Sim) (*Recorder, error) {
 	}
 	world := vizproto.FromWorld(s.World())
 	for _, st := range s.Status() {
-		t := vizproto.Train{Number: st.Train.Number, Name: st.Train.Name, Class: st.Train.Class}
+		t := vizproto.Train{Number: st.Train.Number, Name: st.Train.Name, Class: st.Train.Class, LengthM: float64(st.Train.Length)}
 		for _, sp := range st.Train.Schedule() {
 			t.Schedule = append(t.Schedule, vizproto.SchedulePoint{
 				Stn: sp.StnCode.String(), Kind: string(sp.Kind()), Pf: sp.SpPfNo, Arr: sp.ArrTime, Dep: sp.DeptTime,
@@ -156,13 +157,18 @@ func (r *Recorder) diff(ev *des.Event[ops.RailwayEvent]) {
 		// the front sets off along an edge at TRACK_ENTER
 		switch edge := train.CurrentEdge(); {
 		case edge == nil:
-			msg.Track, msg.From, msg.To, msg.TStart, msg.TEnd = "", "", "", 0, 0
+			msg.Track, msg.From, msg.To, msg.TStart, msg.TEnd, msg.Keys = "", "", "", 0, 0, nil
 		case ev != nil && ev.Type == ops.TrackEntered && ev.TrainID == train.Number:
 			step, _ := train.Route().Head()
 			msg.Track = edge.Track.Id.String()
 			msg.From, msg.To = step.From.Id.String(), step.To.Id.String()
 			msg.TStart = round(r.sim.CurTime())
 			msg.TEnd = round(st.EdgeExit)
+			msg.Keys = keys(st.Keys)
+		case msg.Track == edge.Track.Id.String() && st.Keys != nil:
+			// planned again partway along, e.g. granted more while running
+			msg.TEnd = round(st.EdgeExit)
+			msg.Keys = keys(st.Keys)
 		}
 		if !seen || !sameTrain(prev, msg) {
 			r.trains[train.Number] = msg
@@ -177,6 +183,18 @@ func (r *Recorder) diff(ev *des.Event[ops.RailwayEvent]) {
 			r.write(&msg)
 		}
 	}
+}
+
+// keys are the front's keys on its track, rounded as times are.
+func keys(ks []sim.Key) []vizproto.Key {
+	if len(ks) == 0 {
+		return nil
+	}
+	out := make([]vizproto.Key, len(ks))
+	for i, k := range ks {
+		out[i] = vizproto.Key{T: round(k.T), Frac: math.Round(k.Frac*1e4) / 1e4, Kmph: math.Round(k.Kmph*10) / 10}
+	}
+	return out
 }
 
 func decision(d sim.Decision) vizproto.DecisionMsg {
@@ -211,8 +229,8 @@ func waiting(req *sim.RouteRequest) *vizproto.Waiting {
 }
 
 func sameTrain(a, b vizproto.TrainMsg) bool {
-	a.Header, b.Header = vizproto.Header{}, vizproto.Header{}
 	wa, wb := a.Waiting, b.Waiting
-	a.Waiting, b.Waiting = nil, nil
-	return a == b && (wa == nil) == (wb == nil) && (wa == nil || *wa == *wb)
+	return a.Train == b.Train && a.Track == b.Track && a.From == b.From && a.To == b.To &&
+		a.TStart == b.TStart && a.TEnd == b.TEnd && a.Phase == b.Phase && a.Priority == b.Priority &&
+		(wa == nil) == (wb == nil) && (wa == nil || *wa == *wb) && slices.Equal(a.Keys, b.Keys)
 }

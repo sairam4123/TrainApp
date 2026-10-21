@@ -9,6 +9,7 @@
 //	go run ./cmd/trainviz replay -print -graph run.ndjson   time-distance graph
 //	go run ./cmd/trainviz replay -page delay run.ndjson     open on the run's delays
 //	go run ./cmd/trainviz replay -print -page occupancy run.ndjson
+//	go run ./cmd/trainviz replay -print -page delay-causes run.ndjson   where and why the delay
 //
 // The delay and occupancy pages read the run's KPIs from the .kpi.json
 // trainapp -kpi wrote beside the recording, or from -kpi.
@@ -109,7 +110,7 @@ func replayMain(args []string) {
 	width := fs.Int("width", 120, "with -print -graph: width in columns")
 	height := fs.Int("height", 30, "with -print -graph: height in lines")
 	planned := fs.Bool("planned", false, "with -print -graph: mark the trains' planned times")
-	pageName := fs.String("page", "schematic", "page to open on: schematic, graph, delay, delay-schematic, occupancy or occupancy-table; with -print, the delay and occupancy ones print that page")
+	pageName := fs.String("page", "schematic", "page to open on: schematic, graph, delay, delay-schematic, delay-causes, occupancy, occupancy-table or occupancy-causes; with -print, the delay and occupancy ones print that page")
 	kpiFile := fs.String("kpi", "", "the run's KPIs (trainapp -kpi); empty for the .kpi.json beside the recording")
 	pr := printFlags(fs)
 	fs.Parse(args)
@@ -118,15 +119,16 @@ func replayMain(args []string) {
 		os.Exit(2)
 	}
 	table, delayMap := *pageName == "occupancy-table", *pageName == "delay-schematic"
+	delayCauses, occCauses := *pageName == "delay-causes", *pageName == "occupancy-causes"
 	switch {
-	case table:
+	case table, occCauses:
 		*pageName = "occupancy"
-	case delayMap:
+	case delayMap, delayCauses:
 		*pageName = "delay"
 	}
 	start, ok := pageNames[*pageName]
 	if !ok {
-		log.Fatalf("unknown page %q, want schematic, graph, delay, delay-schematic, occupancy or occupancy-table", *pageName)
+		log.Fatalf("unknown page %q, want schematic, graph, delay, delay-schematic, delay-causes, occupancy, occupancy-table or occupancy-causes", *pageName)
 	}
 
 	f, err := os.Open(fs.Arg(0))
@@ -154,7 +156,7 @@ func replayMain(args []string) {
 	} else {
 		m.st.set(report, rep)
 	}
-	m.st.table, m.st.dMap = table, delayMap
+	m.st.table, m.st.dMap, m.st.dCauses, m.st.oCauses = table, delayMap, delayCauses, occCauses
 	m.name = strings.TrimSuffix(filepath.Base(fs.Arg(0)), ".ndjson")
 	if !*pr.print {
 		m.setPage(start)
@@ -212,9 +214,15 @@ func printPage(m *model, d *schematic.Diagram, p page, pr printOptions, w int) {
 		color = pr.output(d, schematic.Options{Heat: heat, StationNotes: notes})
 		fmt.Println()
 		lines = m.st.delaySide(40, 0)
+	case p == pageDelay && m.st.dCauses:
+		m.st.plain, m.st.dc.focus = true, -1
+		lines = m.st.causesPage(true, w, 0, m.rep)
 	case p == pageDelay:
 		m.st.plain, m.st.dFocus = true, -1
 		lines = m.st.delayPage(w, 0, m.rep)
+	case m.st.oCauses:
+		m.st.plain, m.st.oc.focus = true, -1
+		lines = m.st.causesPage(false, w, 0, m.rep)
 	case m.st.table:
 		m.st.plain, m.st.oFocus = true, -1
 		lines = m.st.occTablePage(w, 0)

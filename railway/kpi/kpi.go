@@ -41,6 +41,9 @@ type Config struct {
 	CapacityColorBand []CapacityBand `json:"capacity_color_band,omitempty"`
 	// DelayColorBand does the same for how late a train was. Empty for none.
 	DelayColorBand []DelayBand `json:"delay_color_band,omitempty"`
+	// ParetoPct is the share of the minutes, in percent, trainviz's Pareto
+	// charts mark off their vital few at.
+	ParetoPct float64 `json:"pareto_pct,omitempty"`
 }
 
 // The report's types live in package report, which the viewers read it
@@ -61,6 +64,8 @@ type (
 	Call         = report.Call
 	StationDelay = report.StationDelay
 	BlockDelay   = report.BlockDelay
+	Loss         = report.Loss
+	Share        = report.Share
 )
 
 // Track kinds and wait kinds, as in package report.
@@ -74,9 +79,29 @@ const (
 	WaitStation = report.WaitStation
 )
 
+// Causes and places of losses, as in package report.
+const (
+	CauseDisruption = report.CauseDisruption
+	CauseHeld       = report.CauseHeld
+	CauseSignal     = report.CauseSignal
+	CauseStation    = report.CauseStation
+	CauseEntry      = report.CauseEntry
+	CauseRunning    = report.CauseRunning
+	CauseFree       = report.CauseFree
+	CauseDwell      = report.CauseDwell
+	CauseSlower     = report.CauseSlower
+
+	RunSection = report.RunSection
+	RunDwell   = report.RunDwell
+
+	WhereStation = report.WhereStation
+	WhereSection = report.WhereSection
+	WhereEntry   = report.WhereEntry
+)
+
 // DefaultConfig is used when the profile has no kpi section.
 func DefaultConfig() Config {
-	return Config{PunctualWithinMin: []float64{1, 5, 15}}
+	return Config{PunctualWithinMin: []float64{1, 5, 15}, ParetoPct: report.DefaultParetoPct}
 }
 
 // LoadConfig reads the settings from a profile's raw "kpi" section; fields
@@ -106,6 +131,9 @@ func (c Config) Validate() error {
 		if !(m >= 0) {
 			return errors.New("kpi: punctual_within_min must not be negative")
 		}
+	}
+	if !(c.ParetoPct > 0 && c.ParetoPct <= 100) {
+		return errors.New("kpi: pareto_pct must be over 0 and at most 100")
 	}
 	return errors.Join(
 		validateBands("capacity_color_band", "over_pct", len(c.CapacityColorBand), func(i int) (float64, string, string) {
@@ -171,6 +199,10 @@ func Compute(s *sim.Sim, c *Collector, opts Options) *Report {
 		return cmp.Compare(a.OverMin, b.OverMin)
 	})
 
+	r.ParetoPct = opts.Config.ParetoPct
+	attr := newAttributor(s, r.Utilization.Stations, opts.Disruptions, end)
+	pieces := map[string][]piece{}
+
 	primary := map[string]float64{}
 	for _, d := range opts.Disruptions {
 		primary[d.Train] += d.Min
@@ -201,12 +233,18 @@ func Compute(s *sim.Sim, c *Collector, opts Options) *Report {
 		} else {
 			r.Unfinished = append(r.Unfinished, t.Number)
 		}
-		tk.Waits = waits(t, s.MinStop(), c.arrivedAt(t.Number), end)
+		ws, points := waits(t, s.MinStop(), c.arrivedAt(t.Number), end)
+		ps := attr.pieces(t, ws, points, c.arrivedAt(t.Number))
+		pieces[t.Number] = ps
+		tk.Waits = ws
 		var fr *FreeRun
 		if hasFree {
 			fr = &free
 		}
 		tk.Calls = callsOf(t, fr)
+		if tk.DelayMin != nil {
+			tk.Losses = attr.losses(t, tk.Calls, fr, ps)
+		}
 		trains = append(trains, t)
 		for _, w := range tk.Waits {
 			tk.WaitMin += w.Min
@@ -218,6 +256,8 @@ func Compute(s *sim.Sim, c *Collector, opts Options) *Report {
 		r.PerTrain = append(r.PerTrain, tk)
 	}
 
+	attr.splitOccupancy(&r.Utilization, c, pieces, opts.Free)
+	attr.blockSections(&r.Utilization, trains)
 	if opts.Free != nil {
 		r.StationDelays = stationDelays(r.PerTrain, r.Utilization.Stations, opts.Config)
 		r.BlockDelays = blockDelays(s.World(), trains, opts.Free, r.Utilization.Tracks)
@@ -266,23 +306,28 @@ func lateness(t *ops.Train) (float64, bool) {
 }
 
 // waits lists the train's waits: to enter the world, at signals, and at
-// stations past its dwell. firstArrival is when its first dwell began, -1 if
-// unknown; open waits end at end.
-func waits(t *ops.Train, minStop units.Minutes, firstArrival, end float64) []Wait {
+// stations past its dwell, and the schedule point each is on the way to or
+// at. firstArrival is when its first dwell began, -1 if unknown; open waits
+// end at end.
+func waits(t *ops.Train, minStop units.Minutes, firstArrival, end float64) ([]Wait, []int) {
 	var out []Wait
-	add := func(kind, at string, from, to float64) {
+	var points []int
+	k := 0
+	add := func(kind, at, waitedFor string, from, to float64) {
 		if to-from >= minWait {
-			out = append(out, Wait{Train: t.Number, Kind: kind, At: at, FromMin: from, Min: to - from})
+			out = append(out, Wait{Train: t.Number, Kind: kind, At: at, FromMin: from, Min: to - from, For: waitedFor})
+			points = append(points, k)
 		}
 	}
-	for k, sp := range t.Schedule() {
+	for k = range t.Schedule() {
+		sp := t.Schedule()[k]
 		stn := sp.StnCode.String()
 		for _, ss := range sp.SignalStops {
 			to := ss.To
 			if to < 0 {
 				to = end
 			}
-			add(WaitSignal, ss.Track, ss.From, to)
+			add(WaitSignal, ss.Track, ss.WaitedFor.Number, ss.From, to)
 		}
 		if !sp.Arrived() {
 			break
@@ -292,7 +337,7 @@ func waits(t *ops.Train, minStop units.Minutes, firstArrival, end float64) []Wai
 			// the entry is when the train got onto the line; it arrives once
 			// it has run the platform track
 			if sp.ArrTime >= 0 {
-				add(WaitEntry, stn, sp.ArrTime, sp.ActArrTime)
+				add(WaitEntry, stn, "", sp.ArrTime, sp.ActArrTime)
 			}
 			if firstArrival >= 0 {
 				arr = firstArrival
@@ -303,9 +348,9 @@ func waits(t *ops.Train, minStop units.Minutes, firstArrival, end float64) []Wai
 			dep = end
 		}
 		dwell := float64(sp.ExpDwellTime(arr, minStop)+sp.ExtraStand()) + des.MinDeltaTime
-		add(WaitStation, stn, arr+dwell, dep)
+		add(WaitStation, stn, sp.WaitedFor.Number, arr+dwell, dep)
 	}
-	return out
+	return out, points
 }
 
 // stats sums up the measure of the finished trains that have it; nil if

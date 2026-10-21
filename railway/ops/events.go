@@ -14,10 +14,15 @@ const (
 
 	// TRK //
 	// TrackReserved  RailwayEvent = "TRACK_RESERVE"
-	TrackEntered RailwayEvent = "TRACK_ENTER"
+	TrackEntered RailwayEvent = "TRACK_ENTER" // the front enters a track
 	// TrackOccupied  RailwayEvent = "TRACK_OCCUPY"
-	TrackTravelEnd RailwayEvent = "TRACK_TRAVEL_END"
-	TrackExited    RailwayEvent = "TRACK_EXITED"
+	TrackTravelEnd RailwayEvent = "TRACK_TRAVEL_END" // the front reaches a track's end
+	// TrackExited is the rear leaving a track behind the front's, while the
+	// front runs; it is freed (TRACK_RELEASE) at once.
+	TrackExited RailwayEvent = "TRACK_EXITED"
+	// TrackApproach is a running train reaching its approach point, where it
+	// asks for the section after its authority (see sim/controller.go).
+	TrackApproach RailwayEvent = "TRACK_APPROACH"
 
 	TrackReleased RailwayEvent = "TRACK_RELEASE"
 

@@ -409,7 +409,9 @@ func (m *model) occTableKey(key string) bool {
 		if !s.throats && s.oFocus == tableThroats {
 			s.oFocus = tableBlocks
 		}
-	case "v", "esc":
+	case "v":
+		s.table, s.oCauses = false, true
+	case "esc":
 		s.table = false
 		m.redraw()
 	case "enter":

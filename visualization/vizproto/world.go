@@ -78,6 +78,9 @@ type Train struct {
 	// Class and Schedule are empty before version 3.
 	Class    string          `json:"class,omitempty"`
 	Schedule []SchedulePoint `json:"schedule,omitempty"`
+	// LengthM is the train's length in metres; 0 before version 5, or for a
+	// train with no length.
+	LengthM float64 `json:"length_m,omitempty"`
 }
 
 // SchedulePoint is a station in a train's schedule as planned. Arr and Dep

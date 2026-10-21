@@ -82,3 +82,39 @@ func TestReadDisruptions(t *testing.T) {
 		t.Error("unknown field accepted")
 	}
 }
+
+// A slow entry lowers the speed the train enters at, the lowest of it, its
+// schedule's entry speed and its top speed; the plan's clone keeps it.
+func TestSlowEntry(t *testing.T) {
+	tr := plannedTrain()
+	if tr.EntersAt() != tr.MaxSpeed {
+		t.Errorf("enters at %v, want its top speed", tr.EntersAt().InKMPH())
+	}
+	tr.EntrySpeed = units.KMPH(40)
+	if err := ops.ApplyDisruptions([]*ops.Train{tr}, []ops.Disruption{{Train: "1", Kind: ops.DisruptSlowEntry, Kmph: 60}}); err != nil {
+		t.Fatal(err)
+	}
+	if got := tr.EntersAt(); got != units.KMPH(40) {
+		t.Errorf("entry 40, slow entry 60: enters at %v km/h, want 40", got.InKMPH())
+	}
+	if err := ops.ApplyDisruptions([]*ops.Train{tr}, []ops.Disruption{{Train: "1", Kind: ops.DisruptSlowEntry, Kmph: 25}}); err != nil {
+		t.Fatal(err)
+	}
+	if got := tr.Clone().EntersAt(); got != units.KMPH(25) {
+		t.Errorf("slow entry 25: clone enters at %v km/h, want 25", got.InKMPH())
+	}
+	for _, d := range []ops.Disruption{
+		{Train: "1", Kind: ops.DisruptSlowEntry},
+		{Train: "1", Kind: ops.DisruptSlowEntry, Kmph: 30, Min: 5},
+		{Train: "1", Kind: ops.DisruptSlowEntry, Kmph: 30, Stn: "A"},
+		{Train: "1", Kind: ops.DisruptLateEntry, Min: 5, Kmph: 30},
+	} {
+		if err := ops.ApplyDisruptions([]*ops.Train{plannedTrain()}, []ops.Disruption{d}); err == nil {
+			t.Errorf("%+v accepted", d)
+		}
+	}
+	ds, err := ops.ReadDisruptions(strings.NewReader(`{"disruptions": [{"train": "1", "kind": "slow_entry", "kmph": 30}]}`))
+	if err != nil || len(ds) != 1 || ds[0].Kmph != 30 {
+		t.Errorf("read %+v, %v", ds, err)
+	}
+}

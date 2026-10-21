@@ -3,6 +3,7 @@ package schematic
 import (
 	"math"
 	"slices"
+	"strconv"
 	"strings"
 	"trainapp/visualization/vizproto"
 	"unicode/utf8"
@@ -365,6 +366,11 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 		numbers = append(numbers, n)
 	}
 	slices.Sort(numbers)
+	if opt.Level != Overview {
+		for _, n := range numbers {
+			d.drawBody(f, n, opt)
+		}
+	}
 	if i := slices.Index(numbers, opt.Selected); i >= 0 {
 		numbers = append(slices.Delete(numbers, i, i+1), opt.Selected) // drawn last, on top
 	}
@@ -393,6 +399,9 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 		held := tr.Waiting.Held()
 		if held {
 			label += "⏸"
+		}
+		if v, ok := tr.Speed(opt.Time); ok && n == opt.Selected && tr.Phase == "running" {
+			label += " " + strconv.Itoa(int(math.Round(v))) // its speed, km/h
 		}
 		size := utf8.RuneCountInString(label)
 		if east {
@@ -426,8 +435,115 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 		for i, r := range []rune(label) {
 			f.cv.set(x+i, y, r, s)
 		}
+		if d.trainLen[n] > 0 && opt.Level != Overview {
+			d.drawCoaches(f, x, y, size, east, s)
+		}
 		f.trains[n] = front
 	}
+}
+
+// coachMarks is how many coaches are drawn behind a train's label.
+const coachMarks = 2
+
+// drawCoaches draws a couple of coaches on the line just behind a train's
+// label at x..x+size-1 on row y, so a train with a length reads as a train
+// however short it is at the zoom. They go on plain horizontal track only,
+// stepping over a signal or other mark on the line, and stop where the line
+// does.
+func (d *Diagram) drawCoaches(f *Frame, x, y, size int, east bool, s style) {
+	drawn := 0
+	for k := 1; k <= coachMarks+coachSkip && drawn < coachMarks; k++ {
+		cx := x + size - 1 + k // behind a train running west
+		if east {
+			cx = x - k
+		}
+		if !f.cv.in(cx, y) || f.cv.cells[y][cx].r == ' ' {
+			return // off the line
+		}
+		if r := f.cv.cells[y][cx].r; r == '─' || r == '═' || r == '━' {
+			f.cv.set(cx, y, '▬', s)
+			drawn++
+		}
+	}
+}
+
+// coachSkip is how many cells of marks on the line coaches may step over.
+const coachSkip = 2
+
+// drawBody draws train n's body as a heavy line over the tracks it is on,
+// its length back from its front: along its front's track, then back over
+// the tracks it occupies before that. The part of a train still outside the
+// world (entering) is not drawn, nor is a train with no length (a recording
+// before version 5). Labels are drawn over it afterwards.
+func (d *Diagram) drawBody(f *Frame, n string, opt Options) {
+	length := d.trainLen[n]
+	tr := opt.State.Trains[n]
+	t, path := d.track[tr.Track], f.paths[tr.Track]
+	if length <= 0 || t == nil || len(path) == 0 || !(t.Length > 0) {
+		return
+	}
+	if tr.To != t.To {
+		path = reversed(path) // run the way the train does
+	}
+	covered := tr.Fraction(opt.Time) * t.Length
+	heavy(f, path, (covered-length)/t.Length, covered/t.Length)
+
+	rem, joint, via := length-covered, tr.From, t
+	for rem > 0 {
+		prev := d.occupiedAt(opt.State, n, joint, via)
+		if prev == nil {
+			return // the world's edge, or not occupied: nothing more to draw
+		}
+		p := f.paths[prev.ID]
+		if len(p) == 0 || !(prev.Length > 0) {
+			return
+		}
+		next := prev.From
+		if prev.To != joint {
+			p, next = reversed(p), prev.To // run towards the joint
+		}
+		heavy(f, p, 1-rem/prev.Length, 1)
+		rem -= prev.Length
+		joint, via = next, prev
+	}
+}
+
+// occupiedAt is the track other than via that meets point joint and is
+// occupied by train n, nil if none.
+func (d *Diagram) occupiedAt(st *vizproto.State, n, joint string, via *Track) *Track {
+	for _, t := range d.tracks {
+		if t == via || (t.From != joint && t.To != joint) {
+			continue
+		}
+		if _, occ := st.TrackHolder(t.ID); occ == n {
+			return t
+		}
+	}
+	return nil
+}
+
+// heavy makes the line heavy over the cells of path from fraction from to
+// fraction to, each clamped to the path. Only plain line cells change, so
+// labels and switch glyphs on the path stay.
+func heavy(f *Frame, path []pos, from, to float64) {
+	last := float64(len(path) - 1)
+	i0 := int(math.Round(math.Max(from, 0) * last))
+	i1 := int(math.Round(math.Min(to, 1) * last))
+	for i := i0; i <= i1 && i < len(path); i++ {
+		p := path[i]
+		if !f.cv.in(p.X, p.Y) {
+			continue
+		}
+		if r := f.cv.cells[p.Y][p.X].r; r == '─' || r == '═' {
+			f.cv.reglyph(p.X, p.Y, '━')
+		}
+	}
+}
+
+func reversed(path []pos) []pos {
+	out := slices.Clone(path)
+	slices.Reverse(out)
+	return out
 }
 
 // rowAt is the row of the cell of the path nearest to column x.

@@ -828,7 +828,7 @@ func (p *picker) timetableBox(sc *scenario.Scenario, l screenLayout) (string, []
 		}
 		var notes []string
 		for _, d := range t.hits {
-			if (d.Kind == "late_entry" && i == 0) || (d.Kind != "late_entry" && string(d.Stn) == string(sp.StnCode)) {
+			if (d.Kind != "stand" && i == 0) || (d.Kind == "stand" && string(d.Stn) == string(sp.StnCode)) {
 				notes = append(notes, disruptionText(d, false))
 			}
 		}

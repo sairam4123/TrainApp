@@ -106,3 +106,25 @@ func TestReadTrainsErrors(t *testing.T) {
 		t.Errorf("unknown field: error %v", err)
 	}
 }
+
+// A train's entry speed reads from entry_kmph and is written back.
+func TestEntryKmphRoundTrips(t *testing.T) {
+	src := `{"trains": [{"number": "1", "max_speed_kmph": 110, "entry_kmph": 45, "points": [{"stn": "A", "kind": "stop", "dwell": 5, "arr": 1}]}]}`
+	trains, err := ops.ReadTrains(strings.NewReader(src))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := trains[0].EntrySpeed; got != units.KMPH(45) {
+		t.Fatalf("entry speed %v km/h, want 45", got.InKMPH())
+	}
+	var buf bytes.Buffer
+	if err := ops.WriteTrains(&buf, trains); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(buf.String(), `"entry_kmph": 45`) {
+		t.Errorf("written without entry_kmph 45:\n%s", buf.String())
+	}
+	if _, err := ops.ReadTrains(strings.NewReader(strings.Replace(src, `"entry_kmph": 45`, `"entry_kmph": -1`, 1))); err == nil {
+		t.Error("a negative entry_kmph accepted")
+	}
+}

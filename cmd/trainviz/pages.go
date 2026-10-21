@@ -12,8 +12,13 @@ func (m *model) pageBody() []string {
 		title := map[page]string{pageDelay: "delay", pageOccupancy: "occupancy"}[m.page]
 		return box(title, []string{"", " " + s.missing}, m.width, h)
 	}
-	if m.page == pageDelay {
+	switch {
+	case m.page == pageDelay && s.dCauses:
+		return s.causesPage(true, m.width, h, m.rep)
+	case m.page == pageDelay:
 		return s.delayPage(m.width, h, m.rep)
+	case s.oCauses:
+		return s.causesPage(false, m.width, h, m.rep)
 	}
 	return s.occTablePage(m.width, h)
 }
@@ -22,6 +27,14 @@ func (m *model) pageBody() []string {
 func (m *model) scrollPage(d int) {
 	s := m.st
 	if s.rep == nil {
+		return
+	}
+	if delay := m.page == pageDelay; delay && s.dCauses || !delay && s.oCauses {
+		v := s.view(delay)
+		v.sel[v.focus] = min(max(v.sel[v.focus]+d, 0), max(s.causeRows(delay, v.focus)-1, 0))
+		if v.focus == cBones {
+			v.sel[cLosses], v.off[cLosses] = 0, 0
+		}
 		return
 	}
 	if m.page == pageDelay {
@@ -50,6 +63,8 @@ func (m *model) kpiKey(key string) bool {
 		return false
 	}
 	switch {
+	case m.page == pageDelay && s.dCauses, m.page == pageOccupancy && s.oCauses:
+		return m.causesKey(key)
 	case m.page == pageDelay:
 		return m.delayKey(key)
 	case s.table:

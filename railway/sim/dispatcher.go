@@ -95,6 +95,10 @@ type RouteRequest struct {
 	// Entry is true for a train waiting to enter the world, which appears on a
 	// boundary platform rather than running from its current position.
 	Entry bool
+	// From is where the route must start, for a running train asking on
+	// approach: the end of the route it is on. nil for where the train
+	// stands.
+	From *infra.Position
 
 	Since   float64
 	LastErr error
@@ -116,6 +120,13 @@ func (disp *Dispatcher) RequestEntry(train *ops.Train, toStn *infra.Station, pre
 // towards a platform of the station. On failure the request is queued.
 func (disp *Dispatcher) RequestRoute(train *ops.Train, toStn *infra.Station, prefPfNo string) (*interlocking.Route, bool) {
 	return disp.request(&RouteRequest{Train: train, Station: toStn, PrefPfNo: prefPfNo})
+}
+
+// RequestAhead is RequestRoute for a running train asking on approach: the
+// section starts at from, the end of the route it is on, not where its front
+// is now.
+func (disp *Dispatcher) RequestAhead(train *ops.Train, toStn *infra.Station, prefPfNo string, from infra.Position) (*interlocking.Route, bool) {
+	return disp.request(&RouteRequest{Train: train, Station: toStn, PrefPfNo: prefPfNo, From: &from})
 }
 
 // Authorize grants movement authority over a reserved route, up to its next
@@ -293,7 +304,7 @@ func (disp *Dispatcher) try(req *RouteRequest) (*interlocking.Route, []ids.Track
 		pfs = v.order
 	}
 	if pfs == nil {
-		pfs = platformsByPreference(req.Station, req.PrefPfNo)
+		pfs = byFit(req.Train, disp.stopOf(req), platformsByPreference(req.Station, req.PrefPfNo))
 	}
 	if req.Entry {
 		route, err = disp.tryEntry(req, pfs, &blockers)
@@ -349,11 +360,13 @@ func (disp *Dispatcher) tryEntry(req *RouteRequest, pfs []*infra.Platform, block
 // reached the right way at all (e.g. single-line working).
 func (disp *Dispatcher) tryRoute(req *RouteRequest, pfs []*infra.Platform, blockers *blockerSet) (*interlocking.Route, error) {
 	train := req.Train
-	from := train.FacingToward
+	from, via := train.FacingToward, train.CurrentEdge()
+	if req.From != nil {
+		from, via = req.From.At, req.From.Via
+	}
 	if from == nil {
 		return nil, errors.New("train has no position")
 	}
-	via := train.CurrentEdge()
 
 	type candidates struct {
 		pf     *infra.Platform

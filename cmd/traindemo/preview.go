@@ -180,8 +180,11 @@ func trainRows(trains []*ops.Train, disruptions []ops.Disruption) []trainRow {
 // disruptionText says what a disruption does, e.g. "stand PDKT +30", or
 // "stand +30" without the station.
 func disruptionText(d ops.Disruption, stn bool) string {
-	if d.Kind != ops.DisruptStand {
+	switch d.Kind {
+	case ops.DisruptLateEntry:
 		return fmt.Sprintf("late +%g", d.Min)
+	case ops.DisruptSlowEntry:
+		return fmt.Sprintf("enters at %g km/h", d.Kmph)
 	}
 	if stn {
 		return fmt.Sprintf("stand %s +%g", d.Stn, d.Min)

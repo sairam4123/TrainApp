@@ -248,15 +248,15 @@ func (p *precedence) compare(l *ops.Train, region []slot, h *projection) conflic
 				continue
 			}
 			if k.track() == hs.track() && k.step.From != hs.step.From {
-				lFirst, lClear = min(lFirst, k.enter), max(lClear, k.exit)
-				hFirst, hClear = min(hFirst, hs.enter), max(hClear, hs.exit)
+				lFirst, lClear = min(lFirst, k.enter), max(lClear, k.clear)
+				hFirst, hClear = min(hFirst, hs.enter), max(hClear, hs.clear)
 				lastOpp = max(lastOpp, j)
 				continue
 			}
 			if k.enter >= hs.enter {
 				continue // h gets there first
 			}
-			save := k.exit + hw - hs.enter
+			save := k.clear + hw - hs.enter
 			if save <= 0 {
 				continue
 			}
@@ -264,7 +264,7 @@ func (p *precedence) compare(l *ops.Train, region []slot, h *projection) conflic
 				mergeSave = max(mergeSave, save)
 			}
 			seqSave = max(seqSave, save)
-			seqWait = max(seqWait, hs.exit+hw-k.enter)
+			seqWait = max(seqWait, hs.clear+hw-k.enter)
 			if firstSeq < 0 || j < firstSeq {
 				firstSeq = j
 			}
@@ -294,7 +294,7 @@ func (p *precedence) compare(l *ops.Train, region []slot, h *projection) conflic
 		return c
 	}
 	c.release = h.slots[release].track().Id
-	c.releaseAt = h.slots[release].exit
+	c.releaseAt = h.slots[release].clear
 	for _, v := range h.visits {
 		if v.slot > release {
 			c.milestone = v.stop
@@ -308,8 +308,9 @@ func (p *precedence) compare(l *ops.Train, region []slot, h *projection) conflic
 // refuge for h: a station track it can stand on while h gets by. It stops
 // short of the refuge's track.
 func (p *precedence) region(l, h *projection) []slot {
-	// the track it stands on (or enters the world on) is not ahead of it
-	return p.regionFrom(l, h, 1)
+	// the track it stands on (or enters the world on, or would stand on at
+	// the end of what it holds) is not ahead of it
+	return p.regionFrom(l, h, l.stand+1)
 }
 
 // regionFrom is region for l setting off from its slot start.
@@ -366,7 +367,7 @@ func (p *precedence) placeOf(t *ops.Train) string {
 	if tc.phase == phaseOutside {
 		return t.Schedule()[0].StnCode.String()
 	}
-	trk := t.CurrentTrack()
+	trk := tc.standTrack()
 	if trk == nil {
 		return ""
 	}
@@ -497,7 +498,7 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 		if !ok {
 			return verdict{}
 		}
-		pfs := platformsByPreference(req.Station, req.PrefPfNo)
+		pfs := byFit(t, p.sim.dispatcher.stopOf(req), platformsByPreference(req.Station, req.PrefPfNo))
 		if i := slices.IndexFunc(pfs, func(pf *infra.Platform) bool { return pf.PfNo == pin }); i > 0 {
 			pfs = append([]*infra.Platform{pfs[i]}, slices.Delete(slices.Clone(pfs), i, i+1)...)
 		}
@@ -537,9 +538,8 @@ func (p *precedence) freeBy(id ids.TrainID, pf *infra.Platform, arr float64) boo
 		if p.building[holder] {
 			return false // its projection depends on this train's
 		}
-		hp := p.project(s.trainCtrllers[holder].train)
-		i := slices.IndexFunc(hp.slots, func(hs slot) bool { return hs.track() == pf.Track })
-		if i < 0 || hp.slots[i].exit+float64(p.cfg.HeadwayMin) > arr {
+		clear, ok := p.project(s.trainCtrllers[holder].train).clearOf(pf.Track)
+		if !ok || clear+float64(p.cfg.HeadwayMin) > arr {
 			return false
 		}
 	}
@@ -622,7 +622,7 @@ func (p *precedence) manualConflicts(t *ops.Train, at string) []conflict {
 				c.milestone = k + 1
 			}
 			if projected && hv.pf != nil {
-				c.release, c.releaseAt = hv.pf.Track.Id, hv.dep
+				c.release, c.releaseAt = hv.pf.Track.Id, hp.slots[hv.slot].clear
 			}
 		}
 		out = append(out, c)
@@ -639,10 +639,10 @@ func (p *precedence) manualConflicts(t *ops.Train, at string) []conflict {
 func (p *precedence) receptionConflict(req *RouteRequest, tc *TrainController) (conflict, bool) {
 	s := p.sim
 	t := req.Train
-	if req.Entry || tc.phase != phaseReady {
+	if req.Entry || !(tc.phase == phaseReady || tc.passing) {
 		return conflict{}, false
 	}
-	if trk := t.CurrentTrack(); trk == nil {
+	if trk := tc.standTrack(); trk == nil {
 		return conflict{}, false
 	} else if stn, ok := s.world.StationOfPlatform(trk); !ok || stn == req.Station {
 		return conflict{}, false
@@ -655,7 +655,7 @@ func (p *precedence) receptionConflict(req *RouteRequest, tc *TrainController) (
 		return conflict{}, false
 	}
 	// slot 0 is the station track it stands on
-	wait, b := p.receptionWait(t.ID(), p.plan(v.stn), p.candidates(t, *v.from, v.stn), v.arr, p.behind(lp, 1, v.slot))
+	wait, b := p.receptionWait(t.ID(), p.plan(v.stn), p.candidates(t, *v.from, v.stn), v.arr, p.behind(lp, lp.stand+1, v.slot))
 	if wait <= epsilon || b.train.IsZero() {
 		return conflict{}, false
 	}
@@ -766,13 +766,18 @@ func (p *precedence) ruledOut(t *ops.Train, c conflict, held []*Decision) string
 	tc := s.trainCtrllers[t.ID()]
 	// a reception hold may keep a train on a main line or through track, as a
 	// last resort: standing at the home signal instead would shut the line
-	if trk := t.CurrentTrack(); trk != nil && tc.phase != phaseOutside && !c.reception {
+	if trk := tc.standTrack(); trk != nil && tc.phase != phaseOutside && !c.reception {
 		if stn, ok := s.world.StationOfPlatform(trk); ok {
+			// a train running in to a pass would stand there from now
+			stay := 0.0
+			if tc.phase == phaseReady {
+				stay = s.CurTime() - tc.arrivedAt
+			}
 			switch stn.TrackClass(trk.Id) {
 			case infra.Through:
 				return "through_track"
 			case infra.Main:
-				if stn.RunsThrough() && tc.phase == phaseReady && s.CurTime()-tc.arrivedAt+float64(c.Wait) > float64(p.cfg.MainLineMaxStayMin) {
+				if stn.RunsThrough() && (tc.phase == phaseReady || tc.passing) && stay+float64(c.Wait) > float64(p.cfg.MainLineMaxStayMin) {
 					return "main_line_limit"
 				}
 			}

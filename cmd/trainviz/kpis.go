@@ -73,6 +73,8 @@ type stats struct {
 	dOff     [dTables]int
 	dMap     bool // the schematic rather than the tables
 	dMetric  int  // into delayMetrics
+	dCauses  bool // the causes view rather than the tables
+	dc       causesView
 
 	// the occupancy page
 	metric  int  // into metrics
@@ -83,6 +85,8 @@ type stats struct {
 	oOff    [4]int
 	throats bool   // list the throats too
 	focus   string // track id picked out on the schematic
+	oCauses bool   // the causes view rather than the schematic
+	oc      causesView
 
 	plain bool // printed: no row picked out
 }

@@ -9,6 +9,7 @@ import (
 	"os"
 	"slices"
 	"trainapp/railway/ids"
+	"trainapp/railway/infra"
 	"trainapp/railway/ops"
 	"trainapp/units"
 )
@@ -41,6 +42,16 @@ type PriorityConfig struct {
 	// or timetabled for less: DefaultMinStopMin if unset. Passes and halts
 	// are not stops (see ops.SchedulePoint.AsHalt).
 	MinStopMin *units.Minutes `json:"min_stop_min,omitempty"`
+	// OverhangExtraMinPer100m lengthens a stop at a platform shorter than the
+	// train: minutes for each started 100 m of train beyond the platform.
+	// Unset or 0, no extra dwell. See overhangDwell.
+	OverhangExtraMinPer100m *units.Minutes `json:"overhang_extra_min_per_100m,omitempty"`
+	// ApproachLeadMin is how long before its braking point a running train
+	// asks for the section after its authority, so that it brakes for a
+	// signal only when the section is really held against it. Unset or 0,
+	// it asks at the braking point. Only trains that brake (Train.Brake)
+	// ask on approach; see controller.go.
+	ApproachLeadMin *units.Minutes `json:"approach_lead_min,omitempty"`
 	// Precedence, if set, lets the dispatcher hold a train back, or move it
 	// to another platform, for a higher-priority one; see precedence.go.
 	Precedence *PrecedenceConfig `json:"precedence,omitempty"`
@@ -110,6 +121,12 @@ func (c *PriorityConfig) Validate() error {
 	if m := c.MinStopMin; m != nil && !(*m >= 0) {
 		errs = append(errs, errors.New("min_stop_min must not be negative"))
 	}
+	if m := c.OverhangExtraMinPer100m; m != nil && !(*m >= 0) {
+		errs = append(errs, errors.New("overhang_extra_min_per_100m must not be negative"))
+	}
+	if m := c.ApproachLeadMin; m != nil && !(*m >= 0) {
+		errs = append(errs, errors.New("approach_lead_min must not be negative"))
+	}
 	if c.Precedence != nil {
 		if err := c.Precedence.Validate(); err != nil {
 			errs = append(errs, fmt.Errorf("precedence: %w", err))
@@ -123,6 +140,15 @@ func (c *PriorityConfig) Validate() error {
 	return errors.Join(errs...)
 }
 
+// ApproachLead is how long before its braking point a running train asks for
+// its next section (PriorityConfig.ApproachLeadMin).
+func (s *Sim) ApproachLead() units.Minutes {
+	if cfg := s.Priorities; cfg != nil && cfg.ApproachLeadMin != nil {
+		return *cfg.ApproachLeadMin
+	}
+	return 0
+}
+
 // DefaultMinStopMin is the minimum stop without a PriorityConfig.MinStopMin.
 const DefaultMinStopMin units.Minutes = 1
 
@@ -132,6 +158,21 @@ func (s *Sim) MinStop() units.Minutes {
 		return *cfg.MinStopMin
 	}
 	return DefaultMinStopMin
+}
+
+// overhang is how many metres of train t stand beyond platform pf at its
+// call sp, and the extra dwell that costs (OverhangExtraMinPer100m): only at
+// a stop with passengers, and only if the train is longer than the platform.
+func (s *Sim) overhang(t *ops.Train, sp *ops.SchedulePoint, pf *infra.Platform) (units.Meters, float64) {
+	if pf == nil || !passengers(sp) || t.Length <= pf.Length {
+		return 0, 0
+	}
+	over := t.Length - pf.Length
+	per := 0.0
+	if cfg := s.Priorities; cfg != nil && cfg.OverhangExtraMinPer100m != nil {
+		per = float64(*cfg.OverhangExtraMinPer100m)
+	}
+	return over, math.Ceil(float64(over)/100) * per
 }
 
 // initPriorities checks the config and gives trains with a Class their base

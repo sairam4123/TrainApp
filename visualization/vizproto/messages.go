@@ -14,8 +14,10 @@ import (
 
 // Version 2 added precedence: decision messages, the trains a waiting train
 // is held for, and each platform's class. Version 3 added each train's class
-// and planned schedule, version 4 its priority. Older recordings still read.
-const Version = 4
+// and planned schedule, version 4 its priority, version 5 its length,
+// version 6 the keys of a train that accelerates and brakes. Older recordings
+// still read.
+const Version = 6
 
 const (
 	TypeHello  = "hello"
@@ -67,7 +69,9 @@ type SwitchMsg struct {
 
 // TrainMsg is where a train's front is and what it is doing. The front runs
 // Track from From to To between TStart and TEnd, then stays at To. Track is
-// empty while the train is outside the world.
+// empty while the train is outside the world. A train that accelerates and
+// brakes also has Keys: its front's place and speed where its acceleration
+// changes, which Fraction and Speed go by instead.
 type TrainMsg struct {
 	Header
 	Train   string   `json:"train"`
@@ -81,6 +85,18 @@ type TrainMsg struct {
 	// Priority is the train's priority now, its delay band included (see
 	// sim.Sim.Priority); 0 before version 4.
 	Priority int `json:"priority,omitempty"`
+	// Keys are the front's place along Track and its speed at the times its
+	// acceleration changes, in order; none for a train at constant speed or
+	// before version 6. The acceleration is constant between two keys.
+	Keys []Key `json:"keys,omitempty"`
+}
+
+// Key is a train's front at time T: Frac of the way along its track (0 to
+// 1) and running at Kmph.
+type Key struct {
+	T    float64 `json:"t"`
+	Frac float64 `json:"frac"`
+	Kmph float64 `json:"kmph"`
 }
 
 // Waiting is a train's queued route request.
@@ -98,12 +114,59 @@ type Waiting struct {
 // Held reports whether precedence holds the train back for others.
 func (w *Waiting) Held() bool { return w != nil && w.HeldFor != "" }
 
-// Fraction is how far along its track the front is at time t, 0 to 1.
+// Fraction is how far along its track the front is at time t, 0 to 1:
+// between its keys at constant acceleration, or with none at constant speed
+// from TStart to TEnd.
 func (m *TrainMsg) Fraction(t float64) float64 {
+	if a, b, ok := m.keysAround(t); ok {
+		dt := b.T - a.T
+		if !(dt > 0) || !(a.Kmph+b.Kmph > 0) {
+			return b.Frac
+		}
+		// the share of the distance run: v0·τ + a·τ²/2 over (v0+v1)/2·dt
+		tau := min(max(t-a.T, 0), dt)
+		run := (a.Kmph*tau + (b.Kmph-a.Kmph)*tau*tau/(2*dt)) / ((a.Kmph + b.Kmph) / 2 * dt)
+		return min(max(a.Frac+(b.Frac-a.Frac)*run, 0), 1)
+	}
+	if n := len(m.Keys); n > 0 {
+		if t < m.Keys[0].T {
+			return m.Keys[0].Frac
+		}
+		return m.Keys[n-1].Frac
+	}
 	if m.TEnd <= m.TStart {
 		return 1
 	}
 	return min(max((t-m.TStart)/(m.TEnd-m.TStart), 0), 1)
+}
+
+// Speed is the front's speed at time t in km/h, from its keys; false for a
+// train with none.
+func (m *TrainMsg) Speed(t float64) (float64, bool) {
+	n := len(m.Keys)
+	if n == 0 {
+		return 0, false
+	}
+	if a, b, ok := m.keysAround(t); ok {
+		if dt := b.T - a.T; dt > 0 {
+			return a.Kmph + (b.Kmph-a.Kmph)*(t-a.T)/dt, true
+		}
+		return b.Kmph, true
+	}
+	if t < m.Keys[0].T {
+		return m.Keys[0].Kmph, true
+	}
+	return m.Keys[n-1].Kmph, true
+}
+
+// keysAround are the two keys either side of t, if t is within them.
+func (m *TrainMsg) keysAround(t float64) (Key, Key, bool) {
+	for i := 1; i < len(m.Keys); i++ {
+		if a, b := m.Keys[i-1], m.Keys[i]; t >= a.T && t <= b.T {
+			return a, b, true
+		}
+	}
+	return Key{}, Key{}, false
 }
 
 // EventMsg is one entry of the run log. Fields are the entry's other keys, in

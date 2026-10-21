@@ -179,7 +179,7 @@ func (m *model) kpiMap() bool {
 	case m.st.rep == nil:
 		return false
 	case m.page == pageOccupancy:
-		return !m.st.table
+		return !m.st.table && !m.st.oCauses
 	case m.page == pageDelay:
 		return m.st.dMap
 	}
@@ -811,6 +811,11 @@ func (m *model) trainLines(w, h int) []string {
 		case tr.Waiting != nil:
 			text = fmt.Sprintf("  waiting %s %s", tr.Waiting.Station, tr.Waiting.Pf)
 		case tr.Track != "":
+			if v, ok := tr.Speed(r.t); ok && tr.Phase == "running" {
+				// the speed in a column of its own, ahead of the track's
+				// name, so a narrow pane cuts the name, not the speed
+				text = fmt.Sprintf(" %4.0f km/h", v)
+			}
 			text += " " + r.trackName[tr.Track]
 		}
 		// the number in its class's colour, the rest by what the train does
@@ -1056,11 +1061,15 @@ func (m *model) keys() (own, shared string) {
 	case m.page == pageGraph:
 		keys = " +/- time zoom  h l pan  0 fit  click seek  p planned" + play
 	case m.page == pageDelay && m.st.rep != nil && m.st.dMap:
-		keys = " +/- zoom  hjkl pan  0 fit  / station  m metric  v tables"
+		keys = " +/- zoom  hjkl pan  0 fit  / station  m metric  v causes"
+	case m.page == pageDelay && m.st.rep != nil && m.st.dCauses:
+		keys = " ↑↓ row  tab part  enter narrow/show  c rank  t tracks  b filter  v tables"
+	case m.page == pageOccupancy && m.st.rep != nil && m.st.oCauses:
+		keys = " ↑↓ row  tab part  enter narrow/show  c rank  t tracks  v schematic"
 	case m.page == pageDelay && m.st.rep != nil:
 		keys = " ↑↓ row  tab table  pgup/pgdn page  enter show  c sort  b filter  v schematic"
 	case m.page == pageOccupancy && m.st.rep != nil && m.st.table:
-		keys = " ↑↓ row  tab table  pgup/pgdn page  enter show  c sort  t throats  v schematic"
+		keys = " ↑↓ row  tab table  pgup/pgdn page  enter show  c sort  t throats  v causes"
 	case m.page == pageOccupancy && m.st.rep != nil:
 		keys = " +/- zoom  hjkl pan  0 fit  / station  m metric  v tables"
 		if m.st.focus != "" {
@@ -1088,6 +1097,8 @@ func (m *model) tabLabel(p page) string {
 		label = fmt.Sprintf(" %d %s · tables ", p+1, tabNames[p])
 	case p == pageDelay && m.st.dMap:
 		label = fmt.Sprintf(" %d %s · schematic ", p+1, tabNames[p])
+	case p == pageDelay && m.st.dCauses, p == pageOccupancy && m.st.oCauses:
+		label = fmt.Sprintf(" %d %s · causes ", p+1, tabNames[p])
 	}
 	return label
 }

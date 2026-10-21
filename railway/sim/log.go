@@ -44,6 +44,9 @@ const (
 //	priority, delay       a waiting train's priority and minutes late (route waits, retries, stuck trains);
 //	                      on PRIORITY_CHANGE, priority is the new base priority
 //	phase, since          a train that never finished: its phase and when it started waiting
+//	kmph                  a train that accelerates or brakes: its speed as its front enters a track
+//	                      (TRACK_ENTER) or runs through a pass (TRAIN_PASS)
+//	running               a route granted to a running train, which asked for it on approach
 //	err                   why the run failed
 //
 // Precedence entries (see precedence.go):
@@ -153,12 +156,22 @@ func (s *Sim) logEvent(ev des.Event[ops.RailwayEvent]) {
 		if trk := data.CurrentTrack(); trk != nil {
 			attrs = append(attrs, "track", trk.String(), "length_m", int(trk.Length))
 		}
+		if tc, ok := s.trainCtrllers[data.ID()]; ok && ev.Type == ops.TrackEntered && tc.dynamic() {
+			_, v := tc.position()
+			attrs = append(attrs, "kmph", roundKmph(v))
+		}
+		if ev.Type == ops.TrainArrived {
+			attrs = append(attrs, s.overhangAttrs(data)...)
+		}
 	case *infra.TrackSegment:
 		attrs = append(attrs, "track", data.String())
 	case *ops.MovementAuthority:
 		attrs = append(attrs, "limit", data.Limit(), "until", data.Route().Step(data.Limit()).Edge.Track.String())
 	case *interlocking.Route:
 		attrs = append(attrs, routeAttrs(data)...)
+		if tc, ok := s.trainCtrllers[data.Train()]; ok && ev.Type == ops.RouteGranted && tc.phase == phaseRunning {
+			attrs = append(attrs, "running", true) // granted on approach
+		}
 	case priorityChange:
 		attrs = append(attrs, "priority", data.to)
 	case string:
@@ -167,6 +180,39 @@ func (s *Sim) logEvent(ev des.Event[ops.RailwayEvent]) {
 		}
 	}
 	s.log.Info(string(ev.Type), attrs...)
+}
+
+// overhangAttrs are how far a train arriving at a stop stands beyond the
+// platform and the extra dwell that costs, if it does.
+func (s *Sim) overhangAttrs(t *ops.Train) []any {
+	stop, ok := t.CurrentStop()
+	if !ok {
+		return nil
+	}
+	stn, ok := s.world.GetStation(stop.StnCode)
+	if !ok {
+		return nil
+	}
+	over, extra := s.overhang(t, stop, platformOf(stn, t.CurrentTrack()))
+	if over <= 0 {
+		return nil
+	}
+	return []any{"overhang_m", int(math.Ceil(float64(over))), "extra_dwell", roundTime(extra)}
+}
+
+// logPass notes a train running through a pass without stopping.
+func (s *Sim) logPass(t *ops.Train, sp *ops.SchedulePoint) {
+	attrs := append(trainAttrs(t), "station", sp.StnCode.String(), "pf", sp.ActPfNo)
+	if tc, ok := s.trainCtrllers[t.ID()]; ok {
+		_, v := tc.position()
+		attrs = append(attrs, "kmph", roundKmph(v))
+	}
+	s.log.Info("TRAIN_PASS", attrs...)
+}
+
+// roundKmph is a speed in km/h to one decimal.
+func roundKmph(v units.MetersPerMin) float64 {
+	return math.Round(v.InKMPH()*10) / 10
 }
 
 func (s *Sim) priorityAttrs(t *ops.Train) []any {

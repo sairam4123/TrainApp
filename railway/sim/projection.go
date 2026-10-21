@@ -7,6 +7,7 @@ import (
 	"trainapp/railway/infra"
 	"trainapp/railway/motion"
 	"trainapp/railway/ops"
+	"trainapp/units"
 )
 
 // Look-ahead.
@@ -19,10 +20,11 @@ import (
 // stationplan.go), then the first ranked path to it.
 
 // slot is a track the train's front runs over, entering it at enter and
-// leaving it at exit.
+// leaving it at exit. The track is free of the train at clear, once its rear
+// has left it too: exit for a train with no length.
 type slot struct {
-	step        infra.Step
-	enter, exit float64
+	step               infra.Step
+	enter, exit, clear float64
 }
 
 func (s slot) track() *infra.TrackSegment { return s.step.Edge.Track }
@@ -48,6 +50,84 @@ type projection struct {
 	train  *ops.Train
 	slots  []slot
 	visits []visit
+	// stand is the slot where the train stands if what it asks for next is
+	// refused: where it is, or for a running train the end of what it has
+	// been granted
+	stand int
+	// tail are the tracks behind the front's track that the train's tail is
+	// on now, oldest first; only their clear is set.
+	tail []slot
+}
+
+// clearOf is when the train is due to be off the track: its rear has left
+// it. It reports false if the train is not projected to be on it.
+func (pr *projection) clearOf(track *infra.TrackSegment) (float64, bool) {
+	for _, list := range [2][]slot{pr.tail, pr.slots} {
+		for _, s := range list {
+			if s.track() == track {
+				return s.clear, true
+			}
+		}
+	}
+	return 0, false
+}
+
+// setClears works out when the rear leaves each slot's track, and the
+// tracks the tail is on now, by walking the front forward the train's
+// length. The front only runs over a platform track until it arrives;
+// standing there it clears nothing. A rear exactly at a track's end clears
+// it when the front moves on, as the controller does (freeCleared). Past the
+// end of the projection, a track counts as clear when the last slot is left.
+func (pr *projection) setClears(head *ops.BodyStep, body []ops.BodyStep) {
+	t := pr.train
+	if t.Length <= 0 {
+		for i := range pr.slots {
+			pr.slots[i].clear = pr.slots[i].exit
+		}
+		return
+	}
+	n := len(pr.slots)
+	if n == 0 {
+		return
+	}
+	arrived := map[int]float64{} // a visit's slot: when the front arrives
+	for _, v := range pr.visits {
+		arrived[v.slot] = v.arr
+	}
+	starts := make([]float64, n) // odometer at each slot's start
+	odo := 0.0
+	if head != nil {
+		odo = head.Start
+	}
+	for i, s := range pr.slots {
+		starts[i] = odo
+		odo += float64(s.track().Length)
+	}
+	// at is when the front's odometer reaches target
+	at := func(target float64) float64 {
+		for j, s := range pr.slots {
+			length := float64(s.track().Length)
+			end := starts[j] + length
+			switch {
+			case target > end:
+				continue
+			case target == end || length == 0:
+				return s.exit // as it moves on
+			}
+			running := s.exit
+			if arr, ok := arrived[j]; ok {
+				running = arr
+			}
+			return s.enter + (target-starts[j])/length*(running-s.enter)
+		}
+		return pr.slots[n-1].exit
+	}
+	for i := range pr.slots {
+		pr.slots[i].clear = max(pr.slots[i].exit, at(starts[i]+float64(pr.slots[i].track().Length)+float64(t.Length)))
+	}
+	for _, b := range body {
+		pr.tail = append(pr.tail, slot{step: b.Step, clear: at(t.ClearPoint(b))})
+	}
 }
 
 // visitAt returns the first visit to the station, if any.
@@ -156,6 +236,12 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 	var pos infra.Position
 	var at float64 // when the front sets off from pos
 	next := 0      // the next stop to run to
+	// off and v are where along the first step of the next run the front
+	// sets off from, and its speed then; trail is the steps behind it, for
+	// a lower limit holding until the rear has left it
+	var off units.Meters
+	var v units.MetersPerMin
+	var trail []infra.Step
 
 	// arrive adds the slot for a platform track of stop k entered at enter
 	// and run in run minutes, and the visit. It returns when the train
@@ -164,30 +250,49 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 		stn, _ := s.world.GetStation(sched[k].StnCode)
 		pf := platformOf(stn, step.Edge.Track)
 		arr := enter + run
-		dep := arr + s.dwellAt(sched[k], arr)
-		pr.slots = append(pr.slots, slot{step, enter, dep})
+		_, extra := s.overhang(t, sched[k], pf)
+		dep := arr + s.dwellAt(sched[k], arr) + extra
+		pr.slots = append(pr.slots, slot{step: step, enter: enter, exit: dep})
 		pr.visits = append(pr.visits, visit{stop: k, stn: stn, pf: pf, arr: arr, dep: dep, slot: len(pr.slots) - 1, from: from, committed: committed})
 		return dep
 	}
-	// run adds slots for steps from at, arriving at stop next if the last
-	// one is its platform track.
+	// visits reports whether step i of steps is the platform track of stop
+	// k: at the end, or for a pass anywhere on the way (a train granted a
+	// section beyond the pass it runs through)
+	visits := func(steps []infra.Step, i, k int) bool {
+		return k < len(sched) && (i == len(steps)-1 || sched[k].IsPass()) && p.isPlatformOfStop(steps[i].Edge.Track, sched[k])
+	}
+	// run adds slots for steps from at, and a visit for each stop it gets
+	// to on them. The train runs free: it stops only to call at a stop at
+	// the end, and runs through a pass.
 	run := func(steps []infra.Step, from *infra.Position, committed bool) {
 		if len(steps) == 0 {
 			return
 		}
-		stops := next < len(sched) && p.isPlatformOfStop(steps[len(steps)-1].Edge.Track, sched[next])
-		times := motion.Plan(t, steps, stops).Times
+		stops := false
+		for i, k := 0, next; i < len(steps); i++ {
+			if visits(steps, i, k) {
+				stops = i == len(steps)-1 && !sched[k].IsPass()
+				k++
+			}
+		}
+		c := motion.Plan(t, motion.Way{Behind: trail, Steps: steps, From: off, Speed: v, Stop: stops})
 		for i, st := range steps {
-			if i == len(steps)-1 && stops {
-				at = arrive(st, times[i], next, at, from, committed)
+			if visits(steps, i, next) {
+				at = arrive(st, c.Time(i), next, at, from, committed)
 				next++
 			} else {
-				exit := at + times[i]
-				pr.slots = append(pr.slots, slot{st, at, exit})
+				exit := at + c.Time(i)
+				pr.slots = append(pr.slots, slot{step: st, enter: at, exit: exit})
 				at = exit
 			}
 			pos = endOf(st)
 		}
+		off, v = 0, c.ExitSpeed()
+		if stops {
+			v = 0
+		}
+		trail = tailOf(append(trail, steps...), t.Length)
 	}
 
 	switch tc.phase {
@@ -213,9 +318,8 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 		if !committed {
 			start = max(start, notBefore)
 		}
-		at = arrive(step, motion.Plan(t, []infra.Step{step}, true).Times[0], 0, start, nil, committed)
-		next = 1
-		pos = endOf(step)
+		at, v = start, t.EntersAt()
+		run([]infra.Step{step}, nil, committed)
 	default:
 		route := t.Route()
 		if route == nil {
@@ -225,32 +329,10 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 		if !ok {
 			return pr
 		}
-		switch tc.phase {
-		case phaseDwelling, phaseReady:
-			dep := max(now, notBefore)
-			if tc.phase == phaseDwelling {
-				dep = max(tc.dwellEnd, now)
-			}
-			k := t.StopIndex()
-			stn, _ := s.world.GetStation(sched[k].StnCode)
-			pr.slots = append(pr.slots, slot{head, tc.since, dep})
-			pr.visits = append(pr.visits, visit{stop: k, stn: stn, pf: platformOf(stn, head.Edge.Track), arr: tc.arrivedAt, dep: dep, slot: 0, committed: true})
-			at, next = dep, k+1
-		case phaseHeld:
-			dep := max(now, notBefore)
-			pr.slots = append(pr.slots, slot{head, tc.since, dep})
-			at, next = dep, t.StopIndex()
-		default: // running
-			// In the hop between the front moving onto head and its
-			// TRACK_ENTER, since is still when it entered the track before,
-			// so this is too early then (tc.edgeExit is stale instead). Kept
-			// as it was; see docs/trainapp/length_dynamics/plan.md, Phase 1.
-			exit := max(tc.since+motion.Plan(t, []infra.Step{head}, false).Times[0], now)
-			pr.slots = append(pr.slots, slot{head, tc.since, exit})
-			at, next = exit, t.StopIndex()
+		body := t.Body()
+		for _, b := range body[:max(len(body)-1, 0)] {
+			trail = append(trail, b.Step)
 		}
-		pos = endOf(head)
-
 		// the rest of what is already reserved: the current route, then a
 		// newer one granted but not started yet
 		var committed []infra.Step
@@ -262,7 +344,47 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 				committed = append(committed, r.Step(i))
 			}
 		}
-		run(committed, nil, true)
+		switch tc.phase {
+		case phaseDwelling, phaseReady:
+			dep := max(now, notBefore)
+			if tc.phase == phaseDwelling {
+				dep = max(tc.dwellEnd, now)
+			}
+			k := t.StopIndex()
+			stn, _ := s.world.GetStation(sched[k].StnCode)
+			pr.slots = append(pr.slots, slot{step: head, enter: tc.since, exit: dep})
+			pr.visits = append(pr.visits, visit{stop: k, stn: stn, pf: platformOf(stn, head.Edge.Track), arr: tc.arrivedAt, dep: dep, slot: 0, committed: true})
+			at, next = dep, k+1
+			pos = endOf(head)
+			run(committed, nil, true)
+		case phaseHeld:
+			dep := max(now, notBefore)
+			pr.slots = append(pr.slots, slot{step: head, enter: tc.since, exit: dep})
+			at, next = dep, t.StopIndex()
+			pos = endOf(head)
+			run(committed, nil, true)
+		default: // running: from where its curve has it, the front's step first
+			off, v, at = tc.projectFrom()
+			next = t.StopIndex()
+			if tc.dynamic() {
+				run(append([]infra.Step{head}, committed...), nil, true)
+				pr.slots[0].enter = tc.since
+				pr.stand = len(pr.slots) - 1
+				break
+			}
+			// A train that stops instantly keeps the look-ahead it had
+			// before Phase 3: its front's step is never a visit, so while
+			// its front runs onto its stop's platform the projection ends
+			// there. Fixing that changes runs; see
+			// docs/trainapp/length_dynamics/phase3.md, As built.
+			c := motion.Plan(t, motion.Way{Behind: trail, Steps: []infra.Step{head}, From: off, Speed: v})
+			at += c.Time(0)
+			pr.slots = append(pr.slots, slot{step: head, enter: tc.since, exit: at})
+			pos = endOf(head)
+			off, v = 0, c.ExitSpeed()
+			run(committed, nil, true)
+			pr.stand = len(pr.slots) - 1
+		}
 	}
 
 	for next < len(sched) && at <= end {
@@ -278,7 +400,31 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 		best := p.rankCandidates(t, next, stn, cands, p.stayAt(t, next, stn))[0]
 		run(best.steps, &from, false)
 	}
+
+	// in the world, the first slot is the front's track, the last body step
+	var head *ops.BodyStep
+	var tail []ops.BodyStep
+	if body := t.Body(); tc.phase != phaseOutside && len(body) > 0 {
+		h := body[len(body)-1]
+		head, tail = &h, body[:len(body)-1]
+	}
+	pr.setClears(head, tail)
 	return pr
+}
+
+// tailOf is the last of steps that a train of the given length can be on:
+// those within its length of the end.
+func tailOf(steps []infra.Step, length units.Meters) []infra.Step {
+	if length <= 0 {
+		return nil
+	}
+	covered := 0.0
+	i := len(steps)
+	for i > 0 && covered < float64(length) {
+		i--
+		covered += float64(steps[i].Edge.Track.Length)
+	}
+	return steps[i:]
 }
 
 func (p *precedence) isPlatformOfStop(track *infra.TrackSegment, sp *ops.SchedulePoint) bool {

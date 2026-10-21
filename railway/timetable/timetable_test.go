@@ -634,3 +634,29 @@ func TestPlanOverrides(t *testing.T) {
 		}
 	}
 }
+
+// A train's entry speed goes into its timetable and back out to the timed
+// train.
+func TestEntryKmphCarriedThrough(t *testing.T) {
+	tr := &ops.Train{Number: "E1", Name: "Entry", MaxSpeed: units.KMPH(110), EntrySpeed: units.KMPH(40)}
+	tr.AddSchedule(ops.NewStopPoint("TPJ", 5, "1").SetEntryTime(1))
+	tr.AddSchedule(ops.NewStopPoint("PDKT", 2, "1"))
+	s := &sim.Sim{OutputDir: t.TempDir()}
+	s.SetWorld(worlds.BuildTpjKkdiWorld())
+	if err := s.AddTrain(tr); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Run(); err != nil {
+		t.Fatal(err)
+	}
+	tt := timetable.FromRun(s, timetable.DefaultConfig())
+	if got := tt.Trains[0].EntryKmph; math.Abs(got-40) > 1e-9 {
+		t.Fatalf("timetable entry_kmph %v, want 40", got)
+	}
+	if got := tt.TimedTrains()[0].EntrySpeed; got != units.KMPH(40) {
+		t.Errorf("timed train enters at %v km/h, want 40", got.InKMPH())
+	}
+}

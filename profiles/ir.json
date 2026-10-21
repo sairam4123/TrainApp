@@ -18,6 +18,8 @@
   ],
   "ageing": { "every_min": 10, "adjust": 5 },
   "min_stop_min": 1,
+  "overhang_extra_min_per_100m": 1,
+  "approach_lead_min": 1.5,
   "precedence": {
     "rule": "thresholds",
     "horizon_min": 30,
@@ -39,6 +41,7 @@
   },
   "kpi": {
     "punctual_within_min": [1, 5, 15],
+    "pareto_pct": 80,
     "capacity_color_band": [
       {"over_pct": 0, "name": "light", "color": "39"},
       {"over_pct": 40, "name": "moderate", "color": "42"},

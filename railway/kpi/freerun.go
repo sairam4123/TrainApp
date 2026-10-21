@@ -17,6 +17,9 @@ type FreeRun struct {
 	JourneyMin float64 `json:"journey_min"`
 	// Calls are when it reached and left each point of its schedule.
 	Calls []FreeCall `json:"calls"`
+	// Occupied is how long it occupied each track, by id: from its front
+	// entering to its rear leaving.
+	Occupied map[string]float64 `json:"occupied,omitempty"`
 }
 
 // FreeCall is a free-running train at one point of its schedule: when it
@@ -26,6 +29,14 @@ type FreeCall struct {
 	ArrMin float64            `json:"arr_min"`
 	DepMin float64            `json:"dep_min"`
 	Via    map[string]float64 `json:"via,omitempty"`
+	// Front is when its front entered each track of the way there, in order.
+	Front []FreeVia `json:"front,omitempty"`
+}
+
+// FreeVia is when a free-running train's front entered a track, by id.
+type FreeVia struct {
+	Track string  `json:"track"`
+	InMin float64 `json:"in_min"`
 }
 
 // FreeRunning runs each train alone over the world, with the same profile,
@@ -44,7 +55,8 @@ func FreeRunning(world *infra.World, prio *sim.PriorityConfig, trains []*ops.Tra
 	var errs []error
 	for _, t := range trains {
 		alone := t.Clone()
-		s := &sim.Sim{OutputDir: dir, Priorities: prio}
+		coll := NewCollector()
+		s := &sim.Sim{OutputDir: dir, Priorities: prio, Observer: coll}
 		s.SetWorld(world)
 		if err := s.AddTrain(alone); err != nil {
 			return nil, err
@@ -62,10 +74,15 @@ func FreeRunning(world *infra.World, prio *sim.PriorityConfig, trains []*ops.Tra
 		}
 		sched := alone.Schedule()
 		entry, exit := sched[0].ArrTime, sched[len(sched)-1].ActDeptTime
-		fr := FreeRun{EntryMin: entry, ExitMin: exit, JourneyMin: exit - entry}
+		fr := FreeRun{EntryMin: entry, ExitMin: exit, JourneyMin: exit - entry, Occupied: map[string]float64{}}
+		for _, o := range coll.occs {
+			enter, _, leave := o.span(s.CurTime())
+			fr.Occupied[o.track.Id.String()] += leave - enter
+		}
 		for _, sp := range sched {
 			fc := FreeCall{ArrMin: sp.ActArrTime, DepMin: sp.ActDeptTime}
 			for _, v := range sp.Via {
+				fc.Front = append(fc.Front, FreeVia{Track: v.Track, InMin: v.In})
 				if v.Out >= 0 {
 					if fc.Via == nil {
 						fc.Via = map[string]float64{}
