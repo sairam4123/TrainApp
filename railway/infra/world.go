@@ -97,6 +97,13 @@ func (w *World) IsFinalized() bool {
 	return w.finalized && w.TrackGraph.cacheBuilt
 }
 
+// Up is the way ("E" or "W", empty for west) the world's UP direction runs
+// (WorldData.Up).
+func (w *World) Up() string { return w.data.Up }
+
+// SwitchLength is the length of each leg of a switch (WorldData.DefaultSwLength).
+func (w *World) SwitchLength() units.Meters { return w.data.DefaultSwLength }
+
 func (w *World) AddSignal(sig *Signal) {
 	w.signals[sig.Id] = sig
 	w.finalized = false

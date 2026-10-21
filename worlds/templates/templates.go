@@ -371,6 +371,29 @@ func (p *throatPlan) build(world *infra.World, code ids.StnCode, side string, en
 			infra.NewSwitch(world, id, e, legs[0].To, legs[1].To, infra.SwitchLayout{Legs: infra.East, Lanes: legs[1].Lanes})
 		}
 	}
+	// a main with no track hanging off it would meet a crossover right at its
+	// end, a switch's length nearer the station than its neighbour's ladder
+	// toe: a plain stretch as long as a switch's straight leg lines the two
+	// up, so the crossover is drawn as an X and its legs are alike
+	for k, kind := range p.crossings {
+		if kind == CrossNone || kind == "none" {
+			continue
+		}
+		for _, j := range []int{k, k + 1} {
+			if out[j] != ends[p.mains[j]] {
+				continue
+			}
+			pad := world.NewTrackPoint(ids.PointID{StnCode: code, Type: "Th" + side, Seq: fmt.Sprint(seq)})
+			seq++
+			trk := world.NewTrackSegment("", world.SwitchLength())
+			if side == "W" {
+				world.TrackGraph.AddTrack(pad, out[j], trk)
+			} else {
+				world.TrackGraph.AddTrack(out[j], pad, trk)
+			}
+			out[j] = pad
+		}
+	}
 	for k, kind := range p.crossings {
 		if kind == CrossNone || kind == "none" {
 			continue
@@ -524,6 +547,54 @@ func CrossingStation(world *infra.World, code ids.StnCode, name string, pfLength
 // at lineKmph, and no points.
 func Halt(world *infra.World, code ids.StnCode, name string, pfLength units.Meters, lineKmph float64) (west, east *infra.TrackPoint, err error) {
 	return Station(world, code, name, "", 0, Track{PfNo: "1", Length: pfLength, Straight: true, Kmph: lineKmph})
+}
+
+// Ways a one-way line runs (OneWayLine).
+const (
+	WayEast = 'E'
+	WayWest = 'W'
+)
+
+// OneWayLine joins two points with a line signalled for trains running one
+// way only (WayEast or WayWest), length long and split into blocks equal
+// blocks, as trainedit's Lines lays one: a signal at every block boundary
+// and both ends, facing the way the line runs, and its tracks labelled UP
+// or DOWN by the world's Up. from is the west end. name names the block
+// points ({name, Bk, i}), tracks (name0, name1, ...) and signals (nameSig0F
+// for a line running east, nameSig0R for one running west, ...).
+func OneWayLine(world *infra.World, name string, from, to *infra.TrackPoint, way byte, length units.Meters, blocks int) {
+	if way != WayEast && way != WayWest {
+		panic(fmt.Sprintf("templates: line %s: way %q, want E or W", name, way))
+	}
+	dir := infra.Down
+	if (way == WayEast) == (cmp.Or(world.Up(), "W") == "E") {
+		dir = infra.Up
+	}
+	pts := []*infra.TrackPoint{from}
+	for i := 1; i < blocks; i++ {
+		pts = append(pts, world.NewTrackPoint(ids.PointID{StnCode: ids.StnCode(name), Type: "Bk", Seq: fmt.Sprint(i)}))
+	}
+	pts = append(pts, to)
+	for i := 0; i+1 < len(pts); i++ {
+		a, b := pts[i], pts[i+1]
+		trk := world.NewTrackSegment(fmt.Sprintf("%s%d", name, i), length/units.Meters(blocks))
+		trk.Direction = dir
+		world.TrackGraph.AddTrack(a, b, trk)
+		if way == WayEast {
+			world.AddSignal(infra.NewSignal(fmt.Sprintf("%sSig%dF", name, i), b, a))
+		} else {
+			world.AddSignal(infra.NewSignal(fmt.Sprintf("%sSig%dR", name, i), a, b))
+		}
+	}
+}
+
+// DoubleLine joins two stations with a double line, the upper line (from[0]
+// to to[0]) running east and the lower (from[1] to to[1]) running west, as
+// OneWayLine lays each. from are the west ends. The lines are named as
+// trainedit names a pattern's lines: name with L1 (upper) and L2 after it.
+func DoubleLine(world *infra.World, name string, from, to [2]*infra.TrackPoint, length units.Meters, blocks int) {
+	OneWayLine(world, name+"L1", from[0], to[0], WayEast, length, blocks)
+	OneWayLine(world, name+"L2", from[1], to[1], WayWest, length, blocks)
 }
 
 // SingleLine joins two points with a single bidirectional line of the given

@@ -19,6 +19,7 @@ func TestSnapshotsUnchanged(t *testing.T) {
 	for name, build := range map[string]func() *infra.World{
 		"tpjkkdi":    BuildTpjKkdiWorld,
 		"tpjkkdi-sl": BuildTpjKkdiSingleLineWorld,
+		"tpjkkdi-dl": BuildTpjKkdiDoubleLineWorld,
 		"single": func() *infra.World {
 			return BuildSingleLineWorld(SingleLineOptions{TerminusPlatforms: 3, LoopPlatforms: 2, BlocksPerLine: 3})
 		},

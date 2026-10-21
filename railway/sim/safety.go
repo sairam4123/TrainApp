@@ -47,7 +47,7 @@ import (
 type participant struct {
 	train     *ops.Train
 	pos       []infra.Position // where it may stand once its granted route is run
-	remaining []ids.StnCode    // stops still to call at from pos
+	remaining []infra.Visit    // stops still to call at from pos
 	next      int              // schedule index of remaining[0]
 	holds     map[ids.TrackID]bool
 }
@@ -152,7 +152,7 @@ func (disp *Dispatcher) participants(requester *TrainController, route *interloc
 			}
 		}
 		for _, sp := range t.Schedule()[p.next:] {
-			p.remaining = append(p.remaining, sp.StnCode)
+			p.remaining = append(p.remaining, visitOf(sp))
 		}
 		out = append(out, p)
 	}
@@ -238,7 +238,7 @@ type safetyCheck struct {
 // checkState is where the participants stand at one point of the search.
 type checkState struct {
 	pos       [][]infra.Position
-	remaining [][]ids.StnCode
+	remaining [][]infra.Visit
 	holds     []map[ids.TrackID]bool
 	finished  []bool
 	advanced  []int // stops each has moved on by
@@ -246,7 +246,7 @@ type checkState struct {
 
 func (ck *safetyCheck) start() *checkState {
 	n := len(ck.parts)
-	st := &checkState{pos: make([][]infra.Position, n), remaining: make([][]ids.StnCode, n), holds: make([]map[ids.TrackID]bool, n), finished: make([]bool, n), advanced: make([]int, n)}
+	st := &checkState{pos: make([][]infra.Position, n), remaining: make([][]infra.Visit, n), holds: make([]map[ids.TrackID]bool, n), finished: make([]bool, n), advanced: make([]int, n)}
 	for i, p := range ck.parts {
 		st.pos[i], st.remaining[i], st.holds[i] = p.pos, p.remaining, p.holds
 	}

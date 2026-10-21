@@ -109,13 +109,23 @@ func (w *World) RankedPaths(from *TrackPoint, via *GraphEdge, to *TrackSegment) 
 	return ranked, nil
 }
 
+// Visit is a stop on a train's way: its station, and whether the train calls
+// there with passengers. A call is made at a platform, never on a through
+// track (one with no platform); a train running through or standing without
+// calling may use any of the station's tracks.
+type Visit struct {
+	Stn  ids.StnCode
+	Call bool
+}
+
 // CanVisit reports whether a train standing at pos can call at each station
 // in stops, in order, without using any step for which blocked returns true
 // (nil blocks nothing). Calling at a station means running onto one of its
-// platforms. For each leg the train must run the correct way if the station
-// can be reached the correct way at all, matching how the dispatcher routes;
-// otherwise wrong-direction running is allowed. Requires Finalize.
-func (w *World) CanVisit(pos Position, stops []ids.StnCode, blocked func(Step) bool) (bool, error) {
+// platform tracks, one with a platform if the visit is a call. For each leg
+// the train must run the correct way if the station can be reached the
+// correct way at all, matching how the dispatcher routes; otherwise
+// wrong-direction running is allowed. Requires Finalize.
+func (w *World) CanVisit(pos Position, stops []Visit, blocked func(Step) bool) (bool, error) {
 	ends, err := w.VisitEnds([]Position{pos}, stops, blocked)
 	return len(ends) > 0, err
 }
@@ -124,17 +134,23 @@ func (w *World) CanVisit(pos Position, stops []ids.StnCode, blocked func(Step) b
 // returns the positions the train can end at, on a platform track of the last
 // stop: none if it cannot call at every stop, the starts themselves if stops
 // is empty. Requires Finalize.
-func (w *World) VisitEnds(starts []Position, stops []ids.StnCode, blocked func(Step) bool) ([]Position, error) {
+func (w *World) VisitEnds(starts []Position, stops []Visit, blocked func(Step) bool) ([]Position, error) {
 	cur := starts
-	for _, code := range stops {
+	for _, v := range stops {
 		if len(cur) == 0 {
 			return nil, nil
 		}
-		stn, ok := w.stations[code]
+		stn, ok := w.stations[v.Stn]
 		if !ok {
-			return nil, fmt.Errorf("unknown station %s", code)
+			return nil, fmt.Errorf("unknown station %s", v.Stn)
 		}
-		atStation := func(s Step) bool { return stn.IsPlatform(s.Edge.Track.Id) }
+		at := map[ids.TrackID]bool{}
+		for _, pf := range stn.Platforms() {
+			if !v.Call || !pf.IsThrough() {
+				at[pf.Track.Id] = true
+			}
+		}
+		atStation := func(s Step) bool { return at[s.Edge.Track.Id] }
 
 		correctOnly := func(s Step) bool { return w.RunsCorrectWay(s) }
 		static, err := w.TrackGraph.Reach(cur, atStation, correctOnly)

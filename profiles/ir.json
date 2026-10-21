@@ -29,7 +29,7 @@
     "main_line_max_stay_min": 5,
     "min_priority_gap": 10,
     "min_saving_min": 1,
-    "max_wait_ratio": 2,
+    "max_wait_ratio": 4,
     "min_net_gain": 1
   },
   "timetable": {

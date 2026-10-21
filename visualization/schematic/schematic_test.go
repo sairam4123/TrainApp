@@ -538,3 +538,15 @@ func TestCoachesBehindTheLabel(t *testing.T) {
 		t.Errorf("no length: coaches drawn in\n%s", got)
 	}
 }
+
+// A siding shows its name rather than its length, and its track name at the
+// detail level.
+func TestSidingLabel(t *testing.T) {
+	trk := &Track{ID: "tpjSt1E-tpjSt1S", Name: "tpjSt1", Kind: Line, Length: 700, Siding: "St1"}
+	if got := trk.label(Layout); got != "St1" {
+		t.Errorf("layout label %q, want St1", got)
+	}
+	if got := trk.label(Detail); got != "tpjSt1" {
+		t.Errorf("detail label %q, want tpjSt1", got)
+	}
+}

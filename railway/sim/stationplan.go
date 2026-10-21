@@ -17,7 +17,10 @@ import (
 // the fastest track: a through track, then the main line for the line it
 // arrives on, then a loop. One expected to stand there, e.g. waiting for a
 // crossing, takes a loop instead: the main line and through tracks are its
-// last resort, so they stay free for the trains running through.
+// last resort, so they stay free for the trains running through. The one
+// exception is a short stand (main_line_max_stay_min) on its own main where
+// the only loops lie across another line's main: crossing over and back costs
+// more than the stand.
 //
 // The plan gives out a station's tracks to the trains due there within the
 // horizon, highest priority first, each taking the first track in its order
@@ -74,12 +77,23 @@ func (p *precedence) trackRank(t *ops.Train, k int, stn *infra.Station, c candid
 	if m, ok := stn.MainFor(c.line); ok && m == c.pf {
 		mine = true
 	}
-	// another line's main line counts as a loop: which of those is best is
-	// down to which side of the station the train is on (rankCandidates)
+	// another line's main line counts as a loop, through track or not: which
+	// of those is best is down to which side of the station the train is on
+	// (rankCandidates)
+	others := !mine && len(stn.MainLinesOf(c.pf.Id)) > 0
 	if sp.IsPass() && p.standing(stay) {
+		// a loop on its own side first; a short stand on its own main
+		// before crossing another line's main to reach a loop
 		r := 0
-		if class == infra.Through || class == infra.Main {
+		switch {
+		case class == infra.Main && mine && stay <= float64(p.cfg.MainLineMaxStayMin):
+			r = 2
+		case class == infra.Through || class == infra.Main:
 			r = 6 // the last resort, whichever line's it is
+		default:
+			if crossings, _ := p.side(t, k, stn, c); crossings > 0 {
+				r = 4
+			}
 		}
 		if !timetabled {
 			r++
@@ -89,7 +103,7 @@ func (p *precedence) trackRank(t *ops.Train, k int, stn *infra.Station, c candid
 	if sp.IsPass() {
 		r := 4
 		switch {
-		case class == infra.Through:
+		case class == infra.Through && !others:
 			r = 0
 		case class == infra.Main && mine:
 			r = 2
@@ -131,7 +145,8 @@ func (p *precedence) standing(stay float64) bool {
 // first the way in and out that crosses fewest other running lines' main
 // routes, then the quickest way through the station's throats. So a train is
 // not sent across the other line to a loop on the far side when there is one
-// next to its own. Platform order breaks what ties remain.
+// next to its own. Platform order breaks what ties remain. Tracks the train
+// cannot call at (callable) are left out, so the list may be empty.
 func (p *precedence) rankCandidates(t *ops.Train, k int, stn *infra.Station, cands []candidate, stay float64) []candidate {
 	type keyed struct {
 		c         candidate
@@ -139,10 +154,13 @@ func (p *precedence) rankCandidates(t *ops.Train, k int, stn *infra.Station, can
 		crossings int
 		time      float64
 	}
-	ks := make([]keyed, len(cands))
-	for i, c := range cands {
+	var ks []keyed
+	for _, c := range cands {
+		if !callable(t.Schedule()[k], c.pf) {
+			continue
+		}
 		crossings, time := p.side(t, k, stn, c)
-		ks[i] = keyed{c, p.rank(t, k, stn, c, stay), crossings, time}
+		ks = append(ks, keyed{c, p.rank(t, k, stn, c, stay), crossings, time})
 	}
 	slices.SortStableFunc(ks, func(a, b keyed) int {
 		return cmp.Or(cmp.Compare(a.rank, b.rank), cmp.Compare(a.crossings, b.crossings), cmp.Compare(a.time, b.time))
@@ -560,6 +578,10 @@ func (p *precedence) changeReason(t *ops.Train, k int, stn *infra.Station, pf *i
 		if a.ranked[i].pf.PfNo == sp.SpPfNo {
 			tt = &a.ranked[i]
 		}
+	}
+	// a call timetabled at a through track is never planned there (callable)
+	if i := slices.IndexFunc(stn.Platforms(), func(pf *infra.Platform) bool { return pf.PfNo == sp.SpPfNo }); i >= 0 && got != nil && !callable(sp, stn.Platforms()[i]) {
+		return reasonThrough, ids.TrainID{}
 	}
 	if tt == nil || got == nil {
 		return "", ids.TrainID{} // the timetabled platform cannot be reached from here

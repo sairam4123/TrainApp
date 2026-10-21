@@ -118,7 +118,7 @@ import (
 // }
 
 func main() {
-	worldName := flag.String("world", "tpjkkdi", "world to run: tpjkkdi (the double line), tpjkkdi-sl (the real single line, with every station) or a world snapshot file (.json)")
+	worldName := flag.String("world", "tpjkkdi", "world to run: tpjkkdi (the double line), tpjkkdi-sl (the real single line, with every station), tpjkkdi-dl (the real line doubled) or a world snapshot file (.json)")
 	schedulePath := flag.String("schedule", "", "trains to run (JSON); empty for the built-in demo trains, which need the tpjkkdi or tpjkkdi-sl world")
 	saveWorldPath := flag.String("save-world", "", "also write the world to this file as a snapshot (JSON), which -world can load")
 	saveSchedulePath := flag.String("save-schedule", "", "also write the trains' schedules to this file (JSON), which -schedule can load")

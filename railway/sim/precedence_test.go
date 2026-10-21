@@ -27,7 +27,7 @@ type entry struct {
 type eventLog struct{ entries []entry }
 
 func (l *eventLog) Logged(_ slog.Level, event string, attrs []slog.Attr) {
-	if !strings.HasPrefix(event, "PRECEDENCE") && event != "PLATFORM_CHANGE" && event != "TRAIN_ARRIVE" {
+	if !strings.HasPrefix(event, "PRECEDENCE") && event != "PLATFORM_CHANGE" && event != "TRAIN_ARRIVE" && event != "TRACK_ENTER" && event != "ROUTE_WAIT" {
 		return
 	}
 	e := entry{event: event, attrs: map[string]string{}}
@@ -217,6 +217,55 @@ func TestAHigherTrainTakesTheMainLine(t *testing.T) {
 	}
 }
 
+// On a double line a train running through keeps to its own line's main:
+// KRMG's through track T3 is the west line's main, so a train running east
+// passes on PF1, the east line's, instead of crossing over to T3 and back.
+func TestAPassingTrainKeepsToItsOwnMain(t *testing.T) {
+	stops := []stop{{"TPJ", "4", 2, false}}
+	for _, code := range []ids.StnCode{"KRMG", "KRUR", "VEL", "PDKT", "NMN", "TYM", "CTND", "KTYR"} {
+		stops = append(stops, stop{code, "", 0, true})
+	}
+	stops = append(stops, stop{"KKDI", "2", 2, false})
+	_, log := runWith(t, worlds.BuildTpjKkdiDoubleLineWorld(), precedenceConfig(), nil, testTrain("X", 50, 110, 1, stops...))
+	for stn, want := range map[string]string{"krmg": "krmgPf1", "krur": "krurPf3", "pdkt": "pdktPf1", "ctnd": "ctndPf1"} {
+		var got []string
+		for _, e := range log.find("TRAIN_ARRIVE", map[string]string{"train": "X"}) {
+			if strings.HasPrefix(e.attrs["track"], stn) {
+				got = append(got, e.attrs["track"])
+			}
+		}
+		if len(got) != 1 || got[0] != want {
+			t.Errorf("X ran through %s on %v, want %s", strings.ToUpper(stn), got, want)
+		}
+	}
+}
+
+func TestAShortStandIsOnItsOwnMain(t *testing.T) {
+	// X runs through KRMG eastbound and stands there a few minutes behind P,
+	// still on the line to KRUR (too close in priority to be held for X).
+	// KRMG's only loop, PF2, is across the west line's main: crossing over
+	// and back costs more than standing on PF1
+	stops := func(krmg stop) []stop {
+		return []stop{{"TPJ", "4", 2, false}, krmg, {"KRUR", "", 2, false}, {"VEL", "", 0, true}, {"PDKT", "", 0, true},
+			{"NMN", "", 0, true}, {"TYM", "", 0, true}, {"CTND", "", 0, true}, {"KTYR", "", 0, true}, {"KKDI", "2", 2, false}}
+	}
+	_, log := runWith(t, worlds.BuildTpjKkdiDoubleLineWorld(), precedenceConfig(), nil,
+		testTrain("P", 35, 100, 1, stops(stop{"KRMG", "", 0, true})...),
+		testTrain("X", 40, 110, 5, stops(stop{"KRMG", "", 0, true})...))
+	if len(log.find("ROUTE_WAIT", map[string]string{"train": "X", "station": "KRUR"})) == 0 {
+		t.Fatal("X never stood at KRMG for the line to KRUR")
+	}
+	var got []string
+	for _, e := range log.find("TRACK_ENTER", map[string]string{"train": "X"}) {
+		if trk := e.attrs["track"]; strings.HasPrefix(trk, "krmgPf") && !strings.Contains(trk, "-") {
+			got = append(got, trk)
+		}
+	}
+	if len(got) != 1 || got[0] != "krmgPf1" {
+		t.Errorf("X stood at KRMG on %v, want krmgPf1", got)
+	}
+}
+
 func TestHoldsAreOnlyPlacedAtRefuges(t *testing.T) {
 	// a slow train ahead keeps P at signals out on the line, where the express
 	// behind could not get past it
@@ -230,6 +279,29 @@ func TestHoldsAreOnlyPlacedAtRefuges(t *testing.T) {
 		if at := h.attrs["at"]; at != "WST" && at != "LPA" && at != "EST" {
 			t.Errorf("%s held at %s, where nothing can pass it", h.attrs["train"], at)
 		}
+	}
+}
+
+func TestAHeldTrainEntersAndDwells(t *testing.T) {
+	// both due at WST at t=1: P is held for X, but stands its dwell at a
+	// free platform while held instead of waiting off the edge
+	trains := []*ops.Train{
+		testTrain("X", 50, 100, 1, stop{"WST", "1", 4, false}, stop{"LPA", "1", 0, true}, stop{"HLT", "1", 0, true}, stop{"EST", "1", 2, false}),
+		testTrain("P", 20, 60, 1, stop{"WST", "2", 2, false}, stop{"LPA", "1", 2, false}, stop{"HLT", "1", 0, true}, stop{"EST", "2", 2, false}),
+	}
+	_, log := runWith(t, singleLine(), precedenceConfig(), nil, trains...)
+	if got := log.find("PRECEDENCE_HOLD", map[string]string{"train": "P", "for": "X", "at": "WST"}); len(got) == 0 {
+		t.Fatalf("P was not held at WST for X: %+v", log.entries)
+	}
+	x, p := trains[0].Schedule()[0], trains[1].Schedule()[0]
+	if p.ActArrTime > 1+0.1 {
+		t.Errorf("P entered WST at %.2f, held off the edge", p.ActArrTime)
+	}
+	if p.ActDeptTime < x.ActDeptTime {
+		t.Errorf("P left WST at %.2f, before X at %.2f", p.ActDeptTime, x.ActDeptTime)
+	}
+	if p.ActDeptTime > x.ActDeptTime+5 {
+		t.Errorf("P left WST at %.2f, X at %.2f: its dwell did not overlap the hold", p.ActDeptTime, x.ActDeptTime)
 	}
 }
 
@@ -429,13 +501,44 @@ func TestRandomTrafficWithPrecedence(t *testing.T) {
 		for seed := range uint64(seeds()) {
 			t.Run(fmt.Sprintf("%s/seed%d", sh.name, seed), func(t *testing.T) {
 				trains := randomTraffic(sh.routes, seed)
-				s, _ := runWith(t, sh.build(), cfg, nil, trains...)
+				w := sh.build()
+				s, log := runWith(t, w, cfg, nil, trains...)
+				callsAtPlatforms(t, w, log, trains)
 				for _, d := range s.Decisions() {
 					if d.Action == sim.ActionHold && d.Ended-d.Since > maxHold+2 {
 						t.Errorf("%s held for %.2f min", d.ID, d.Ended-d.Since)
 					}
 				}
 			})
+		}
+	}
+}
+
+// callsAtPlatforms checks no train stood on a through track (no platform)
+// at a station it calls at.
+func callsAtPlatforms(t *testing.T, w *infra.World, log *eventLog, trains []*ops.Train) {
+	t.Helper()
+	through := map[string]ids.StnCode{}
+	for _, stn := range w.ListStations() {
+		for _, pf := range stn.Platforms() {
+			if pf.IsThrough() {
+				through[pf.Track.Name] = stn.Code
+			}
+		}
+	}
+	byNumber := map[string]*ops.Train{}
+	for _, tr := range trains {
+		byNumber[tr.Number] = tr
+	}
+	for _, e := range log.find("TRAIN_ARRIVE", nil) {
+		code, ok := through[e.attrs["track"]]
+		if !ok {
+			continue
+		}
+		for _, sp := range byNumber[e.attrs["train"]].Schedule() {
+			if sp.StnCode == code && !sp.IsPass() && !sp.IsHalt() {
+				t.Errorf("%s called at %s on through track %s", e.attrs["train"], code, e.attrs["track"])
+			}
 		}
 	}
 }

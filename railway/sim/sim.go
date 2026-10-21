@@ -154,7 +154,7 @@ func (s *Sim) checkSchedules() error {
 				stn, ok := s.world.StationOfPlatform(step.Edge.Track)
 				return ok && stn != from && stn != to
 			}
-			ends, err := s.world.VisitEnds(starts, []ids.StnCode{to.Code}, other)
+			ends, err := s.world.VisitEnds(starts, []infra.Visit{visitOf(sched[i])}, other)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("train %s: %w", t.Number, err))
 			} else if len(ends) == 0 {

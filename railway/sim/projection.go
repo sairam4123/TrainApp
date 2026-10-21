@@ -312,7 +312,11 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 			if len(cands) == 0 {
 				return pr
 			}
-			step = p.rankCandidates(t, 0, first, cands, p.stayAt(t, 0, first))[0].steps[0]
+			ranked := p.rankCandidates(t, 0, first, cands, p.stayAt(t, 0, first))
+			if len(ranked) == 0 {
+				return pr
+			}
+			step = ranked[0].steps[0]
 		}
 		start := max(sched[0].ArrTime, now)
 		if !committed {
@@ -397,8 +401,11 @@ func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projectio
 		if len(cands) == 0 {
 			break
 		}
-		best := p.rankCandidates(t, next, stn, cands, p.stayAt(t, next, stn))[0]
-		run(best.steps, &from, false)
+		ranked := p.rankCandidates(t, next, stn, cands, p.stayAt(t, next, stn))
+		if len(ranked) == 0 {
+			break
+		}
+		run(ranked[0].steps, &from, false)
 	}
 
 	// in the world, the first slot is the front's track, the last body step

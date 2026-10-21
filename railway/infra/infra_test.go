@@ -362,21 +362,21 @@ func TestCanVisit(t *testing.T) {
 	start, _ := boundaryOf(t, w, "TPJ", "1")
 	pos := infra.Position{At: start}
 
-	ok, err := w.CanVisit(pos, []ids.StnCode{"TPJ", "PDKT", "KKDI"}, nil)
+	ok, err := w.CanVisit(pos, []infra.Visit{{Stn: "TPJ"}, {Stn: "PDKT"}, {Stn: "KKDI"}}, nil)
 	if err != nil || !ok {
 		t.Fatalf("TPJ -> PDKT -> KKDI: %v %v", ok, err)
 	}
 	// an up train must not be told it can reach KKDI by running back down the down line
 	leg, _ := w.TrackGraph.GetTrack(ids.NewTrackID(ids.PointID{StnCode: "TPJ", Type: "Bp", Seq: "2"}, ids.PointID{StnCode: "PDKT", Type: "Bp", Seq: "0"}))
 	blockUpLeg := func(s infra.Step) bool { return s.Edge.Track == leg }
-	if ok, _ := w.CanVisit(pos, []ids.StnCode{"TPJ", "PDKT"}, blockUpLeg); ok {
+	if ok, _ := w.CanVisit(pos, []infra.Visit{{Stn: "TPJ"}, {Stn: "PDKT"}}, blockUpLeg); ok {
 		t.Error("PDKT reachable with the up line blocked: wrong-direction running was allowed")
 	}
 	// a train at the boundary calls at the platform in front of it
-	if ok, _ := w.CanVisit(pos, []ids.StnCode{"TPJ"}, nil); !ok {
+	if ok, _ := w.CanVisit(pos, []infra.Visit{{Stn: "TPJ"}}, nil); !ok {
 		t.Error("could not call at the platform it stands next to")
 	}
-	if _, err := w.CanVisit(pos, []ids.StnCode{"NOPE"}, nil); err == nil {
+	if _, err := w.CanVisit(pos, []infra.Visit{{Stn: "NOPE"}}, nil); err == nil {
 		t.Error("unknown station accepted")
 	}
 }
@@ -472,18 +472,47 @@ func TestVisitEnds(t *testing.T) {
 	wst, _ := w.GetStation("WST")
 	edge, _ := w.TrackGraph.Edge(wst.FindStnPlatform("1"))
 	start := infra.Position{At: edge.To, Via: edge}
-	ends, err := w.VisitEnds([]infra.Position{start}, []ids.StnCode{"LPA"}, nil)
+	ends, err := w.VisitEnds([]infra.Position{start}, []infra.Visit{{Stn: "LPA"}}, nil)
 	if err != nil || len(ends) != 2 {
 		t.Fatalf("ends at LPA = %v (%v), want both platforms", ends, err)
 	}
 	lpa, _ := w.GetStation("LPA")
 	pf1 := lpa.FindStnPlatform("1")
-	ends, _ = w.VisitEnds([]infra.Position{start}, []ids.StnCode{"LPA"}, func(s infra.Step) bool { return s.Edge.Track == pf1 })
+	ends, _ = w.VisitEnds([]infra.Position{start}, []infra.Visit{{Stn: "LPA"}}, func(s infra.Step) bool { return s.Edge.Track == pf1 })
 	if len(ends) != 1 || ends[0].Via.Track == pf1 {
 		t.Fatalf("ends with pf1 blocked = %v", ends)
 	}
 	if ends, _ := w.VisitEnds([]infra.Position{start}, nil, nil); len(ends) != 1 {
 		t.Fatalf("no stops should end where it starts, got %v", ends)
+	}
+}
+
+// A call ends at a platform, never on a through track; a pass may end on
+// either.
+func TestVisitEndsCallsAtPlatforms(t *testing.T) {
+	w := worlds.BuildSingleLineWorld(worlds.SingleLineOptions{TerminusPlatforms: 1, LoopPlatforms: 2, BlocksPerLine: 1, ThroughTrack: true})
+	wst, _ := w.GetStation("WST")
+	edge, _ := w.TrackGraph.Edge(wst.FindStnPlatform("1"))
+	start := infra.Position{At: edge.To, Via: edge}
+	lpa, _ := w.GetStation("LPA")
+	through := map[*infra.TrackSegment]bool{}
+	for _, pf := range lpa.Platforms() {
+		through[pf.Track] = pf.IsThrough()
+	}
+	for _, call := range []bool{false, true} {
+		ends, err := w.VisitEnds([]infra.Position{start}, []infra.Visit{{Stn: "LPA", Call: call}}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		onThrough := 0
+		for _, e := range ends {
+			if through[e.Via.Track] {
+				onThrough++
+			}
+		}
+		if want := map[bool]int{false: 1, true: 0}[call]; onThrough != want || len(ends) < 2 {
+			t.Errorf("call %v: %d ends, %d on the through track, want %d there", call, len(ends), onThrough, want)
+		}
 	}
 }
 

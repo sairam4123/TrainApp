@@ -352,9 +352,9 @@ func (p *precedence) canReach(t *ops.Train, upTo int, blocked func(infra.Step) b
 	if next > upTo {
 		return true
 	}
-	stops := make([]ids.StnCode, 0, upTo-next+1)
+	stops := make([]infra.Visit, 0, upTo-next+1)
 	for _, sp := range sched[next : upTo+1] {
-		stops = append(stops, sp.StnCode)
+		stops = append(stops, visitOf(sp))
 	}
 	ends, err := p.sim.world.VisitEnds(starts, stops, blocked)
 	return err == nil && len(ends) > 0
@@ -480,6 +480,15 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 			held = append(held, d)
 		}
 	}
+	if req.Entry && len(held) > 0 {
+		if pfs := p.enterHeld(req, order, held); len(pfs) > 0 {
+			// it stands its dwell at a platform while held, rather than
+			// waiting off the edge: the hold carries on there and applies
+			// to its departure
+			p.syncHolds(t, held)
+			return verdict{order: pfs}
+		}
+	}
 	p.syncHolds(t, held)
 	if len(held) > 0 {
 		var waitOn []ids.TrackID
@@ -510,6 +519,48 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 		return verdict{}
 	}
 	return verdict{order: append(order, booked...)}
+}
+
+// enterHeld lists the platforms a train held before entering the world may
+// enter on and stand at, still held, so that its hold and dwell overlap: the
+// plan's tracks for it, not booked for a higher-priority train, free now, ones
+// it may be held on for the hold's length, and where every train it is held
+// for can still get by it. Only holds for an overtake or crossing qualify; a
+// train with no track waits outside, as does one with nowhere to stand.
+func (p *precedence) enterHeld(req *RouteRequest, order []*infra.Platform, held []*Decision) []*infra.Platform {
+	s := p.sim
+	stn := req.Station
+	wait := 0.0
+	for _, d := range held {
+		if d.Source != SourceAuto || (d.Kind != KindOvertake && d.Kind != KindCross) {
+			return nil
+		}
+		wait = max(wait, d.Until-s.CurTime())
+	}
+	stay := max(s.dwellAt(req.Train.Schedule()[0], s.CurTime()), wait)
+	var out []*infra.Platform
+	for _, pf := range order {
+		if !p.isFree(pf) {
+			continue
+		}
+		// as ruledOut would judge the hold once it stands there
+		switch stn.TrackClass(pf.Id) {
+		case infra.Through:
+			continue
+		case infra.Main:
+			if stn.RunsThrough() && stay > float64(p.cfg.MainLineMaxStayMin) {
+				continue
+			}
+		}
+		blocked := func(st infra.Step) bool { return p.tracksConflict(st.Edge.Track, pf.Track) }
+		if slices.ContainsFunc(held, func(d *Decision) bool {
+			return !p.canReach(s.trainCtrllers[d.For].train, d.milestone, blocked)
+		}) {
+			continue
+		}
+		out = append(out, pf)
+	}
+	return out
 }
 
 func (p *precedence) isFree(pf *infra.Platform) bool {
@@ -962,11 +1013,14 @@ func (p *precedence) skip(t *ops.Train, id string, c conflict, at, reason string
 }
 
 // granted notes a route granted to the train: it is no longer held where it
-// stood, and if the route ends on a platform other than the timetabled one
-// because of precedence, that is a decision.
+// stood, unless it enters the world held (enterHeld), and if the route ends on
+// a platform other than the timetabled one because of precedence, that is a
+// decision.
 func (p *precedence) granted(req *RouteRequest, k int, last *infra.TrackSegment) {
 	t := req.Train
-	delete(p.heldSince, t.ID())
+	if !req.Entry || len(p.holds[t.ID()]) == 0 {
+		delete(p.heldSince, t.ID())
+	}
 	pf := platformOf(req.Station, last)
 	if pf == nil || p.disabled[t.ID()] {
 		return

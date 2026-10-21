@@ -2,6 +2,7 @@ package templates
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"trainapp/railway/ids"
 	"trainapp/railway/infra"
@@ -167,5 +168,96 @@ func TestJunctionStation(t *testing.T) {
 		if !reaches(t, w, west[0], no) {
 			t.Errorf("the west line does not reach platform %s", no)
 		}
+	}
+}
+
+// A double line runs east on its upper line and west on its lower, each
+// signalled the one way and labelled by the world's Up (west, unset).
+func TestDoubleLine(t *testing.T) {
+	w := newWorld()
+	mains := []Track{{PfNo: "1", Length: 600, Straight: true}, {PfNo: "2", Length: 600, Straight: true}}
+	wsW, wsE, err := BuildStation(w, "WS", "West", Layout{Edge: "W"}, mains...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	esW, esE, err := BuildStation(w, "ES", "East", Layout{Edge: "E"}, mains...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(wsW)+len(esE) != 0 || len(wsE) != 2 || len(esW) != 2 {
+		t.Fatalf("line points: %d %d %d %d", len(wsW), len(wsE), len(esW), len(esE))
+	}
+	DoubleLine(w, "ln", [2]*infra.TrackPoint(wsE), [2]*infra.TrackPoint(esW), 4000, 2)
+	if err := w.Finalize(); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, sig := range w.ListSignals() {
+		east := sig.AtPoint.Id.StnCode == "ES" || sig.FacingPoint.Id.StnCode == "WS" ||
+			(sig.AtPoint.Id.StnCode == "lnL1" && sig.FacingPoint.Id.StnCode != "ES")
+		switch {
+		case strings.HasPrefix(sig.Id, "lnL1") && !strings.HasSuffix(sig.Id, "F"),
+			strings.HasPrefix(sig.Id, "lnL2") && !strings.HasSuffix(sig.Id, "R"):
+			t.Errorf("signal %s faces the wrong way for its line", sig.Id)
+		case strings.HasPrefix(sig.Id, "lnL1") && !east:
+			t.Errorf("signal %s at %s facing %s is not for trains running east", sig.Id, sig.AtPoint.Id, sig.FacingPoint.Id)
+		}
+	}
+	for name, want := range map[string]infra.TrackDirection{"lnL10": infra.Down, "lnL11": infra.Down, "lnL20": infra.Up, "lnL21": infra.Up} {
+		found := false
+		for _, e := range w.TrackGraph.Edges {
+			if e.Track.Name == name {
+				found = true
+				if e.Track.Direction != want {
+					t.Errorf("%s is %s, want %s", name, e.Track.Direction, want)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("no track %s", name)
+		}
+	}
+
+	// legal reports whether a train leaving from's platform can run to
+	// platform no of to, the way the signals let it
+	legal := func(from ids.StnCode, side string, fromNo string, to ids.StnCode, no string) bool {
+		id := ids.PointID{StnCode: from, Type: "Pf", Seq: fromNo, Other: side}
+		var start *infra.TrackPoint
+		for _, e := range w.TrackGraph.Edges {
+			if e.From.Id == id {
+				start = e.From
+			}
+			if e.To.Id == id {
+				start = e.To
+			}
+		}
+		trk, ok := w.TrackGraph.GetTrack(ids.NewTrackID(
+			ids.PointID{StnCode: to, Type: "Pf", Seq: no, Other: "S"},
+			ids.PointID{StnCode: to, Type: "Pf", Seq: no, Other: "E"}))
+		if start == nil || !ok {
+			t.Fatalf("no platform %s %s or %s %s", from, fromNo, to, no)
+		}
+		paths, err := w.TrackGraph.GenerateCandidatePaths(start, trk)
+		if err != nil {
+			return false
+		}
+		for _, p := range paths {
+			if w.IsLegalPath(p) && w.FollowsSignals(p) {
+				return true
+			}
+		}
+		return false
+	}
+	if !legal("WS", "E", "1", "ES", "1") {
+		t.Error("the upper line does not run east")
+	}
+	if !legal("ES", "S", "2", "WS", "2") {
+		t.Error("the lower line does not run west")
+	}
+	if legal("WS", "E", "2", "ES", "2") {
+		t.Error("the lower line runs east")
+	}
+	if legal("ES", "S", "1", "WS", "1") {
+		t.Error("the upper line runs west")
 	}
 }

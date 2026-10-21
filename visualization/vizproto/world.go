@@ -42,6 +42,20 @@ type Track struct {
 	// Direction is the line's UP or DOWN label, if it has one; only a label,
 	// the way trains run on it is its signals'.
 	Direction string `json:"direction,omitempty"`
+	// Siding is the name of a station's siding or goods loop, e.g. "Gd1",
+	// for a line that is one.
+	Siding string `json:"siding,omitempty"`
+}
+
+// sidingName is the name of the siding running from a to b, a station track
+// with no platform that templates.Station names by its ends (Type the name,
+// Other S and E), or "" if the track is not one.
+func sidingName(a, b ids.PointID) string {
+	if ends := a.Other + b.Other; ends != "SE" && ends != "ES" ||
+		a.StnCode == "" || a.StnCode != b.StnCode || a.Type == "" || a.Type == "Pf" || a.Type != b.Type || a.Seq != "" || b.Seq != "" {
+		return ""
+	}
+	return a.Type
 }
 
 type SwitchBlock struct {
@@ -120,6 +134,7 @@ func FromWorld(w *infra.World) *World {
 			Length: float64(trk.Length),
 
 			Direction: string(trk.Direction),
+			Siding:    sidingName(edge.From.Id, edge.To.Id),
 		})
 	}
 	// in the world's id order, which the layout uses to break ties

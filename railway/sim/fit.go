@@ -47,9 +47,25 @@ func fitOf(t *ops.Train, sp *ops.SchedulePoint, pf *infra.Platform) fit {
 	return fitsNeither
 }
 
+// callable reports whether pf can take a train's call sp. A call with
+// passengers (a stop, not a pass or a halt) is only ever made at a track with
+// a platform: a through track has none, so it is for trains that run through
+// or stand without calling. A nil sp is unknown, and anything goes.
+func callable(sp *ops.SchedulePoint, pf *infra.Platform) bool {
+	return sp == nil || !passengers(sp) || !pf.IsThrough()
+}
+
+// visitOf is the schedule point as a stop VisitEnds checks: a call if
+// passengers get on or off there.
+func visitOf(sp *ops.SchedulePoint) infra.Visit {
+	return infra.Visit{Stn: sp.StnCode, Call: passengers(sp)}
+}
+
 // byFit orders the platforms best fit first for train t's call sp, keeping
-// their order within each fit.
+// their order within each fit, and leaves out those it cannot call at
+// (callable).
 func byFit(t *ops.Train, sp *ops.SchedulePoint, pfs []*infra.Platform) []*infra.Platform {
+	pfs = slices.DeleteFunc(slices.Clone(pfs), func(pf *infra.Platform) bool { return !callable(sp, pf) })
 	if t.Length <= 0 || sp == nil {
 		return pfs
 	}

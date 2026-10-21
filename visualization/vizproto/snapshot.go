@@ -78,6 +78,7 @@ func FromSnapshot(s *infra.Snapshot) *World {
 		tracks = append(tracks, track{id, Track{
 			ID: id.String(), Name: cmp.Or(t.Name, id.String()), From: t.From, To: t.To,
 			Lanes: t.Lanes, Kind: kind, Length: t.LengthM, Direction: t.Direction,
+			Siding: sidingName(from, to),
 		}})
 	}
 	slices.SortFunc(tracks, func(a, b track) int { return a.id.Compare(b.id) })

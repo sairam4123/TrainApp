@@ -15,9 +15,9 @@ import (
 // Version 2 added precedence: decision messages, the trains a waiting train
 // is held for, and each platform's class. Version 3 added each train's class
 // and planned schedule, version 4 its priority, version 5 its length,
-// version 6 the keys of a train that accelerates and brakes. Older recordings
-// still read.
-const Version = 6
+// version 6 the keys of a train that accelerates and brakes, version 7 each
+// siding's name. Older recordings still read.
+const Version = 7
 
 const (
 	TypeHello  = "hello"

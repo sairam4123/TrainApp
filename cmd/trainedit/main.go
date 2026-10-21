@@ -31,7 +31,7 @@ func main() {
 	fresh := flag.Bool("new", false, "start a new scenario in -dir")
 	dir := flag.String("dir", "scenarios", "with -new, the directory the scenario goes in")
 	from := flag.String("from", "", "with -new, a scenario whose world, schedule and profile to start from")
-	world := flag.String("world", "", "with -new, the world to start from: tpjkkdi, tpjkkdi-sl or a world snapshot (.json); empty for an empty world")
+	world := flag.String("world", "", "with -new, the world to start from: tpjkkdi, tpjkkdi-sl, tpjkkdi-dl or a world snapshot (.json); empty for an empty world")
 	savedTo := flag.String("saved-to", "", "write the path of the scenario saved last to this file (for traindemo)")
 	binDir := flag.String("bin", "", "directory with trainapp and trainviz; empty to look next to trainedit, then in dist/, then on $PATH")
 	outDir := flag.String("out", filepath.Join("logs", "demo"), "directory for the runs' recordings and KPIs, shared with traindemo")

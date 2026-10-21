@@ -5,7 +5,7 @@
 //	 "schedule": "schedules/sl-12.json", "profile": "../profiles/ir.json",
 //	 "disruptions": [{"train": "0452U", "kind": "stand", "stn": "PDKT", "min": 30}]}
 //
-// world is tpjkkdi, tpjkkdi-sl or a world snapshot; file paths are relative
+// world is tpjkkdi, tpjkkdi-sl, tpjkkdi-dl or a world snapshot; file paths are relative
 // to the scenario file.
 //
 // A scenario may also name a timetable, as trainapp -timetable writes one

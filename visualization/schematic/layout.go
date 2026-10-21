@@ -37,6 +37,8 @@ type Track struct {
 	Class    string // main, through or loop, for a platform (empty if unknown)
 	// Direction is a line's UP or DOWN label, drawn with its length.
 	Direction string
+	// Siding is a siding's name, drawn instead of its length.
+	Siding string
 
 	span int // fixed width, for a box
 
@@ -46,13 +48,18 @@ type Track struct {
 	branchWest, branchEast bool
 }
 
-// label is drawn on the track: its platform number or length. At the detail
-// level a named track shows its name instead of the platform number, and a
-// station track its class if it is a main line or through track. A through
-// track has no platform, so it is T1 rather than Pf1.
+// label is drawn on the track: its platform number, siding name or length.
+// At the detail level a named track shows its name instead of the platform
+// number or siding name, and a station track its class if it is a main line
+// or through track. A through track has no platform, so it is T1 rather than
+// Pf1.
 func (t *Track) label(level Level) string {
 	named := level == Detail && t.Name != t.ID
 	switch {
+	case t.Kind == Line && t.Siding != "" && named:
+		return t.Name
+	case t.Kind == Line && t.Siding != "":
+		return t.Siding
 	case t.Kind == Line && named:
 		return t.Name + " (" + t.lengthLabel() + ")"
 	case t.Kind == Line:
@@ -133,7 +140,7 @@ func Build(w *vizproto.World) (*Diagram, error) {
 				return nil, fmt.Errorf("schematic: track %s ends at unknown point %s", wt.ID, end)
 			}
 		}
-		t := &Track{ID: wt.ID, Name: wt.Name, From: wt.From, To: wt.To, Lanes: wt.Lanes, Length: wt.Length, Direction: wt.Direction}
+		t := &Track{ID: wt.ID, Name: wt.Name, From: wt.From, To: wt.To, Lanes: wt.Lanes, Length: wt.Length, Direction: wt.Direction, Siding: wt.Siding}
 		switch wt.Kind {
 		case vizproto.KindPlatform:
 			t.Kind = Platform
