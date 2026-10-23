@@ -868,8 +868,12 @@ func subLines(text string, w int) []string {
 }
 
 // decisionSummary says what a decision does, e.g. "held at PDKT for 0451U
-// (overtake, +6.2m)" or "pf 3→4 at PDKT (main_line_stay)".
+// (overtake, +6.2m)", "pf 3→4 at PDKT (main_line_stay)" or "let go at TPJ
+// for 0451U, to be held at PDKT (+5.1m, wait 8.0m)".
 func decisionSummary(d vizproto.DecisionMsg) string {
+	if d.Action == "defer" {
+		return fmt.Sprintf("let go at %s for %s, to be held at %s (+%.1fm, wait %.1fm)", d.At, d.For, d.To, d.Gain, d.Wait)
+	}
 	if d.Action == "platform" {
 		text := fmt.Sprintf("pf %s→%s at %s (%s", d.PfFrom, d.PfTo, d.At, d.Reason)
 		if d.For != "" {
@@ -895,7 +899,7 @@ func (m *model) decisionLines(n int) []string {
 			break
 		}
 		line := fmt.Sprintf("t=%.2f %-10s %s %s", d.Since, d.Status, d.Train, decisionSummary(d))
-		if d.Reason != "" && d.Action == "hold" {
+		if d.Reason != "" && d.Action != "platform" {
 			line += "  " + d.Reason
 		}
 		if d.Active() {

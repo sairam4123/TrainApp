@@ -43,6 +43,14 @@ type PrecedenceConfig struct {
 	// MinNetGain is the weighted rule's setting: hold when priority(H) x
 	// saving - priority(L) x wait exceeds it.
 	MinNetGain float64 `json:"min_net_gain,omitempty"`
+	// FollowHorizonMin is how far ahead a train catching up with a slower one
+	// is projected following it, and the slower one's refuges compared for
+	// where to let it by (trailing.go). 0 turns both off.
+	FollowHorizonMin units.Minutes `json:"follow_horizon_min,omitempty"`
+	// DeferMarginMin is how much better, in the hold rule's score, a later
+	// refuge must be than where the train stands for it to be let go and
+	// held there instead. Defaults to 1.
+	DeferMarginMin units.Minutes `json:"defer_margin_min,omitempty"`
 }
 
 const (
@@ -59,7 +67,8 @@ func (c *PrecedenceConfig) Validate() error {
 	for name, v := range map[string]units.Minutes{
 		"horizon_min": c.HorizonMin, "headway_min": c.HeadwayMin, "max_hold_min": c.MaxHoldMin,
 		"main_line_max_stay_min": c.MainLineMaxStayMin, "min_saving_min": c.MinSavingMin,
-		"max_reception_hold_min": c.MaxReceptionHoldMin,
+		"max_reception_hold_min": c.MaxReceptionHoldMin, "follow_horizon_min": c.FollowHorizonMin,
+		"defer_margin_min": c.DeferMarginMin,
 	} {
 		if v < 0 {
 			errs = append(errs, fmt.Errorf("%s is negative", name))
@@ -67,6 +76,9 @@ func (c *PrecedenceConfig) Validate() error {
 	}
 	if c.MaxWaitRatio < 0 {
 		errs = append(errs, errors.New("max_wait_ratio is negative"))
+	}
+	if c.FollowHorizonMin > 0 && float64(c.FollowHorizonMin) < c.horizon() {
+		errs = append(errs, fmt.Errorf("follow_horizon_min %.0f is below horizon_min %.0f", float64(c.FollowHorizonMin), c.horizon()))
 	}
 	return errors.Join(errs...)
 }
@@ -90,6 +102,21 @@ func (c *PrecedenceConfig) maxHold() float64 {
 		return defaultMaxHold
 	}
 	return float64(c.MaxHoldMin)
+}
+
+// trailing reports whether trains catching up are projected following the
+// trains ahead, and refuges compared (trailing.go).
+func (c *PrecedenceConfig) trailing() bool { return c.FollowHorizonMin > 0 }
+
+func (c *PrecedenceConfig) followHorizon() float64 { return float64(c.FollowHorizonMin) }
+
+const defaultDeferMargin = 1
+
+func (c *PrecedenceConfig) deferMargin() float64 {
+	if c.DeferMarginMin == 0 {
+		return defaultDeferMargin
+	}
+	return float64(c.DeferMarginMin)
 }
 
 // maxReceptionHold is the cap on a reception hold.
@@ -129,6 +156,9 @@ type Conflict struct {
 	Held, For         ids.TrainID
 	HeldPrio, ForPrio int
 	Saving, Wait      units.Minutes
+	// TrailTo is set when Saving is what For loses trailing Held up to this
+	// station, rather than over Held's next section (trailing.go).
+	TrailTo string
 }
 
 // HoldRule decides whether a train is held for a higher-priority one. Whatever
@@ -138,6 +168,10 @@ type HoldRule interface {
 	Name() string
 	// Hold reports whether c.Held should wait for c.For, and why.
 	Hold(c Conflict) (bool, string)
+	// Score ranks holds the rule accepts, in minutes of the held train's
+	// time, higher better. It picks where a train is held for another (the
+	// best refuge, trailing.go), not whether.
+	Score(c Conflict) float64
 }
 
 // holdRules maps a rule's name to how it is built from the config. A new rule
@@ -172,8 +206,15 @@ func (r thresholdRule) Hold(c Conflict) (bool, string) {
 	if r.ratio > 0 && float64(c.Wait) > r.ratio*float64(c.Saving) {
 		return false, fmt.Sprintf("waits %.1f min to save %.1f, more than %.1f per minute saved", c.Wait, c.Saving, r.ratio)
 	}
+	if c.TrailTo != "" {
+		return true, fmt.Sprintf("%s would lose %.1f min trailing it to %s", c.For, c.Saving, c.TrailTo)
+	}
 	return true, fmt.Sprintf("%s would lose %.1f min", c.For, c.Saving)
 }
+
+// Score is the minutes the two trains lose between them less for the hold:
+// priority decides whether a train is held, plain minutes where.
+func (thresholdRule) Score(c Conflict) float64 { return float64(c.Saving - c.Wait) }
 
 // weightedRule holds a train when what the higher-priority train saves,
 // weighted by its priority, outweighs what the held train waits, weighted by
@@ -191,4 +232,10 @@ func (r weightedRule) Hold(c Conflict) (bool, string) {
 		return false, fmt.Sprintf("net gain %.1f is not above %.1f", net, r.minNet)
 	}
 	return true, fmt.Sprintf("net gain %.1f (%s saves %.1f min, %s waits %.1f)", net, c.For, c.Saving, c.Held, c.Wait)
+}
+
+// Score is the net gain in minutes of the held train's time.
+func (weightedRule) Score(c Conflict) float64 {
+	w := func(p int) float64 { return float64(max(p, 1)) }
+	return (w(c.ForPrio)*float64(c.Saving) - w(c.HeldPrio)*float64(c.Wait)) / w(c.HeldPrio)
 }

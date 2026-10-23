@@ -445,6 +445,8 @@ func TestPrecedenceConfig(t *testing.T) {
 		"negative horizon":        {HorizonMin: -1},
 		"negative reception hold": {MaxReceptionHoldMin: -1},
 		"negative ratio":          {MaxWaitRatio: -1},
+		"negative defer margin":   {DeferMarginMin: -1},
+		"follow below horizon":    {HorizonMin: 40, FollowHorizonMin: 30},
 	} {
 		if err := (&sim.PriorityConfig{Precedence: &cfg}).Validate(); err == nil {
 			t.Errorf("%s: accepted", name)

@@ -231,9 +231,9 @@ type call struct {
 }
 
 // calls is how far the train has got through its schedule by now, one entry
-// per schedule point: its k-th TRAIN_ARRIVE is at its k-th point, passes
-// included, and the TRAIN_DEPART (or, at the last, the SCHEDULE_END) after it
-// is when it left.
+// per schedule point: each point is a TRAIN_ARRIVE, with the TRAIN_DEPART
+// (or, at the last, the SCHEDULE_END) after it when it left, or a TRAIN_PASS
+// where it ran through, arriving and leaving at once.
 func (r *replay) calls(train string, points int) []call {
 	out := make([]call, points)
 	for i := range out {
@@ -253,6 +253,16 @@ func (r *replay) calls(train string, points int) []call {
 				for _, f := range e.Fields {
 					if f.Key == "track" {
 						out[k].pf = r.pfNo[fmt.Sprint(f.Value)]
+					}
+				}
+			}
+		case "TRAIN_PASS":
+			k++
+			if k < points {
+				out[k].arr, out[k].dep = e.T, e.T
+				for _, f := range e.Fields {
+					if f.Key == "pf" {
+						out[k].pf = fmt.Sprint(f.Value)
 					}
 				}
 			}

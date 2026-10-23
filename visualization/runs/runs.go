@@ -139,10 +139,10 @@ func ReadReport(path string) *kpi.Report {
 }
 
 // ReadCalls reads each train's calls from a recording, one per schedule
-// point, as trainviz's schedule pane does: a train's k-th TRAIN_ARRIVE is at
-// its k-th point, passes included, and the TRAIN_DEPART (or, at the last,
-// the SCHEDULE_END) after it is when it left. Nil if the recording does not
-// read.
+// point, as trainviz's schedule pane does: each point is a TRAIN_ARRIVE, with
+// the TRAIN_DEPART (or, at the last, the SCHEDULE_END) after it when it left,
+// or a TRAIN_PASS where it ran through, arriving and leaving at once. Nil if
+// the recording does not read.
 func ReadCalls(path string) map[string][]Call {
 	f, err := os.Open(path)
 	if err != nil {
@@ -176,6 +176,14 @@ func ReadCalls(path string) map[string][]Call {
 			for _, f := range e.Fields {
 				if f.Key == "track" {
 					c.Pf = pfNo[fmt.Sprint(f.Value)]
+				}
+			}
+			calls[e.Train] = append(cs, c)
+		case "TRAIN_PASS":
+			c := Call{Arr: e.T, Dep: e.T}
+			for _, f := range e.Fields {
+				if f.Key == "pf" {
+					c.Pf = fmt.Sprint(f.Value)
 				}
 			}
 			calls[e.Train] = append(cs, c)

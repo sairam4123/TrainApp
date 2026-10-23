@@ -173,7 +173,7 @@ func (p *precedence) project(t *ops.Train) *projection {
 		return pr
 	}
 	p.building[t.ID()] = true
-	pr := p.buildProjection(t, p.blockedUntil(t.ID()))
+	pr := p.buildProjection(t, p.blockedUntil(t.ID()), p.cfg.horizon())
 	delete(p.building, t.ID())
 	p.projections[t.ID()] = pr
 	return pr
@@ -185,8 +185,29 @@ func (p *precedence) projectNow(t *ops.Train) *projection {
 	if pr, ok := p.nowProjections[t.ID()]; ok {
 		return pr
 	}
-	pr := p.buildProjection(t, 0)
+	pr := p.buildProjection(t, 0, p.cfg.horizon())
 	p.nowProjections[t.ID()] = pr
+	return pr
+}
+
+// projectLong is project over follow_horizon_min: what trailing
+// (trailing.go) looks at. Nothing else uses it.
+func (p *precedence) projectLong(t *ops.Train) *projection {
+	if pr, ok := p.longProjections[t.ID()]; ok {
+		return pr
+	}
+	pr := p.buildProjection(t, p.blockedUntil(t.ID()), p.cfg.followHorizon())
+	p.longProjections[t.ID()] = pr
+	return pr
+}
+
+// projectLongNow is projectNow over follow_horizon_min.
+func (p *precedence) projectLongNow(t *ops.Train) *projection {
+	if pr, ok := p.longNowProjections[t.ID()]; ok {
+		return pr
+	}
+	pr := p.buildProjection(t, 0, p.cfg.followHorizon())
+	p.longNowProjections[t.ID()] = pr
 	return pr
 }
 
@@ -223,13 +244,13 @@ func (p *precedence) blockedUntil(id ids.TrainID) float64 {
 	return until
 }
 
-// buildProjection projects the train from where it stands, setting off no
-// earlier than notBefore if it is waiting to.
-func (p *precedence) buildProjection(t *ops.Train, notBefore float64) *projection {
+// buildProjection projects the train from where it stands, up to horizon
+// minutes ahead, setting off no earlier than notBefore if it is waiting to.
+func (p *precedence) buildProjection(t *ops.Train, notBefore, horizon float64) *projection {
 	s := p.sim
 	tc := s.trainCtrllers[t.ID()]
 	now := s.CurTime()
-	end := now + p.cfg.horizon()
+	end := now + horizon
 	sched := t.Schedule()
 	pr := &projection{train: t}
 

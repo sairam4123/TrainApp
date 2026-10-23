@@ -16,8 +16,9 @@ import (
 // is held for, and each platform's class. Version 3 added each train's class
 // and planned schedule, version 4 its priority, version 5 its length,
 // version 6 the keys of a train that accelerates and brakes, version 7 each
-// siding's name. Older recordings still read.
-const Version = 7
+// siding's name, version 8 deferral decisions (action "defer" and its to).
+// Older recordings still read.
+const Version = 8
 
 const (
 	TypeHello  = "hello"
@@ -185,8 +186,9 @@ type Field struct {
 }
 
 // DecisionMsg is a precedence decision as it stands at T: a train held back
-// for another (Action "hold"), or moved off its timetabled platform
-// ("platform"). It is sent again whenever it changes, e.g. when it ends.
+// for another (Action "hold"), moved off its timetabled platform
+// ("platform"), or let go to be held for another further on, at To
+// ("defer"). It is sent again whenever it changes, e.g. when it ends.
 type DecisionMsg struct {
 	Header
 	ID     string  `json:"id"`
@@ -197,8 +199,9 @@ type DecisionMsg struct {
 	At     string  `json:"at"`
 	PfFrom string  `json:"pfFrom,omitempty"`
 	PfTo   string  `json:"pfTo,omitempty"`
-	Status string  `json:"status"` // active, released, expired, overridden or done
-	Source string  `json:"source"` // auto or manual
+	To     string  `json:"to,omitempty"` // a deferral: where the train is to be held
+	Status string  `json:"status"`       // active, released, expired, overridden or done
+	Source string  `json:"source"`       // auto or manual
 	Rule   string  `json:"rule,omitempty"`
 	Reason string  `json:"reason,omitempty"`
 	Gain   float64 `json:"gain,omitempty"` // minutes the other train saves

@@ -200,7 +200,7 @@ func keys(ks []sim.Key) []vizproto.Key {
 func decision(d sim.Decision) vizproto.DecisionMsg {
 	return vizproto.DecisionMsg{
 		ID: d.ID, Action: d.Action, Kind: string(d.Kind), Train: d.Train.Number, For: d.For.Number, At: d.At,
-		PfFrom: d.PfFrom, PfTo: d.PfTo, Status: d.Status, Source: d.Source, Rule: d.Rule, Reason: d.Reason,
+		PfFrom: d.PfFrom, PfTo: d.PfTo, To: d.To, Status: d.Status, Source: d.Source, Rule: d.Rule, Reason: d.Reason,
 		Gain: round(float64(d.Gain)), Wait: round(float64(d.Wait)), Since: round(d.Since), Until: round(d.Until), Ended: round(d.Ended),
 	}
 }

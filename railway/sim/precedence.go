@@ -47,19 +47,20 @@ const (
 	StatusReleased   = "released"   // the conflict is over
 	StatusExpired    = "expired"    // held for max_hold_min
 	StatusOverridden = "overridden" // an operator released it
-	StatusDone       = "done"       // a platform change, once the train has left the station
+	StatusDone       = "done"       // a platform change, once the train has left the station; a deferral, once it is where it is to be held
 )
 
 // Decision actions and sources.
 const (
 	ActionHold     = "hold"
 	ActionPlatform = "platform"
+	ActionDefer    = "defer" // let go here, to be held at a later refuge (trailing.go)
 	SourceAuto     = "auto"
 	SourceManual   = "manual"
 )
 
-// Decision is something precedence did: held a train for another, or moved it
-// to another platform.
+// Decision is something precedence did: held a train for another, moved it
+// to another platform, or let it go to be held further on.
 type Decision struct {
 	ID     string
 	Action string       // ActionHold or ActionPlatform
@@ -69,6 +70,7 @@ type Decision struct {
 	At     string       // the station, or for a hold outside one the track the train stands on
 	PfFrom string       // a platform change: timetabled platform
 	PfTo   string       // a platform change: platform given
+	To     string       // a deferral: the station where it is to be held
 	Status string
 	Source string // SourceAuto or SourceManual
 	Rule   string
@@ -78,11 +80,19 @@ type Decision struct {
 	Since  float64
 	Until  float64 // when the hold is expected to end
 	Ended  float64
+	// Trail is what For would lose trailing Train all the way to TrailTo,
+	// if Train were never held (trailing.go); 0 if not worked out
+	Trail   units.Minutes
+	TrailTo string
+	// a deferral: the gain and wait of holding it where it was let go
+	GainHere, WaitHere units.Minutes
 
 	release   ids.TrackID   // H leaving it ends the conflict
 	wake      []ids.TrackID // other tracks whose freeing may end it
 	milestone int           // H's stop it must reach to be past; -1 for its last
 	reviewAt  float64       // latest review event scheduled, other than the max_hold one
+	expiryAt  float64       // the max_hold review scheduled
+	toStop    int           // a deferral: the train's schedule index at To
 }
 
 func holdID(train, forTrain ids.TrainID, at string) string {
@@ -125,15 +135,20 @@ type precedence struct {
 	// worked out from the state, dropped whenever it changes
 	projections    map[ids.TrainID]*projection
 	nowProjections map[ids.TrainID]*projection // see projectNow
-	building       map[ids.TrainID]bool        // projections being built, to stop cycles
-	plans          map[ids.StnCode]*stationPlan
-	planning       map[ids.StnCode]bool // plans being built, to stop cycles
-	conflicts      map[[2]*infra.TrackSegment]bool
+	// over follow_horizon_min, for trailing (trailing.go)
+	longProjections    map[ids.TrainID]*projection
+	longNowProjections map[ids.TrainID]*projection
+	choices            map[choiceKey]*trailChoice
+	building           map[ids.TrainID]bool // projections being built, to stop cycles
+	plans              map[ids.StnCode]*stationPlan
+	planning           map[ids.StnCode]bool // plans being built, to stop cycles
+	conflicts          map[[2]*infra.TrackSegment]bool
 
 	all     []*Decision          // every decision, in the order made
 	current map[string]*Decision // latest decision for each id
 	holds   map[ids.TrainID][]*Decision
-	skipped map[string]string // decision id -> reason last logged as skipped
+	defers  map[ids.TrainID][]*Decision // active deferrals
+	skipped map[string]string           // decision id -> reason last logged as skipped
 	// heldSince is when the train was first held where it stands now, for
 	// whoever: max_hold_min caps the total
 	heldSince map[ids.TrainID]float64
@@ -154,6 +169,7 @@ func newPrecedence(s *Sim, cfg *PrecedenceConfig) *precedence {
 		rule:      holdRules[cfg.ruleName()](cfg),
 		current:   map[string]*Decision{},
 		holds:     map[ids.TrainID][]*Decision{},
+		defers:    map[ids.TrainID][]*Decision{},
 		skipped:   map[string]string{},
 		heldSince: map[ids.TrainID]float64{},
 		vetoed:    map[string]bool{},
@@ -171,6 +187,9 @@ func newPrecedence(s *Sim, cfg *PrecedenceConfig) *precedence {
 func (p *precedence) invalidate() {
 	p.projections = map[ids.TrainID]*projection{}
 	p.nowProjections = map[ids.TrainID]*projection{}
+	p.longProjections = map[ids.TrainID]*projection{}
+	p.longNowProjections = map[ids.TrainID]*projection{}
+	p.choices = map[choiceKey]*trailChoice{}
 	p.building = map[ids.TrainID]bool{}
 	p.plans = map[ids.StnCode]*stationPlan{}
 	p.planning = map[ids.StnCode]bool{}
@@ -189,6 +208,12 @@ func (p *precedence) higher(id ids.TrainID) []*ops.Train {
 	}
 	slices.SortStableFunc(out, func(a, b *ops.Train) int { return cmp.Compare(s.Priority(b.ID()), s.Priority(a.ID())) })
 	return out
+}
+
+// trailing reports whether trailing (trailing.go) is on: in the config, and
+// precedence makes its own decisions (not ManualPrecedence).
+func (p *precedence) trailing() bool {
+	return p.cfg.trailing() && !p.sim.ManualPrecedence
 }
 
 // tracksConflict reports whether two trains cannot use the tracks at once:
@@ -223,13 +248,16 @@ type conflict struct {
 	wake      []ids.TrackID // other tracks whose freeing may end it
 	milestone int           // H's stop it must reach to be past L; -1 for its last
 	manual    bool
-	reception bool   // a reception hold: the hold rule and track rules do not apply
-	why       string // for a reception hold, the reason
+	reception bool    // a reception hold: the hold rule and track rules do not apply
+	chosen    bool    // from a refuge choice (trailing.go), which applied the hold rule
+	why       string  // for a reception hold, the reason
+	trail     float64 // what For loses trailing the train if never held (trailing.go)
 }
 
 // compare works out what train l running over region now would cost h, and
-// how long l would wait if held instead.
-func (p *precedence) compare(l *ops.Train, region []slot, h *projection) conflict {
+// how long l would wait if held instead. Without sameWay, h following l onto
+// the same track is left out: trailing (trailing.go) weighs that.
+func (p *precedence) compare(l *ops.Train, region []slot, h *projection, sameWay bool) conflict {
 	s := p.sim
 	hw := float64(p.cfg.HeadwayMin)
 	c := conflict{Conflict: Conflict{Held: l.ID(), For: h.train.ID(), HeldPrio: s.Priority(l.ID()), ForPrio: s.Priority(h.train.ID())}, milestone: -1}
@@ -245,6 +273,9 @@ func (p *precedence) compare(l *ops.Train, region []slot, h *projection) conflic
 	for _, k := range region {
 		for j, hs := range h.slots {
 			if !p.tracksConflict(k.track(), hs.track()) {
+				continue
+			}
+			if !sameWay && k.track() == hs.track() && k.step.From == hs.step.From {
 				continue
 			}
 			if k.track() == hs.track() && k.step.From != hs.step.From {
@@ -416,13 +447,24 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 	reception := map[ids.TrainID]conflict{}
 	// with ManualPrecedence only the overrides decide
 	auto := !p.sim.ManualPrecedence
+	trailing := p.trailing()
 	lp := p.projectNow(t)
 	for _, h := range p.higher(id) {
 		if !auto {
 			break
 		}
-		if c := p.compare(t, p.region(lp, p.project(h)), p.project(h)); c.Saving > 0 {
+		if c := p.compare(t, p.region(lp, p.project(h)), p.project(h), !trailing); c.Saving > 0 {
 			add(c)
+		}
+	}
+	// where it is best let by the trains catching it up, and by which
+	var chosen *trailChoice
+	if trailing {
+		chosen = p.choice(t, true)
+		if o := chosen.here(); o != nil {
+			for _, c := range o.pass {
+				add(c)
+			}
 		}
 	}
 	pl := p.plan(req.Station)
@@ -479,6 +521,9 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 		if d != nil {
 			held = append(held, d)
 		}
+	}
+	if trailing {
+		p.syncDefers(t, at, chosen, len(held) == 0)
 	}
 	if req.Entry && len(held) > 0 {
 		if pfs := p.enterHeld(req, order, held); len(pfs) > 0 {
@@ -653,7 +698,7 @@ func (p *precedence) manualConflicts(t *ops.Train, at string) []conflict {
 			continue
 		}
 		hp := p.project(htc.train)
-		c := p.compare(t, p.region(p.projectNow(t), hp), hp)
+		c := p.compare(t, p.region(p.projectNow(t), hp), hp, true)
 		if c.Saving <= 0 {
 			c = conflict{Conflict: Conflict{Kind: KindManual, Held: t.ID(), For: m.forTrain, HeldPrio: s.Priority(t.ID()), ForPrio: s.Priority(m.forTrain)}}
 		}
@@ -752,10 +797,7 @@ func (p *precedence) tryHold(t *ops.Train, c conflict, at string, held []*Decisi
 	if d != nil && d.Status != StatusActive {
 		d = nil
 	}
-	elapsed := 0.0 // held here so far, for anyone
-	if since, ok := p.heldSince[t.ID()]; ok {
-		elapsed = now - since
-	}
+	elapsed := p.heldFor(t.ID()) // held here so far, for anyone
 	var why string
 	if !c.manual {
 		limit := p.cfg.maxHold()
@@ -770,7 +812,9 @@ func (p *precedence) tryHold(t *ops.Train, c conflict, at string, held []*Decisi
 			return nil
 		}
 		why = c.why
-		if !c.reception {
+		// a reception hold is not the rule's to judge; a refuge choice
+		// (trailing.go) has judged it already
+		if !c.reception && !c.chosen {
 			ok, reason := p.rule.Hold(c.Conflict)
 			if !ok {
 				return nil
@@ -803,6 +847,9 @@ func (p *precedence) tryHold(t *ops.Train, c conflict, at string, held []*Decisi
 		d.Until = max(d.Until, c.releaseAt+float64(p.cfg.HeadwayMin))
 	}
 	d.release, d.wake, d.milestone = c.release, c.wake, c.milestone
+	if c.trail > 0 {
+		d.Trail, d.TrailTo = units.Min(c.trail), c.TrailTo
+	}
 	if why != "" {
 		d.Reason = why
 	} else if d.Reason == "" {
@@ -814,24 +861,11 @@ func (p *precedence) tryHold(t *ops.Train, c conflict, at string, held []*Decisi
 // ruledOut says why the train cannot be held for c where it stands, or "".
 func (p *precedence) ruledOut(t *ops.Train, c conflict, held []*Decision) string {
 	s := p.sim
-	tc := s.trainCtrllers[t.ID()]
 	// a reception hold may keep a train on a main line or through track, as a
 	// last resort: standing at the home signal instead would shut the line
-	if trk := tc.standTrack(); trk != nil && tc.phase != phaseOutside && !c.reception {
-		if stn, ok := s.world.StationOfPlatform(trk); ok {
-			// a train running in to a pass would stand there from now
-			stay := 0.0
-			if tc.phase == phaseReady {
-				stay = s.CurTime() - tc.arrivedAt
-			}
-			switch stn.TrackClass(trk.Id) {
-			case infra.Through:
-				return "through_track"
-			case infra.Main:
-				if stn.RunsThrough() && (tc.phase == phaseReady || tc.passing) && stay+float64(c.Wait) > float64(p.cfg.MainLineMaxStayMin) {
-					return "main_line_limit"
-				}
-			}
+	if !c.reception {
+		if reason := p.trackRuledOut(t, float64(c.Wait)); reason != "" {
+			return reason
 		}
 	}
 	h := s.trainCtrllers[c.For].train
@@ -848,6 +882,36 @@ func (p *precedence) ruledOut(t *ops.Train, c conflict, held []*Decision) string
 	cons = append(cons, holdConstraint{held: t.ID(), forTrain: c.For, milestone: c.milestone})
 	if ok, _ := s.dispatcher.safe(nil, nil, cons); !ok {
 		return "unsafe"
+	}
+	return ""
+}
+
+// trackRuledOut says why the track the train stands on rules out holding it
+// there for wait minutes, or "": a through track, or a main line it would
+// stand on too long.
+func (p *precedence) trackRuledOut(t *ops.Train, wait float64) string {
+	s := p.sim
+	tc := s.trainCtrllers[t.ID()]
+	trk := tc.standTrack()
+	if trk == nil || tc.phase == phaseOutside {
+		return ""
+	}
+	stn, ok := s.world.StationOfPlatform(trk)
+	if !ok {
+		return ""
+	}
+	// a train running in to a pass would stand there from now
+	stay := 0.0
+	if tc.phase == phaseReady {
+		stay = s.CurTime() - tc.arrivedAt
+	}
+	switch stn.TrackClass(trk.Id) {
+	case infra.Through:
+		return "through_track"
+	case infra.Main:
+		if stn.RunsThrough() && (tc.phase == phaseReady || tc.passing) && stay+wait > float64(p.cfg.MainLineMaxStayMin) {
+			return "main_line_limit"
+		}
 	}
 	return ""
 }
@@ -948,12 +1012,12 @@ func (p *precedence) syncHolds(t *ops.Train, held []*Decision) {
 				// just past the limit, so float noise cannot leave it short.
 				// Not noted in reviewAt: a review at the expected end, if
 				// sooner, is still needed
-				limit := p.cfg.maxHold()
-				if d.Kind == KindReception {
-					limit = p.cfg.maxReceptionHold()
-				}
-				s.ScheduleEventAt(max(p.heldSince[t.ID()]+limit, now)+des.MinDeltaTime, ops.PrecedenceReview, d.ID, d.Train)
+				p.reviewExpiry(d)
 			}
+		} else if d.Source == SourceAuto && p.trailing() {
+			// the clock may have started later than first thought: at the
+			// end of a dwell that had not begun (holdStart)
+			p.reviewExpiry(d)
 		}
 		switch {
 		case d.Until > now && d.Until > d.reviewAt+0.5:
@@ -963,6 +1027,52 @@ func (p *precedence) syncHolds(t *ops.Train, held []*Decision) {
 		}
 	}
 	p.holds[t.ID()] = held
+}
+
+// reviewExpiry schedules a PRECEDENCE_REVIEW just past when the train's hold
+// clock reaches the decision's limit, unless one is already due then: just
+// past, so float noise cannot leave it short. Not noted in reviewAt: a review
+// at the expected end, if sooner, is still needed.
+func (p *precedence) reviewExpiry(d *Decision) {
+	s := p.sim
+	limit := p.cfg.maxHold()
+	if d.Kind == KindReception {
+		limit = p.cfg.maxReceptionHold()
+	}
+	start, _ := p.holdStart(d.Train)
+	at := max(start+limit, s.CurTime()) + des.MinDeltaTime
+	if at <= d.expiryAt+epsilon {
+		return
+	}
+	d.expiryAt = at
+	s.ScheduleEventAt(at, ops.PrecedenceReview, d.ID, d.Train)
+}
+
+// holdStart is when the train's hold clock started, the clock max_hold_min
+// caps: when it was first held where it stands, for whoever. With trailing
+// on, not before the end of the dwell it stands there anyway, since a dwell
+// is not a hold.
+func (p *precedence) holdStart(id ids.TrainID) (float64, bool) {
+	since, ok := p.heldSince[id]
+	if !ok {
+		return 0, false
+	}
+	if p.trailing() {
+		if tc := p.sim.trainCtrllers[id]; tc.phase == phaseDwelling || tc.phase == phaseReady {
+			since = max(since, tc.dwellEnd)
+		}
+	}
+	return since, true
+}
+
+// heldFor is how long the train has been held where it stands, by its hold
+// clock (holdStart).
+func (p *precedence) heldFor(id ids.TrainID) float64 {
+	start, ok := p.holdStart(id)
+	if !ok {
+		return 0
+	}
+	return max(p.sim.CurTime()-start, 0)
 }
 
 // epsilon absorbs float noise in sim times.
@@ -988,6 +1098,11 @@ func (p *precedence) end(d *Decision, status string) {
 		return
 	}
 	d.Status, d.Ended = status, p.sim.CurTime()
+	if d.Action == ActionDefer {
+		p.defers[d.Train] = slices.DeleteFunc(p.defers[d.Train], func(x *Decision) bool { return x == d })
+		p.sim.logRelease(d)
+		return
+	}
 	if d.Action == ActionHold {
 		p.holds[d.Train] = slices.DeleteFunc(p.holds[d.Train], func(x *Decision) bool { return x == d })
 		p.sim.logRelease(d)
@@ -1062,6 +1177,9 @@ func (p *precedence) finishPlatform(id ids.TrainID, stn ids.StnCode) {
 func (p *precedence) forget(t *ops.Train) {
 	id := t.ID()
 	for _, d := range slices.Clone(p.holds[id]) {
+		p.end(d, StatusReleased)
+	}
+	for _, d := range slices.Clone(p.defers[id]) {
 		p.end(d, StatusReleased)
 	}
 	for _, sp := range t.Schedule() {

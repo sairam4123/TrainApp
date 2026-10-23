@@ -373,7 +373,9 @@ func (p *precedence) buildPlan(stn *infra.Station) *stationPlan {
 // predictedHold is how long the train is likely to stand at the visit beyond
 // its dwell: waiting anyway for a train, of any priority, that gets onto a
 // shared stretch of single line first, or held for a higher-priority one the
-// way a hold would be decided when it sets off.
+// way a hold would be decided when it sets off. With trailing on, a hold for
+// a higher-priority train catching it up is predicted only at the refuge
+// chosen for it (trailing.go).
 func (p *precedence) predictedHold(t *ops.Train, pr *projection, v visit) float64 {
 	s := p.sim
 	wait := 0.0
@@ -383,13 +385,25 @@ func (p *precedence) predictedHold(t *ops.Train, pr *projection, v visit) float6
 			continue
 		}
 		hp := p.project(h)
-		c := p.compare(t, p.regionFrom(pr, hp, v.slot+1), hp)
+		c := p.compare(t, p.regionFrom(pr, hp, v.slot+1), hp, !p.trailing())
 		wait = max(wait, c.natural)
-		if c.Saving <= 0 || s.Priority(h.ID()) <= mine {
+		if s.Priority(h.ID()) <= mine {
+			continue
+		}
+		if c.Saving <= 0 {
 			continue
 		}
 		if ok, _ := p.rule.Hold(c.Conflict); ok && float64(c.Wait) <= p.cfg.maxHold() {
 			wait = max(wait, float64(c.Wait))
+		}
+	}
+	if p.trailing() {
+		// held here if this is where it is best let by the trains catching
+		// it up
+		for _, o := range p.choice(t, false).holds {
+			if !o.here && o.stop == v.stop {
+				wait = max(wait, o.wait)
+			}
 		}
 	}
 	return min(max(wait, p.lineTaken(t, pr, v)), p.cfg.maxHold())

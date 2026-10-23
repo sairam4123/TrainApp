@@ -1,6 +1,7 @@
 package vizproto
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -23,8 +24,9 @@ func TestReadsOlderVersions(t *testing.T) {
 			t.Errorf("version %s: decisions %+v", v, got)
 		}
 	}
-	if _, _, err := ReadAll(strings.NewReader(`{"type":"hello","t":0,"version":8,"world":{}}`)); err == nil {
-		t.Error("version 8 accepted")
+	newer := fmt.Sprintf(`{"type":"hello","t":0,"version":%d,"world":{}}`, Version+1)
+	if _, _, err := ReadAll(strings.NewReader(newer)); err == nil {
+		t.Errorf("version %d accepted", Version+1)
 	}
 }
 

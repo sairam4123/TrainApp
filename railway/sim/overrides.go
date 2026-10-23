@@ -25,7 +25,9 @@ type OverrideAction string
 
 const (
 	// OverrideRelease ends the hold Decision names, or keeps it from ever
-	// being placed.
+	// being placed. Naming a deferral (defer:...) keeps the train from being
+	// let go to be held further on: it is held where it stands, if the hold
+	// rule would hold it there.
 	OverrideRelease OverrideAction = "release"
 	// OverrideHold holds Train at Station until For has left Station, or
 	// with Until HoldUntilArrived until For has reached it (e.g. for a
@@ -134,8 +136,8 @@ func (s *Sim) checkOverride(o Override) error {
 	}
 	switch o.Action {
 	case OverrideRelease:
-		if !strings.HasPrefix(o.Decision, "hold:") {
-			return fmt.Errorf("release needs a hold decision id (hold:...), got %q", o.Decision)
+		if !strings.HasPrefix(o.Decision, "hold:") && !strings.HasPrefix(o.Decision, "defer:") {
+			return fmt.Errorf("release needs a hold or deferral decision id (hold:... or defer:...), got %q", o.Decision)
 		}
 	case OverrideHold:
 		if _, err := train(o.Train); err != nil {

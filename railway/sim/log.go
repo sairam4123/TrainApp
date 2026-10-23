@@ -51,13 +51,17 @@ const (
 //
 // Precedence entries (see precedence.go):
 //
-//	decision              the decision's id, e.g. hold:0452U>0451U@PDKT or pf:0453D@PDKT
+//	decision              the decision's id, e.g. hold:0452U>0451U@PDKT, pf:0453D@PDKT or defer:0452U>0451U@TPJ
 //	kind                  overtake, cross, platform or manual
 //	for                   the train it makes way for
 //	at                    where the train is held: its station, or the track it stands on
 //	gain, wait            minutes the other train saves; minutes the held one is expected to wait
+//	trail, trail_to       minutes the other train would lose trailing it, never held, up to station trail_to
+//	to                    a deferral: the station where the train is to be held instead
+//	gain_here, wait_here  a deferral: gain and wait of holding it where it was let go
 //	rule, source          the hold rule that decided it; auto or manual
-//	status, held          how a hold ended (released, expired, overridden) and how long it lasted
+//	status, held          how a hold ended (released, expired, overridden) and how long it lasted;
+//	                      a deferral ends done (it got there), released or overridden
 //	pf_from, pf_to        a platform change: timetabled platform and the one given
 //	action                an override: release, hold, platform or disable
 const (
@@ -247,12 +251,25 @@ func (s *Sim) logHold(d *Decision) {
 	attrs := append(trainAttrs(s.trainByID(d.Train)),
 		"decision", d.ID, "kind", string(d.Kind), "for", d.For.Number, "at", d.At,
 		"gain", roundMin(d.Gain), "wait", roundMin(d.Wait), "rule", d.Rule, "source", d.Source, "reason", d.Reason)
+	if d.Trail > 0 {
+		attrs = append(attrs, "trail", roundMin(d.Trail), "trail_to", d.TrailTo)
+	}
 	s.log.Info("PRECEDENCE_HOLD", attrs...)
 }
 
-func (s *Sim) logRelease(d *Decision) {
+func (s *Sim) logDefer(d *Decision) {
 	attrs := append(trainAttrs(s.trainByID(d.Train)),
-		"decision", d.ID, "status", d.Status, "held", roundTime(d.Ended-d.Since))
+		"decision", d.ID, "for", d.For.Number, "at", d.At, "to", d.To,
+		"gain", roundMin(d.Gain), "wait", roundMin(d.Wait), "gain_here", roundMin(d.GainHere), "wait_here", roundMin(d.WaitHere),
+		"trail", roundMin(d.Trail), "trail_to", d.TrailTo, "rule", d.Rule, "reason", d.Reason)
+	s.log.Info("PRECEDENCE_DEFERRED", attrs...)
+}
+
+func (s *Sim) logRelease(d *Decision) {
+	attrs := append(trainAttrs(s.trainByID(d.Train)), "decision", d.ID, "status", d.Status)
+	if d.Action == ActionHold {
+		attrs = append(attrs, "held", roundTime(d.Ended-d.Since))
+	}
 	s.log.Info("PRECEDENCE_RELEASE", attrs...)
 }
 
@@ -266,6 +283,9 @@ func (s *Sim) logSkipped(t *ops.Train, id string, c conflict, at, reason string)
 	attrs := append(trainAttrs(t),
 		"decision", id, "kind", string(c.Kind), "for", c.For.Number, "at", at,
 		"gain", roundMin(c.Saving), "wait", roundMin(c.Wait), "reason", reason)
+	if c.trail > 0 {
+		attrs = append(attrs, "trail", roundMin(units.Min(c.trail)), "trail_to", c.TrailTo)
+	}
 	s.log.Info("PRECEDENCE_SKIPPED", attrs...)
 }
 
