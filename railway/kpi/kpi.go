@@ -1,6 +1,7 @@
 // Package kpi measures a finished run against the three objectives: delay,
-// line utilization and, until there is a passenger model, the waits
-// passengers sit through.
+// line utilization and dispatching. Dispatching is read from the first two
+// together, and from how the delay was taken: the waits, holds and signal
+// stops, and where trains stood.
 //
 // Delay is measured against free-running time: how long each train takes
 // with the line to itself (FreeRunning). A train's journey runs from its

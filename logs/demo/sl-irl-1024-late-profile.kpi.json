@@ -1,0 +1,3973 @@
+{
+  "run": {
+    "trains": 3,
+    "finished": 3,
+    "delay": {
+      "trains": 3,
+      "total_min": 233.00213904437294,
+      "mean_min": 77.66737968145765,
+      "weighted_mean_min": 99.37983818060682,
+      "punctual": [
+        {
+          "within_min": 1,
+          "trains": 1,
+          "share": 0.3333333333333333
+        },
+        {
+          "within_min": 5,
+          "trains": 1,
+          "share": 0.3333333333333333
+        },
+        {
+          "within_min": 15,
+          "trains": 1,
+          "share": 0.3333333333333333
+        }
+      ],
+      "worst": "16751",
+      "worst_min": 195.41212649234262
+    },
+    "lateness": {
+      "trains": 3,
+      "total_min": 241.00213904437294,
+      "mean_min": 80.33404634812432,
+      "weighted_mean_min": 102.49094929171794,
+      "punctual": [
+        {
+          "within_min": 1,
+          "trains": 1,
+          "share": 0.3333333333333333
+        },
+        {
+          "within_min": 5,
+          "trains": 1,
+          "share": 0.3333333333333333
+        },
+        {
+          "within_min": 15,
+          "trains": 1,
+          "share": 0.3333333333333333
+        }
+      ],
+      "worst": "16751",
+      "worst_min": 199.41212649234262
+    },
+    "disruption": {
+      "primary_min": 255,
+      "reactionary_min": -21.99786095562706
+    },
+    "longest_wait": {
+      "train": "16849",
+      "kind": "station",
+      "at": "TPJ",
+      "from_min": 452.19448148148143,
+      "min": 15.682331121300479,
+      "cause": "held",
+      "for": "16751"
+    },
+    "wait_min": 29.652536353792243,
+    "holds": 1,
+    "held_min": 13.657430103710965,
+    "platform_changes": 0,
+    "utilization": {
+      "from_min": 420.00199999999995,
+      "to_min": 552.5920125520303,
+      "blocks": {
+        "tracks": 9,
+        "mean_occupancy": 0.14618062386834435,
+        "min_occupancy": 0.07357532080909368,
+        "max_occupancy": 0.22188946216113273,
+        "mean_standing": 0.012037448245751928,
+        "standing_min": 14.364408725987971
+      },
+      "platforms": {
+        "tracks": 35,
+        "mean_occupancy": 0.03155385008950177,
+        "min_occupancy": 0,
+        "max_occupancy": 0.35168075318301406,
+        "mean_standing": 0.02484387345079625,
+        "standing_min": 115.29173224387443
+      },
+      "stations": [
+        {
+          "stn": "TPJ",
+          "platforms": 9,
+          "occupancy": 0.042730430562952754,
+          "standing_min": 47.41621047781564
+        },
+        {
+          "stn": "KRMG",
+          "platforms": 3,
+          "occupancy": 0.02739612579012469,
+          "standing_min": 7.1270300213533915
+        },
+        {
+          "stn": "KRUR",
+          "platforms": 3,
+          "occupancy": 0.032321597914765125,
+          "standing_min": 9.086235253845643
+        },
+        {
+          "stn": "VEL",
+          "platforms": 3,
+          "occupancy": 0.02770940764597204,
+          "standing_min": 7.154099566170544
+        },
+        {
+          "stn": "PDKT",
+          "platforms": 3,
+          "occupancy": 0.04048643848969734,
+          "standing_min": 13.275865037861706
+        },
+        {
+          "stn": "NMN",
+          "platforms": 1,
+          "occupancy": 0.042935862493756465,
+          "standing_min": 3.8577107523906875
+        },
+        {
+          "stn": "TYM",
+          "platforms": 3,
+          "occupancy": 0.027396125790124834,
+          "standing_min": 7.127030021353448
+        },
+        {
+          "stn": "CTND",
+          "platforms": 3,
+          "occupancy": 0.01662010105585923,
+          "standing_min": 4.795441908527891
+        },
+        {
+          "stn": "KTYR",
+          "platforms": 1,
+          "occupancy": 0.08033265516714885,
+          "standing_min": 8.31951629728269
+        },
+        {
+          "stn": "KKDI",
+          "platforms": 6,
+          "occupancy": 0.013458828390908638,
+          "standing_min": 7.1325929072727945
+        }
+      ],
+      "tracks": [
+        {
+          "track": "tpjPf1",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf1E-tpjThE5",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf2",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "2",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf2E-tpjThE6",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf3",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "3",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf3E-tpjThE7",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf4",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "4",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf4E-tpjThE8",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf5",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "5",
+          "entries": 2,
+          "occupied_min": 46.62935547884331,
+          "running_min": 2.3829629629629494,
+          "standing_min": 44.24639251588036,
+          "occupancy": 0.35168075318301406,
+          "running": 0.01797241675369658,
+          "standing": 0.33370833642931746,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.3829629629629494
+            },
+            {
+              "cause": "dwell",
+              "min": 28.56406139457988
+            },
+            {
+              "cause": "held",
+              "kind": "overtake",
+              "min": 11.461948622229556
+            },
+            {
+              "cause": "station wait",
+              "min": 4.220382499070922
+            }
+          ]
+        },
+        {
+          "track": "tpjPf6",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "6",
+          "entries": 1,
+          "occupied_min": 4.361299443416783,
+          "running_min": 1.1914814814815031,
+          "standing_min": 3.16981796193528,
+          "occupancy": 0.03289312188356075,
+          "running": 0.008986208376848505,
+          "standing": 0.023906913506712247,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.1914814814815031
+            },
+            {
+              "cause": "dwell",
+              "min": 3.16981796193528
+            }
+          ]
+        },
+        {
+          "track": "tpjPf6E-tpjThE4",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 1,
+          "occupied_min": 2.563817961935456,
+          "running_min": 0.5968179619355283,
+          "standing_min": 1.9669999999999277,
+          "occupancy": 0.019336433511003517,
+          "running": 0.004501228640440229,
+          "standing": 0.01483520487056329,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.563817961935456
+            }
+          ]
+        },
+        {
+          "track": "tpjPf7",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "7",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf7E-tpjThE3",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf8",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "8",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf8E-tpjThE0",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf9",
+          "kind": "platform",
+          "stn": "TPJ",
+          "pf": "9",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf9E-tpjThE5",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjSd1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjSd1E-tpjThE1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjSd2",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjSd2E-tpjThE0",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjSt1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjSt1E-tpjThE2",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE0-tpjThE1",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE1-tpjThE2",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE10-tpjThE4",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 1,
+          "occupied_min": 2.3659999999999286,
+          "running_min": 0.39999999999997726,
+          "standing_min": 1.9659999999999513,
+          "occupancy": 0.017844481303382294,
+          "running": 0.0030168184790163683,
+          "standing": 0.014827662824365925,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.3659999999999286
+            }
+          ]
+        },
+        {
+          "track": "tpjThE2-tpjThE3",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE3-tpjThE4",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE5-tpjThE6",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE6-tpjThE7",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE7-tpjThE8",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjThE8-tpjThE9",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tpjPf5E-tpjThE9",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 2,
+          "occupied_min": 2.1401177873839288,
+          "running_min": 0.6991952110598731,
+          "standing_min": 1.4409225763240556,
+          "occupancy": 0.016140867220629566,
+          "running": 0.005273362582913237,
+          "standing": 0.010867504637716328,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.1401177873839288
+            }
+          ]
+        },
+        {
+          "track": "tpjThE10-tpjThE9",
+          "kind": "throat",
+          "stn": "TPJ",
+          "entries": 2,
+          "occupied_min": 1.6356229627185712,
+          "running_min": 0.33532767227035265,
+          "standing_min": 1.3002952904482186,
+          "occupancy": 0.012335943946582916,
+          "running": 0.002529056795577005,
+          "standing": 0.009806887151005911,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.6356229627185712
+            }
+          ]
+        },
+        {
+          "track": "slTpjKrmg0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 27.05681710173178,
+          "running_min": 25.249037335657988,
+          "standing_min": 1.8077797660737929,
+          "occupancy": 0.20406376453968791,
+          "running": 0.1904294060289789,
+          "standing": 0.013634358510709038,
+          "trains_per_hour": 1.357568315557443,
+          "section": "TPJ–KRMG",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 25.040734046077603
+            },
+            {
+              "cause": "slower running",
+              "min": 2.0160830556541782
+            }
+          ]
+        },
+        {
+          "track": "krmgPf1",
+          "kind": "platform",
+          "stn": "KRMG",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krmgPf1E-krmgThE0",
+          "kind": "throat",
+          "stn": "KRMG",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krmgPf1S-krmgThW0",
+          "kind": "throat",
+          "stn": "KRMG",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "krmgPf2S-krmgThW1",
+          "kind": "throat",
+          "stn": "KRMG",
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099273,
+          "standing_min": 2.0139263309578723,
+          "occupancy": 0.021160009458984233,
+          "running": 0.005970884032455011,
+          "standing": 0.015189125426529221,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.8056059197677996
+            }
+          ]
+        },
+        {
+          "track": "krmgPf3",
+          "kind": "platform",
+          "stn": "KRMG",
+          "pf": "3",
+          "entries": 1,
+          "occupied_min": 0.7081818181817425,
+          "running_min": 0.4363636363636374,
+          "standing_min": 0.27181818181810513,
+          "occupancy": 0.005341139988985531,
+          "running": 0.0032910747043816873,
+          "standing": 0.002050065284603843,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.4363636363636374
+            },
+            {
+              "cause": "dwell",
+              "min": 0.27181818181810513
+            }
+          ]
+        },
+        {
+          "track": "krmgPf3E-krmgThE0",
+          "kind": "throat",
+          "stn": "KRMG",
+          "entries": 1,
+          "occupied_min": 0.32536363636359056,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2708181818181288,
+          "occupancy": 0.0024539075764542445,
+          "running": 0.0004113843380477645,
+          "standing": 0.00204252323840648,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            }
+          ]
+        },
+        {
+          "track": "krmgPf3S-krmgThW0",
+          "kind": "throat",
+          "stn": "KRMG",
+          "entries": 1,
+          "occupied_min": 0.3243636363636142,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2698181818181524,
+          "occupancy": 0.002446365530256881,
+          "running": 0.0004113843380477645,
+          "standing": 0.002034981192209117,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            }
+          ]
+        },
+        {
+          "track": "krmgThE0-krmgThE1",
+          "kind": "throat",
+          "stn": "KRMG",
+          "entries": 1,
+          "occupied_min": 0.3243636363636142,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2698181818181524,
+          "occupancy": 0.002446365530256881,
+          "running": 0.0004113843380477645,
+          "standing": 0.002034981192209117,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            }
+          ]
+        },
+        {
+          "track": "krmgThW0-krmgThW1",
+          "kind": "throat",
+          "stn": "KRMG",
+          "entries": 1,
+          "occupied_min": 0.32536363636359056,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2708181818181288,
+          "occupancy": 0.0024539075764542445,
+          "running": 0.0004113843380477645,
+          "standing": 0.00204252323840648,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            }
+          ]
+        },
+        {
+          "track": "krmgPf2",
+          "kind": "platform",
+          "stn": "KRMG",
+          "pf": "2",
+          "entries": 2,
+          "occupied_min": 10.18917616898716,
+          "running_min": 3.3339643294518737,
+          "standing_min": 6.855211839535286,
+          "occupancy": 0.07684723738138854,
+          "running": 0.025144912993680997,
+          "standing": 0.05170232438770754,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 3.3339643294518737
+            },
+            {
+              "cause": "dwell",
+              "min": 4.853211839535447
+            },
+            {
+              "cause": "station wait",
+              "min": 2.001999999999839
+            }
+          ]
+        },
+        {
+          "track": "krmgPf2E-krmgThE1",
+          "kind": "throat",
+          "stn": "KRMG",
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099273,
+          "standing_min": 2.0139263309578723,
+          "occupancy": 0.021160009458984233,
+          "running": 0.005970884032455011,
+          "standing": 0.015189125426529221,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.8056059197677996
+            }
+          ]
+        },
+        {
+          "track": "slKrmgKrur0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 29.420326573107843,
+          "running_min": 27.178508391289938,
+          "standing_min": 2.241818181817905,
+          "occupancy": 0.22188946216113273,
+          "running": 0.20498156586737393,
+          "standing": 0.01690789629375879,
+          "trains_per_hour": 1.357568315557443,
+          "section": "KRMG–KRUR",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 29.420326573107843
+            }
+          ]
+        },
+        {
+          "track": "krurPf1",
+          "kind": "platform",
+          "stn": "KRUR",
+          "pf": "1",
+          "entries": 1,
+          "occupied_min": 5.095588084493613,
+          "running_min": 1.6669821647259369,
+          "standing_min": 3.4286059197676764,
+          "occupancy": 0.03843116073689206,
+          "running": 0.012572456496840499,
+          "standing": 0.025858704240051565,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.6669821647259369
+            },
+            {
+              "cause": "dwell",
+              "min": 2.4276059197677
+            },
+            {
+              "cause": "station wait",
+              "min": 1.0009999999999764
+            }
+          ]
+        },
+        {
+          "track": "krurPf1E-krurThE0",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 1,
+          "occupied_min": 1.183999999999969,
+          "running_min": 0.19999999999998863,
+          "standing_min": 0.9839999999999804,
+          "occupancy": 0.008929782697888725,
+          "running": 0.0015084092395081842,
+          "standing": 0.00742137345838054,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.183999999999969
+            }
+          ]
+        },
+        {
+          "track": "krurPf1S-krurThW0",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 1,
+          "occupied_min": 1.6226059197678069,
+          "running_min": 0.5916795888099387,
+          "standing_min": 1.0309263309578682,
+          "occupancy": 0.012237768807292871,
+          "running": 0.004462474792946826,
+          "standing": 0.007775294014346045,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.6226059197678069
+            }
+          ]
+        },
+        {
+          "track": "krurPf2S-krurThW1",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 1,
+          "occupied_min": 1.183999999999969,
+          "running_min": 0.19999999999998863,
+          "standing_min": 0.9839999999999804,
+          "occupancy": 0.008929782697888725,
+          "running": 0.0015084092395081842,
+          "standing": 0.00742137345838054,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.183999999999969
+            }
+          ]
+        },
+        {
+          "track": "krurPf3",
+          "kind": "platform",
+          "stn": "KRUR",
+          "pf": "3",
+          "entries": 1,
+          "occupied_min": 0.7081818181817425,
+          "running_min": 0.4363636363636374,
+          "standing_min": 0.27181818181810513,
+          "occupancy": 0.005341139988985531,
+          "running": 0.0032910747043816873,
+          "standing": 0.002050065284603843,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.4363636363636374
+            },
+            {
+              "cause": "dwell",
+              "min": 0.27181818181810513
+            }
+          ]
+        },
+        {
+          "track": "krurPf3E-krurThE0",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 1,
+          "occupied_min": 0.32536363636359056,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2708181818181288,
+          "occupancy": 0.0024539075764542445,
+          "running": 0.0004113843380477645,
+          "standing": 0.00204252323840648,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            }
+          ]
+        },
+        {
+          "track": "krurPf3S-krurThW0",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 1,
+          "occupied_min": 0.3243636363636142,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2698181818181524,
+          "occupancy": 0.002446365530256881,
+          "running": 0.0004113843380477645,
+          "standing": 0.002034981192209117,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            }
+          ]
+        },
+        {
+          "track": "krurThE0-krurThE1",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 2,
+          "occupied_min": 1.4654886183583358,
+          "running_min": 0.2106704365402834,
+          "standing_min": 1.2548181818180524,
+          "occupancy": 0.011052782861629612,
+          "running": 0.0015888861648430204,
+          "standing": 0.009463896696786591,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.4654886183583358
+            }
+          ]
+        },
+        {
+          "track": "krurThW0-krurThW1",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 2,
+          "occupied_min": 1.5365252395134235,
+          "running_min": 0.29962716480986273,
+          "standing_min": 1.2368980747035607,
+          "occupancy": 0.011588544340098527,
+          "running": 0.0022598019190343205,
+          "standing": 0.009328742421064205,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.5365252395134235
+            }
+          ]
+        },
+        {
+          "track": "krurPf2",
+          "kind": "platform",
+          "stn": "KRUR",
+          "pf": "2",
+          "entries": 1,
+          "occupied_min": 7.052793316985799,
+          "running_min": 1.6669821647259369,
+          "standing_min": 5.385811152259862,
+          "occupancy": 0.05319249301841778,
+          "running": 0.012572456496840499,
+          "standing": 0.04062003652157729,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.6669821647259369
+            },
+            {
+              "cause": "dwell",
+              "min": 2.4266059197677237
+            },
+            {
+              "cause": "station wait",
+              "min": 2.9592052324921383
+            }
+          ]
+        },
+        {
+          "track": "krurPf2E-krurThE1",
+          "kind": "throat",
+          "stn": "KRUR",
+          "entries": 1,
+          "occupied_min": 1.6216059197678305,
+          "running_min": 0.5916795888099387,
+          "standing_min": 1.0299263309578919,
+          "occupancy": 0.012230226761095508,
+          "running": 0.004462474792946826,
+          "standing": 0.007767751968148682,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.6216059197678305
+            }
+          ]
+        },
+        {
+          "track": "slKrurVel0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 25.590213100367066,
+          "running_min": 23.356556028650402,
+          "standing_min": 2.2336570717166637,
+          "occupancy": 0.19300256940789626,
+          "running": 0.17615622458354424,
+          "standing": 0.01684634482435201,
+          "trains_per_hour": 1.357568315557443,
+          "section": "KRUR–VEL",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 25.555499192463117
+            },
+            {
+              "cause": "slower running",
+              "min": 0.03471390790394935
+            }
+          ]
+        },
+        {
+          "track": "velPf1",
+          "kind": "platform",
+          "stn": "VEL",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "velPf1E-velThE0",
+          "kind": "throat",
+          "stn": "VEL",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "velPf1S-velThW0",
+          "kind": "throat",
+          "stn": "VEL",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "velPf2S-velThW1",
+          "kind": "throat",
+          "stn": "VEL",
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099273,
+          "standing_min": 2.0139263309578723,
+          "occupancy": 0.021160009458984233,
+          "running": 0.005970884032455011,
+          "standing": 0.015189125426529221,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.8056059197677996
+            }
+          ]
+        },
+        {
+          "track": "velPf3",
+          "kind": "platform",
+          "stn": "VEL",
+          "pf": "3",
+          "entries": 1,
+          "occupied_min": 0.832795953778998,
+          "running_min": 0.5339082271438542,
+          "standing_min": 0.29888772663514374,
+          "occupancy": 0.006280985556526713,
+          "running": 0.004026760514366349,
+          "standing": 0.002254225042160364,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.4092940915465988
+            },
+            {
+              "cause": "dwell",
+              "min": 0.29888772663514374
+            },
+            {
+              "cause": "slower running",
+              "min": 0.12461413559725543
+            }
+          ]
+        },
+        {
+          "track": "velPf3E-velThE0",
+          "kind": "throat",
+          "stn": "VEL",
+          "entries": 1,
+          "occupied_min": 0.35453039919337925,
+          "running_min": 0.06255180660326687,
+          "standing_min": 0.2919785925901124,
+          "occupancy": 0.0026738846491492427,
+          "running": 0.0004717686151415107,
+          "standing": 0.002202116034007732,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            },
+            {
+              "cause": "slower running",
+              "min": 0.029166762829788695
+            }
+          ]
+        },
+        {
+          "track": "velPf3S-velThW0",
+          "kind": "throat",
+          "stn": "VEL",
+          "entries": 1,
+          "occupied_min": 0.3901897863649424,
+          "running_min": 0.05719095841794797,
+          "standing_min": 0.3329988279469944,
+          "occupancy": 0.002942829394573185,
+          "running": 0.00043133685046982986,
+          "standing": 0.0025114925441033554,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            },
+            {
+              "cause": "slower running",
+              "min": 0.06582615000132819
+            }
+          ]
+        },
+        {
+          "track": "velThE0-velThE1",
+          "kind": "throat",
+          "stn": "VEL",
+          "entries": 1,
+          "occupied_min": 0.34661066835451493,
+          "running_min": 0.06119862806411902,
+          "standing_min": 0.2854120402903959,
+          "occupancy": 0.002614153673290435,
+          "running": 0.00046156288008573616,
+          "standing": 0.0021525907932046988,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            },
+            {
+              "cause": "slower running",
+              "min": 0.022247031990900723
+            }
+          ]
+        },
+        {
+          "track": "velThW0-velThW1",
+          "kind": "throat",
+          "stn": "VEL",
+          "entries": 1,
+          "occupied_min": 0.37670522809600016,
+          "running_min": 0.05471380471379916,
+          "standing_min": 0.321991423382201,
+          "occupancy": 0.0028411282331553844,
+          "running": 0.0004126540427947289,
+          "standing": 0.0024284741903606555,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            },
+            {
+              "cause": "slower running",
+              "min": 0.0513415917324096
+            }
+          ]
+        },
+        {
+          "track": "velPf2",
+          "kind": "platform",
+          "stn": "VEL",
+          "pf": "2",
+          "entries": 2,
+          "occupied_min": 10.189176168987274,
+          "running_min": 3.3339643294518737,
+          "standing_min": 6.8552118395354,
+          "occupancy": 0.0768472373813894,
+          "running": 0.025144912993680997,
+          "standing": 0.0517023243877084,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 3.3339643294518737
+            },
+            {
+              "cause": "dwell",
+              "min": 4.853211839535447
+            },
+            {
+              "cause": "station wait",
+              "min": 2.0019999999999527
+            }
+          ]
+        },
+        {
+          "track": "velPf2E-velThE1",
+          "kind": "throat",
+          "stn": "VEL",
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099273,
+          "standing_min": 2.0139263309578723,
+          "occupancy": 0.021160009458984233,
+          "running": 0.005970884032455011,
+          "standing": 0.015189125426529221,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.8056059197677996
+            }
+          ]
+        },
+        {
+          "track": "slVelPdkt0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 21.213540560985848,
+          "running_min": 19.570790455396605,
+          "standing_min": 1.6427501055892435,
+          "occupancy": 0.1599935029243725,
+          "running": 0.1476038057370025,
+          "standing": 0.012389697187370003,
+          "trains_per_hour": 1.357568315557443,
+          "section": "VEL–PDKT",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 21.213540560985848
+            }
+          ]
+        },
+        {
+          "track": "pdktGd1",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktGd1E-pdktThE0",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktGd1S-pdktThW0",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktPf1S-pdktThW2",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 3,
+          "occupied_min": 2.2725091097174754,
+          "running_min": 0.7060615056457777,
+          "standing_min": 1.5664476040716977,
+          "occupancy": 0.017139368689822763,
+          "running": 0.005325148493886058,
+          "standing": 0.011814220195936705,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.2725091097174754
+            }
+          ]
+        },
+        {
+          "track": "pdktPf2",
+          "kind": "platform",
+          "stn": "PDKT",
+          "pf": "2",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktPf2E-pdktThE1",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktPf2S-pdktThW1",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktPf3",
+          "kind": "platform",
+          "stn": "PDKT",
+          "pf": "3",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktPf3E-pdktThE0",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktPf3S-pdktThW0",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktThE0-pdktThE1",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktThE1-pdktThE2",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktThW0-pdktThW1",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktThW1-pdktThW2",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "pdktPf1",
+          "kind": "platform",
+          "stn": "PDKT",
+          "pf": "1",
+          "entries": 3,
+          "occupied_min": 16.10429216260792,
+          "running_min": 2.828427124746213,
+          "standing_min": 13.275865037861706,
+          "occupancy": 0.12145931546909201,
+          "running": 0.021332128041214985,
+          "standing": 0.10012718742787702,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.828427124746156
+            },
+            {
+              "cause": "dwell",
+              "min": 8.275865037861706
+            },
+            {
+              "cause": "disruption",
+              "kind": "stand",
+              "min": 5
+            }
+          ]
+        },
+        {
+          "track": "pdktPf1E-pdktThE2",
+          "kind": "throat",
+          "stn": "PDKT",
+          "entries": 3,
+          "occupied_min": 3.2968578025598845,
+          "running_min": 1.2405501360378253,
+          "standing_min": 2.056307666522059,
+          "occupancy": 0.024865053853631306,
+          "running": 0.009356286436363484,
+          "standing": 0.01550876741726782,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 3.2968578025598845
+            }
+          ]
+        },
+        {
+          "track": "slPdktNmn0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 12.831505622060149,
+          "running_min": 11.943374725349713,
+          "standing_min": 0.888130896710436,
+          "occupancy": 0.09677580818558919,
+          "running": 0.09007748393313526,
+          "standing": 0.006698324252453932,
+          "trains_per_hour": 1.357568315557443,
+          "section": "PDKT–NMN",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 12.831505622060149
+            }
+          ]
+        },
+        {
+          "track": "nmnPf1",
+          "kind": "platform",
+          "stn": "NMN",
+          "pf": "1",
+          "entries": 3,
+          "occupied_min": 5.692866546979417,
+          "running_min": 1.8351557945887293,
+          "standing_min": 3.8577107523906875,
+          "occupancy": 0.042935862493756465,
+          "running": 0.013840829782473899,
+          "standing": 0.02909503271128256,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.8351557945887293
+            },
+            {
+              "cause": "dwell",
+              "min": 2.856710752390711
+            },
+            {
+              "cause": "station wait",
+              "min": 1.0009999999999764
+            }
+          ]
+        },
+        {
+          "track": "slNmnTym0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 18.191198691418947,
+          "running_min": 16.57551799572707,
+          "standing_min": 1.6156806956918786,
+          "occupancy": 0.13719886091933545,
+          "running": 0.12501332247195154,
+          "standing": 0.012185538447383895,
+          "trains_per_hour": 1.357568315557443,
+          "section": "NMN–TYM",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 18.191198691418833
+            }
+          ]
+        },
+        {
+          "track": "tymPf1",
+          "kind": "platform",
+          "stn": "TYM",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tymPf1E-tymThE0",
+          "kind": "throat",
+          "stn": "TYM",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tymPf1S-tymThW0",
+          "kind": "throat",
+          "stn": "TYM",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "tymPf2S-tymThW1",
+          "kind": "throat",
+          "stn": "TYM",
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099841,
+          "standing_min": 2.0139263309578155,
+          "occupancy": 0.021160009458984233,
+          "running": 0.0059708840324554395,
+          "standing": 0.015189125426528793,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.8056059197677996
+            }
+          ]
+        },
+        {
+          "track": "tymPf3",
+          "kind": "platform",
+          "stn": "TYM",
+          "pf": "3",
+          "entries": 1,
+          "occupied_min": 0.7081818181817425,
+          "running_min": 0.4363636363636374,
+          "standing_min": 0.27181818181810513,
+          "occupancy": 0.005341139988985531,
+          "running": 0.0032910747043816873,
+          "standing": 0.002050065284603843,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.4363636363636374
+            },
+            {
+              "cause": "dwell",
+              "min": 0.27181818181810513
+            }
+          ]
+        },
+        {
+          "track": "tymPf3E-tymThE0",
+          "kind": "throat",
+          "stn": "TYM",
+          "entries": 1,
+          "occupied_min": 0.32536363636359056,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2708181818181288,
+          "occupancy": 0.0024539075764542445,
+          "running": 0.0004113843380477645,
+          "standing": 0.00204252323840648,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            }
+          ]
+        },
+        {
+          "track": "tymPf3S-tymThW0",
+          "kind": "throat",
+          "stn": "TYM",
+          "entries": 1,
+          "occupied_min": 0.3243636363636142,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2698181818181524,
+          "occupancy": 0.002446365530256881,
+          "running": 0.0004113843380477645,
+          "standing": 0.002034981192209117,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            }
+          ]
+        },
+        {
+          "track": "tymThE0-tymThE1",
+          "kind": "throat",
+          "stn": "TYM",
+          "entries": 1,
+          "occupied_min": 0.3243636363636142,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2698181818181524,
+          "occupancy": 0.002446365530256881,
+          "running": 0.0004113843380477645,
+          "standing": 0.002034981192209117,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            }
+          ]
+        },
+        {
+          "track": "tymThW0-tymThW1",
+          "kind": "throat",
+          "stn": "TYM",
+          "entries": 1,
+          "occupied_min": 0.32536363636359056,
+          "running_min": 0.05454545454546178,
+          "standing_min": 0.2708181818181288,
+          "occupancy": 0.0024539075764542445,
+          "running": 0.0004113843380477645,
+          "standing": 0.00204252323840648,
+          "trains_per_hour": 0.4525227718524809,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            }
+          ]
+        },
+        {
+          "track": "tymPf2",
+          "kind": "platform",
+          "stn": "TYM",
+          "pf": "2",
+          "entries": 2,
+          "occupied_min": 10.189176168987217,
+          "running_min": 3.3339643294518737,
+          "standing_min": 6.855211839535343,
+          "occupancy": 0.07684723738138897,
+          "running": 0.025144912993680997,
+          "standing": 0.05170232438770797,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 3.3339643294518737
+            },
+            {
+              "cause": "dwell",
+              "min": 4.8532118395353905
+            },
+            {
+              "cause": "station wait",
+              "min": 2.0019999999999527
+            }
+          ]
+        },
+        {
+          "track": "tymPf2E-tymThE1",
+          "kind": "throat",
+          "stn": "TYM",
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099273,
+          "standing_min": 2.0139263309578723,
+          "occupancy": 0.021160009458984233,
+          "running": 0.005970884032455011,
+          "standing": 0.015189125426529221,
+          "trains_per_hour": 0.9050455437049618,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.8056059197677996
+            }
+          ]
+        },
+        {
+          "track": "slTymCtnd0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 17.554588790851312,
+          "running_min": 16.025952427215373,
+          "standing_min": 1.5286363636359397,
+          "occupancy": 0.13239751963944213,
+          "running": 0.12086847356565826,
+          "standing": 0.011529046073783874,
+          "trains_per_hour": 1.357568315557443,
+          "section": "TYM–CTND",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 17.554588790851312
+            }
+          ]
+        },
+        {
+          "track": "ctndGd1",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndGd1E-ctndThE0",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndGd1S-ctndThW0",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndPf1",
+          "kind": "platform",
+          "stn": "CTND",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndPf1E-ctndThE1",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndPf1S-ctndThW1",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndPf3",
+          "kind": "platform",
+          "stn": "CTND",
+          "pf": "3",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndPf3E-ctndThE0",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndPf3S-ctndThW0",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndThE0-ctndThE2",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndThW0-ctndThW2",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "ctndThW1-ctndThW2",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 3,
+          "occupied_min": 1.6163886511898227,
+          "running_min": 0.35417261935526767,
+          "standing_min": 1.262216031834555,
+          "occupancy": 0.012190877880455192,
+          "running": 0.002671186257081656,
+          "standing": 0.009519691623373535,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.6163886511898227
+            }
+          ]
+        },
+        {
+          "track": "ctndPf2S-ctndThW1",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 3,
+          "occupied_min": 2.090129437861151,
+          "running_min": 0.7007704979008054,
+          "standing_min": 1.3893589399603457,
+          "occupancy": 0.015763852779189933,
+          "running": 0.005285243469041927,
+          "standing": 0.010478609310148004,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.090129437861151
+            }
+          ]
+        },
+        {
+          "track": "ctndPf2",
+          "kind": "platform",
+          "stn": "CTND",
+          "pf": "2",
+          "entries": 3,
+          "occupied_min": 6.610978222837161,
+          "running_min": 1.81553631430927,
+          "standing_min": 4.795441908527891,
+          "occupancy": 0.04986030316757768,
+          "running": 0.013692858755834465,
+          "standing": 0.036167444411743216,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.81553631430927
+            },
+            {
+              "cause": "dwell",
+              "min": 3.794441908527915
+            },
+            {
+              "cause": "station wait",
+              "min": 1.0009999999999764
+            }
+          ]
+        },
+        {
+          "track": "ctndPf2E-ctndThE1",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 3,
+          "occupied_min": 1.0667807450187752,
+          "running_min": 0.16628186750881468,
+          "standing_min": 0.9004988775099605,
+          "occupancy": 0.00804570966157918,
+          "running": 0.0012541055265649303,
+          "standing": 0.00679160413501425,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.0667807450187752
+            }
+          ]
+        },
+        {
+          "track": "ctndThE1-ctndThE2",
+          "kind": "throat",
+          "stn": "CTND",
+          "entries": 3,
+          "occupied_min": 1.0323161302356425,
+          "running_min": 0.16380471380466588,
+          "standing_min": 0.8685114164309766,
+          "occupancy": 0.007785775944704328,
+          "running": 0.0012354227188898293,
+          "standing": 0.006550353225814498,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.0323161302356425
+            }
+          ]
+        },
+        {
+          "track": "slCtndKtyr0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 9.755352709597389,
+          "running_min": 8.810182747230613,
+          "standing_min": 0.9451699623667764,
+          "occupancy": 0.07357532080909368,
+          "running": 0.06644680528839504,
+          "standing": 0.007128515520698646,
+          "trains_per_hour": 1.357568315557443,
+          "section": "CTND–KTYR",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 9.755352709597389
+            }
+          ]
+        },
+        {
+          "track": "ktyrPf1",
+          "kind": "platform",
+          "stn": "KTYR",
+          "pf": "1",
+          "entries": 3,
+          "occupied_min": 10.651307756950189,
+          "running_min": 2.3317914596674996,
+          "standing_min": 8.31951629728269,
+          "occupancy": 0.08033265516714885,
+          "running": 0.017586478911844658,
+          "standing": 0.0627461762553042,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.3317914596674996
+            },
+            {
+              "cause": "dwell",
+              "min": 6.317516297282737
+            },
+            {
+              "cause": "station wait",
+              "min": 2.0019999999999527
+            }
+          ]
+        },
+        {
+          "track": "slKtyrKkdi0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 12.82527363198625,
+          "running_min": 11.364487949600914,
+          "standing_min": 1.4607856823853353,
+          "occupancy": 0.09672880622854922,
+          "running": 0.08571149312729205,
+          "standing": 0.011017313101257163,
+          "trains_per_hour": 1.357568315557443,
+          "section": "KTYR–KKDI",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 12.82527363198625
+            }
+          ]
+        },
+        {
+          "track": "kkdiPf1",
+          "kind": "platform",
+          "stn": "KKDI",
+          "pf": "1",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf1S-kkdiThW1",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf2",
+          "kind": "platform",
+          "stn": "KKDI",
+          "pf": "2",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf2S-kkdiThW2",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf4",
+          "kind": "platform",
+          "stn": "KKDI",
+          "pf": "4",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf4S-kkdiThW0",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf5",
+          "kind": "platform",
+          "stn": "KKDI",
+          "pf": "5",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf5S-kkdiThW0",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf6",
+          "kind": "platform",
+          "stn": "KKDI",
+          "pf": "6",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiPf6S-kkdiThW1",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiThW0-kkdiThW4",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiThW1-kkdiThW2",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiThW2-kkdiThW3",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 0,
+          "occupied_min": 0,
+          "running_min": 0,
+          "standing_min": 0,
+          "occupancy": 0,
+          "running": 0,
+          "standing": 0,
+          "trains_per_hour": 0
+        },
+        {
+          "track": "kkdiThW3-kkdiThW4",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 3,
+          "occupied_min": 2.305584546974387,
+          "running_min": 0.42557363427630435,
+          "standing_min": 1.8800109126980828,
+          "occupancy": 0.017388825165618273,
+          "running": 0.003209696010167454,
+          "standing": 0.014179129155450818,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.305584546974387
+            }
+          ]
+        },
+        {
+          "track": "kkdiPf3S-kkdiThW3",
+          "kind": "throat",
+          "stn": "KKDI",
+          "entries": 3,
+          "occupied_min": 2.8388334096338212,
+          "running_min": 0.8067108333098076,
+          "standing_min": 2.0321225763240136,
+          "occupancy": 0.021410612722582104,
+          "running": 0.0060842503728796475,
+          "standing": 0.015326362349702458,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.8388334096338212
+            }
+          ]
+        },
+        {
+          "track": "kkdiPf3",
+          "kind": "platform",
+          "stn": "KKDI",
+          "pf": "3",
+          "entries": 3,
+          "occupied_min": 10.70703735171719,
+          "running_min": 3.5744444444443957,
+          "standing_min": 7.1325929072727945,
+          "occupancy": 0.08075297034545183,
+          "running": 0.026958625130544655,
+          "standing": 0.053794345214907176,
+          "trains_per_hour": 1.357568315557443,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 3.5744444444443957
+            },
+            {
+              "cause": "dwell",
+              "min": 7.1325929072727945
+            }
+          ]
+        }
+      ],
+      "capacity_color_band": [
+        {
+          "over_pct": 0,
+          "name": "light",
+          "color": "39"
+        },
+        {
+          "over_pct": 40,
+          "name": "moderate",
+          "color": "42"
+        },
+        {
+          "over_pct": 60,
+          "name": "heavy",
+          "color": "214"
+        },
+        {
+          "over_pct": 75,
+          "name": "saturated",
+          "color": "203"
+        }
+      ]
+    },
+    "per_train": [
+      {
+        "train": "16849",
+        "class": "UR Express",
+        "priority": 30,
+        "finished": true,
+        "entry_min": 420,
+        "exit_min": 552.5910125520303,
+        "journey_min": 132.5910125520303,
+        "free_run_min": 95.00099999999998,
+        "delay_min": 37.590012552030316,
+        "late_min": 41.590012552030316,
+        "primary_min": 30,
+        "wait_min": 22.645536353792522,
+        "waits": [
+          {
+            "train": "16849",
+            "kind": "station",
+            "at": "TPJ",
+            "from_min": 452.19448148148143,
+            "min": 15.682331121300479,
+            "cause": "held",
+            "for": "16751"
+          },
+          {
+            "train": "16849",
+            "kind": "station",
+            "at": "KRMG",
+            "from_min": 479.248528257835,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "16849",
+            "kind": "station",
+            "at": "KRUR",
+            "from_min": 493.46525778942055,
+            "min": 2.9592052324921383,
+            "cause": "station wait",
+            "for": "56804"
+          },
+          {
+            "train": "16849",
+            "kind": "station",
+            "at": "VEL",
+            "from_min": 508.3365561898619,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "16849",
+            "kind": "station",
+            "at": "TYM",
+            "from_min": 531.9689054322178,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "16849",
+            "kind": "station",
+            "at": "KTYR",
+            "from_min": 544.6071881526124,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          }
+        ],
+        "calls": [
+          {
+            "stn": "TPJ",
+            "arr_min": 450.001,
+            "dep_min": 467.8768126027819,
+            "delay_min": 42.87481260278196,
+            "approach_min": 30,
+            "station_min": 12.874812602781958,
+            "late_min": 42.87681260278191
+          },
+          {
+            "stn": "KRMG",
+            "arr_min": 478.24752825783503,
+            "dep_min": 480.249528257835,
+            "delay_min": 42.87481260278196,
+            "approach_min": 0,
+            "station_min": -1.6272843449469292,
+            "late_min": 41.24752825783503
+          },
+          {
+            "stn": "KRUR",
+            "arr_min": 492.46425778942057,
+            "dep_min": 496.4244630219127,
+            "delay_min": 41.24752825783503,
+            "approach_min": 0,
+            "station_min": 1.958205232492162,
+            "late_min": 43.46425778942057
+          },
+          {
+            "stn": "VEL",
+            "arr_min": 507.3355561898619,
+            "dep_min": 509.33755618986186,
+            "delay_min": 43.20573349032719,
+            "approach_min": 0,
+            "station_min": 0,
+            "late_min": 46.335556189861904
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 518.0815661829841,
+            "dep_min": 519.0835661829841,
+            "delay_min": 43.20573349032719,
+            "approach_min": 0,
+            "station_min": 0,
+            "late_min": 45.08156618298415
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 523.9283811799498,
+            "dep_min": 523.9283811799498,
+            "delay_min": 43.20573349032719,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "arr_min": 530.9679054322178,
+            "dep_min": 532.9699054322177,
+            "delay_min": 43.20573349032725,
+            "approach_min": 5.684341886080802e-14,
+            "station_min": 0,
+            "late_min": 44.967905432217776
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 540.1454743478988,
+            "dep_min": 540.1454743478988,
+            "delay_min": 43.20573349032708,
+            "approach_min": -1.7053025658242404e-13,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "arr_min": 543.6061881526124,
+            "dep_min": 545.6081881526123,
+            "delay_min": 43.20573349032696,
+            "approach_min": -1.1368683772161603e-13,
+            "station_min": 0,
+            "late_min": 44.60618815261239
+          },
+          {
+            "stn": "KKDI",
+            "arr_min": 551.5900125520303,
+            "dep_min": 552.5910125520303,
+            "delay_min": 43.205733490326736,
+            "approach_min": -2.2737367544323206e-13,
+            "station_min": -5.61572093829642,
+            "late_min": 41.590012552030316
+          }
+        ],
+        "losses": [
+          {
+            "cause": "disruption",
+            "kind": "late_entry",
+            "where": "entry",
+            "at": "TPJ",
+            "from_min": 420,
+            "min": 30
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "TPJ",
+            "track": "tpjPf5",
+            "from_min": 450.001,
+            "min": -2.8075185185185205
+          },
+          {
+            "cause": "held",
+            "kind": "overtake",
+            "for": "16751",
+            "where": "station",
+            "at": "TPJ",
+            "track": "tpjPf5",
+            "from_min": 452.19448148148143,
+            "min": 11.461948622229556
+          },
+          {
+            "cause": "station wait",
+            "for": "16751",
+            "where": "station",
+            "at": "TPJ",
+            "track": "tpjPf5",
+            "from_min": 463.656430103711,
+            "min": 4.220382499070922
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "KRMG",
+            "track": "krmgPf2",
+            "from_min": 478.24752825783503,
+            "min": -2.6282843449469055
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "KRMG",
+            "track": "krmgPf2",
+            "from_min": 479.248528257835,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "KRUR",
+            "track": "krurPf2",
+            "from_min": 492.46425778942057,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "for": "56804",
+            "where": "station",
+            "at": "KRUR",
+            "track": "krurPf2",
+            "from_min": 493.46525778942055,
+            "min": 2.9592052324921383
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "VEL",
+            "track": "velPf2",
+            "from_min": 507.3355561898619,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "VEL",
+            "track": "velPf2",
+            "from_min": 508.3365561898619,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "TYM",
+            "track": "tymPf2",
+            "from_min": 530.9679054322178,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "TYM",
+            "track": "tymPf2",
+            "from_min": 531.9689054322178,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "KTYR",
+            "track": "ktyrPf1",
+            "from_min": 543.6061881526124,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "KTYR",
+            "track": "ktyrPf1",
+            "from_min": 544.6071881526124,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "KKDI",
+            "track": "kkdiPf3",
+            "from_min": 551.5900125520303,
+            "min": -5.61572093829642
+          }
+        ]
+      },
+      {
+        "train": "16751",
+        "class": "Mail/Express",
+        "priority": 40,
+        "finished": true,
+        "entry_min": 235,
+        "exit_min": 515.4131264923426,
+        "journey_min": 280.4131264923426,
+        "free_run_min": 85.00099999999998,
+        "delay_min": 195.41212649234262,
+        "late_min": 199.41212649234262,
+        "primary_min": 220,
+        "wait_min": 0,
+        "calls": [
+          {
+            "stn": "TPJ",
+            "arr_min": 455.001,
+            "dep_min": 457.19748148148136,
+            "delay_min": 217.19548148148135,
+            "approach_min": 219.99999999999997,
+            "station_min": -2.80451851851862,
+            "late_min": 217.19748148148136
+          },
+          {
+            "stn": "KRMG",
+            "pass": true,
+            "arr_min": 468.1524489664183,
+            "dep_min": 468.1524489664183,
+            "delay_min": 219.37162119999655,
+            "approach_min": 2.176139718515202,
+            "station_min": 0
+          },
+          {
+            "stn": "KRUR",
+            "pass": true,
+            "arr_min": 476.68390351187276,
+            "dep_min": 476.68390351187276,
+            "delay_min": 219.37162119999647,
+            "approach_min": -8.526512829121202e-14,
+            "station_min": 0
+          },
+          {
+            "stn": "VEL",
+            "pass": true,
+            "arr_min": 484.01208013851186,
+            "dep_min": 484.01208013851186,
+            "delay_min": 219.4719796448175,
+            "approach_min": 0.1003584448210404,
+            "station_min": 0
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 490.6951458136548,
+            "dep_min": 491.69714581365474,
+            "delay_min": 218.22385450449832,
+            "approach_min": -1.248125140319189,
+            "station_min": -11.52870869084353,
+            "late_min": 207.6951458136548
+          },
+          {
+            "stn": "NMN",
+            "pass": true,
+            "arr_min": 496.5419608106205,
+            "dep_min": 496.5419608106205,
+            "delay_min": 205.95276830075875,
+            "approach_min": -0.7423775128960415,
+            "station_min": 0
+          },
+          {
+            "stn": "TYM",
+            "pass": true,
+            "arr_min": 501.98959717425674,
+            "dep_min": 501.98959717425674,
+            "delay_min": 205.95276830075875,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "CTND",
+            "pass": true,
+            "arr_min": 507.07377899243846,
+            "dep_min": 507.07377899243846,
+            "delay_min": 205.95276830075875,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KTYR",
+            "pass": true,
+            "arr_min": 510.0358571320735,
+            "dep_min": 510.0358571320735,
+            "delay_min": 205.95276830075875,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "KKDI",
+            "arr_min": 514.4121264923426,
+            "dep_min": 515.4131264923426,
+            "delay_min": 205.95276830075863,
+            "approach_min": -1.1368683772161603e-13,
+            "station_min": -10.540641808416012,
+            "late_min": 199.41212649234262
+          }
+        ],
+        "losses": [
+          {
+            "cause": "disruption",
+            "kind": "late_entry",
+            "where": "entry",
+            "at": "TPJ",
+            "from_min": 235,
+            "min": 220
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "TPJ",
+            "track": "tpjPf6",
+            "from_min": 455.001,
+            "min": -2.80451851851862
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "TPJ–KRMG",
+            "track": "tpjPf6E-tpjThE4",
+            "from_min": 457.19748148148136,
+            "min": 0.1191503026039424
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "TPJ–KRMG",
+            "track": "tpjThE10-tpjThE4",
+            "from_min": 457.7972994434168,
+            "min": 0.07965628636729055
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "TPJ–KRMG",
+            "track": "slTpjKrmg0",
+            "from_min": 458.1982994434168,
+            "min": 1.8685845109758779
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "TPJ–KRMG",
+            "track": "krmgThW0-krmgThW1",
+            "from_min": 467.6049944209638,
+            "min": 0.011033777141329807
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "TPJ–KRMG",
+            "track": "krmgPf3S-krmgThW0",
+            "from_min": 467.66053987550924,
+            "min": 0.09771484142676162
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRUR–VEL",
+            "track": "velThW0-velThW1",
+            "from_min": 483.3642671482363,
+            "min": 0.00016835016833738337
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRUR–VEL",
+            "track": "velPf3S-velThW0",
+            "from_min": 483.4199809529501,
+            "min": 0.10019009465270301
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "VEL–PDKT",
+            "track": "velPf3E-velThE0",
+            "from_min": 484.01208013851186,
+            "min": 0.008006352057805088
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "VEL–PDKT",
+            "track": "velThE0-velThE1",
+            "from_min": 484.0766319451151,
+            "min": 0.0066531735186572405
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "VEL–PDKT",
+            "track": "slVelPdkt0",
+            "from_min": 484.1388305731792,
+            "min": -0.2534086652481733
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "VEL–PDKT",
+            "track": "pdktPf1S-pdktThW2",
+            "from_min": 489.69214581365486,
+            "min": -1.0093760006474781
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "PDKT",
+            "track": "pdktPf1",
+            "from_min": 490.6951458136548,
+            "min": -11.52870869084353
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "PDKT–NMN",
+            "track": "pdktPf1E-pdktThE2",
+            "from_min": 491.69714581365474,
+            "min": -0.09112355257882973
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "PDKT–NMN",
+            "track": "slPdktNmn0",
+            "from_min": 492.2918254024646,
+            "min": -0.6512539603172118
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "KKDI",
+            "track": "kkdiPf3",
+            "from_min": 514.4121264923426,
+            "min": -10.540641808416012
+          }
+        ]
+      },
+      {
+        "train": "56804",
+        "class": "Passenger",
+        "priority": 20,
+        "finished": true,
+        "entry_min": 420,
+        "exit_min": 550.001,
+        "journey_min": 130.00099999999998,
+        "free_run_min": 130.00099999999998,
+        "delay_min": 0,
+        "late_min": 0,
+        "primary_min": 5,
+        "wait_min": 7.006999999999721,
+        "waits": [
+          {
+            "train": "56804",
+            "kind": "station",
+            "at": "KTYR",
+            "from_min": 433.001,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "56804",
+            "kind": "station",
+            "at": "CTND",
+            "from_min": 441.001,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "56804",
+            "kind": "station",
+            "at": "TYM",
+            "from_min": 451.2846247459621,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "56804",
+            "kind": "station",
+            "at": "NMN",
+            "from_min": 461.3369074663571,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "56804",
+            "kind": "station",
+            "at": "VEL",
+            "from_min": 485.341806564144,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "56804",
+            "kind": "station",
+            "at": "KRUR",
+            "from_min": 498.3104451866386,
+            "min": 1.0009999999999764,
+            "cause": "station wait"
+          },
+          {
+            "train": "56804",
+            "kind": "station",
+            "at": "KRMG",
+            "from_min": 512.5827201727697,
+            "min": 1.0009999999998627,
+            "cause": "station wait"
+          }
+        ],
+        "calls": [
+          {
+            "stn": "KKDI",
+            "arr_min": 420.001,
+            "dep_min": 425.00199999999995,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0,
+            "late_min": 0.0019999999999527063
+          },
+          {
+            "stn": "KTYR",
+            "arr_min": 430.58645066204434,
+            "dep_min": 434.00199999999995,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0,
+            "late_min": 0
+          },
+          {
+            "stn": "CTND",
+            "arr_min": 439.06826884386254,
+            "dep_min": 442.00199999999995,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0,
+            "late_min": 0
+          },
+          {
+            "stn": "TYM",
+            "arr_min": 450.28362474596213,
+            "dep_min": 452.2856247459621,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0,
+            "late_min": 1.283624745962129
+          },
+          {
+            "stn": "NMN",
+            "arr_min": 460.3359074663571,
+            "dep_min": 462.3379074663571,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0,
+            "late_min": 1.3359074663571278
+          },
+          {
+            "stn": "PDKT",
+            "arr_min": 467.68135812840154,
+            "dep_min": 475.00199999999995,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 5,
+            "late_min": 0
+          },
+          {
+            "stn": "VEL",
+            "arr_min": 484.34080656414403,
+            "dep_min": 486.342806564144,
+            "delay_min": 5,
+            "approach_min": 0,
+            "station_min": -2.6591934358559683,
+            "late_min": 2.3408065641440317
+          },
+          {
+            "stn": "KRUR",
+            "arr_min": 497.30944518663864,
+            "dep_min": 499.3114451866386,
+            "delay_min": 2.39635201868947,
+            "approach_min": 0.05554545454543813,
+            "station_min": 0,
+            "late_min": 3.3094451866386407
+          },
+          {
+            "stn": "KRMG",
+            "arr_min": 511.5817201727696,
+            "dep_min": 513.5837201727695,
+            "delay_min": 2.451897473234908,
+            "approach_min": 0.05554545454543813,
+            "station_min": -5.684341886080802e-14,
+            "late_min": 2.5817201727696215
+          },
+          {
+            "stn": "TPJ",
+            "arr_min": 523.7570129941745,
+            "dep_min": 550.001,
+            "delay_min": 2.4518974732347942,
+            "approach_min": -5.684341886080802e-14,
+            "station_min": -2.4518974732347942,
+            "late_min": 0
+          }
+        ],
+        "losses": [
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "KTYR",
+            "track": "ktyrPf1",
+            "from_min": 430.58645066204434,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "KTYR",
+            "track": "ktyrPf1",
+            "from_min": 433.001,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "CTND",
+            "track": "ctndPf2",
+            "from_min": 439.06826884386254,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "CTND",
+            "track": "ctndPf2",
+            "from_min": 441.001,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "TYM",
+            "track": "tymPf2",
+            "from_min": 450.28362474596213,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "TYM",
+            "track": "tymPf2",
+            "from_min": 451.2846247459621,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "NMN",
+            "track": "nmnPf1",
+            "from_min": 460.3359074663571,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "NMN",
+            "track": "nmnPf1",
+            "from_min": 461.3369074663571,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "disruption",
+            "kind": "stand",
+            "where": "station",
+            "at": "PDKT",
+            "track": "pdktPf1",
+            "from_min": 470,
+            "min": 5
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "VEL",
+            "track": "velPf2",
+            "from_min": 484.34080656414403,
+            "min": -3.6601934358559447
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "VEL",
+            "track": "velPf2",
+            "from_min": 485.341806564144,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRUR–VEL",
+            "track": "slKrurVel0",
+            "from_min": 486.93748615295385,
+            "min": -0.10157952744935983
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRUR–VEL",
+            "track": "krurThE0-krurThE1",
+            "from_min": 495.282338039918,
+            "min": 0.012179060197584994
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRUR–VEL",
+            "track": "krurPf1E-krurThE0",
+            "from_min": 495.4394630219128,
+            "min": 0.14494592179721297
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "KRUR",
+            "track": "krurPf1",
+            "from_min": 497.30944518663864,
+            "min": -1.0009999999999764
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "KRUR",
+            "track": "krurPf1",
+            "from_min": 498.3104451866386,
+            "min": 1.0009999999999764
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRMG–KRUR",
+            "track": "krurPf1S-krurThW0",
+            "from_min": 499.3114451866386,
+            "min": 0.0026920136758690257
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRMG–KRUR",
+            "track": "krurThW0-krurThW1",
+            "from_min": 499.90612477544846,
+            "min": 0.0011139701813857692
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRMG–KRUR",
+            "track": "slKrmgKrur0",
+            "from_min": 500.15220648571284,
+            "min": 0.04327437846743343
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRMG–KRUR",
+            "track": "krmgPf2E-krmgThE1",
+            "from_min": 509.71173800804377,
+            "min": 0.008465092220749908
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "KRMG",
+            "track": "krmgPf2",
+            "from_min": 511.5817201727696,
+            "min": -1.0009999999999195
+          },
+          {
+            "cause": "station wait",
+            "where": "station",
+            "at": "KRMG",
+            "track": "krmgPf2",
+            "from_min": 512.5827201727697,
+            "min": 1.0009999999998627
+          },
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "TPJ",
+            "track": "tpjPf5",
+            "from_min": 523.7570129941745,
+            "min": -2.4518974732347942
+          }
+        ]
+      }
+    ],
+    "delay_color_band": [
+      {
+        "over_min": 0,
+        "name": "on time",
+        "color": "42"
+      },
+      {
+        "over_min": 5,
+        "name": "slightly late",
+        "color": "214"
+      },
+      {
+        "over_min": 15,
+        "name": "late",
+        "color": "203"
+      },
+      {
+        "over_min": 60,
+        "name": "very late",
+        "color": "196"
+      }
+    ],
+    "station_delays": [
+      {
+        "stn": "TPJ",
+        "calls": 3,
+        "stops": 3,
+        "passes": 0,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 87.5073971858327,
+        "worst": "16751",
+        "worst_min": 217.19548148148135,
+        "approach_min": 249.99999999999991,
+        "station_min": 7.618396611028544,
+        "late_calls": 3,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ]
+      },
+      {
+        "stn": "KRMG",
+        "calls": 3,
+        "stops": 2,
+        "passes": 1,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 88.23277709200447,
+        "worst": "16751",
+        "worst_min": 219.37162119999655,
+        "approach_min": 2.23168517306064,
+        "station_min": -1.627284344946986,
+        "late_calls": 2,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.5
+          }
+        ]
+      },
+      {
+        "stn": "KRUR",
+        "calls": 3,
+        "stops": 2,
+        "passes": 1,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 87.671833825507,
+        "worst": "16751",
+        "worst_min": 219.37162119999647,
+        "approach_min": 0.05554545454535287,
+        "station_min": 1.958205232492162,
+        "late_calls": 2,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.5
+          }
+        ]
+      },
+      {
+        "stn": "VEL",
+        "calls": 3,
+        "stops": 2,
+        "passes": 1,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 89.22590437838157,
+        "worst": "16751",
+        "worst_min": 219.4719796448175,
+        "approach_min": 0.1003584448210404,
+        "station_min": -2.6591934358559683,
+        "late_calls": 2,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.5
+          }
+        ]
+      },
+      {
+        "stn": "PDKT",
+        "calls": 3,
+        "stops": 3,
+        "passes": 0,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 87.14319599827517,
+        "worst": "16751",
+        "worst_min": 218.22385450449832,
+        "approach_min": -1.248125140319189,
+        "station_min": -6.52870869084353,
+        "late_calls": 3,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ]
+      },
+      {
+        "stn": "NMN",
+        "calls": 3,
+        "stops": 1,
+        "passes": 2,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 83.05283393036198,
+        "worst": "16751",
+        "worst_min": 205.95276830075875,
+        "approach_min": -0.7423775128960415,
+        "station_min": 0,
+        "late_calls": 1,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 1
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 1
+          }
+        ]
+      },
+      {
+        "stn": "TYM",
+        "calls": 3,
+        "stops": 2,
+        "passes": 1,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 83.052833930362,
+        "worst": "16751",
+        "worst_min": 205.95276830075875,
+        "approach_min": 5.684341886080802e-14,
+        "station_min": 0,
+        "late_calls": 2,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 0,
+            "share": 0
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.5
+          }
+        ]
+      },
+      {
+        "stn": "CTND",
+        "calls": 3,
+        "stops": 1,
+        "passes": 2,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 83.05283393036194,
+        "worst": "16751",
+        "worst_min": 205.95276830075875,
+        "approach_min": -1.7053025658242404e-13,
+        "station_min": 0,
+        "late_calls": 1,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 1
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 1
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 1
+          }
+        ]
+      },
+      {
+        "stn": "KTYR",
+        "calls": 3,
+        "stops": 2,
+        "passes": 1,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 83.0528339303619,
+        "worst": "16751",
+        "worst_min": 205.95276830075875,
+        "approach_min": -1.1368683772161603e-13,
+        "station_min": 0,
+        "late_calls": 2,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.5
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.5
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.5
+          }
+        ]
+      },
+      {
+        "stn": "KKDI",
+        "calls": 3,
+        "stops": 3,
+        "passes": 0,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ],
+        "mean_min": 83.05283393036179,
+        "worst": "16751",
+        "worst_min": 205.95276830075863,
+        "approach_min": -3.410605131648481e-13,
+        "station_min": -16.156362746712432,
+        "late_calls": 3,
+        "late_punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 1,
+            "share": 0.3333333333333333
+          }
+        ]
+      }
+    ],
+    "block_delays": [
+      {
+        "track": "slTpjKrmg0",
+        "trains": 3,
+        "gained_min": 2.0160830556542066,
+        "worst": "16751",
+        "worst_min": 2.0160830556542635
+      },
+      {
+        "track": "slKrmgKrur0",
+        "trains": 3,
+        "gained_min": -0.19053625571893917,
+        "worst_min": 0
+      },
+      {
+        "track": "slKrurVel0",
+        "trains": 3,
+        "gained_min": -0.10157952744935983,
+        "worst_min": 0
+      },
+      {
+        "track": "slVelPdkt0",
+        "trains": 3,
+        "gained_min": -0.2534086652481733,
+        "worst_min": 0
+      },
+      {
+        "track": "slPdktNmn0",
+        "trains": 3,
+        "gained_min": -0.4962958026316642,
+        "worst_min": 0
+      },
+      {
+        "track": "slNmnTym0",
+        "trains": 3,
+        "gained_min": 0,
+        "worst_min": 0
+      },
+      {
+        "track": "slTymCtnd0",
+        "trains": 3,
+        "gained_min": 0,
+        "worst_min": 0
+      },
+      {
+        "track": "slCtndKtyr0",
+        "trains": 3,
+        "gained_min": -5.684341886080802e-14,
+        "worst_min": 0
+      },
+      {
+        "track": "slKtyrKkdi0",
+        "trains": 3,
+        "gained_min": 0,
+        "worst": "16751",
+        "worst_min": 5.684341886080802e-14
+      }
+    ],
+    "pareto_pct": 80
+  }
+}
