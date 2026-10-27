@@ -67,8 +67,8 @@ func TestDelayPageWaitsByPlace(t *testing.T) {
 		t.Error("esc does not go back to the trains")
 	}
 	press(m, "shift+tab", "enter")
-	if m.page != pageSchematic || !strings.Contains(m.note, places[0].at) {
-		t.Errorf("enter on %s: page %d, note %q", places[0].at, m.page, m.note)
+	if m.page != pageSchematic || !strings.Contains(m.note, places[0].At) {
+		t.Errorf("enter on %s: page %d, note %q", places[0].At, m.page, m.note)
 	}
 }
 

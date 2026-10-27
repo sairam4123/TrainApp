@@ -17,6 +17,11 @@ type Options struct {
 	Selected string // a train to pick out, "" for none
 	Planned  bool   // mark the trains' planned times
 	Color    bool
+	// Under, if set, is another run on the same corridor, drawn faint
+	// first, e.g. the baseline when comparing runs; its Selected train is
+	// drawn dotted, so the gap to this run's line is the time it lost or
+	// gained.
+	Under *Graph
 }
 
 // colours: trains running east and west, picked out or not
@@ -27,6 +32,7 @@ const (
 	sgrSelected = "1;97"
 	sgrPlanned  = "35"
 	sgrGrid     = "90"
+	sgrUnder    = "2;37"
 )
 
 // minute steps for the time axis labels
@@ -80,6 +86,20 @@ func (g *Graph) Draw(o Options) []string {
 		}
 	}
 
+	if u := o.Under; u != nil {
+		var sel *train
+		for _, tr := range u.trains {
+			if tr.number == o.Selected {
+				sel = tr
+				continue
+			}
+			u.drawRuns(cv, tr, gut, px, py, pw, ph, 1, sgrUnder)
+		}
+		if sel != nil {
+			u.drawRuns(cv, sel, gut, px, py, pw, ph, 3, sgrSelected)
+		}
+	}
+
 	// the selected train last, so it stays on top
 	order := make([]*train, 0, len(g.trains))
 	var sel *train
@@ -119,7 +139,7 @@ func (g *Graph) Draw(o Options) []string {
 					f := (o.Now - a.t) / (b.t - a.t)
 					b = sample{o.Now, a.at + f*(b.at-a.at)}
 				}
-				cv.line(gut, px(a.t), py(a.at), px(b.t), py(b.at), pw, ph, style)
+				cv.line(gut, px(a.t), py(a.at), px(b.t), py(b.at), pw, ph, style, 1)
 			}
 		}
 		if o.Planned {
@@ -147,6 +167,17 @@ func (g *Graph) Draw(o Options) []string {
 		out[y] = cv.row(y, o.Color)
 	}
 	return out
+}
+
+// drawRuns draws a train's runs in full, every every-th pixel of them: 1
+// for a solid line, more for a dotted one.
+func (g *Graph) drawRuns(cv *canvas, tr *train, gut int, px, py func(float64) float64, pw, ph, every int, sgr string) {
+	for _, r := range tr.runs {
+		for i := 1; i < len(r); i++ {
+			a, b := r[i-1], r[i]
+			cv.line(gut, px(a.t), py(a.at), px(b.t), py(b.at), pw, ph, sgr, every)
+		}
+	}
 }
 
 // axis labels the time axis along the bottom row with clock times.
@@ -232,10 +263,11 @@ func (cv *canvas) dot(gut, x, y int, sgr string) {
 	c.sgr = sgr
 }
 
-// line draws a straight line between two plot pixels, clipped to the plot.
-func (cv *canvas) line(gut int, x0, y0, x1, y1 float64, pw, ph int, sgr string) {
+// line draws a straight line between two plot pixels, clipped to the plot:
+// every pixel of it, or for every > 1 every every-th, dotted.
+func (cv *canvas) line(gut int, x0, y0, x1, y1 float64, pw, ph int, sgr string, every int) {
 	n := int(math.Ceil(max(math.Abs(x1-x0), math.Abs(y1-y0)))) + 1
-	for i := range n {
+	for i := 0; i < n; i += max(every, 1) {
 		f := 0.0
 		if n > 1 {
 			f = float64(i) / float64(n-1)

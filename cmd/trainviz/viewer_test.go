@@ -93,7 +93,7 @@ func newReplayModel(t *testing.T) *model {
 	return m
 }
 
-func press(m *model, keys ...string) {
+func press(m tea.Model, keys ...string) {
 	for _, k := range keys {
 		var msg tea.KeyPressMsg
 		switch k {
@@ -113,6 +113,12 @@ func press(m *model, keys ...string) {
 			msg = tea.KeyPressMsg{Code: tea.KeyHome}
 		case "end":
 			msg = tea.KeyPressMsg{Code: tea.KeyEnd}
+		case "esc":
+			msg = tea.KeyPressMsg{Code: tea.KeyEscape}
+		case "down":
+			msg = tea.KeyPressMsg{Code: tea.KeyDown}
+		case "up":
+			msg = tea.KeyPressMsg{Code: tea.KeyUp}
 		default:
 			r := []rune(k)[0]
 			msg = tea.KeyPressMsg{Code: r, Text: k}

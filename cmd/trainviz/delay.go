@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 	"trainapp/railway/kpi/report"
+	"trainapp/visualization/compare"
 	"trainapp/visualization/schematic"
 	"trainapp/visualization/tui"
 )
@@ -394,35 +395,10 @@ func (s *stats) trainDetail(rep *replay) (string, []string) {
 	return title, out
 }
 
-// waitPlace is the waits at one place, of one kind.
-type waitPlace struct {
-	at, kind string
-	waits    int
-	trains   map[string]bool
-	min      float64
-}
-
 // waitPlaces groups every train's waits by place and kind, most minutes
 // first.
-func waitPlaces(r *report.Report) []*waitPlace {
-	by := map[[2]string]*waitPlace{}
-	var out []*waitPlace
-	for _, t := range r.PerTrain {
-		for _, w := range t.Waits {
-			k := [2]string{w.At, w.Kind}
-			p := by[k]
-			if p == nil {
-				p = &waitPlace{at: w.At, kind: w.Kind, trains: map[string]bool{}}
-				by[k] = p
-				out = append(out, p)
-			}
-			p.waits++
-			p.trains[t.Train] = true
-			p.min += w.Min
-		}
-	}
-	slices.SortStableFunc(out, func(a, b *waitPlace) int { return cmp.Compare(b.min, a.min) })
-	return out
+func waitPlaces(r *report.Report) []*compare.WaitPlace {
+	return compare.WaitPlaces([]*report.Report{r})
 }
 
 // placesTable is a row per place the trains waited at.
@@ -433,14 +409,14 @@ func (s *stats) placesTable() table {
 	places := waitPlaces(s.rep)
 	most := 0.0
 	for _, p := range places {
-		most = max(most, p.min)
+		most = max(most, p.Min[0])
 	}
 	for _, p := range places {
 		share := 0.0
 		if most > 0 {
-			share = p.min / most
+			share = p.Min[0] / most
 		}
-		t.rows = append(t.rows, cols(widths, right, " "+p.at, p.kind, fmt.Sprint(p.waits), fmt.Sprint(len(p.trains)), mins(p.min))+bar(share, 12, ""))
+		t.rows = append(t.rows, cols(widths, right, " "+p.At, p.Kind, fmt.Sprint(p.Waits[0]), fmt.Sprint(p.Trains[0]), mins(p.Min[0]))+bar(share, 12, ""))
 	}
 	return t
 }
@@ -545,16 +521,16 @@ func (m *model) showWait(t report.Train) {
 
 // showPlace goes to the schematic, centred on where the trains waited: a
 // station, or for a signal the track they stood on.
-func (m *model) showPlace(p *waitPlace) {
+func (m *model) showPlace(p *compare.WaitPlace) {
 	m.setPage(pageSchematic)
-	x, y, ok := m.frame.Station(p.at)
+	x, y, ok := m.frame.Station(p.At)
 	if !ok {
-		x, y, ok = m.frame.Where(schematic.Piece{Kind: schematic.PieceTrack, ID: m.st.trackID[p.at]})
+		x, y, ok = m.frame.Where(schematic.Piece{Kind: schematic.PieceTrack, ID: m.st.trackID[p.At]})
 	}
 	if !ok {
-		m.note = p.at + " is not drawn at this zoom: + zooms in"
+		m.note = p.At + " is not drawn at this zoom: + zooms in"
 		return
 	}
 	m.centreOn(x, y)
-	m.note = fmt.Sprintf("%s: %d %s waits, %s min", p.at, p.waits, p.kind, mins(p.min))
+	m.note = fmt.Sprintf("%s: %d %s waits, %s min", p.At, p.Waits[0], p.Kind, mins(p.Min[0]))
 }

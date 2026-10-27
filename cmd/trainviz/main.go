@@ -10,6 +10,8 @@
 //	go run ./cmd/trainviz replay -page delay run.ndjson     open on the run's delays
 //	go run ./cmd/trainviz replay -print -page occupancy run.ndjson
 //	go run ./cmd/trainviz replay -print -page delay-causes run.ndjson   where and why the delay
+//	go run ./cmd/trainviz compare a.ndjson b.ndjson [c.ndjson ...]     runs side by side
+//	go run ./cmd/trainviz compare -print a.ndjson b.ndjson             their figures, once
 //
 // The delay and occupancy pages read the run's KPIs from the .kpi.json
 // trainapp -kpi wrote beside the recording, or from -kpi.
@@ -58,6 +60,10 @@ func main() {
 		replayMain(os.Args[2:])
 		return
 	}
+	if len(os.Args) > 1 && os.Args[1] == "compare" {
+		compareMain(os.Args[2:])
+		return
+	}
 	viewMain(os.Args[1:])
 }
 
@@ -71,7 +77,7 @@ func viewMain(args []string) {
 	})
 	fs := flag.NewFlagSet("trainviz", flag.ExitOnError)
 	fs.Usage = func() {
-		fmt.Fprintln(fs.Output(), "usage: trainviz [flags]\n       trainviz replay [flags] recording.ndjson")
+		fmt.Fprintln(fs.Output(), "usage: trainviz [flags]\n       trainviz replay [flags] recording.ndjson\n       trainviz compare [flags] run.ndjson run.ndjson [run.ndjson ...]")
 		fs.PrintDefaults()
 	}
 	worldName := fs.String("world", "tpjkkdi", "world to draw: "+strings.Join(names, ", ")+", or a world snapshot file (.json)")
@@ -106,7 +112,8 @@ func replayMain(args []string) {
 		fmt.Fprintln(fs.Output(), "usage: trainviz replay [flags] recording.ndjson")
 		fs.PrintDefaults()
 	}
-	at := fs.Float64("at", -1, "with -print: the sim time to show (default the end)")
+	at := fs.Float64("at", -1, "the sim time to show: with -print, default the end; else the time to open at")
+	trainFlag := fs.String("train", "", "a train to select when the viewer opens")
 	graph := fs.Bool("graph", false, "with -print: print the time-distance graph instead of the schematic")
 	width := fs.Int("width", 120, "with -print -graph: width in columns")
 	height := fs.Int("height", 30, "with -print -graph: height in lines")
@@ -160,6 +167,12 @@ func replayMain(args []string) {
 	m.st.table, m.st.dMap, m.st.dCauses, m.st.oCauses = table, delayMap, delayCauses, occCauses
 	m.name = strings.TrimSuffix(filepath.Base(fs.Arg(0)), ".ndjson")
 	if !*pr.print {
+		if *at >= 0 {
+			rep.seek(*at)
+		}
+		if i := slices.Index(rep.trains, *trainFlag); i >= 0 {
+			m.selected, m.follow = i, true
+		}
 		m.setPage(start)
 		m.note = ""
 		run(m)

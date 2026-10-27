@@ -78,6 +78,9 @@ type Result struct {
 	Stale bool
 	// Timetable is the timetable the run exported, if it did.
 	Timetable *timetable.Timetable
+	// Baseline, if set, is a baseline's run of the same scenario under the
+	// same rule, which SummaryLines gives each figure's change against.
+	Baseline *kpi.Report
 }
 
 // LoadResult reads a run written earlier, nil if there is none.

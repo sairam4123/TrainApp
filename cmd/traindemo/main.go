@@ -39,6 +39,7 @@ func main() {
 	rule := flag.String("rule", "", "precedence rule to start with: thresholds, weighted or off; empty for the profile's")
 	binDir := flag.String("bin", "", "directory with trainapp, trainviz and trainedit; empty to look next to traindemo, then in dist/, then on $PATH")
 	outDir := flag.String("out", filepath.Join("logs", "demo"), "directory for the runs' recordings and KPIs")
+	against := flag.String("against", "", "a bench file (trainbench -out) to show the runs' changes against; empty for the baseline b saved in -out, if any")
 	flag.Parse()
 
 	if !dirSet() {
@@ -68,6 +69,9 @@ func main() {
 
 	p, err := newPicker(*dir, ruleIdx, bins{trainapp: trainapp, trainviz: trainviz, trainedit: trainedit, editErr: editErr}, *outDir)
 	if err != nil {
+		log.Fatal(err)
+	}
+	if err := p.loadBaseline(*against); err != nil {
 		log.Fatal(err)
 	}
 	if _, err := tea.NewProgram(p).Run(); errors.Is(err, tea.ErrInterrupted) {

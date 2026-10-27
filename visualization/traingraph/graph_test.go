@@ -178,3 +178,26 @@ func TestTrainsListed(t *testing.T) {
 		t.Errorf("Trains() = %s", got)
 	}
 }
+
+// A run drawn under another shows faint, and its selected train dotted.
+func TestUnderRunIsDrawnFaint(t *testing.T) {
+	hello, msgs := recordRun(t, worlds.BuildTpjKkdiWorld(), newTrain("UP", 1, "TPJ", "PDKT", "KKDI"))
+	base := build(t, hello, msgs)
+	hello, msgs = recordRun(t, worlds.BuildTpjKkdiWorld(), newTrain("UP", 30, "TPJ", "PDKT", "KKDI"))
+	g := build(t, hello, msgs)
+	from, _ := base.Span()
+	_, to := g.Span()
+	o := traingraph.Options{Width: 80, Height: 14, From: from, To: to, Now: -1, Color: true}
+	alone := strings.Join(g.Draw(o), "\n")
+	o.Under = base
+	over := strings.Join(g.Draw(o), "\n")
+	t.Log("\n" + over)
+	if strings.Contains(alone, "\x1b[2;37m") || !strings.Contains(over, "\x1b[2;37m") {
+		t.Error("the run under is not drawn faint, or drawn without Under")
+	}
+	o.Selected = "UP"
+	sel := strings.Join(g.Draw(o), "\n")
+	if strings.Count(sel, "\x1b[1;97m") < 2 {
+		t.Errorf("the selected train is not picked out in both runs:\n%s", sel)
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"trainapp/railway/kpi/report"
 	"trainapp/railway/scenario"
 	"trainapp/visualization/runs"
 	"trainapp/visualization/schematic"
@@ -74,10 +75,15 @@ type picker struct {
 	previews *previews
 	results  map[string]*runs.Result // by resultKey
 	run      *runs.Run               // trainapp running, if it is
-	viewing  string                  // resultKey of the run trainviz shows
+	viewing  string                  // resultKey of the run trainviz shows, "" for a comparison
 	spin     int
-	note     string
-	choice   choice
+
+	set          []runs.Pick       // the runs picked to compare (x), in the order added
+	gate         *gate             // the runs X or b waits on, if it does
+	baseline     []report.BenchRun // the baseline's runs, nil for none
+	baselinePath string            // where the baseline was read from
+	note         string
+	choice       choice
 }
 
 // newPicker lists the scenarios in dir; one that does not read is listed
@@ -157,16 +163,23 @@ func (p *picker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return p, tea.Quit
 		}
 		if r.Cancelled {
+			p.gate = nil // and the runs after it
 			return p, nil
 		}
-		p.results[r.Key] = r.Finish(msg.Err)
+		res := r.Finish(msg.Err)
+		p.results[r.Key] = res
+		if p.gate != nil {
+			return p, p.gateRunDone(r, res)
+		}
 
 	case vizDoneMsg:
 		if runs.Interrupted(msg.err) {
 			p.choice = choiceInterrupt
 			return p, tea.Quit
 		}
-		if res := p.results[p.viewing]; res != nil && msg.err != nil && res.Failed == "" {
+		if p.viewing == "" && msg.err != nil {
+			p.note = "trainviz compare: " + msg.err.Error()
+		} else if res := p.results[p.viewing]; res != nil && msg.err != nil && res.Failed == "" {
 			res.Failed = "trainviz: " + msg.err.Error()
 		}
 
@@ -208,10 +221,17 @@ func (p *picker) key(key string) tea.Cmd {
 		return nil // the DoneMsg follows
 	}
 	p.note = ""
+	if p.gate != nil && p.gate.asking {
+		return p.gateKey(key)
+	}
 	switch key {
 	case "esc":
 		if p.focus == focusTrains {
 			p.focus = focusList
+			break
+		}
+		if len(p.set) > 0 {
+			p.set = nil
 			break
 		}
 		p.choice = choiceQuit
@@ -230,6 +250,14 @@ func (p *picker) key(key string) tea.Cmd {
 		return p.view("-page", "delay")
 	case "o":
 		return p.view("-page", "occupancy")
+	case "x":
+		p.pick()
+	case "ctrl+x":
+		p.pickAll()
+	case "X":
+		return p.compareSet()
+	case "b":
+		return p.startBaseline()
 	case "e":
 		return p.edit(false, false)
 	case "c":
@@ -428,7 +456,7 @@ type screenLayout struct {
 const scheduleExtra = 4
 
 func (p *picker) layout() screenLayout {
-	l := screenLayout{body: max(p.height-1, 1)}
+	l := screenLayout{body: max(p.height-1-p.setLines(), 1)}
 	if p.width >= 70 {
 		l.list = listWidth
 	}
@@ -513,17 +541,34 @@ func (p *picker) render() string {
 	for i := range lines {
 		lines[i] = tui.At(left, i) + tui.At(right, i)
 	}
+	if p.setLines() > 0 {
+		lines = append(lines, ansi.Truncate(p.setLine(), p.width, "…"))
+	}
 	lines = append(lines, p.keyLine())
 	return strings.Join(lines, "\n")
 }
 
+// setLines is the line the compare set takes above the key line, if any.
+func (p *picker) setLines() int {
+	if len(p.set) > 0 {
+		return 1
+	}
+	return 0
+}
+
 func (p *picker) keyLine() string {
-	keys := " ↑↓ scenario  tab trains  enter run  v replay  d delay  o occupancy  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn schedule  q quit"
+	keys := " ↑↓ scenario  tab trains  enter run  v replay  d delay  o occupancy  x pick  X compare  b baseline  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn schedule  q quit"
 	if p.focus == focusTrains {
-		keys = " ↑↓ train  tab/esc scenarios  enter run  v replay  d delay  o occupancy  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn page  q quit"
+		keys = " ↑↓ train  tab/esc scenarios  enter run  v replay  d delay  o occupancy  x pick  X compare  b baseline  e edit  c copy  n new  r rule  ←→ pan  z overview/layout  pgup/pgdn page  q quit"
+	}
+	if p.gate != nil && p.gate.asking {
+		return tui.Bold.Render(ansi.Truncate(p.gate.prompt(), p.width, ""))
 	}
 	if p.run != nil {
 		keys = " esc cancel the run  ctrl+c quit"
+		if p.gate != nil {
+			keys = " esc cancel the runs  ctrl+c quit"
+		}
 	}
 	return tui.Dim.Render(ansi.Truncate(keys, p.width, ""))
 }
@@ -531,7 +576,11 @@ func (p *picker) keyLine() string {
 func (p *picker) listLines() []string {
 	var out []string
 	for i, sc := range p.scenarios {
-		line := tui.Fit(" "+sc.Name, listWidth-4)
+		marks := p.setMarks(sc)
+		line := tui.Fit(" "+sc.Name, listWidth-4-len(marks))
+		if marks != "" {
+			line += tui.Accent.Render(marks)
+		}
 		if i == p.cursor {
 			line = tui.Bold.Reverse(true).Faint(p.focus != focusList).Render(line)
 		}
@@ -666,7 +715,14 @@ func (p *picker) runBox(w int) (string, []string) {
 			lines = []string{tui.Amber.Render("ran before the last edit"), "", tui.Dim.Render("enter runs it again, v replays the old run")}
 		default:
 			title = "last run · " + runs.RuleLabel(runs.Rules[p.rule])
+			res.Baseline = runs.BaselineFor(p.baseline, p.scenarios[p.cursor], runs.Rules[p.rule])
+			if res.Baseline != nil {
+				title += " · Δ baseline"
+			}
 			lines = runs.SummaryLines(res)
+			if p.baseline != nil && res.Baseline == nil {
+				lines = append(lines, tui.Dim.Render("no baseline run"))
+			}
 			if res.Failed != "" {
 				lines = append(lines, tui.Failed.Render(ansi.Truncate(res.Failed, w, "…")))
 			}
@@ -680,6 +736,9 @@ func (p *picker) runBox(w int) (string, []string) {
 	spin := tui.Accent.Render(tui.Spinner[p.spin%len(tui.Spinner)])
 	elapsed := time.Since(r.Started).Truncate(time.Second)
 	title := fmt.Sprintf("running · %s · %d:%02d", runs.RuleLabel(r.Rule), int(elapsed.Minutes()), int(elapsed.Seconds())%60)
+	if g := p.gate; g != nil {
+		title = fmt.Sprintf("running %d of %d · %s · %d:%02d", g.total-len(g.queue), g.total, runs.Pick{Scenario: r.Scenario, Rule: r.Rule}.Label(), int(elapsed.Minutes()), int(elapsed.Seconds())%60)
+	}
 	pr := r.Progress
 	switch {
 	case r.Cancelled:

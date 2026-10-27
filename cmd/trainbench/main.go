@@ -2,6 +2,8 @@
 // and prints their KPIs side by side.
 //
 //	trainbench [-rules thresholds,weighted,off] [scenario.json ...]
+//	trainbench -against old-bench.json [scenario.json ...]   ... and the change since
+//	trainbench -diff old-bench.json new-bench.json           compare two runs' files only
 //
 // With no scenarios it runs every scenarios/*.json; see package scenario for
 // the file format. Each rule replaces the profile's precedence rule; "off"
@@ -9,6 +11,7 @@
 package main
 
 import (
+	"cmp"
 	"errors"
 	"flag"
 	"fmt"
@@ -21,9 +24,11 @@ import (
 	"text/tabwriter"
 	"time"
 	"trainapp/railway/kpi"
+	"trainapp/railway/kpi/report"
 	"trainapp/railway/ops"
 	"trainapp/railway/scenario"
 	"trainapp/railway/sim"
+	"trainapp/visualization/compare"
 	"trainapp/worlds"
 )
 
@@ -68,14 +73,8 @@ func (sc *bench) freeRunning() error {
 	return err
 }
 
-// result is one scenario run under one rule.
-type result struct {
-	Scenario string      `json:"scenario"`
-	Rule     string      `json:"rule"`
-	WallSec  float64     `json:"wall_sec"`
-	Err      string      `json:"error,omitempty"`
-	Report   *kpi.Report `json:"report,omitempty"`
-}
+// result is one scenario run under one rule, as the -out file has it.
+type result = report.BenchRun
 
 func (sc *bench) run(rule, logDir string) result {
 	r := result{Scenario: sc.Name, Rule: rule}
@@ -120,7 +119,34 @@ func main() {
 	outPath := flag.String("out", "logs/bench.json", "also write every run's KPIs to this file (JSON); empty for none")
 	logDir := flag.String("logs", "logs/bench", "directory for the runs' logs, one subdirectory per run")
 	jobs := flag.Int("j", runtime.NumCPU(), "runs to do at once")
+	against := flag.String("against", "", "a bench file written earlier (-out, or traindemo's baseline) to compare the runs with, row by row")
+	diff := flag.Bool("diff", false, "compare two bench files, old.json new.json, without running anything")
 	flag.Parse()
+
+	if *diff {
+		if flag.NArg() != 2 {
+			log.Fatal("usage: trainbench -diff old.json new.json")
+		}
+		old, err := report.ReadBench(flag.Arg(0))
+		if err != nil {
+			log.Fatal(err)
+		}
+		new, err := report.ReadBench(flag.Arg(1))
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := printDiff(os.Stdout, flag.Arg(0), compare.Bench(old, new)); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+	var old []result
+	if *against != "" {
+		var err error
+		if old, err = report.ReadBench(*against); err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	var scenarios []*bench
 	var loaded []*scenario.Scenario
@@ -180,11 +206,102 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err := errors.Join(kpi.WriteJSON(f, results), f.Close()); err != nil {
+		if err := errors.Join(report.WriteBench(f, results), f.Close()); err != nil {
 			log.Fatal(err)
 		}
 		fmt.Printf("\nKPIs written to %s\n", *outPath)
 	}
+	if old != nil {
+		fmt.Println()
+		if err := printDiff(os.Stdout, *against, compare.Bench(old, results)); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+// diffColumns are the figures printDiff shows, as in printTable; on time is
+// the widest threshold's.
+var diffColumns = []struct{ key, head string }{
+	{"finished", "done"}, {"delay_total", "delay"}, {"delay_mean", "mean"}, {"delay_weighted", "weighted"}, {"on_time", "punctual"},
+	{"reactionary", "reactionary"}, {"wait_total", "wait"}, {"holds", "holds"}, {"block_occ_mean", "block occ"}, {"standing", "in section"}, {"wall", "wall"},
+}
+
+// printDiff prints the runs in both files a row each: each figure in the
+// new run, with its change since the old; then the runs in one file only.
+// On a terminal, a change is green where it is better and red where worse.
+func printDiff(w *os.File, oldPath string, d compare.BenchDiff) error {
+	color := isTerminal(w)
+	paint := func(text string, verdict int) string {
+		if !color {
+			return text
+		}
+		// every cell's codes are as long, not to throw the columns out
+		code := map[int]string{1: "32", -1: "31", 0: "39"}[verdict]
+		return "\x1b[" + code + "m" + text + "\x1b[39m"
+	}
+	fmt.Fprintf(w, "against %s: Δ is this run less that one; — where it does not compare (other trains) or a run has no figure\n", oldPath)
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', tabwriter.AlignRight)
+	heads := []string{"scenario", "rule", "trains"}
+	for _, c := range diffColumns {
+		heads = append(heads, c.head, "Δ")
+	}
+	fmt.Fprintln(tw, strings.Join(heads, "\t")+"\t")
+	for _, p := range d.Pairs {
+		row := []string{p.Scenario, p.Rule, p.Kind.String()}
+		if p.Figures == nil {
+			row[2] = "error: " + cmp.Or(p.New.Err, p.Old.Err, "no report")
+			fmt.Fprintln(tw, strings.Join(row, "\t")+"\t")
+			continue
+		}
+		for _, c := range diffColumns {
+			f, ok := diffFigure(p.Figures, c.key)
+			if !ok {
+				row = append(row, "-", paint("-", 0))
+				continue
+			}
+			row = append(row, f.Text(1), paint(f.DeltaText(1), f.Verdict(1)))
+		}
+		fmt.Fprintln(tw, strings.Join(row, "\t")+"\t")
+	}
+	if err := tw.Flush(); err != nil {
+		return err
+	}
+	for _, only := range []struct {
+		what string
+		runs []result
+	}{{"only in " + oldPath, d.OnlyOld}, {"only in this run", d.OnlyNew}} {
+		if len(only.runs) == 0 {
+			continue
+		}
+		var names []string
+		for _, r := range only.runs {
+			names = append(names, r.Scenario+" "+compare.RuleLabel(r.Rule))
+		}
+		fmt.Fprintf(w, "%s: %s\n", only.what, strings.Join(names, ", "))
+	}
+	return nil
+}
+
+// diffFigure finds a column's figure; "on_time" is the widest threshold's.
+func diffFigure(figs []compare.Figure, key string) (compare.Figure, bool) {
+	if key != "on_time" {
+		return compare.Find(figs, key)
+	}
+	var last compare.Figure
+	found := false
+	for _, f := range figs {
+		if strings.HasPrefix(f.Key, "on_time_") {
+			last, found = f, true
+		}
+	}
+	return last, found
+}
+
+// isTerminal reports whether f is a terminal, to colour the changes, unless
+// NO_COLOR is set.
+func isTerminal(f *os.File) bool {
+	fi, err := f.Stat()
+	return err == nil && fi.Mode()&os.ModeCharDevice != 0 && os.Getenv("NO_COLOR") == ""
 }
 
 // printTable prints one row per run.
