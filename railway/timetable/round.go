@@ -339,9 +339,10 @@ type order struct {
 
 // orders are, for every resource, each consecutive pair of the trains that
 // used it, in the order they took it in tt. A resource is a station's
-// platform, or a track between two points (Point.Via): that covers single
-// and double lines, loops and throats alike. Points TimedTrains leaves out
-// are left out here too.
+// platform, a track between two points (Point.Via), or a switch block one of
+// those tracks is in (Via.Blocks): that covers single and double lines, loops
+// and throats alike, and two trains on different tracks over one switch.
+// Points TimedTrains leaves out are left out here too.
 func orders(tt Timetable) []order {
 	type user struct {
 		use
@@ -365,8 +366,11 @@ func orders(tt Timetable) []order {
 				if out < 0 {
 					out = p.Arr
 				}
-				key := "track " + v.Track
-				users[key] = append(users[key], user{use{end{i, k - 1, departure}, end{i, k, arrival}, v.In, out}, true})
+				u := user{use{end{i, k - 1, departure}, end{i, k, arrival}, v.In, out}, true}
+				users["track "+v.Track] = append(users["track "+v.Track], u)
+				for _, b := range v.Blocks {
+					users["switch "+b] = append(users["switch "+b], u)
+				}
 			}
 		}
 	}

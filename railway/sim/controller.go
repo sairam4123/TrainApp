@@ -435,6 +435,18 @@ func (tc *TrainController) recordVia(trk *infra.TrackSegment) {
 	stop.EnterTrack(tc.sim.CurTime(), trk.Id.String(), via)
 }
 
+// recordCleared notes the rear has left trk, on the way to the stop the train
+// is on or one before: a long train's rear can still be on the way to the
+// last stop when its front has reached it, or left it.
+func (tc *TrainController) recordCleared(trk *infra.TrackSegment) {
+	sched := tc.train.Schedule()
+	for k := min(tc.train.StopIndex(), len(sched)-1); k >= 0; k-- {
+		if sched[k].ClearTrack(tc.sim.CurTime(), trk.Id.String()) {
+			return
+		}
+	}
+}
+
 // advance moves the train's front onto the next edge of its route, and its
 // rear off whatever it has cleared.
 func (tc *TrainController) advance() {
@@ -709,6 +721,7 @@ func (tc *TrainController) leaveRear() {
 		tc.fail("rear left %s, but the interlocking freed %s", b.Step.Edge.Track, step.Edge.Track)
 		return
 	}
+	tc.recordCleared(step.Edge.Track)
 	tc.sim.ScheduleEventNext(ops.TrackReleased, step.Edge.Track, tc.train.ID())
 	tc.sim.dispatcher.OnTrackReleased(step.Edge.Track, tc.train.ID())
 }

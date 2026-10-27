@@ -1,8 +1,10 @@
 package timetable_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"testing"
 	"trainapp/railway/ids"
@@ -416,6 +418,64 @@ func TestNoMeetingOnTheSameTrack(t *testing.T) {
 	}
 }
 
+// switchTimetable has H run X-Y on line xy2, its rear clear of Y's switch
+// ySw at 20.2, and L leave Y onto xy over the same switch just after, at
+// 20.4. They share no track or platform, only the switch.
+func switchTimetable(blocks bool) timetable.Timetable {
+	tt := meetingTimetable()
+	h := tt.Trains[0].Points
+	h[1].Via = via("xy2", 10.1, 20.2)
+	h[1].Arr, h[1].Dep = 21.2, 21.2
+	if blocks {
+		h[1].Via[0].Blocks = []string{"ySw"}
+		tt.Trains[1].Points[2].Via[0].Blocks = []string{"ySw"}
+	}
+	return tt
+}
+
+func TestRoundKeepsTheOrderOverASwitch(t *testing.T) {
+	cfg := timetable.Config{RoundingMin: 1}
+	tt := timetable.Round(switchTimetable(true), cfg)
+	// H leaves X at 11, not 10.05, and so clears the switch at 21.15: L
+	// keeps the 0.2 min it had after H in the run
+	hv, lv := pointAt(t, tt, "H", "Y").Via[0], pointAt(t, tt, "L", "X").Via[0]
+	if lv.In-hv.Out < 0.2-1e-9 {
+		t.Errorf("L onto the switch at %v, %v after H clears it at %v; want at least the 0.2 of the run", lv.In, lv.In-hv.Out, hv.Out)
+	}
+	if l := pointAt(t, tt, "L", "Y"); l.Dep != 22 {
+		t.Errorf("L dep Y = %v, want 22 (held for H over the switch)", l.Dep)
+	}
+	holds := 0
+	for _, o := range tt.PlanOverrides() {
+		if o.Action == sim.OverrideHold && o.Train == "L" && o.For == "H" && o.Station == "Y" {
+			holds++
+		}
+	}
+	if holds != 1 {
+		t.Errorf("%d holds of L at Y for H, want 1 for the switch", holds)
+	}
+}
+
+func TestATimetableWithoutBlocksOrdersOnTracksOnly(t *testing.T) {
+	// as saved before vias had blocks: the same run, with no order over
+	// the switch
+	var tt timetable.Timetable
+	b, err := json.Marshal(switchTimetable(false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b), "blocks") {
+		t.Fatalf("a via without blocks is written with them: %s", b)
+	}
+	if err := json.Unmarshal(b, &tt); err != nil {
+		t.Fatal(err)
+	}
+	tt = timetable.Round(tt, timetable.Config{RoundingMin: 1})
+	if l := pointAt(t, tt, "L", "Y"); l.Dep != 21 {
+		t.Errorf("L dep Y = %v, want 21 (20.3 rounded up, not held over a switch it has no block for)", l.Dep)
+	}
+}
+
 func TestRoundKeepsATrainBehindTheOneItFollows(t *testing.T) {
 	// G stands at Y until F, which passed Y before G got there, is clear of
 	// the line to Z. F's departure from X is rounded up by 0.95, so G's from
@@ -658,5 +718,35 @@ func TestEntryKmphCarriedThrough(t *testing.T) {
 	}
 	if got := tt.TimedTrains()[0].EntrySpeed; got != units.KMPH(40) {
 		t.Errorf("timed train enters at %v km/h, want 40", got.InKMPH())
+	}
+}
+
+func TestFromRunGivesViasTheirSwitchBlocks(t *testing.T) {
+	world := worlds.BuildTpjKkdiSingleLineWorld()
+	s := run(t, world, irProfile(t), singleLineTrains()[0])
+	tt := timetable.FromRun(s, timetable.DefaultConfig())
+	tracks := map[string]*infra.TrackSegment{}
+	for _, trk := range world.TrackGraph.ListTracks() {
+		tracks[trk.Id.String()] = trk
+	}
+	throats, lines := 0, 0
+	for _, p := range tt.Trains[0].Points {
+		for _, v := range p.Via {
+			var want []string
+			for _, sb := range world.SwitchBlocksOn(tracks[v.Track]) {
+				want = append(want, sb.Id)
+			}
+			if !slices.Equal(v.Blocks, want) {
+				t.Errorf("via %s blocks %v, want %v", v.Track, v.Blocks, want)
+			}
+			if len(want) > 0 {
+				throats++
+			} else {
+				lines++
+			}
+		}
+	}
+	if throats == 0 || lines == 0 {
+		t.Errorf("%d vias over switches and %d on plain track, want some of each", throats, lines)
 	}
 }

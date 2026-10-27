@@ -3,6 +3,7 @@ package sim_test
 import (
 	"log/slog"
 	"math"
+	"slices"
 	"testing"
 	"trainapp/des"
 	"trainapp/railway/ids"
@@ -254,6 +255,80 @@ func TestShortPlatformLengthensTheStop(t *testing.T) {
 		}
 		if len(log.find("TRAIN_ARRIVE", map[string]string{"overhang_m": "91", "extra_dwell": "1"})) != 1 {
 			t.Errorf("precedence %v: no arrival logged with overhang_m 91 and extra_dwell 1 in %v", prec, log.entries)
+		}
+	}
+}
+
+// releases records when each track was released, by train.
+type releases struct {
+	at map[string]map[string][]float64
+}
+
+func (r *releases) Logged(slog.Level, string, []slog.Attr) {}
+
+func (r *releases) AfterEvent(ev des.Event[ops.RailwayEvent]) {
+	if ev.Type != ops.TrackReleased {
+		return
+	}
+	if r.at[ev.TrainID] == nil {
+		r.at[ev.TrainID] = map[string][]float64{}
+	}
+	trk := ev.Data.(*infra.TrackSegment).Id.String()
+	r.at[ev.TrainID][trk] = append(r.at[ev.TrainID][trk], ev.Time)
+}
+
+func TestViaOutIsWhenTheRearClears(t *testing.T) {
+	for _, long := range []bool{true, false} {
+		tr := &ops.Train{Name: "Via", Number: "V1", MaxSpeed: units.KMPH(110)}
+		if long {
+			length := 491.0
+			tr.Stock = &ops.Stock{LengthM: &length}
+		}
+		tr.AddSchedule(ops.NewStopPoint("TPJ", 5, "1").SetEntryTime(1))
+		for _, stn := range []ids.StnCode{"KRMG", "KRUR", "VEL"} {
+			tr.AddSchedule(ops.NewPassPoint(stn, -1, ""))
+		}
+		tr.AddSchedule(ops.NewStopPoint("PDKT", 5, "1"))
+
+		s := &sim.Sim{OutputDir: t.TempDir()}
+		s.SetWorld(worlds.BuildTpjKkdiSingleLineWorld())
+		if err := s.AddTrain(tr); err != nil {
+			t.Fatal(err)
+		}
+		rel := &releases{at: map[string]map[string][]float64{}}
+		s.Observer = rel
+		if err := s.Init(); err != nil {
+			t.Fatal(err)
+		}
+		if err := s.Run(); err != nil {
+			t.Fatal(err)
+		}
+		// a track is released the event hop after the rear leaves it
+		hop := 2 * des.MinDeltaTime
+		later := 0 // vias the rear left well after the front entered the next
+		for k, sp := range tr.Schedule() {
+			for n, v := range sp.Via {
+				if v.Out < v.In {
+					t.Errorf("long %v: point %d via %s out %v, in %v", long, k, v.Track, v.Out, v.In)
+					continue
+				}
+				if !slices.ContainsFunc(rel.at["V1"][v.Track], func(at float64) bool { return at >= v.Out && at-v.Out <= hop }) {
+					t.Errorf("long %v: via %s out %v, but released at %v", long, v.Track, v.Out, rel.at["V1"][v.Track])
+				}
+				if n+1 == len(sp.Via) {
+					continue
+				}
+				next := sp.Via[n+1].In
+				if v.Out-next > 0.1 {
+					later++
+				}
+				if !long && math.Abs(v.Out-next) > hop {
+					t.Errorf("no length: via %s out %v, want when the front entered the next track, %v", v.Track, v.Out, next)
+				}
+			}
+		}
+		if long && later == 0 {
+			t.Error("491 m: no rear left a via track well after the front entered the next")
 		}
 	}
 }

@@ -166,11 +166,14 @@ type Point struct {
 
 // Via is a track a train ran over between two points, by id: its front
 // entered it at In and its rear left it at Out. In a rounded timetable they
-// are moved on with the train's departure from the point before.
+// are moved on with the train's departure from the point before. Blocks are
+// the switch blocks the track is in, which Round keeps the order of trains
+// on too; a timetable saved without them keeps it on tracks only.
 type Via struct {
-	Track string  `json:"track"`
-	In    float64 `json:"in"`
-	Out   float64 `json:"out"`
+	Track  string   `json:"track"`
+	Blocks []string `json:"blocks,omitempty"`
+	In     float64  `json:"in"`
+	Out    float64  `json:"out"`
 }
 
 // Reached reports whether the train got to the point.
@@ -200,6 +203,7 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 		runs = append(runs, st.Train)
 	}
 	c := newClassifier(runs, s.Decisions())
+	blocks := switchBlocks(s.World())
 	tt := Timetable{}
 	for _, st := range s.Status() {
 		t := st.Train
@@ -219,7 +223,7 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 				p.MinDwell = minDwell(sp, s.MinStop())
 			}
 			for _, v := range sp.Via {
-				p.Via = append(p.Via, Via{Track: v.Track, In: v.In, Out: v.Out})
+				p.Via = append(p.Via, Via{Track: v.Track, Blocks: blocks[v.Track], In: v.In, Out: v.Out})
 			}
 			for _, ss := range sp.SignalStops {
 				// most stops are only a signal handing over to the next
@@ -272,6 +276,17 @@ func FromRun(s *sim.Sim, cfg Config) Timetable {
 		tt.Trains = append(tt.Trains, tr)
 	}
 	return tt
+}
+
+// switchBlocks are the switch blocks each track of the world is in, by id.
+func switchBlocks(w *infra.World) map[string][]string {
+	out := map[string][]string{}
+	for _, trk := range w.TrackGraph.ListTracks() {
+		for _, sb := range w.SwitchBlocksOn(trk) {
+			out[trk.Id.String()] = append(out[trk.Id.String()], sb.Id)
+		}
+	}
+	return out
 }
 
 // isHalt reports whether a train that stood extra minutes longer than it had
@@ -366,10 +381,10 @@ func (tt Timetable) TimedTrains() []*ops.Train {
 
 // PlanOverrides are the run's decisions as precedence overrides, for running
 // the timetable again: every train pinned to the track it used at each point,
-// and the order of trains on each track between points kept (see orders) by
-// holding the second at its stop or halt before the track. One from the other
-// way is waited for until it has arrived there; one the same way that
-// overtakes it there until it has left. One the same way already gone needs
+// and the order of trains on each track between points, and each switch on
+// one, kept (see orders) by holding the second at its stop or halt before the
+// track. One from the other way is waited for until it has arrived there; one
+// the same way that overtakes it there until it has left. One the same way already gone needs
 // no hold: the line ahead keeps the train back. Without them a run of the
 // timed trains decides precedence afresh from the new times, and can meet
 // trains elsewhere than the timetable has them meet. Points TimedTrains leaves

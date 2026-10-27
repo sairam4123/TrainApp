@@ -50,8 +50,8 @@ type SchedulePoint struct {
 }
 
 // ViaTrack is a track a train ran over between two points: its front entered
-// it at In, and its rear left it at Out, when the front entered the next
-// track. Out is -1 until then.
+// it at In, and its rear left it at Out. With no length, that is when the
+// front entered the next track. Out is -1 until then.
 type ViaTrack struct {
 	Track   string
 	In, Out float64
@@ -66,18 +66,27 @@ type SignalStop struct {
 	WaitedFor ids.TrainID
 }
 
+// ClearTrack notes the train's rear left track at t, if it is one of the way
+// here the rear has not left yet.
+func (s *SchedulePoint) ClearTrack(t float64, track string) bool {
+	for i := len(s.Via) - 1; i >= 0; i-- {
+		if s.Via[i].Track == track && s.Via[i].Out < 0 {
+			s.Via[i].Out = t
+			return true
+		}
+	}
+	return false
+}
+
 // RecordPlatform notes the platform the train actually used.
 func (s *SchedulePoint) RecordPlatform(pfNo string) {
 	s.ActPfNo = pfNo
 }
 
-// EnterTrack notes the train's front entered a track at t on the way here:
-// it has left the one before. via says whether the track is one of the way
-// (see Via), not a platform track of either station.
+// EnterTrack notes the train's front entered a track at t on the way here.
+// via says whether the track is one of the way (see Via), not a platform
+// track of either station. When the rear leaves it is ClearTrack's.
 func (s *SchedulePoint) EnterTrack(t float64, track string, via bool) {
-	if n := len(s.Via); n > 0 && s.Via[n-1].Out < 0 {
-		s.Via[n-1].Out = t
-	}
 	if via {
 		s.Via = append(s.Via, ViaTrack{Track: track, In: t, Out: -1})
 	}
