@@ -534,9 +534,8 @@ func (p *precedence) standsAtStation(tc *TrainController) bool {
 }
 
 // refugeTrackAt reports whether l has a track at the visit's station it could
-// stand on for stay while each of hs gets by: one it can call at that is not
-// a through track, nor a main line it would stand on too long, and that all
-// of them can get past.
+// stand on for stay while each of hs gets by: one it can call at and may
+// stand on that long (standable), and that all of them can get past.
 func (p *precedence) refugeTrackAt(l *ops.Train, v visit, hs []*projection, stay float64) bool {
 	if v.from == nil {
 		return false
@@ -546,13 +545,8 @@ func (p *precedence) refugeTrackAt(l *ops.Train, v visit, hs []*projection, stay
 		if !callable(sp, c.pf) {
 			continue
 		}
-		switch v.stn.TrackClass(c.pf.Id) {
-		case infra.Through:
+		if p.standable(sp, v.stn, c.pf, stay) != "" {
 			continue
-		case infra.Main:
-			if v.stn.RunsThrough() && stay > float64(p.cfg.MainLineMaxStayMin) {
-				continue
-			}
 		}
 		at := v
 		at.pf = c.pf

@@ -27,6 +27,7 @@
     "max_hold_min": 30,
     "max_reception_hold_min": 30,
     "main_line_max_stay_min": 5,
+    "through_track_max_stay_min": 20,
     "min_priority_gap": 10,
     "min_saving_min": 1,
     "max_wait_ratio": 4,

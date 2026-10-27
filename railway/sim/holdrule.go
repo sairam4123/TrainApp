@@ -30,6 +30,12 @@ type PrecedenceConfig struct {
 	// the next one has no track free for it when it would arrive (a
 	// reception hold). Defaults to max_hold_min.
 	MaxReceptionHoldMin units.Minutes `json:"max_reception_hold_min,omitempty"`
+	// ThroughTrackMaxStayMin is the longest a train that does not call may
+	// stand on a through track, e.g. held there while another gets by; a
+	// train that does not call also takes its own through track before a
+	// loop (stationplan.go). 0 keeps through tracks for trains that run
+	// straight through, as before.
+	ThroughTrackMaxStayMin units.Minutes `json:"through_track_max_stay_min,omitempty"`
 
 	// MinPriorityGap and MinSavingMin are the thresholds rule's settings: hold
 	// only for a train at least this much higher in priority, that would
@@ -68,7 +74,7 @@ func (c *PrecedenceConfig) Validate() error {
 		"horizon_min": c.HorizonMin, "headway_min": c.HeadwayMin, "max_hold_min": c.MaxHoldMin,
 		"main_line_max_stay_min": c.MainLineMaxStayMin, "min_saving_min": c.MinSavingMin,
 		"max_reception_hold_min": c.MaxReceptionHoldMin, "follow_horizon_min": c.FollowHorizonMin,
-		"defer_margin_min": c.DeferMarginMin,
+		"defer_margin_min": c.DeferMarginMin, "through_track_max_stay_min": c.ThroughTrackMaxStayMin,
 	} {
 		if v < 0 {
 			errs = append(errs, fmt.Errorf("%s is negative", name))
@@ -118,6 +124,10 @@ func (c *PrecedenceConfig) deferMargin() float64 {
 	}
 	return float64(c.DeferMarginMin)
 }
+
+// throughRefuge reports whether a train that does not call may stand on a
+// through track (ThroughTrackMaxStayMin).
+func (c *PrecedenceConfig) throughRefuge() bool { return c.ThroughTrackMaxStayMin > 0 }
 
 // maxReceptionHold is the cap on a reception hold.
 func (c *PrecedenceConfig) maxReceptionHold() float64 {
@@ -172,6 +182,16 @@ type HoldRule interface {
 	// time, higher better. It picks where a train is held for another (the
 	// best refuge, trailing.go), not whether.
 	Score(c Conflict) float64
+	// KeepBack reports whether keeping a train back costs no more than
+	// letting it on: kept back, held is delayed held.Wait; let on, each of
+	// others is delayed its Wait instead (a keep-back, stationplan.go).
+	KeepBack(held Waiter, others []Waiter) bool
+}
+
+// Waiter is a train, by its priority, and how long it would be delayed.
+type Waiter struct {
+	Prio int
+	Wait units.Minutes
 }
 
 // holdRules maps a rule's name to how it is built from the config. A new rule
@@ -216,6 +236,15 @@ func (r thresholdRule) Hold(c Conflict) (bool, string) {
 // priority decides whether a train is held, plain minutes where.
 func (thresholdRule) Score(c Conflict) float64 { return float64(c.Saving - c.Wait) }
 
+// KeepBack weighs plain minutes, as Score does.
+func (thresholdRule) KeepBack(held Waiter, others []Waiter) bool {
+	sum := 0.0
+	for _, o := range others {
+		sum += float64(o.Wait)
+	}
+	return float64(held.Wait) <= sum
+}
+
 // weightedRule holds a train when what the higher-priority train saves,
 // weighted by its priority, outweighs what the held train waits, weighted by
 // its own. Priorities below 1 count as 1.
@@ -238,4 +267,14 @@ func (r weightedRule) Hold(c Conflict) (bool, string) {
 func (weightedRule) Score(c Conflict) float64 {
 	w := func(p int) float64 { return float64(max(p, 1)) }
 	return (w(c.ForPrio)*float64(c.Saving) - w(c.HeldPrio)*float64(c.Wait)) / w(c.HeldPrio)
+}
+
+// KeepBack weighs each train's minutes by its priority, as Hold does.
+func (weightedRule) KeepBack(held Waiter, others []Waiter) bool {
+	w := func(p int) float64 { return float64(max(p, 1)) }
+	sum := 0.0
+	for _, o := range others {
+		sum += w(o.Prio) * float64(o.Wait)
+	}
+	return w(held.Prio)*float64(held.Wait) <= sum
 }

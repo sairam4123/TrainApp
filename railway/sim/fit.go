@@ -55,6 +55,29 @@ func callable(sp *ops.SchedulePoint, pf *infra.Platform) bool {
 	return sp == nil || !passengers(sp) || !pf.IsThrough()
 }
 
+// standable says why a train at its call sp at stn may not stand on pf for
+// stay minutes, or "". A through track is for trains running through; with
+// through_track_max_stay_min set, one that does not call may also stand
+// there that long, e.g. while another gets by on a loop. A main line takes a
+// stand up to main_line_max_stay_min, unless nothing runs through the
+// station. A loop takes any stand. A nil sp counts as a call.
+func (p *precedence) standable(sp *ops.SchedulePoint, stn *infra.Station, pf *infra.Platform, stay float64) string {
+	switch stn.TrackClass(pf.Id) {
+	case infra.Through:
+		if sp == nil || passengers(sp) || !p.cfg.throughRefuge() {
+			return "through_track"
+		}
+		if stay > float64(p.cfg.ThroughTrackMaxStayMin) {
+			return "through_track_limit"
+		}
+	case infra.Main:
+		if stn.RunsThrough() && stay > float64(p.cfg.MainLineMaxStayMin) {
+			return "main_line_limit"
+		}
+	}
+	return ""
+}
+
 // visitOf is the schedule point as a stop VisitEnds checks: a call if
 // passengers get on or off there.
 func visitOf(sp *ops.SchedulePoint) infra.Visit {

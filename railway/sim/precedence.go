@@ -495,6 +495,11 @@ func (p *precedence) evaluate(req *RouteRequest) verdict {
 		if c, ok := p.receptionConflict(req, tc); ok {
 			reception[c.For] = c
 		}
+		if c, ok := p.keepBackConflict(req); ok {
+			if _, dup := reception[c.For]; !dup {
+				reception[c.For] = c
+			}
+		}
 	}
 	for _, c := range p.manualConflicts(t, at) {
 		add(c)
@@ -589,13 +594,8 @@ func (p *precedence) enterHeld(req *RouteRequest, order []*infra.Platform, held 
 			continue
 		}
 		// as ruledOut would judge the hold once it stands there
-		switch stn.TrackClass(pf.Id) {
-		case infra.Through:
+		if p.standable(req.Train.Schedule()[0], stn, pf, stay) != "" {
 			continue
-		case infra.Main:
-			if stn.RunsThrough() && stay > float64(p.cfg.MainLineMaxStayMin) {
-				continue
-			}
 		}
 		blocked := func(st infra.Step) bool { return p.tracksConflict(st.Edge.Track, pf.Track) }
 		if slices.ContainsFunc(held, func(d *Decision) bool {
@@ -773,6 +773,63 @@ func (p *precedence) receptionConflict(req *RouteRequest, tc *TrainController) (
 	return c, true
 }
 
+// keepBackConflict is the train, ready to leave a station, kept there because
+// at the next it would stand on a loop that calls need (the plan's keepBack).
+// Like a reception hold, the hold rule does not apply to it: the train it is
+// kept back for may have a lower priority. The other train is the call whose
+// track frees last.
+func (p *precedence) keepBackConflict(req *RouteRequest) (conflict, bool) {
+	s := p.sim
+	t := req.Train
+	if req.Entry || !p.cfg.throughRefuge() {
+		return conflict{}, false
+	}
+	tc := s.trainCtrllers[t.ID()]
+	if !(tc.phase == phaseReady || tc.passing) {
+		return conflict{}, false
+	}
+	v, ok := receivingVisit(p.projectNow(t), headingTo(tc))
+	if !ok {
+		return conflict{}, false
+	}
+	if _, ok := p.keepBackFrom(t, v.stn); !ok {
+		return conflict{}, false
+	}
+	pl := p.plan(v.stn)
+	a, ok := pl.assign[t.ID()]
+	if !ok || !a.keepBack {
+		return conflict{}, false
+	}
+	var by booking
+	for _, id := range a.keptFor {
+		if e := pl.assign[id]; e != nil && e.pf != nil && e.to > by.to {
+			by = booking{id, e.pf, e.from, e.to}
+		}
+	}
+	if by.train.IsZero() {
+		return conflict{}, false
+	}
+	wait := by.to - float64(p.cfg.HeadwayMin) - v.arr
+	if wait <= epsilon {
+		return conflict{}, false
+	}
+	c := conflict{
+		Conflict: Conflict{
+			Kind: KindReception, Held: t.ID(), For: by.train,
+			HeldPrio: s.Priority(t.ID()), ForPrio: s.Priority(by.train),
+			Saving: units.Min(wait), Wait: units.Min(wait),
+		},
+		release:   by.pf.Track.Id,
+		milestone: -1,
+		reception: true,
+		why:       fmt.Sprintf("keeps %s pf %s free for %s's call", v.stn.Code, by.pf.PfNo, by.train),
+	}
+	if hv, ok := p.project(s.trainCtrllers[by.train].train).visitAt(v.stn); ok && hv.stop+1 < len(s.trainCtrllers[by.train].train.Schedule()) {
+		c.milestone = hv.stop + 1
+	}
+	return c, true
+}
+
 // atStation reports whether the train's front is on a station track of its
 // stop k, so it is clear of the line behind it.
 func (p *precedence) atStation(tc *TrainController, k int) bool {
@@ -887,8 +944,8 @@ func (p *precedence) ruledOut(t *ops.Train, c conflict, held []*Decision) string
 }
 
 // trackRuledOut says why the track the train stands on rules out holding it
-// there for wait minutes, or "": a through track, or a main line it would
-// stand on too long.
+// there for wait minutes, or "": one it may not stand on that long
+// (standable).
 func (p *precedence) trackRuledOut(t *ops.Train, wait float64) string {
 	s := p.sim
 	tc := s.trainCtrllers[t.ID()]
@@ -905,15 +962,23 @@ func (p *precedence) trackRuledOut(t *ops.Train, wait float64) string {
 	if tc.phase == phaseReady {
 		stay = s.CurTime() - tc.arrivedAt
 	}
-	switch stn.TrackClass(trk.Id) {
-	case infra.Through:
-		return "through_track"
-	case infra.Main:
-		if stn.RunsThrough() && (tc.phase == phaseReady || tc.passing) && stay+wait > float64(p.cfg.MainLineMaxStayMin) {
-			return "main_line_limit"
+	reason := p.standable(callAt(tc, stn), stn, platformOf(stn, trk), stay+wait)
+	if reason == "main_line_limit" && tc.phase != phaseReady && !tc.passing {
+		return "" // running in to a call there: its dwell is the plan's business
+	}
+	return reason
+}
+
+// callAt is the train's schedule point at stn, where it stands or is running
+// in to: nil if neither is there.
+func callAt(tc *TrainController, stn *infra.Station) *ops.SchedulePoint {
+	sched := tc.train.Schedule()
+	for _, k := range []int{tc.train.StopIndex(), headingTo(tc)} {
+		if k >= 0 && k < len(sched) && sched[k].StnCode == stn.Code {
+			return sched[k]
 		}
 	}
-	return ""
+	return nil
 }
 
 // blockedBy rejects steps onto the train's tracks, or through a switch it has

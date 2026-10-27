@@ -7,6 +7,7 @@ import (
 	"trainapp/railway/ids"
 	"trainapp/railway/infra"
 	"trainapp/railway/ops"
+	"trainapp/units"
 )
 
 // Station plan.
@@ -22,6 +23,12 @@ import (
 // the only loops lie across another line's main: crossing over and back costs
 // more than the stand.
 //
+// With through_track_max_stay_min set, a train that does not call (a pass or
+// a halt) takes its own through track first, whether it runs through or
+// stands there, up to that long: the platforms stay free for trains that
+// call. A higher-priority train due in the same window still gets the
+// through track first, as the plan goes highest priority first.
+//
 // The plan gives out a station's tracks to the trains due there within the
 // horizon, highest priority first, each taking the first track in its order
 // that is free for its whole stay. So a higher-priority train keeps its
@@ -35,6 +42,7 @@ const (
 	reasonThrough      = "through_track"  // a stopping train on a through track
 	reasonPassing      = "passing"        // a faster track for a train running through
 	reasonStanding     = "standing"       // a loop for a train running through that is expected to stand
+	reasonRefuge       = "refuge_through" // a through track for a train not calling that is expected to stand
 	reasonTooShort     = "too_short"      // the train is longer than the platform (fit.go)
 	reasonOverride     = "override"       // an operator pinned it
 )
@@ -81,6 +89,9 @@ func (p *precedence) trackRank(t *ops.Train, k int, stn *infra.Station, c candid
 	// of those is best is down to which side of the station the train is on
 	// (rankCandidates)
 	others := !mine && len(stn.MainLinesOf(c.pf.Id)) > 0
+	if p.cfg.throughRefuge() && !passengers(sp) {
+		return p.notCallingRank(t, k, stn, c, stay, mine, others)
+	}
 	if sp.IsPass() && p.standing(stay) {
 		// a loop on its own side first; a short stand on its own main
 		// before crossing another line's main to reach a loop
@@ -127,6 +138,77 @@ func (p *precedence) trackRank(t *ops.Train, k int, stn *infra.Station, c candid
 		return 3
 	}
 	return 5 // a main line, for too long a stay
+}
+
+// notCallingRank is trackRank for a train that does not call, with
+// through_track_max_stay_min set: it takes its own through track first,
+// whether it runs through or stands, so the platforms stay free for trains
+// that call. Then its own main, for a short stand only, then a loop, its own
+// side first. Another line's main counts as a loop for a train running
+// through, as in trackRank; for one that stands it is the last resort, as is
+// a track it would stand on too long. So is the through track for one that
+// stands while a train of the same or higher priority that does not call is
+// due (metByEqual): the through track stays free for that train.
+func (p *precedence) notCallingRank(t *ops.Train, k int, stn *infra.Station, c candidate, stay float64, mine, others bool) int {
+	sp := t.Schedule()[k]
+	class := stn.TrackClass(c.pf.Id)
+	standing := p.standing(stay)
+	r := 4
+	switch {
+	case others:
+		if standing {
+			r = 8
+		}
+	case class == infra.Through:
+		r = 0
+		if standing && p.metByEqual(t, k, stn, stay) {
+			r = 8
+		}
+	case class == infra.Main && mine:
+		r = 2
+	case standing:
+		if crossings, _ := p.side(t, k, stn, c); crossings > 0 {
+			r = 6
+		}
+	}
+	if !others && class != infra.Loop && p.standable(sp, stn, c.pf, stay) != "" {
+		r = 8
+	}
+	if c.pf.PfNo != sp.SpPfNo {
+		r++
+	}
+	return r
+}
+
+// metByEqual reports whether another train of the same or higher priority
+// that does not call at stn, so may want the through track, is due there,
+// whichever way it runs, while train t stands there for stay minutes at its
+// stop k. One that calls takes a platform and is not in the way. It is told from the
+// projections, so only once t's own is built: the station plan builds every
+// train's before ranking their tracks, while a projection being built ranks
+// tracks without it. A train whose projection is being built is left out.
+func (p *precedence) metByEqual(t *ops.Train, k int, stn *infra.Station, stay float64) bool {
+	s := p.sim
+	pr, ok := p.projections[t.ID()]
+	if !ok {
+		return false
+	}
+	v, ok := pr.visitOf(k)
+	if !ok {
+		return false
+	}
+	hw := float64(p.cfg.HeadwayMin)
+	from, to := v.arr-hw, v.arr+stay+hw
+	mine := s.Priority(t.ID())
+	for _, h := range s.trains {
+		if h == t || p.building[h.ID()] || s.trainCtrllers[h.ID()].phase == phaseExited || s.Priority(h.ID()) < mine {
+			continue
+		}
+		if hv, ok := p.project(h).visitAt(stn); ok && !passengers(h.Schedule()[hv.stop]) && hv.arr < to && hv.dep > from {
+			return true
+		}
+	}
+	return false
 }
 
 // minStand is the shortest expected stand that sends a train running through
@@ -267,6 +349,13 @@ type assignment struct {
 	ranked   []candidate // its candidates, best first
 	blockers []booking   // with no track: the bookings in its way
 	fixed    bool
+	// keepBack: a train that does not call, which would stand on a loop a
+	// call needs, is better kept at the station before until the calls in
+	// keptFor have been made (keepBack). It has no track in the plan;
+	// fallback is the loop it takes if it cannot be kept back.
+	keepBack bool
+	keptFor  []ids.TrainID
+	fallback *infra.Platform
 }
 
 type stationPlan struct {
@@ -349,13 +438,52 @@ func (p *precedence) buildPlan(stn *infra.Station) *stationPlan {
 	slices.SortStableFunc(open, func(x, y due) int {
 		return cmp.Or(cmp.Compare(y.prio, x.prio), cmp.Compare(x.v.arr, y.v.arr), cmp.Compare(x.seq, y.seq))
 	})
-	for _, d := range open {
+	rest := make([]*ops.Train, len(open))
+	for i, d := range open {
+		rest[i] = d.t
+	}
+	for i, d := range open {
 		a := d.a
-		for _, c := range a.ranked {
-			if _, busy := pl.bookedBy(d.t.ID(), c.pf, a.from, a.to); !busy {
-				a.pf = c.pf
-				break
+		// a train that does not call and stands there keeps off the loops
+		// the calls after it need (keepBack)
+		refuge := p.cfg.throughRefuge() && !passengers(d.t.Schedule()[a.stop]) && p.standing(a.stay)
+		// whether it is in their way is judged by when it would get there
+		// if it set off now: a train already kept back stays kept back
+		// until they have called
+		win := a
+		if refuge {
+			if v, ok := p.keepBackFrom(d.t, stn); ok {
+				w := *a
+				w.from, w.to = v.arr-hw, v.arr-hw+(a.to-a.from)
+				win = &w
 			}
+		}
+		var first *infra.Platform
+		var calls []*ops.Train
+		for _, c := range a.ranked {
+			if _, busy := pl.bookedBy(d.t.ID(), c.pf, a.from, a.to); busy {
+				continue
+			}
+			if refuge && !c.pf.IsThrough() {
+				if blocked := p.blockedCalls(pl, d.t, win, c.pf, rest[i+1:]); len(blocked) > 0 {
+					if first == nil {
+						first, calls = c.pf, blocked
+					}
+					continue
+				}
+			}
+			a.pf = c.pf
+			break
+		}
+		if a.pf == nil && first != nil {
+			if p.keepBack(pl, d.t, win, calls) {
+				a.keepBack, a.fallback = true, first
+				for _, c := range calls {
+					a.keptFor = append(a.keptFor, c.ID())
+				}
+				continue
+			}
+			a.pf = first
 		}
 		if a.pf == nil {
 			for _, c := range a.ranked {
@@ -368,6 +496,88 @@ func (p *precedence) buildPlan(stn *infra.Station) *stationPlan {
 		pl.bookings = append(pl.bookings, booking{d.t.ID(), a.pf, a.from, a.to})
 	}
 	return pl
+}
+
+// blockedCalls lists the trains of rest, still to be given a track, that call
+// at the station during train t's window a and would be left with no track
+// if t took pf, though they would have one otherwise. Each takes the first of
+// its tracks free, in turn, as the plan gives them out.
+func (p *precedence) blockedCalls(pl *stationPlan, t *ops.Train, a *assignment, pf *infra.Platform, rest []*ops.Train) []*ops.Train {
+	left := func(extra []booking) map[ids.TrainID]bool {
+		bs := append(slices.Clone(pl.bookings), extra...)
+		out := map[ids.TrainID]bool{}
+		for _, c := range rest {
+			e := pl.assign[c.ID()]
+			if !passengers(c.Schedule()[e.stop]) || !(e.from < a.to && a.from < e.to) {
+				continue
+			}
+			i := slices.IndexFunc(e.ranked, func(cand candidate) bool {
+				return !slices.ContainsFunc(bs, func(b booking) bool { return b.pf == cand.pf && b.overlaps(e.from, e.to) })
+			})
+			if i < 0 {
+				out[c.ID()] = true
+				continue
+			}
+			bs = append(bs, booking{c.ID(), e.ranked[i].pf, e.from, e.to})
+		}
+		return out
+	}
+	anyway := left(nil)
+	with := left([]booking{{t.ID(), pf, a.from, a.to}})
+	var out []*ops.Train
+	for _, c := range rest {
+		if with[c.ID()] && !anyway[c.ID()] {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// keepBack reports whether train t, which does not call at the plan's
+// station and stands there, but would leave the calls with no track whichever
+// loop it took, is better kept at the station before until they have called: if that delays it no more than taking pf would delay them, as the
+// hold rule weighs it (HoldRule.KeepBack). Kept back, it gets there once the
+// last of them has left, and is delayed only past when it would have left
+// anyway. Only a train that can still be kept back counts: one ready to
+// leave the station before, or running through it (keepBackFrom).
+func (p *precedence) keepBack(pl *stationPlan, t *ops.Train, a *assignment, calls []*ops.Train) bool {
+	s := p.sim
+	hw := float64(p.cfg.HeadwayMin)
+	if _, ok := p.keepBackFrom(t, pl.stn); !ok {
+		return false
+	}
+	dep := a.from + hw + a.stay // when it would leave, kept back or not
+	own := 0.0
+	var others []Waiter
+	for _, c := range calls {
+		e := pl.assign[c.ID()]
+		own = max(own, e.to-dep)
+		others = append(others, Waiter{Prio: s.Priority(c.ID()), Wait: units.Min(max(a.to-(e.from+hw), 0))})
+	}
+	return p.rule.KeepBack(Waiter{Prio: s.Priority(t.ID()), Wait: units.Min(max(own, 0))}, others)
+}
+
+// keepBackFrom is the train's visit to stn if it can be kept back from it:
+// it is ready to leave, or running through, the station before, and stn is
+// the next one that can take it off the line. The visit is projected as if
+// it set off now, whatever holds it, as a reception hold is (so a train
+// kept back stays kept back until the calls are made).
+func (p *precedence) keepBackFrom(t *ops.Train, stn *infra.Station) (visit, bool) {
+	s := p.sim
+	tc := s.trainCtrllers[t.ID()]
+	if !(tc.phase == phaseReady || tc.passing) {
+		return visit{}, false
+	}
+	if trk := tc.standTrack(); trk == nil {
+		return visit{}, false
+	} else if at, ok := s.world.StationOfPlatform(trk); !ok || at == stn {
+		return visit{}, false
+	}
+	v, ok := receivingVisit(p.projectNow(t), headingTo(tc))
+	if !ok || v.stn != stn {
+		return visit{}, false
+	}
+	return v, true
 }
 
 // predictedHold is how long the train is likely to stand at the visit beyond
@@ -541,12 +751,16 @@ func (p *precedence) order(req *RouteRequest, k int) (pfs, booked []*infra.Platf
 	if !planned || a.stop != k || a.fixed {
 		return nil, nil, true
 	}
-	if a.pf == nil {
+	first := a.pf
+	if a.keepBack {
+		first = a.fallback // let go after all: the loop it was kept back from
+	}
+	if first == nil {
 		return nil, nil, false
 	}
-	pfs = []*infra.Platform{a.pf}
+	pfs = []*infra.Platform{first}
 	for _, c := range a.ranked {
-		if c.pf == a.pf {
+		if c.pf == first {
 			continue
 		}
 		if _, ok := p.bookingAgainst(req.Train.ID(), pl, a, c.pf); ok {
@@ -608,9 +822,12 @@ func (p *precedence) changeReason(t *ops.Train, k int, stn *infra.Station, pf *i
 	}
 	class := stn.TrackClass(tt.pf.Id)
 	switch {
-	case sp.IsPass():
+	case sp.IsPass() || (p.cfg.throughRefuge() && !passengers(sp)):
 		if p.rank(t, k, stn, *tt, a.stay) > p.rank(t, k, stn, *got, a.stay) {
-			if p.standing(a.stay) {
+			switch {
+			case p.standing(a.stay) && p.cfg.throughRefuge() && stn.TrackClass(got.pf.Id) == infra.Through:
+				return reasonRefuge, ids.TrainID{}
+			case p.standing(a.stay):
 				return reasonStanding, ids.TrainID{}
 			}
 			return reasonPassing, ids.TrainID{}
