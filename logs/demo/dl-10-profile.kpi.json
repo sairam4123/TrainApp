@@ -5163,16 +5163,16 @@
       {
         "track": "dlKrurVelL10",
         "trains": 5,
-        "gained_min": 0.2691919191919112,
+        "gained_min": 0.8460145315385432,
         "worst": "16603",
-        "worst_min": 0.2691919191919112
+        "worst_min": 0.8460145315385432
       },
       {
         "track": "dlVelPdktL10",
         "trains": 5,
-        "gained_min": 0.9870464910068932,
+        "gained_min": 0.4282250185334249,
         "worst": "16603",
-        "worst_min": 0.9870464910068932
+        "worst_min": 0.4282250185334249
       },
       {
         "track": "dlPdktNmnL10",
@@ -5237,9 +5237,9 @@
       {
         "track": "dlPdktNmnL20",
         "trains": 5,
-        "gained_min": 0.10157952744935983,
+        "gained_min": 0.1444545454545505,
         "worst": "16604",
-        "worst_min": 0.10157952744935983
+        "worst_min": 0.1444545454545505
       },
       {
         "track": "dlTpjKrmgL20",

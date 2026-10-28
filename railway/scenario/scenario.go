@@ -8,6 +8,9 @@
 // world is tpjkkdi, tpjkkdi-sl, tpjkkdi-dl or a world snapshot; file paths are relative
 // to the scenario file.
 //
+// "safety": "off" runs it without the sim's deadlock avoidance (see
+// sim.Sim.NoDeadlockAvoidance), to show what that prevents.
+//
 // A scenario may also name a timetable, as trainapp -timetable writes one
 // from a run of it. It then runs the timetable's timed trains in place of the
 // schedule (see Trains), and the schedule, the draft the timetable was made
@@ -28,6 +31,9 @@ import (
 // RuleOff runs without precedence.
 const RuleOff = "off"
 
+// SafetyOff, as a scenario's safety, runs it without deadlock avoidance.
+const SafetyOff = "off"
+
 // Scenario is a scenario file.
 type Scenario struct {
 	Name        string           `json:"name"`
@@ -37,6 +43,8 @@ type Scenario struct {
 	Timetable   string           `json:"timetable,omitempty"`
 	Profile     string           `json:"profile"`
 	Disruptions []ops.Disruption `json:"disruptions,omitempty"`
+	// Safety is SafetyOff to run without deadlock avoidance; empty for on.
+	Safety string `json:"safety,omitempty"`
 
 	// Path is the scenario file.
 	Path string `json:"-"`
@@ -64,6 +72,9 @@ func Load(path string) (*Scenario, error) {
 	}
 	if sc.World == "" || (sc.Schedule == "" && sc.Timetable == "") {
 		return nil, fmt.Errorf("%s: a scenario needs a world and a schedule or a timetable", path)
+	}
+	if sc.Safety != "" && sc.Safety != SafetyOff {
+		return nil, fmt.Errorf("%s: safety is %q: leave it out, or %q to run without deadlock avoidance", path, sc.Safety, SafetyOff)
 	}
 	return sc, nil
 }
@@ -169,6 +180,11 @@ func (sc *Scenario) Trains() ([]*ops.Train, error) {
 // ProfilePath is the profile, resolved against the scenario file; empty for
 // none.
 func (sc *Scenario) ProfilePath() string { return sc.Rel(sc.Profile) }
+
+// Configure sets up s as the scenario asks beyond its files: its safety.
+func (sc *Scenario) Configure(s *sim.Sim) {
+	s.NoDeadlockAvoidance = sc.Safety == SafetyOff
+}
 
 // ApplyRule replaces the profile's precedence rule with rule: a hold rule's
 // name, or RuleOff to run without precedence. An empty rule keeps the

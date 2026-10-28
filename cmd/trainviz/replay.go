@@ -22,10 +22,11 @@ type replay struct {
 	t       float64
 	end     float64
 
-	trains    []string          // in the order the sim added them
-	trackName map[string]string // display name of each track
-	pfNo      map[string]string // platform number of each platform track, by name
-	failure   string            // why the run failed, if it did
+	trains    []string              // in the order the sim added them
+	trackName map[string]string     // display name of each track
+	pfNo      map[string]string     // platform number of each platform track, by name
+	failure   string                // why the run failed, if it did
+	deadlock  *vizproto.DeadlockMsg // the deadlock it ended in, if it did
 
 	class   map[string]string // each train's class, if it has one
 	classes []classKey        // the classes in the run, lowest priority first
@@ -65,6 +66,9 @@ func newReplay(hello *vizproto.HelloMsg, msgs []vizproto.Message) *replay {
 		if e, ok := m.(*vizproto.ErrorMsg); ok {
 			r.failure = e.Message
 		}
+		if d, ok := m.(*vizproto.DeadlockMsg); ok {
+			r.deadlock = d
+		}
 	}
 	if len(msgs) > 0 {
 		r.end = msgs[len(msgs)-1].Head().T
@@ -77,6 +81,15 @@ func newReplay(hello *vizproto.HelloMsg, msgs []vizproto.Message) *replay {
 func isEventMsg(m vizproto.Message) bool {
 	_, ok := m.(*vizproto.EventMsg)
 	return ok
+}
+
+// deadlocked is the deadlock the run ended in, once playback has reached the
+// time its trains were stuck; nil before, or if there was none.
+func (r *replay) deadlocked() *vizproto.DeadlockMsg {
+	if r.deadlock != nil && r.t >= r.deadlock.Since {
+		return r.deadlock
+	}
+	return nil
 }
 
 // reset goes back to the state before the first event.

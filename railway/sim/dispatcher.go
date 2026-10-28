@@ -333,6 +333,7 @@ func platformsByPreference(stn *infra.Station, prefPfNo string) []*infra.Platfor
 
 func (disp *Dispatcher) tryEntry(req *RouteRequest, pfs []*infra.Platform, blockers *blockerSet) (*interlocking.Route, error) {
 	var firstErr error
+	unsafeAt := "" // a later platform refused as unsafe
 	for _, pf := range pfs {
 		boundary := disp.world.TrackGraph.FindWorldBoundaryPoint(pf.Track)
 		if boundary == nil {
@@ -345,12 +346,24 @@ func (disp *Dispatcher) tryEntry(req *RouteRequest, pfs []*infra.Platform, block
 		}
 		if firstErr == nil {
 			firstErr = err
+		} else if unsafeAt == "" && errors.Is(err, ErrUnsafe) {
+			unsafeAt = pf.Track.String()
 		}
 	}
 	if firstErr == nil {
 		firstErr = ErrNoEntryPlatform
 	}
-	return nil, firstErr
+	return nil, withUnsafe(firstErr, unsafeAt)
+}
+
+// withUnsafe adds to a request's first error that a later way, to track at,
+// was refused as unsafe, so the reason shows the safe-state check held it
+// too. Only first is wrapped: errors.Is(err, ErrUnsafe) is as it was.
+func withUnsafe(first error, at string) error {
+	if at == "" || errors.Is(first, ErrUnsafe) {
+		return first
+	}
+	return fmt.Errorf("%w; %s: %s", first, at, ErrUnsafe.Error())
 }
 
 // tryRoute reserves the first signal section of the best way from the train
@@ -387,6 +400,7 @@ func (disp *Dispatcher) tryRoute(req *RouteRequest, pfs []*infra.Platform, block
 
 	tried := map[string]struct{}{}
 	var firstErr error
+	unsafeAt := "" // a later way, to this platform, refused as unsafe
 	for _, c := range append(free, busy...) {
 		for _, r := range c.ranked {
 			if anyCorrect && !r.FollowsSignals {
@@ -409,11 +423,13 @@ func (disp *Dispatcher) tryRoute(req *RouteRequest, pfs []*infra.Platform, block
 			}
 			if firstErr == nil {
 				firstErr = err
+			} else if unsafeAt == "" && errors.Is(err, ErrUnsafe) {
+				unsafeAt = c.pf.Track.String()
 			}
 		}
 	}
 	if firstErr == nil {
 		firstErr = fmt.Errorf("no route to %s", req.Station.Code)
 	}
-	return nil, firstErr
+	return nil, withUnsafe(firstErr, unsafeAt)
 }

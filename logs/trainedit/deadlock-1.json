@@ -1,0 +1,6 @@
+{
+  "name": "deadlock-1",
+  "world": "/Users/sairammangeshkar/Documents/Projects/TrainApp/scenarios/worlds/deadlock-1.json",
+  "schedule": "/Users/sairammangeshkar/Documents/Projects/TrainApp/logs/trainedit/deadlock-1.schedule.json",
+  "profile": "/Users/sairammangeshkar/Documents/Projects/TrainApp/profiles/ir.json"
+}

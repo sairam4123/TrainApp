@@ -1,0 +1,60 @@
+{
+  "trains": [
+    {
+      "number": "T001",
+      "name": "Test",
+      "class": "Mail/Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "STA",
+          "kind": "stop",
+          "arr": 1,
+          "dwell": 2
+        },
+        {
+          "stn": "STB",
+          "kind": "stop",
+          "dwell": 2
+        }
+      ]
+    },
+    {
+      "number": "T002",
+      "name": "Test",
+      "class": "Mail/Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "STA",
+          "kind": "stop",
+          "arr": 2,
+          "dwell": 2
+        },
+        {
+          "stn": "STB",
+          "kind": "stop",
+          "dwell": 2
+        }
+      ]
+    },
+    {
+      "number": "T003",
+      "class": "Mail/Express",
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "STB",
+          "kind": "stop",
+          "arr": 1,
+          "dwell": 2
+        },
+        {
+          "stn": "STA",
+          "kind": "stop",
+          "dwell": 2
+        }
+      ]
+    }
+  ]
+}

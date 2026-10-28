@@ -402,7 +402,7 @@ func TestRoute(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	way, err := route(s, "TPJ", "KKDI", "")
+	way, err := edit.RouteStations(s, "TPJ", "KKDI", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -410,7 +410,7 @@ func TestRoute(t *testing.T) {
 	if !slices.Equal(way, want) {
 		t.Errorf("way %v, want %v", way, want)
 	}
-	back, _ := route(s, "KKDI", "PDKT", "")
+	back, _ := edit.RouteStations(s, "KKDI", "PDKT", "")
 	if !slices.Equal(back, []string{"KKDI", "KTYR", "CTND", "TYM", "NMN", "PDKT"}) {
 		t.Errorf("back %v", back)
 	}
@@ -548,12 +548,12 @@ func TestRouteDoesNotReverse(t *testing.T) {
 	for _, c := range []struct{ from, to, want string }{
 		{"WJN", "NJN", "WJN MID NJN"}, {"NJN", "WJN", "NJN MID WJN"}, {"EJN", "WJN", "EJN MID WJN"},
 	} {
-		way, err := route(s, c.from, c.to, "")
+		way, err := edit.RouteStations(s, c.from, c.to, "")
 		if err != nil || strings.Join(way, " ") != c.want {
 			t.Errorf("%s to %s: %v, %v, want %s", c.from, c.to, way, err, c.want)
 		}
 	}
-	if _, err := route(s, "EJN", "NJN", ""); err == nil || !strings.Contains(err.Error(), "reverse") {
+	if _, err := edit.RouteStations(s, "EJN", "NJN", ""); err == nil || !strings.Contains(err.Error(), "reverse") {
 		t.Errorf("EJN to NJN: %v, want it refused for reversing", err)
 	}
 }
@@ -562,12 +562,12 @@ func TestRouteDoesNotReverse(t *testing.T) {
 // picks the other.
 func TestRouteOtherWays(t *testing.T) {
 	s := twoWaysWorld(t)
-	way, err := route(s, "AAA", "DDD", "")
+	way, err := edit.RouteStations(s, "AAA", "DDD", "")
 	if err != nil || len(way) != 3 {
 		t.Fatalf("AAA to DDD: %v, %v", way, err)
 	}
 	other := map[string]string{"BBB": "CCC", "CCC": "BBB"}[way[1]]
-	if via, err := route(s, "DDD", "AAA", other); err != nil || strings.Join(via, " ") != "DDD "+other+" AAA" {
+	if via, err := edit.RouteStations(s, "DDD", "AAA", other); err != nil || strings.Join(via, " ") != "DDD "+other+" AAA" {
 		t.Errorf("DDD to AAA by %s: %v, %v", other, via, err)
 	}
 }
@@ -717,24 +717,24 @@ func twoWaysWorld(t *testing.T) *infra.Snapshot {
 // ways lists each way round, shortest first, over track a train can run.
 func TestWays(t *testing.T) {
 	s := twoWaysWorld(t)
-	ws := ways(s, "AAA", "DDD", 6)
+	ws := edit.Routes(s, "AAA", "DDD", 6)
 	if len(ws) != 2 {
 		t.Fatalf("%d ways, want 2", len(ws))
 	}
 	var labels []string
 	for _, w := range ws {
-		labels = append(labels, w.label())
+		labels = append(labels, w.Label())
 		// the points are a run of track, one way
-		for i := 0; i+1 < len(w.points); i++ {
-			if !slices.ContainsFunc(s.Tracks, func(tr infra.SnapshotTrack) bool { return tr.From == w.points[i] && tr.To == w.points[i+1] }) {
-				t.Errorf("%s: no track east from %s to %s", w.label(), w.points[i], w.points[i+1])
+		for i := 0; i+1 < len(w.Points); i++ {
+			if !slices.ContainsFunc(s.Tracks, func(tr infra.SnapshotTrack) bool { return tr.From == w.Points[i] && tr.To == w.Points[i+1] }) {
+				t.Errorf("%s: no track east from %s to %s", w.Label(), w.Points[i], w.Points[i+1])
 			}
 		}
 	}
 	if !slices.Equal(labels, []string{"by BBB · 11 km", "by CCC · 11 km"}) {
 		t.Errorf("ways %v", labels)
 	}
-	if ws := ways(s, "AAA", "DDD", 1); len(ws) != 1 {
+	if ws := edit.Routes(s, "AAA", "DDD", 1); len(ws) != 1 {
 		t.Errorf("max 1: %d ways", len(ws))
 	}
 
@@ -742,8 +742,8 @@ func TestWays(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ws = ways(dl, "KKDI", "TPJ", 6)
-	if len(ws) != 1 || strings.Join(ws[0].stations, " ") != "KKDI PDKT TPJ" || ws[0].m < 96000 {
+	ws = edit.Routes(dl, "KKDI", "TPJ", 6)
+	if len(ws) != 1 || strings.Join(ws[0].Stations, " ") != "KKDI PDKT TPJ" || ws[0].M < 96000 {
 		t.Errorf("KKDI to TPJ: %+v", ws)
 	}
 }
@@ -774,9 +774,9 @@ func TestRoutePicker(t *testing.T) {
 	if len(r.ways) != 2 || len(r.sh.table) != 3 {
 		t.Fatalf("%d ways and %d stations, want 2 and 3", len(r.ways), len(r.sh.table))
 	}
-	second := r.ways[1].label()
+	second := r.ways[1].Label()
 	setCell(t, m, "way", second)
-	via := r.ways[1].stations[1]
+	via := r.ways[1].Stations[1]
 	setCell(t, m, "stop:"+via, "■")
 	setCell(t, m, "dwell:"+via, "5")
 	setCell(t, m, "pf:"+via, "1")
@@ -832,7 +832,7 @@ func TestPatternBackOnAnyPlatform(t *testing.T) {
 	setCell(t, m, "from", "AAA")
 	setCell(t, m, "to", "DDD")
 	r := m.panel.(*routePicker)
-	via := r.ways[0].stations[1]
+	via := r.ways[0].Stations[1]
 	setCell(t, m, "stop:"+via, "■")
 	setCell(t, m, "pf:"+via, "1")
 	setCell(t, m, "count", "1")
@@ -1006,7 +1006,7 @@ func TestTrainPath(t *testing.T) {
 				slices.Reverse(stns)
 			}
 			pts := []ops.PointSpec{{Stn: stns[0]}, {Stn: "PDKT", Pf: pf}, {Stn: stns[2]}}
-			path, err := trainPath(s, pts)
+			path, err := edit.TrainPath(s, pts)
 			if err != nil {
 				continue
 			}
@@ -1019,8 +1019,11 @@ func TestTrainPath(t *testing.T) {
 			if i := slices.Index(path, from); i < 0 || i+1 >= len(path) || path[i+1] != to {
 				t.Errorf("%v: the path does not run over PDKT platform %s: %v", stns, pf, path)
 			}
-			g := newTrackGraph(s)
-			if g.code[path[0]] != stns[0] || g.code[path[len(path)-1]] != stns[2] {
+			code := map[string]string{}
+			for _, p := range s.Points {
+				code[p.ID] = p.Stn
+			}
+			if code[path[0]] != stns[0] || code[path[len(path)-1]] != stns[2] {
 				t.Errorf("%v: the path runs %s to %s", stns, path[0], path[len(path)-1])
 			}
 		}
@@ -1028,7 +1031,7 @@ func TestTrainPath(t *testing.T) {
 	if runs < 2 {
 		t.Errorf("only %d runs over PDKT's platforms", runs)
 	}
-	if _, err := trainPath(s, []ops.PointSpec{{Stn: "TPJ"}, {Stn: "KKDI"}, {Stn: "PDKT"}}); err == nil {
+	if _, err := edit.TrainPath(s, []ops.PointSpec{{Stn: "TPJ"}, {Stn: "KKDI"}, {Stn: "PDKT"}}); err == nil {
 		t.Error("a path that reverses")
 	}
 }
@@ -1084,7 +1087,7 @@ func TestRoutePickerSpaceStops(t *testing.T) {
 	setCell(t, m, "from", "AAA")
 	setCell(t, m, "to", "DDD")
 	r := m.panel.(*routePicker)
-	via := r.ways[0].stations[1]
+	via := r.ways[0].Stations[1]
 	setCell(t, m, "pf:"+via, "1")
 	for _, want := range []string{"■", "·"} {
 		press(m, "space")
@@ -1170,7 +1173,7 @@ func TestEditTrainInPicker(t *testing.T) {
 	setCell(t, m, "from", "AAA")
 	setCell(t, m, "to", "DDD")
 	r := m.panel.(*routePicker)
-	via := r.ways[0].stations[1]
+	via := r.ways[0].Stations[1]
 	setCell(t, m, "name", "Express")
 	setCell(t, m, "priority", "2")
 	setCell(t, m, "entry", "08:00")

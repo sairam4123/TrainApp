@@ -1,0 +1,6262 @@
+{
+  "rounding_min": 1,
+  "trains": [
+    {
+      "number": "12606",
+      "name": "Karaikkudi - Chennai Egmore Pallavan SF Express",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 335,
+          "dep": 341,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 349,
+          "dep": 349,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "kkdiPf1S-kkdiThW1",
+              "blocks": [
+                "kkdiSwW1"
+              ],
+              "in": 341.00199999999995,
+              "out": 343.58880295988376
+            },
+            {
+              "track": "kkdiThW1-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 341.6218029598839,
+              "out": 343.98880295988374
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 342.02280295988385,
+              "out": 344.3888029598838
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 342.4238029598838,
+              "out": 344.6871207296586
+            },
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 342.82480295988375,
+              "out": 348.5719397134295
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 352,
+          "dep": 352,
+          "dwell": 0,
+          "run": 3,
+          "via": [
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 348.74148516797493,
+              "out": 351.41230334979304
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 351.1424851679749,
+              "out": 351.4668488043385
+            },
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 351.1980306225203,
+              "out": 351.52139425888396
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 357,
+          "dep": 357,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 351.6909397134294,
+              "out": 352.015303349793
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 351.7464851679748,
+              "out": 352.06984880433845
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 351.80203062252025,
+              "out": 356.49648516797475
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 356.2266669861566,
+              "out": 356.5510306225202
+            },
+            {
+              "track": "tymPf3E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 356.28221244070204,
+              "out": 356.6055760770657
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 363,
+          "dep": 363,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "tymPf3S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 356.7751215316111,
+              "out": 357.0994851679747
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 356.83066698615653,
+              "out": 357.15403062252017
+            },
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 356.88621244070197,
+              "out": 362.06583603488247
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 366,
+          "dep": 367,
+          "dwell": 1,
+          "min_dwell": 1,
+          "run": 3,
+          "via": [
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 362.2353814894279,
+              "out": 365.29615216511826
+            },
+            {
+              "track": "pdktPf1E-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 364.9692771123235,
+              "out": 365.3843305846152
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 375,
+          "dep": 375,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "pdktPf1S-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 367.00199999999995,
+              "out": 368.4414021651341
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 367.59467958880987,
+              "out": 374.4692823118761
+            },
+            {
+              "track": "velThE0-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 374.19946413005795,
+              "out": 374.52382776642156
+            },
+            {
+              "track": "velPf3E-velThE0",
+              "blocks": [
+                "velSwE0"
+              ],
+              "in": 374.2550095846034,
+              "out": 374.578373220967
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 382,
+          "dep": 382,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "velPf3S-velThW0",
+              "blocks": [
+                "velSwW0"
+              ],
+              "in": 374.74791867551244,
+              "out": 375.07228231187605
+            },
+            {
+              "track": "velThW0-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 374.8034641300579,
+              "out": 375.1268277664215
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 374.8590095846033,
+              "out": 381.69710049369417
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 381.427282311876,
+              "out": 381.7516459482396
+            },
+            {
+              "track": "krurPf3E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 381.48282776642145,
+              "out": 381.8061914027851
+            }
+          ]
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 391,
+          "dep": 391,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "krurPf3S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 381.9757368573305,
+              "out": 382.3001004936941
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 382.03128231187594,
+              "out": 382.3546459482396
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 382.0868277664214,
+              "out": 390.2285550391486
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 389.95873685733045,
+              "out": 390.28310049369406
+            },
+            {
+              "track": "krmgPf3E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 390.0142823118759,
+              "out": 390.3376459482395
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 403,
+          "dep": 416,
+          "dwell": 13,
+          "min_dwell": 1,
+          "run": 12,
+          "via": [
+            {
+              "track": "krmgPf3S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 390.50719140278494,
+              "out": 390.83155503914855
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 390.5627368573304,
+              "out": 390.886100493694
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 390.6182823118758,
+              "out": 399.1343951064884
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 397.34417288426636,
+              "out": 399.53539510648835
+            },
+            {
+              "track": "tpjThE8-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 397.56739510648856,
+              "out": 399.9363951064883
+            },
+            {
+              "track": "tpjThE7-tpjThE8",
+              "blocks": [
+                "tpjSwE8"
+              ],
+              "in": 397.9683951064885,
+              "out": 400.33639510648834
+            },
+            {
+              "track": "tpjThE6-tpjThE7",
+              "blocks": [
+                "tpjSwE7"
+              ],
+              "in": 398.36939510648847,
+              "out": 400.7363951064883
+            },
+            {
+              "track": "tpjThE5-tpjThE6",
+              "blocks": [
+                "tpjSwE6"
+              ],
+              "in": 398.7703951064884,
+              "out": 401.13639510648835
+            },
+            {
+              "track": "tpjPf1E-tpjThE5",
+              "blocks": [
+                "tpjSwE5"
+              ],
+              "in": 399.1713951064884,
+              "out": 401.5363951064883
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "16849",
+      "name": "Tiruchchirappalli - Rameswaram UR Express",
+      "class": "UR Express",
+      "priority": 30,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "7",
+          "arr": 420,
+          "dep": 426,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KRMG",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 439,
+          "dep": 441,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tpjPf7E-tpjThE3",
+              "blocks": [
+                "tpjSwE3"
+              ],
+              "in": 426.00199999999995,
+              "out": 428.56581796193535
+            },
+            {
+              "track": "tpjThE3-tpjThE4",
+              "blocks": [
+                "tpjSwE4"
+              ],
+              "in": 426.59981796193546,
+              "out": 428.9658179619354
+            },
+            {
+              "track": "tpjThE10-tpjThE4",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 427.0008179619354,
+              "out": 429.36581796193536
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 427.40181796193536,
+              "out": 438.0608732088426
+            },
+            {
+              "track": "krmgPf2S-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 437.0778732088427,
+              "out": 438.26087320884267
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 454,
+          "dep": 456,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krmgPf2E-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 441.00199999999995,
+              "out": 442.6226059197678
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 441.59467958880987,
+              "out": 452.3277473668597
+            },
+            {
+              "track": "krurPf2S-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 451.34474736685974,
+              "out": 452.5277473668597
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 467,
+          "dep": 469,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krurPf2E-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 456.00199999999995,
+              "out": 457.6226059197678
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 456.59467958880987,
+              "out": 466.0241110032233
+            },
+            {
+              "track": "velPf2S-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 465.04111100322336,
+              "out": 466.22411100322336
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 478,
+          "dep": 479,
+          "dwell": 1,
+          "min_dwell": 1,
+          "run": 9,
+          "via": [
+            {
+              "track": "velPf2E-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 469.00199999999995,
+              "out": 470.6226059197678
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 469.59467958880987,
+              "out": 477.06788504591714
+            },
+            {
+              "track": "pdktPf1S-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 476.74100999312236,
+              "out": 477.1560634654141
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 484,
+          "dep": 484,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "pdktPf1E-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 479.00199999999995,
+              "out": 480.4414021651341
+            },
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 479.59467958880987,
+              "out": 483.6762695424203
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 491,
+          "dep": 493,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 7,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 483.8458149969657,
+              "out": 489.85290253905316
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 488.9127775570584,
+              "out": 490.05290253905315
+            },
+            {
+              "track": "tymPf1S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 489.0699025390532,
+              "out": 490.2529025390532
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 501,
+          "dep": 501,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "tymPf1E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 493.00199999999995,
+              "out": 494.6236059197678
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 493.59467958880987,
+              "out": 494.8048411919597
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 493.84076129907425,
+              "out": 499.95347800659033
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 499.6836598247722,
+              "out": 500.0080234611358
+            },
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 499.7392052793176,
+              "out": 500.06256891568125
+            }
+          ]
+        },
+        {
+          "stn": "KTYR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 504,
+          "dep": 506,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 3,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 500.23211437022667,
+              "out": 500.5564780065903
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 500.2876598247721,
+              "out": 500.61102346113574
+            },
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 500.34320527931754,
+              "out": 503.1038816472322
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 515,
+          "dep": 516,
+          "dwell": 1,
+          "min_dwell": 1,
+          "run": 9,
+          "via": [
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 506.00199999999995,
+              "out": 512.528122379216
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 510.737900156994,
+              "out": 512.9281223792161
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 510.9611223792162,
+              "out": 513.328122379216
+            },
+            {
+              "track": "kkdiThW1-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 511.36212237921615,
+              "out": 513.7281223792161
+            },
+            {
+              "track": "kkdiPf1S-kkdiThW1",
+              "blocks": [
+                "kkdiSwW1"
+              ],
+              "in": 511.7631223792161,
+              "out": 514.128122379216
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "56804",
+      "name": "Karaikudi - Tiruchchirappalli Passenger",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 420,
+          "dep": 426,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KTYR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 432,
+          "dep": 435,
+          "dwell": 3,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "kkdiPf3S-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 426.00199999999995,
+              "out": 427.442402165134
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 426.59467958880987,
+              "out": 427.55934096727265
+            },
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 426.84076129907425,
+              "out": 430.9965041343362
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 441,
+          "dep": 443,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 435.00199999999995,
+              "out": 439.3122345656841
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 439.0075550391489,
+              "out": 439.39014389665743
+            },
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 439.06326884386266,
+              "out": 439.4783223161544
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 452,
+          "dep": 454,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 9,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 443.00199999999995,
+              "out": 444.442402165134
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 443.59467958880987,
+              "out": 444.55934096727265
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 443.84076129907425,
+              "out": 450.39464258123627
+            },
+            {
+              "track": "tymPf2E-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 449.4116425812363,
+              "out": 450.5946425812363
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 463,
+          "dep": 465,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 9,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tymPf2S-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 454.00199999999995,
+              "out": 455.6226059197678
+            },
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 454.59467958880987,
+              "out": 461.46233619268685
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 472,
+          "dep": 478,
+          "dwell": 6,
+          "min_dwell": 1,
+          "run": 7,
+          "halt": {
+            "reason": "cross",
+            "for": "16849",
+            "min": 5.239741538517194
+          },
+          "via": [
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 465.00199999999995,
+              "out": 470.59364258123634
+            },
+            {
+              "track": "pdktThE1-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 469.6096425812364,
+              "out": 470.7936425812363
+            },
+            {
+              "track": "pdktPf2E-pdktThE1",
+              "blocks": [
+                "pdktSwE1"
+              ],
+              "in": 469.8106425812364,
+              "out": 470.9748778534283
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 489,
+          "dep": 491,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "pdktPf2S-pdktThW1",
+              "blocks": [
+                "pdktSwW1"
+              ],
+              "in": 478.00199999999995,
+              "out": 479.6236059197678
+            },
+            {
+              "track": "pdktThW1-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 478.59467958880987,
+              "out": 479.8236059197678
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 478.84076129907425,
+              "out": 487.1942019123142
+            },
+            {
+              "track": "velPf2E-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 486.21120191231427,
+              "out": 487.39420191231426
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 502,
+          "dep": 504,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "velPf2S-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 491.00199999999995,
+              "out": 492.6226059197678
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 491.59467958880987,
+              "out": 501.0241110032233
+            },
+            {
+              "track": "krurPf2E-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 500.04111100322336,
+              "out": 501.22411100322336
+            }
+          ]
+        },
+        {
+          "stn": "KRMG",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 517,
+          "dep": 519,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krurPf2S-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 504.00199999999995,
+              "out": 505.6226059197678
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 504.59467958880987,
+              "out": 515.3277473668597
+            },
+            {
+              "track": "krmgPf2E-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 514.3447473668598,
+              "out": 515.5277473668598
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 530,
+          "dep": 551,
+          "dwell": 21,
+          "min_dwell": 1,
+          "run": 11,
+          "via": [
+            {
+              "track": "krmgPf2S-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 519.002,
+              "out": 520.6226059197678
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 519.5946795888099,
+              "out": 528.3290113399236
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 527.7800497556677,
+              "out": 528.4490113399236
+            },
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 527.8712957176737,
+              "out": 528.5690113399236
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "56832",
+      "name": "Karaikkudi - Tiruchchirappalli Passenger ?",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 585,
+          "dep": 591,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KTYR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 597,
+          "dep": 600,
+          "dwell": 3,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "kkdiPf3S-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 591.002,
+              "out": 592.4424021651341
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 591.5946795888099,
+              "out": 592.5593409672726
+            },
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 591.8407612990743,
+              "out": 595.9965041343362
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 606,
+          "dep": 608,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 600.002,
+              "out": 604.3122345656841
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 604.0075550391489,
+              "out": 604.3901438966574
+            },
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 604.0632688438627,
+              "out": 604.4783223161544
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 617,
+          "dep": 619,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 9,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 608.002,
+              "out": 609.4424021651341
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 608.5946795888099,
+              "out": 609.5593409672726
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 608.8407612990743,
+              "out": 615.3946425812364
+            },
+            {
+              "track": "tymPf2E-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 614.4116425812364,
+              "out": 615.5946425812364
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 628,
+          "dep": 630,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 9,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tymPf2S-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 619.002,
+              "out": 620.6226059197678
+            },
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 619.5946795888099,
+              "out": 626.4623361926868
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 636,
+          "dep": 637,
+          "dwell": 1,
+          "min_dwell": 1,
+          "run": 6,
+          "via": [
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 630.002,
+              "out": 634.6673257148392
+            },
+            {
+              "track": "pdktPf1E-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 634.3404506620445,
+              "out": 634.7555041343362
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 647,
+          "dep": 649,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 10,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "pdktPf1S-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 637.002,
+              "out": 638.441402165134
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 637.5946795888099,
+              "out": 645.4518243994182
+            },
+            {
+              "track": "velPf2E-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 644.4688243994182,
+              "out": 645.6518243994182
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 660,
+          "dep": 662,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "velPf2S-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 649.002,
+              "out": 650.6226059197678
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 649.5946795888099,
+              "out": 659.0241110032234
+            },
+            {
+              "track": "krurPf2E-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 658.0411110032234,
+              "out": 659.2241110032234
+            }
+          ]
+        },
+        {
+          "stn": "KRMG",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 675,
+          "dep": 677,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krurPf2S-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 662.002,
+              "out": 663.6226059197678
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 662.5946795888099,
+              "out": 673.3277473668599
+            },
+            {
+              "track": "krmgPf2E-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 672.3447473668598,
+              "out": 673.5277473668598
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 688,
+          "dep": 716,
+          "dwell": 28,
+          "min_dwell": 1,
+          "run": 11,
+          "via": [
+            {
+              "track": "krmgPf2S-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 677.002,
+              "out": 678.6226059197678
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 677.5946795888099,
+              "out": 686.3290113399236
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 685.7800497556677,
+              "out": 686.4490113399236
+            },
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 685.8712957176737,
+              "out": 686.5690113399236
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "56815",
+      "name": "Tiruchchirappalli - Karaikkudi Passenger ?",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 625,
+          "dep": 631,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KRMG",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 642,
+          "dep": 646,
+          "dwell": 4,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 631.002,
+              "out": 632.4424021651341
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 631.5946795888099,
+              "out": 632.5593409672726
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 631.8407612990743,
+              "out": 640.4837334903274
+            },
+            {
+              "track": "krmgPf2S-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 639.5007334903273,
+              "out": 640.6837334903273
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 659,
+          "dep": 661,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krmgPf2E-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 646.002,
+              "out": 647.6226059197678
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 646.5946795888099,
+              "out": 657.1832928214052
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 656.2431678394104,
+              "out": 657.3832928214052
+            },
+            {
+              "track": "krurPf1S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 656.4002928214052,
+              "out": 657.5832928214052
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 672,
+          "dep": 674,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krurPf1E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 661.002,
+              "out": 662.6236059197678
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 661.5946795888099,
+              "out": 662.8048411919598
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 661.8407612990743,
+              "out": 671.0796564577689
+            },
+            {
+              "track": "velPf2S-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 670.0966564577689,
+              "out": 671.2796564577689
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 683,
+          "dep": 686,
+          "dwell": 3,
+          "min_dwell": 1,
+          "run": 9,
+          "via": [
+            {
+              "track": "velPf2E-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 674.002,
+              "out": 675.6226059197678
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 674.5946795888099,
+              "out": 682.067885045917
+            },
+            {
+              "track": "pdktPf1S-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 681.7410099931224,
+              "out": 682.156063465414
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 691,
+          "dep": 691,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "pdktPf1E-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 686.002,
+              "out": 687.441402165134
+            },
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 686.5946795888099,
+              "out": 690.6762695424203
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 698,
+          "dep": 702,
+          "dwell": 4,
+          "min_dwell": 1,
+          "run": 7,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 690.8458149969657,
+              "out": 696.9973570845078
+            },
+            {
+              "track": "tymPf2S-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 696.0143570845078,
+              "out": 697.1973570845078
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 710,
+          "dep": 712,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 8,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tymPf2E-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 702.002,
+              "out": 703.6226059197678
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 702.5946795888099,
+              "out": 708.932793896762
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 708.6281143702267,
+              "out": 709.0107032277352
+            },
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 708.6838281749406,
+              "out": 709.0988816472322
+            }
+          ]
+        },
+        {
+          "stn": "KTYR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 718,
+          "dep": 720,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 712.002,
+              "out": 713.4424021651341
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 712.5946795888099,
+              "out": 713.5593409672726
+            },
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 712.8407612990743,
+              "out": 716.4783223161544
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 726,
+          "dep": 746,
+          "dwell": 20,
+          "min_dwell": 1,
+          "run": 6,
+          "via": [
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 720.002,
+              "out": 725.1375429179366
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 724.5885813336807,
+              "out": 725.2575429179366
+            },
+            {
+              "track": "kkdiPf3S-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 724.6798272956867,
+              "out": 725.3775429179366
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "56816",
+      "name": "Karaikkudi - Tiruchchirappalli Passenger ?",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 915,
+          "dep": 921,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KTYR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 927,
+          "dep": 930,
+          "dwell": 3,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "kkdiPf3S-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 921.002,
+              "out": 922.4424021651341
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 921.5946795888099,
+              "out": 922.5593409672726
+            },
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 921.8407612990743,
+              "out": 925.9965041343362
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 936,
+          "dep": 938,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 930.002,
+              "out": 934.3122345656841
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 934.0075550391489,
+              "out": 934.3901438966574
+            },
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 934.0632688438627,
+              "out": 934.4783223161544
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 947,
+          "dep": 949,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 9,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 938.002,
+              "out": 939.4424021651341
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 938.5946795888099,
+              "out": 939.5593409672726
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 938.8407612990743,
+              "out": 945.3946425812364
+            },
+            {
+              "track": "tymPf2E-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 944.4116425812364,
+              "out": 945.5946425812364
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 957,
+          "dep": 957,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "tymPf2S-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 949.002,
+              "out": 950.6226059197678
+            },
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 949.5946795888099,
+              "out": 956.3831016007709
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 961,
+          "dep": 962,
+          "dwell": 1,
+          "min_dwell": 1,
+          "run": 4,
+          "via": [
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 956.5526470553164,
+              "out": 959.6134177310066
+            },
+            {
+              "track": "pdktPf1E-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 959.286542678212,
+              "out": 959.7015961505036
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 972,
+          "dep": 974,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 10,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "pdktPf1S-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 962.002,
+              "out": 963.441402165134
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 962.5946795888099,
+              "out": 970.4518243994182
+            },
+            {
+              "track": "velPf2E-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 969.4688243994182,
+              "out": 970.6518243994182
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 985,
+          "dep": 994,
+          "dwell": 9,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "cross",
+            "for": "56831",
+            "min": 7.38729282140514
+          },
+          "via": [
+            {
+              "track": "velPf2S-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 974.002,
+              "out": 975.6226059197678
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 974.5946795888099,
+              "out": 984.0241110032234
+            },
+            {
+              "track": "krurPf2E-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 983.0411110032234,
+              "out": 984.2241110032234
+            }
+          ]
+        },
+        {
+          "stn": "KRMG",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1007,
+          "dep": 1009,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krurPf2S-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 994.002,
+              "out": 995.6226059197678
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 994.5946795888099,
+              "out": 1005.3277473668599
+            },
+            {
+              "track": "krmgPf2E-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1004.3447473668598,
+              "out": 1005.5277473668598
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 1020,
+          "dep": 1041,
+          "dwell": 21,
+          "min_dwell": 1,
+          "run": 11,
+          "via": [
+            {
+              "track": "krmgPf2S-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1009.002,
+              "out": 1010.6226059197678
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1009.5946795888099,
+              "out": 1018.3290113399236
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1017.7800497556677,
+              "out": 1018.4490113399236
+            },
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1017.8712957176737,
+              "out": 1018.5690113399236
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "56831",
+      "name": "Tiruchchirappalli - Karaikkudi Passenger ?",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 960,
+          "dep": 966,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KRMG",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 977,
+          "dep": 982,
+          "dwell": 5,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 966.002,
+              "out": 967.4424021651341
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 966.5946795888099,
+              "out": 967.5593409672726
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 966.8407612990743,
+              "out": 975.4837334903274
+            },
+            {
+              "track": "krmgPf2S-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 974.5007334903273,
+              "out": 975.6837334903273
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 995,
+          "dep": 997,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krmgPf2E-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 982.002,
+              "out": 983.6226059197678
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 982.5946795888099,
+              "out": 993.1832928214052
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 992.2431678394104,
+              "out": 993.3832928214052
+            },
+            {
+              "track": "krurPf1S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 992.4002928214052,
+              "out": 993.5832928214052
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1008,
+          "dep": 1010,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krurPf1E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 997.002,
+              "out": 998.6236059197678
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 997.5946795888099,
+              "out": 998.8048411919598
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 997.8407612990743,
+              "out": 1007.0796564577689
+            },
+            {
+              "track": "velPf2S-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1006.0966564577689,
+              "out": 1007.2796564577689
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1019,
+          "dep": 1020,
+          "dwell": 1,
+          "min_dwell": 1,
+          "run": 9,
+          "via": [
+            {
+              "track": "velPf2E-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1010.002,
+              "out": 1011.6226059197678
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1010.5946795888099,
+              "out": 1018.067885045917
+            },
+            {
+              "track": "pdktPf1S-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1017.7410099931224,
+              "out": 1018.156063465414
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1026,
+          "dep": 1028,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "pdktPf1E-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1020.002,
+              "out": 1021.441402165134
+            },
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1020.5946795888099,
+              "out": 1024.7555041343362
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1037,
+          "dep": 1039,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 9,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1028.002,
+              "out": 1035.758097126691
+            },
+            {
+              "track": "tymPf2S-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1034.775097126691,
+              "out": 1035.958097126691
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1047,
+          "dep": 1049,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 8,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tymPf2E-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1039.002,
+              "out": 1040.622605919768
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1039.5946795888099,
+              "out": 1045.932793896762
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1045.6281143702267,
+              "out": 1046.0107032277353
+            },
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1045.6838281749406,
+              "out": 1046.0988816472325
+            }
+          ]
+        },
+        {
+          "stn": "KTYR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1055,
+          "dep": 1057,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1049.002,
+              "out": 1050.4424021651341
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1049.5946795888099,
+              "out": 1050.5593409672726
+            },
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1049.8407612990743,
+              "out": 1053.4783223161546
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 1063,
+          "dep": 1086,
+          "dwell": 23,
+          "min_dwell": 1,
+          "run": 6,
+          "via": [
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1057.002,
+              "out": 1062.137542917937
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1061.5885813336808,
+              "out": 1062.257542917937
+            },
+            {
+              "track": "kkdiPf3S-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1061.679827295687,
+              "out": 1062.3775429179368
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "16850",
+      "name": "Rameswaram - Tiruchchirappalli UR Express",
+      "class": "UR Express",
+      "priority": 30,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1078,
+          "dep": 1081,
+          "dwell": 3,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KTYR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1089,
+          "dep": 1091,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 8,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "kkdiPf2S-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 1081.002,
+              "out": 1083.5658179619356
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1081.5998179619355,
+              "out": 1083.9658179619357
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1082.0008179619356,
+              "out": 1084.2641357317104
+            },
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1082.4018179619356,
+              "out": 1088.2281893073973
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1096,
+          "dep": 1096,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1091.002,
+              "out": 1095.2773732209669
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1095.0075550391489,
+              "out": 1095.3319186755123
+            },
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1095.0631004936943,
+              "out": 1095.386464130058
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1103,
+          "dep": 1105,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 7,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1095.5560095846033,
+              "out": 1095.8803732209667
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1095.6115550391487,
+              "out": 1095.9349186755123
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1095.667100493694,
+              "out": 1101.199642581236
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1100.2595175992412,
+              "out": 1101.3996425812359
+            },
+            {
+              "track": "tymPf1E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 1100.416642581236,
+              "out": 1101.599642581236
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1113,
+          "dep": 1113,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "tymPf1S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 1105.002,
+              "out": 1106.623605919768
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1105.5946795888099,
+              "out": 1106.80484119196
+            },
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1105.8407612990743,
+              "out": 1112.4386470553163
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1117,
+          "dep": 1118,
+          "dwell": 1,
+          "min_dwell": 1,
+          "run": 4,
+          "via": [
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1112.6081925098617,
+              "out": 1115.668963185552
+            },
+            {
+              "track": "pdktPf1E-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1115.3420881327572,
+              "out": 1115.7571416050491
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1128,
+          "dep": 1130,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 10,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "pdktPf1S-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1118.002,
+              "out": 1119.4414021651341
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1118.5946795888099,
+              "out": 1126.4518243994182
+            },
+            {
+              "track": "velPf2E-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1125.4688243994183,
+              "out": 1126.6518243994183
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1141,
+          "dep": 1143,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "velPf2S-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1130.002,
+              "out": 1131.622605919768
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1130.5946795888099,
+              "out": 1140.0241110032234
+            },
+            {
+              "track": "krurPf2E-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1139.0411110032235,
+              "out": 1140.2241110032235
+            }
+          ]
+        },
+        {
+          "stn": "KRMG",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1156,
+          "dep": 1158,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krurPf2S-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1143.002,
+              "out": 1144.622605919768
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1143.5946795888099,
+              "out": 1154.1832928214053
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1153.2431678394105,
+              "out": 1154.3832928214051
+            },
+            {
+              "track": "krmgPf1E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 1153.4002928214052,
+              "out": 1154.5832928214052
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "6",
+          "arr": 1171,
+          "dep": 1211,
+          "dwell": 40,
+          "min_dwell": 1,
+          "run": 13,
+          "via": [
+            {
+              "track": "krmgPf1S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 1158.002,
+              "out": 1159.623605919768
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1158.5946795888099,
+              "out": 1159.80484119196
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1158.8407612990743,
+              "out": 1169.1185908012033
+            },
+            {
+              "track": "tpjThE10-tpjThE4",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1167.1525908012031,
+              "out": 1169.5185908012033
+            },
+            {
+              "track": "tpjPf6E-tpjThE4",
+              "blocks": [
+                "tpjSwE4"
+              ],
+              "in": 1167.5535908012032,
+              "out": 1169.816908570978
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "56803",
+      "name": "Tiruchchirappalli - Karaikkudi Passenger ?",
+      "class": "Passenger",
+      "priority": 20,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 1105,
+          "dep": 1111,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KRMG",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1122,
+          "dep": 1127,
+          "dwell": 5,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1111.002,
+              "out": 1112.4424021651341
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1111.5946795888099,
+              "out": 1112.5593409672726
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1111.8407612990743,
+              "out": 1120.4837334903273
+            },
+            {
+              "track": "krmgPf2S-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1119.5007334903273,
+              "out": 1120.6837334903273
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1140,
+          "dep": 1142,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 13,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krmgPf2E-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1127.002,
+              "out": 1128.622605919768
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1127.5946795888099,
+              "out": 1138.1832928214053
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1137.2431678394105,
+              "out": 1138.3832928214051
+            },
+            {
+              "track": "krurPf1S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 1137.4002928214052,
+              "out": 1138.5832928214052
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1153,
+          "dep": 1155,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 11,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "krurPf1E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 1142.002,
+              "out": 1143.623605919768
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1142.5946795888099,
+              "out": 1143.80484119196
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1142.8407612990743,
+              "out": 1152.0796564577688
+            },
+            {
+              "track": "velPf2S-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1151.0966564577689,
+              "out": 1152.2796564577689
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1164,
+          "dep": 1166,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 9,
+          "via": [
+            {
+              "track": "velPf2E-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1155.002,
+              "out": 1156.622605919768
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1155.5946795888099,
+              "out": 1163.0678850459171
+            },
+            {
+              "track": "pdktPf1S-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1162.7410099931224,
+              "out": 1163.1560634654143
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1172,
+          "dep": 1174,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "pdktPf1E-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1166.002,
+              "out": 1167.4414021651341
+            },
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1166.5946795888099,
+              "out": 1170.7555041343364
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1183,
+          "dep": 1185,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 9,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1174.002,
+              "out": 1181.758097126691
+            },
+            {
+              "track": "tymPf2S-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1180.775097126691,
+              "out": 1181.958097126691
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1193,
+          "dep": 1195,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 8,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "tymPf2E-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1185.002,
+              "out": 1186.622605919768
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1185.5946795888099,
+              "out": 1191.932793896762
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1191.6281143702267,
+              "out": 1192.0107032277353
+            },
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1191.6838281749406,
+              "out": 1192.0988816472325
+            }
+          ]
+        },
+        {
+          "stn": "KTYR",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1201,
+          "dep": 1203,
+          "dwell": 2,
+          "min_dwell": 1,
+          "run": 6,
+          "halt": {
+            "reason": "technical",
+            "min": 1.0019999999999527
+          },
+          "via": [
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1195.002,
+              "out": 1196.4424021651341
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1195.5946795888099,
+              "out": 1196.5593409672726
+            },
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1195.8407612990743,
+              "out": 1199.4783223161546
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 1209,
+          "dep": 1226,
+          "dwell": 17,
+          "min_dwell": 1,
+          "run": 6,
+          "via": [
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1203.002,
+              "out": 1208.137542917937
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1207.5885813336808,
+              "out": 1208.257542917937
+            },
+            {
+              "track": "kkdiPf3S-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1207.679827295687,
+              "out": 1208.3775429179368
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "12605",
+      "name": "Chennai Egmore - Karaikkudi Pallavan SF Express",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 1240,
+          "dep": 1246,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1255,
+          "dep": 1255,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1246.002,
+              "out": 1247.4424021651341
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1246.5946795888099,
+              "out": 1247.5593409672726
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1246.8407612990743,
+              "out": 1254.501191402785
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1254.231373220967,
+              "out": 1254.5557368573304
+            },
+            {
+              "track": "krmgPf3S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 1254.2869186755124,
+              "out": 1254.610282311876
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1264,
+          "dep": 1264,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "krmgPf3E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 1254.7798277664215,
+              "out": 1255.1041914027849
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1254.8353732209669,
+              "out": 1255.1587368573305
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1254.8909186755122,
+              "out": 1263.0326459482392
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1262.7628277664212,
+              "out": 1263.0871914027846
+            },
+            {
+              "track": "krurPf3S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 1262.8183732209666,
+              "out": 1263.1417368573302
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1271,
+          "dep": 1271,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "krurPf3E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 1263.3112823118756,
+              "out": 1263.635645948239
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1263.366827766421,
+              "out": 1263.6901914027846
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1263.4223732209664,
+              "out": 1270.260464130057
+            },
+            {
+              "track": "velThW0-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1269.990645948239,
+              "out": 1270.3150095846024
+            },
+            {
+              "track": "velPf3S-velThW0",
+              "blocks": [
+                "velSwW0"
+              ],
+              "in": 1270.0461914027844,
+              "out": 1270.369555039148
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1279,
+          "dep": 1292,
+          "dwell": 13,
+          "min_dwell": 1,
+          "run": 8,
+          "halt": {
+            "reason": "cross",
+            "for": "16752",
+            "min": 0.8229505129968402
+          },
+          "via": [
+            {
+              "track": "velPf3E-velThE0",
+              "blocks": [
+                "velSwE0"
+              ],
+              "in": 1270.5391004936935,
+              "out": 1270.8634641300569
+            },
+            {
+              "track": "velThE0-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1270.5946459482388,
+              "out": 1270.9180095846025
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1270.6501914027842,
+              "out": 1277.4409153085082
+            },
+            {
+              "track": "pdktThW1-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1276.456915308508,
+              "out": 1277.640915308508
+            },
+            {
+              "track": "pdktPf2S-pdktThW1",
+              "blocks": [
+                "pdktSwW1"
+              ],
+              "in": 1276.657915308508,
+              "out": 1277.8221505807
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1298,
+          "dep": 1298,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "pdktPf2E-pdktThE1",
+              "blocks": [
+                "pdktSwE1"
+              ],
+              "in": 1292.002,
+              "out": 1293.623605919768
+            },
+            {
+              "track": "pdktThE1-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1292.5946795888099,
+              "out": 1293.8236059197677
+            },
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1292.8407612990743,
+              "out": 1297.4186470553163
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1304,
+          "dep": 1304,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1297.5881925098618,
+              "out": 1302.7571925098616
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1302.4873743280436,
+              "out": 1302.811737964407
+            },
+            {
+              "track": "tymPf3S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 1302.542919782589,
+              "out": 1302.8662834189527
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1309,
+          "dep": 1309,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "tymPf3E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 1303.035828873498,
+              "out": 1303.3601925098615
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1303.0913743280435,
+              "out": 1303.414737964407
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1303.1469197825888,
+              "out": 1307.8413743280432
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1307.5715561462252,
+              "out": 1307.8959197825886
+            },
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1307.6271016007706,
+              "out": 1307.9504652371343
+            }
+          ]
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1312,
+          "dep": 1312,
+          "dwell": 0,
+          "run": 3,
+          "via": [
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1308.1200106916797,
+              "out": 1308.444374328043
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1308.175556146225,
+              "out": 1308.4989197825887
+            },
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1308.2311016007704,
+              "out": 1310.9125433767692
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1319,
+          "dep": 1356,
+          "dwell": 37,
+          "min_dwell": 1,
+          "run": 7,
+          "via": [
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1311.0820888313146,
+              "out": 1316.003656171382
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1314.2134339491597,
+              "out": 1316.403656171382
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1314.4366561713819,
+              "out": 1316.803656171382
+            },
+            {
+              "track": "kkdiThW1-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 1314.837656171382,
+              "out": 1317.2036561713821
+            },
+            {
+              "track": "kkdiPf1S-kkdiThW1",
+              "blocks": [
+                "kkdiSwW1"
+              ],
+              "in": 1315.238656171382,
+              "out": 1317.603656171382
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "16752",
+      "name": "Rameswaram - Chennai Egmore Express",
+      "class": "Mail/Express",
+      "priority": 40,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1263,
+          "dep": 1266,
+          "dwell": 3,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1274,
+          "dep": 1274,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "kkdiPf1S-kkdiThW1",
+              "blocks": [
+                "kkdiSwW1"
+              ],
+              "in": 1266.002,
+              "out": 1268.5888029598839
+            },
+            {
+              "track": "kkdiThW1-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 1266.6218029598838,
+              "out": 1268.988802959884
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1267.0228029598838,
+              "out": 1269.388802959884
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1267.423802959884,
+              "out": 1269.6871207296588
+            },
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1267.824802959884,
+              "out": 1273.5719397134296
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1277,
+          "dep": 1277,
+          "dwell": 0,
+          "run": 3,
+          "via": [
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1273.741485167975,
+              "out": 1276.412303349793
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1276.142485167975,
+              "out": 1276.4668488043385
+            },
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1276.1980306225205,
+              "out": 1276.5213942588841
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1282,
+          "dep": 1282,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1276.6909397134295,
+              "out": 1277.015303349793
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1276.746485167975,
+              "out": 1277.0698488043386
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1276.8020306225203,
+              "out": 1281.4964851679747
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1281.2266669861567,
+              "out": 1281.55103062252
+            },
+            {
+              "track": "tymPf3E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 1281.282212440702,
+              "out": 1281.6055760770657
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1288,
+          "dep": 1288,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "tymPf3S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 1281.7751215316111,
+              "out": 1282.0994851679745
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1281.8306669861565,
+              "out": 1282.1540306225202
+            },
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1281.886212440702,
+              "out": 1287.0658360348825
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 1293,
+          "dep": 1301,
+          "dwell": 8,
+          "min_dwell": 1,
+          "run": 5,
+          "via": [
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1287.235381489428,
+              "out": 1291.2234690315156
+            },
+            {
+              "track": "pdktThE1-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1290.2384690315155,
+              "out": 1291.4234690315157
+            },
+            {
+              "track": "pdktThE0-pdktThE1",
+              "blocks": [
+                "pdktSwE1"
+              ],
+              "in": 1290.4394690315155,
+              "out": 1291.6234690315155
+            },
+            {
+              "track": "pdktPf3E-pdktThE0",
+              "blocks": [
+                "pdktSwE0"
+              ],
+              "in": 1290.6404690315155,
+              "out": 1291.8047043037075
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1310,
+          "dep": 1310,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "pdktPf3S-pdktThW0",
+              "blocks": [
+                "pdktSwW0"
+              ],
+              "in": 1301.002,
+              "out": 1302.6246059197679
+            },
+            {
+              "track": "pdktThW0-pdktThW1",
+              "blocks": [
+                "pdktSwW1"
+              ],
+              "in": 1301.5946795888099,
+              "out": 1302.8246059197677
+            },
+            {
+              "track": "pdktThW1-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1301.8407612990743,
+              "out": 1303.0246059197677
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1302.0426059197678,
+              "out": 1309.412659824772
+            },
+            {
+              "track": "velThE0-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1309.142841642954,
+              "out": 1309.4672052793173
+            },
+            {
+              "track": "velPf3E-velThE0",
+              "blocks": [
+                "velSwE0"
+              ],
+              "in": 1309.1983870974993,
+              "out": 1309.521750733863
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1317,
+          "dep": 1317,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "velPf3S-velThW0",
+              "blocks": [
+                "velSwW0"
+              ],
+              "in": 1309.6912961884084,
+              "out": 1310.0156598247718
+            },
+            {
+              "track": "velThW0-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1309.7468416429538,
+              "out": 1310.0702052793174
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1309.8023870974991,
+              "out": 1316.6404780065898
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1316.3706598247718,
+              "out": 1316.6950234611352
+            },
+            {
+              "track": "krurPf3E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 1316.4262052793172,
+              "out": 1316.7495689156808
+            }
+          ]
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1326,
+          "dep": 1326,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "krurPf3S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 1316.9191143702262,
+              "out": 1317.2434780065896
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1316.9746598247716,
+              "out": 1317.2980234611352
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1317.030205279317,
+              "out": 1325.171932552044
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1324.902114370226,
+              "out": 1325.2264780065893
+            },
+            {
+              "track": "krmgPf3E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 1324.9576598247713,
+              "out": 1325.281023461135
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 1334,
+          "dep": 1391,
+          "dwell": 57,
+          "min_dwell": 1,
+          "run": 8,
+          "via": [
+            {
+              "track": "krmgPf3S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 1325.4505689156804,
+              "out": 1325.7749325520438
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1325.5061143702258,
+              "out": 1325.8294780065894
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1325.5616598247711,
+              "out": 1332.6871931581047
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1332.1382315738485,
+              "out": 1332.8071931581046
+            },
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1332.2294775358546,
+              "out": 1332.9271931581045
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "22661",
+      "name": "Chennai Egmore - Rameswaram Sethu SF Express",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "4",
+          "arr": 1400,
+          "dep": 1406,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1418,
+          "dep": 1418,
+          "dwell": 0,
+          "run": 12,
+          "via": [
+            {
+              "track": "tpjPf4E-tpjThE8",
+              "blocks": [
+                "tpjSwE8"
+              ],
+              "in": 1406.002,
+              "out": 1408.5658179619356
+            },
+            {
+              "track": "tpjThE8-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1406.5998179619355,
+              "out": 1408.9658179619357
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1407.0008179619356,
+              "out": 1409.2641357317104
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1407.4018179619356,
+              "out": 1416.7328765758461
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1416.4630583940282,
+              "out": 1416.7874220303916
+            },
+            {
+              "track": "krmgPf3S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 1416.5186038485735,
+              "out": 1416.8419674849372
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1426,
+          "dep": 1426,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "krmgPf3E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 1417.0115129394826,
+              "out": 1417.335876575846
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1417.067058394028,
+              "out": 1417.3904220303916
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1417.1226038485734,
+              "out": 1425.2643311213003
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1424.9945129394823,
+              "out": 1425.3188765758457
+            },
+            {
+              "track": "krurPf3S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 1425.0500583940277,
+              "out": 1425.3734220303913
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1433,
+          "dep": 1433,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "krurPf3E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 1425.5429674849368,
+              "out": 1425.8673311213001
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1425.5985129394821,
+              "out": 1425.9218765758458
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1425.6540583940275,
+              "out": 1432.4921493031181
+            },
+            {
+              "track": "velThW0-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1432.2223311213002,
+              "out": 1432.5466947576635
+            },
+            {
+              "track": "velPf3S-velThW0",
+              "blocks": [
+                "velSwW0"
+              ],
+              "in": 1432.2778765758455,
+              "out": 1432.6012402122092
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1441,
+          "dep": 1452,
+          "dwell": 11,
+          "min_dwell": 1,
+          "run": 8,
+          "halt": {
+            "reason": "cross",
+            "for": "22662",
+            "min": 0.8229505129968402
+          },
+          "via": [
+            {
+              "track": "velPf3E-velThE0",
+              "blocks": [
+                "velSwE0"
+              ],
+              "in": 1432.7707856667546,
+              "out": 1433.095149303118
+            },
+            {
+              "track": "velThE0-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1432.8263311213,
+              "out": 1433.1496947576636
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1432.8818765758454,
+              "out": 1439.6726004815694
+            },
+            {
+              "track": "pdktThW1-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1438.6886004815692,
+              "out": 1439.8726004815692
+            },
+            {
+              "track": "pdktPf2S-pdktThW1",
+              "blocks": [
+                "pdktSwW1"
+              ],
+              "in": 1438.8896004815692,
+              "out": 1440.0538357537612
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1458,
+          "dep": 1458,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "pdktPf2E-pdktThE1",
+              "blocks": [
+                "pdktSwE1"
+              ],
+              "in": 1452.002,
+              "out": 1453.623605919768
+            },
+            {
+              "track": "pdktThE1-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1452.5946795888099,
+              "out": 1453.8236059197677
+            },
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1452.8407612990743,
+              "out": 1457.4186470553163
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1464,
+          "dep": 1464,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1457.5881925098618,
+              "out": 1462.7571925098616
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1462.4873743280436,
+              "out": 1462.811737964407
+            },
+            {
+              "track": "tymPf3S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 1462.542919782589,
+              "out": 1462.8662834189527
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1469,
+          "dep": 1469,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "tymPf3E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 1463.035828873498,
+              "out": 1463.3601925098615
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1463.0913743280435,
+              "out": 1463.414737964407
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1463.1469197825888,
+              "out": 1467.8413743280432
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1467.5715561462252,
+              "out": 1467.8959197825886
+            },
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1467.6271016007706,
+              "out": 1467.9504652371343
+            }
+          ]
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1472,
+          "dep": 1472,
+          "dwell": 0,
+          "run": 3,
+          "via": [
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1468.1200106916797,
+              "out": 1468.444374328043
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1468.175556146225,
+              "out": 1468.4989197825887
+            },
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1468.2311016007704,
+              "out": 1470.9125433767692
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 1476,
+          "dep": 1486,
+          "dwell": 10,
+          "min_dwell": 1,
+          "run": 4,
+          "via": [
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1471.0820888313146,
+              "out": 1474.6130767101026
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1474.0641151258465,
+              "out": 1474.7330767101025
+            },
+            {
+              "track": "kkdiPf3S-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1474.1553610878525,
+              "out": 1474.8530767101024
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "22662",
+      "name": "Rameswaram - Chennai Egmore Sethu SF Express",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1423,
+          "dep": 1426,
+          "dwell": 3,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1434,
+          "dep": 1434,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "kkdiPf1S-kkdiThW1",
+              "blocks": [
+                "kkdiSwW1"
+              ],
+              "in": 1426.002,
+              "out": 1428.5888029598839
+            },
+            {
+              "track": "kkdiThW1-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 1426.6218029598838,
+              "out": 1428.988802959884
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1427.0228029598838,
+              "out": 1429.388802959884
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1427.423802959884,
+              "out": 1429.6871207296588
+            },
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1427.824802959884,
+              "out": 1433.5719397134296
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1437,
+          "dep": 1437,
+          "dwell": 0,
+          "run": 3,
+          "via": [
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1433.741485167975,
+              "out": 1436.412303349793
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1436.142485167975,
+              "out": 1436.4668488043385
+            },
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1436.1980306225205,
+              "out": 1436.5213942588841
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1442,
+          "dep": 1442,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1436.6909397134295,
+              "out": 1437.015303349793
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1436.746485167975,
+              "out": 1437.0698488043386
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1436.8020306225203,
+              "out": 1441.4964851679747
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1441.2266669861567,
+              "out": 1441.55103062252
+            },
+            {
+              "track": "tymPf3E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 1441.282212440702,
+              "out": 1441.6055760770657
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1448,
+          "dep": 1448,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "tymPf3S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 1441.7751215316111,
+              "out": 1442.0994851679745
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1441.8306669861565,
+              "out": 1442.1540306225202
+            },
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1441.886212440702,
+              "out": 1447.0658360348825
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 1453,
+          "dep": 1463,
+          "dwell": 10,
+          "min_dwell": 1,
+          "run": 5,
+          "via": [
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1447.235381489428,
+              "out": 1451.2234690315156
+            },
+            {
+              "track": "pdktThE1-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1450.2384690315155,
+              "out": 1451.4234690315157
+            },
+            {
+              "track": "pdktThE0-pdktThE1",
+              "blocks": [
+                "pdktSwE1"
+              ],
+              "in": 1450.4394690315155,
+              "out": 1451.6234690315155
+            },
+            {
+              "track": "pdktPf3E-pdktThE0",
+              "blocks": [
+                "pdktSwE0"
+              ],
+              "in": 1450.6404690315155,
+              "out": 1451.8047043037075
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1472,
+          "dep": 1472,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "pdktPf3S-pdktThW0",
+              "blocks": [
+                "pdktSwW0"
+              ],
+              "in": 1463.002,
+              "out": 1464.6246059197679
+            },
+            {
+              "track": "pdktThW0-pdktThW1",
+              "blocks": [
+                "pdktSwW1"
+              ],
+              "in": 1463.5946795888099,
+              "out": 1464.8246059197677
+            },
+            {
+              "track": "pdktThW1-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1463.8407612990743,
+              "out": 1465.0246059197677
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1464.0426059197678,
+              "out": 1471.412659824772
+            },
+            {
+              "track": "velThE0-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1471.142841642954,
+              "out": 1471.4672052793173
+            },
+            {
+              "track": "velPf3E-velThE0",
+              "blocks": [
+                "velSwE0"
+              ],
+              "in": 1471.1983870974993,
+              "out": 1471.521750733863
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1479,
+          "dep": 1479,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "velPf3S-velThW0",
+              "blocks": [
+                "velSwW0"
+              ],
+              "in": 1471.6912961884084,
+              "out": 1472.0156598247718
+            },
+            {
+              "track": "velThW0-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1471.7468416429538,
+              "out": 1472.0702052793174
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1471.8023870974991,
+              "out": 1478.6404780065898
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1478.3706598247718,
+              "out": 1478.6950234611352
+            },
+            {
+              "track": "krurPf3E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 1478.4262052793172,
+              "out": 1478.7495689156808
+            }
+          ]
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1488,
+          "dep": 1488,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "krurPf3S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 1478.9191143702262,
+              "out": 1479.2434780065896
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1478.9746598247716,
+              "out": 1479.2980234611352
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1479.030205279317,
+              "out": 1487.171932552044
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1486.902114370226,
+              "out": 1487.2264780065893
+            },
+            {
+              "track": "krmgPf3E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 1486.9576598247713,
+              "out": 1487.281023461135
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1500,
+          "dep": 1526,
+          "dwell": 26,
+          "min_dwell": 1,
+          "run": 12,
+          "via": [
+            {
+              "track": "krmgPf3S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 1487.4505689156804,
+              "out": 1487.7749325520438
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1487.5061143702258,
+              "out": 1487.8294780065894
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1487.5616598247711,
+              "out": 1496.0777726193842
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1494.2875503971618,
+              "out": 1496.4787726193842
+            },
+            {
+              "track": "tpjThE8-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1494.510772619384,
+              "out": 1496.8797726193843
+            },
+            {
+              "track": "tpjThE7-tpjThE8",
+              "blocks": [
+                "tpjSwE8"
+              ],
+              "in": 1494.911772619384,
+              "out": 1497.2797726193842
+            },
+            {
+              "track": "tpjThE6-tpjThE7",
+              "blocks": [
+                "tpjSwE7"
+              ],
+              "in": 1495.312772619384,
+              "out": 1497.6797726193843
+            },
+            {
+              "track": "tpjThE5-tpjThE6",
+              "blocks": [
+                "tpjSwE6"
+              ],
+              "in": 1495.7137726193841,
+              "out": 1498.0797726193844
+            },
+            {
+              "track": "tpjPf1E-tpjThE5",
+              "blocks": [
+                "tpjSwE5"
+              ],
+              "in": 1496.1147726193842,
+              "out": 1498.4797726193842
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "16618",
+      "name": "Coimbatore - Rameswaram Express ?",
+      "class": "Mail/Express",
+      "priority": 40,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1445,
+          "dep": 1451,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1464,
+          "dep": 1464,
+          "dwell": 0,
+          "run": 13,
+          "via": [
+            {
+              "track": "tpjPf1E-tpjThE5",
+              "blocks": [
+                "tpjSwE5"
+              ],
+              "in": 1451.002,
+              "out": 1453.589802959884
+            },
+            {
+              "track": "tpjThE5-tpjThE6",
+              "blocks": [
+                "tpjSwE6"
+              ],
+              "in": 1451.6218029598838,
+              "out": 1453.9908029598841
+            },
+            {
+              "track": "tpjThE6-tpjThE7",
+              "blocks": [
+                "tpjSwE7"
+              ],
+              "in": 1452.0228029598838,
+              "out": 1454.390802959884
+            },
+            {
+              "track": "tpjThE7-tpjThE8",
+              "blocks": [
+                "tpjSwE8"
+              ],
+              "in": 1452.423802959884,
+              "out": 1454.790802959884
+            },
+            {
+              "track": "tpjThE8-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1452.824802959884,
+              "out": 1455.1908029598842
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1453.225802959884,
+              "out": 1455.489120729659
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1453.6268029598841,
+              "out": 1462.9578615737946
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1462.6880433919766,
+              "out": 1463.01240702834
+            },
+            {
+              "track": "krmgPf3S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 1462.743588846522,
+              "out": 1463.0669524828857
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "halt",
+          "pf": "2",
+          "arr": 1474,
+          "dep": 1479,
+          "dwell": 5,
+          "run": 10,
+          "halt": {
+            "reason": "cross",
+            "for": "22662",
+            "min": 5.337183089618065
+          },
+          "via": [
+            {
+              "track": "krmgPf3E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 1463.236497937431,
+              "out": 1463.5608615737945
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1463.2920433919764,
+              "out": 1463.61540702834
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1463.3475888465218,
+              "out": 1472.471858206791
+            },
+            {
+              "track": "krurPf2S-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1471.488858206791,
+              "out": 1472.671858206791
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1489,
+          "dep": 1489,
+          "dwell": 0,
+          "run": 10,
+          "via": [
+            {
+              "track": "krurPf2E-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1479.002,
+              "out": 1480.622605919768
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1479.5946795888099,
+              "out": 1488.0415689156812
+            },
+            {
+              "track": "velThW0-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1487.7717507338632,
+              "out": 1488.0961143702266
+            },
+            {
+              "track": "velPf3S-velThW0",
+              "blocks": [
+                "velSwW0"
+              ],
+              "in": 1487.8272961884086,
+              "out": 1488.1506598247722
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1497,
+          "dep": 1501,
+          "dwell": 4,
+          "min_dwell": 1,
+          "run": 8,
+          "via": [
+            {
+              "track": "velPf3E-velThE0",
+              "blocks": [
+                "velSwE0"
+              ],
+              "in": 1488.3202052793176,
+              "out": 1488.644568915681
+            },
+            {
+              "track": "velThE0-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1488.375750733863,
+              "out": 1488.6991143702267
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1488.4312961884084,
+              "out": 1495.2220200941324
+            },
+            {
+              "track": "pdktThW1-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1494.2380200941323,
+              "out": 1495.4220200941322
+            },
+            {
+              "track": "pdktPf2S-pdktThW1",
+              "blocks": [
+                "pdktSwW1"
+              ],
+              "in": 1494.4390200941323,
+              "out": 1495.6032553663242
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1507,
+          "dep": 1507,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "pdktPf2E-pdktThE1",
+              "blocks": [
+                "pdktSwE1"
+              ],
+              "in": 1501.002,
+              "out": 1502.623605919768
+            },
+            {
+              "track": "pdktThE1-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1501.5946795888099,
+              "out": 1502.8236059197677
+            },
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1501.8407612990743,
+              "out": 1506.4186470553163
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1514,
+          "dep": 1514,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1506.5881925098618,
+              "out": 1512.7397345974039
+            },
+            {
+              "track": "tymPf2S-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1511.756734597404,
+              "out": 1512.939734597404
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1521,
+          "dep": 1521,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "tymPf2E-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1513.4474076640815,
+              "out": 1514.6304076640815
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1513.6484076640816,
+              "out": 1519.9057342963586
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1519.6359161145406,
+              "out": 1519.960279750904
+            },
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1519.691461569086,
+              "out": 1520.0148252054496
+            }
+          ]
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1524,
+          "dep": 1524,
+          "dwell": 0,
+          "run": 3,
+          "via": [
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1520.184370659995,
+              "out": 1520.5087342963584
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1520.2399161145404,
+              "out": 1520.563279750904
+            },
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1520.2954615690858,
+              "out": 1522.9769033450846
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1531,
+          "dep": 1546,
+          "dwell": 15,
+          "min_dwell": 1,
+          "run": 7,
+          "via": [
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1523.14644879963,
+              "out": 1528.0680161396974
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1526.277793917475,
+              "out": 1528.4680161396973
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1526.5010161396972,
+              "out": 1528.8680161396974
+            },
+            {
+              "track": "kkdiThW1-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 1526.9020161396973,
+              "out": 1529.2680161396975
+            },
+            {
+              "track": "kkdiPf1S-kkdiThW1",
+              "blocks": [
+                "kkdiSwW1"
+              ],
+              "in": 1527.3030161396973,
+              "out": 1529.6680161396973
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "20497",
+      "name": "Rameswaram - Firozpur Cantt Humsafar Express ?",
+      "class": "Superfast Express",
+      "priority": 50,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "KKDI",
+          "kind": "pass",
+          "pf": "6",
+          "arr": 1492,
+          "dep": 1492,
+          "dwell": 0
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1501,
+          "dep": 1501,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "kkdiPf6S-kkdiThW1",
+              "blocks": [
+                "kkdiSwW1"
+              ],
+              "in": 1492.001,
+              "out": 1494.1912222222222
+            },
+            {
+              "track": "kkdiThW1-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 1492.2242222222221,
+              "out": 1494.5912222222223
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1492.6252222222222,
+              "out": 1494.9912222222224
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1493.0262222222223,
+              "out": 1495.2895399919971
+            },
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1493.4272222222223,
+              "out": 1499.174358975768
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1504,
+          "dep": 1504,
+          "dwell": 0,
+          "run": 3,
+          "via": [
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1500.317108134017,
+              "out": 1502.987926315835
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1502.718108134017,
+              "out": 1503.0424717703804
+            },
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1502.7736535885624,
+              "out": 1503.097017224926
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "halt",
+          "pf": "3",
+          "arr": 1509,
+          "dep": 1513,
+          "dwell": 4,
+          "run": 5,
+          "halt": {
+            "reason": "cross",
+            "for": "16618",
+            "min": 3.0817308404914456
+          },
+          "via": [
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1503.2665626794715,
+              "out": 1503.5909263158348
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1503.3221081340168,
+              "out": 1503.6454717703805
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1503.3776535885622,
+              "out": 1508.1069694787338
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1507.8022899521986,
+              "out": 1508.1848788097072
+            },
+            {
+              "track": "tymPf3E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 1507.8580037569125,
+              "out": 1508.2730572292044
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1521,
+          "dep": 1521,
+          "dwell": 0,
+          "run": 8,
+          "via": [
+            {
+              "track": "tymPf3S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 1513.002,
+              "out": 1514.4424021651341
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1513.5946795888099,
+              "out": 1514.5593409672726
+            },
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1513.8407612990743,
+              "out": 1519.8972695424204
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1526,
+          "dep": 1546,
+          "dwell": 20,
+          "min_dwell": 1,
+          "run": 5,
+          "via": [
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1520.0668149969658,
+              "out": 1524.0539025390535
+            },
+            {
+              "track": "pdktThE1-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1523.0699025390534,
+              "out": 1524.2539025390533
+            },
+            {
+              "track": "pdktPf2E-pdktThE1",
+              "blocks": [
+                "pdktSwE1"
+              ],
+              "in": 1523.2709025390534,
+              "out": 1524.4351378112453
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1555,
+          "dep": 1555,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "pdktPf2S-pdktThW1",
+              "blocks": [
+                "pdktSwW1"
+              ],
+              "in": 1546.002,
+              "out": 1547.623605919768
+            },
+            {
+              "track": "pdktThW1-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1546.5946795888099,
+              "out": 1547.8236059197677
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1546.8407612990743,
+              "out": 1554.211659824772
+            },
+            {
+              "track": "velThE0-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1553.941841642954,
+              "out": 1554.2662052793173
+            },
+            {
+              "track": "velPf3E-velThE0",
+              "blocks": [
+                "velSwE0"
+              ],
+              "in": 1553.9973870974993,
+              "out": 1554.320750733863
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1562,
+          "dep": 1562,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "velPf3S-velThW0",
+              "blocks": [
+                "velSwW0"
+              ],
+              "in": 1554.4902961884084,
+              "out": 1554.8146598247718
+            },
+            {
+              "track": "velThW0-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1554.5458416429537,
+              "out": 1554.8692052793174
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1554.6013870974991,
+              "out": 1561.4394780065898
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1561.1696598247718,
+              "out": 1561.4940234611352
+            },
+            {
+              "track": "krurPf3E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 1561.2252052793172,
+              "out": 1561.5485689156808
+            }
+          ]
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1571,
+          "dep": 1571,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "krurPf3S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 1561.7181143702262,
+              "out": 1562.0424780065896
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1561.7736598247716,
+              "out": 1562.0970234611352
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1561.829205279317,
+              "out": 1569.970932552044
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1569.701114370226,
+              "out": 1570.0254780065893
+            },
+            {
+              "track": "krmgPf3E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 1569.7566598247713,
+              "out": 1570.080023461135
+            }
+          ]
+        },
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "3",
+          "arr": 1582,
+          "dep": 1631,
+          "dwell": 49,
+          "min_dwell": 1,
+          "run": 11,
+          "via": [
+            {
+              "track": "krmgPf3S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 1570.2495689156804,
+              "out": 1570.5739325520437
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1570.3051143702257,
+              "out": 1570.6284780065894
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1570.3606598247711,
+              "out": 1578.8767726193842
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1577.0865503971618,
+              "out": 1579.276772619384
+            },
+            {
+              "track": "tpjThE8-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1577.309772619384,
+              "out": 1579.676772619384
+            },
+            {
+              "track": "tpjThE7-tpjThE8",
+              "blocks": [
+                "tpjSwE8"
+              ],
+              "in": 1577.710772619384,
+              "out": 1580.0767726193842
+            },
+            {
+              "track": "tpjPf3E-tpjThE7",
+              "blocks": [
+                "tpjSwE7"
+              ],
+              "in": 1578.111772619384,
+              "out": 1580.375090389159
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": "16751",
+      "name": "Chennai Egmore - Rameswaram Express",
+      "class": "Mail/Express",
+      "priority": 40,
+      "max_speed_kmph": 110,
+      "points": [
+        {
+          "stn": "TPJ",
+          "kind": "stop",
+          "pf": "5",
+          "arr": 1675,
+          "dep": 1681,
+          "dwell": 6,
+          "min_dwell": 1
+        },
+        {
+          "stn": "KRMG",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1690,
+          "dep": 1690,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "tpjPf5E-tpjThE9",
+              "blocks": [
+                "tpjSwE9"
+              ],
+              "in": 1681.002,
+              "out": 1682.4424021651341
+            },
+            {
+              "track": "tpjThE10-tpjThE9",
+              "blocks": [
+                "tpjSwE10"
+              ],
+              "in": 1681.5946795888099,
+              "out": 1682.5593409672726
+            },
+            {
+              "track": "krmgThW1-tpjThE10",
+              "in": 1681.8407612990743,
+              "out": 1689.501191402785
+            },
+            {
+              "track": "krmgThW0-krmgThW1",
+              "blocks": [
+                "krmgSwW1"
+              ],
+              "in": 1689.231373220967,
+              "out": 1689.5557368573304
+            },
+            {
+              "track": "krmgPf3S-krmgThW0",
+              "blocks": [
+                "krmgSwW0"
+              ],
+              "in": 1689.2869186755124,
+              "out": 1689.610282311876
+            }
+          ]
+        },
+        {
+          "stn": "KRUR",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1699,
+          "dep": 1699,
+          "dwell": 0,
+          "run": 9,
+          "via": [
+            {
+              "track": "krmgPf3E-krmgThE0",
+              "blocks": [
+                "krmgSwE0"
+              ],
+              "in": 1689.7798277664215,
+              "out": 1690.1041914027849
+            },
+            {
+              "track": "krmgThE0-krmgThE1",
+              "blocks": [
+                "krmgSwE1"
+              ],
+              "in": 1689.8353732209669,
+              "out": 1690.1587368573305
+            },
+            {
+              "track": "krmgThE1-krurThW1",
+              "in": 1689.8909186755122,
+              "out": 1698.0326459482392
+            },
+            {
+              "track": "krurThW0-krurThW1",
+              "blocks": [
+                "krurSwW1"
+              ],
+              "in": 1697.7628277664212,
+              "out": 1698.0871914027846
+            },
+            {
+              "track": "krurPf3S-krurThW0",
+              "blocks": [
+                "krurSwW0"
+              ],
+              "in": 1697.8183732209666,
+              "out": 1698.1417368573302
+            }
+          ]
+        },
+        {
+          "stn": "VEL",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1706,
+          "dep": 1706,
+          "dwell": 0,
+          "run": 7,
+          "via": [
+            {
+              "track": "krurPf3E-krurThE0",
+              "blocks": [
+                "krurSwE0"
+              ],
+              "in": 1698.3112823118756,
+              "out": 1698.635645948239
+            },
+            {
+              "track": "krurThE0-krurThE1",
+              "blocks": [
+                "krurSwE1"
+              ],
+              "in": 1698.366827766421,
+              "out": 1698.6901914027846
+            },
+            {
+              "track": "krurThE1-velThW1",
+              "in": 1698.4223732209664,
+              "out": 1705.260464130057
+            },
+            {
+              "track": "velThW0-velThW1",
+              "blocks": [
+                "velSwW1"
+              ],
+              "in": 1704.990645948239,
+              "out": 1705.3150095846024
+            },
+            {
+              "track": "velPf3S-velThW0",
+              "blocks": [
+                "velSwW0"
+              ],
+              "in": 1705.0461914027844,
+              "out": 1705.369555039148
+            }
+          ]
+        },
+        {
+          "stn": "PDKT",
+          "kind": "stop",
+          "pf": "2",
+          "arr": 1714,
+          "dep": 1726,
+          "dwell": 12,
+          "min_dwell": 1,
+          "run": 8,
+          "via": [
+            {
+              "track": "velPf3E-velThE0",
+              "blocks": [
+                "velSwE0"
+              ],
+              "in": 1705.5391004936935,
+              "out": 1705.8634641300569
+            },
+            {
+              "track": "velThE0-velThE1",
+              "blocks": [
+                "velSwE1"
+              ],
+              "in": 1705.5946459482388,
+              "out": 1705.9180095846025
+            },
+            {
+              "track": "pdktThW2-velThE1",
+              "in": 1705.6501914027842,
+              "out": 1712.4409153085082
+            },
+            {
+              "track": "pdktThW1-pdktThW2",
+              "blocks": [
+                "pdktSwW2"
+              ],
+              "in": 1711.456915308508,
+              "out": 1712.640915308508
+            },
+            {
+              "track": "pdktPf2S-pdktThW1",
+              "blocks": [
+                "pdktSwW1"
+              ],
+              "in": 1711.657915308508,
+              "out": 1712.8221505807
+            }
+          ]
+        },
+        {
+          "stn": "NMN",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1732,
+          "dep": 1732,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "pdktPf2E-pdktThE1",
+              "blocks": [
+                "pdktSwE1"
+              ],
+              "in": 1726.002,
+              "out": 1727.623605919768
+            },
+            {
+              "track": "pdktThE1-pdktThE2",
+              "blocks": [
+                "pdktSwE2"
+              ],
+              "in": 1726.5946795888099,
+              "out": 1727.8236059197677
+            },
+            {
+              "track": "nmnPf1S-pdktThE2",
+              "in": 1726.8407612990743,
+              "out": 1731.4186470553163
+            }
+          ]
+        },
+        {
+          "stn": "TYM",
+          "kind": "pass",
+          "pf": "3",
+          "arr": 1738,
+          "dep": 1738,
+          "dwell": 0,
+          "run": 6,
+          "via": [
+            {
+              "track": "nmnPf1E-tymThW1",
+              "in": 1731.5881925098618,
+              "out": 1736.7571925098616
+            },
+            {
+              "track": "tymThW0-tymThW1",
+              "blocks": [
+                "tymSwW1"
+              ],
+              "in": 1736.4873743280436,
+              "out": 1736.811737964407
+            },
+            {
+              "track": "tymPf3S-tymThW0",
+              "blocks": [
+                "tymSwW0"
+              ],
+              "in": 1736.542919782589,
+              "out": 1736.8662834189527
+            }
+          ]
+        },
+        {
+          "stn": "CTND",
+          "kind": "pass",
+          "pf": "2",
+          "arr": 1743,
+          "dep": 1743,
+          "dwell": 0,
+          "run": 5,
+          "via": [
+            {
+              "track": "tymPf3E-tymThE0",
+              "blocks": [
+                "tymSwE0"
+              ],
+              "in": 1737.035828873498,
+              "out": 1737.3601925098615
+            },
+            {
+              "track": "tymThE0-tymThE1",
+              "blocks": [
+                "tymSwE1"
+              ],
+              "in": 1737.0913743280435,
+              "out": 1737.414737964407
+            },
+            {
+              "track": "ctndThW2-tymThE1",
+              "in": 1737.1469197825888,
+              "out": 1741.8413743280432
+            },
+            {
+              "track": "ctndThW1-ctndThW2",
+              "blocks": [
+                "ctndSwW2"
+              ],
+              "in": 1741.5715561462252,
+              "out": 1741.8959197825886
+            },
+            {
+              "track": "ctndPf2S-ctndThW1",
+              "blocks": [
+                "ctndSwW1"
+              ],
+              "in": 1741.6271016007706,
+              "out": 1741.9504652371343
+            }
+          ]
+        },
+        {
+          "stn": "KTYR",
+          "kind": "pass",
+          "pf": "1",
+          "arr": 1746,
+          "dep": 1746,
+          "dwell": 0,
+          "run": 3,
+          "via": [
+            {
+              "track": "ctndPf2E-ctndThE1",
+              "blocks": [
+                "ctndSwE1"
+              ],
+              "in": 1742.1200106916797,
+              "out": 1742.444374328043
+            },
+            {
+              "track": "ctndThE1-ctndThE2",
+              "blocks": [
+                "ctndSwE2"
+              ],
+              "in": 1742.175556146225,
+              "out": 1742.4989197825887
+            },
+            {
+              "track": "ctndThE2-ktyrPf1S",
+              "in": 1742.2311016007704,
+              "out": 1744.9125433767692
+            }
+          ]
+        },
+        {
+          "stn": "KKDI",
+          "kind": "stop",
+          "pf": "1",
+          "arr": 1753,
+          "dep": 1761,
+          "dwell": 8,
+          "min_dwell": 1,
+          "run": 7,
+          "via": [
+            {
+              "track": "kkdiThW4-ktyrPf1E",
+              "in": 1745.0820888313146,
+              "out": 1750.003656171382
+            },
+            {
+              "track": "kkdiThW3-kkdiThW4",
+              "blocks": [
+                "kkdiSwW4"
+              ],
+              "in": 1748.2134339491597,
+              "out": 1750.403656171382
+            },
+            {
+              "track": "kkdiThW2-kkdiThW3",
+              "blocks": [
+                "kkdiSwW3"
+              ],
+              "in": 1748.4366561713819,
+              "out": 1750.803656171382
+            },
+            {
+              "track": "kkdiThW1-kkdiThW2",
+              "blocks": [
+                "kkdiSwW2"
+              ],
+              "in": 1748.837656171382,
+              "out": 1751.2036561713821
+            },
+            {
+              "track": "kkdiPf1S-kkdiThW1",
+              "blocks": [
+                "kkdiSwW1"
+              ],
+              "in": 1749.238656171382,
+              "out": 1751.603656171382
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "check": {
+    "tolerance_min": 1,
+    "precedence": "plan",
+    "late": [
+      {
+        "train": "16849",
+        "stn": "KRMG",
+        "event": "dep",
+        "late_min": 1.0019999999999527
+      },
+      {
+        "train": "56804",
+        "stn": "KTYR",
+        "event": "dep",
+        "late_min": 1.0019999999999527
+      },
+      {
+        "train": "56832",
+        "stn": "KTYR",
+        "event": "dep",
+        "late_min": 1.0019999999999527
+      },
+      {
+        "train": "56815",
+        "stn": "KRMG",
+        "event": "dep",
+        "late_min": 1.0019999999999527
+      },
+      {
+        "train": "56816",
+        "stn": "KTYR",
+        "event": "dep",
+        "late_min": 1.0019999999999527
+      },
+      {
+        "train": "56831",
+        "stn": "KRMG",
+        "event": "dep",
+        "late_min": 1.0019999999999527
+      },
+      {
+        "train": "16850",
+        "stn": "KTYR",
+        "event": "dep",
+        "late_min": 1.0019999999999527
+      },
+      {
+        "train": "56803",
+        "stn": "KRMG",
+        "event": "dep",
+        "late_min": 1.0019999999999527
+      }
+    ]
+  }
+}

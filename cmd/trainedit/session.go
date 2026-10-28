@@ -102,6 +102,7 @@ func newSession(dir, from string) (*session, error) {
 		sc.Timetable = sc.Ref(base.TimetablePath())
 		sc.Profile = sc.Ref(base.ProfilePath())
 		sc.Disruptions = slices.Clone(base.Disruptions)
+		sc.Safety = base.Safety
 	} else {
 		sc.Name = "new"
 		sc.Path = filepath.Join(dir, "x.json")

@@ -11,6 +11,7 @@ import (
 	"trainapp/visualization/tui"
 
 	tea "charm.land/bubbletea/v2"
+	"trainapp/worlds/edit"
 )
 
 // The route picker: a train's route picked rather than typed. The head has
@@ -48,7 +49,7 @@ func (c stopChoice) stops(end bool) bool {
 // each station's stop.
 type pickedRoute struct {
 	head  values
-	way   way
+	way   edit.Route
 	entry float64
 	dwell float64
 	stops map[string]stopChoice
@@ -123,7 +124,7 @@ type routePicker struct {
 	title string
 	sh    sheet
 
-	ways  []way
+	ways  []edit.Route
 	found [2]string             // the from and to the ways are for
 	kept  map[string]stopChoice // stops picked, by station, kept as the way changes
 	err   string
@@ -175,21 +176,21 @@ func (r *routePicker) refresh() {
 	if r.found != [2]string{from, to} {
 		r.found = [2]string{from, to}
 		r.ways, r.err = nil, ""
-		if _, err := routeWay(r.m.s.world.S, from, to, ""); err != nil {
+		if _, err := edit.FindRoute(r.m.s.world.S, from, to, ""); err != nil {
 			r.err = err.Error()
 		} else {
-			r.ways = ways(r.m.s.world.S, from, to, maxWays)
+			r.ways = edit.Routes(r.m.s.world.S, from, to, maxWays)
 		}
 		f := field{key: "way", label: "way", fixed: true, value: r.err}
 		if len(r.ways) > 0 {
 			var labels []string
 			for _, w := range r.ways {
-				labels = append(labels, w.label())
+				labels = append(labels, w.Label())
 			}
 			pick := labels[0]
 			for _, w := range r.ways {
-				if slices.Equal(w.stations, r.prefer) {
-					pick = w.label()
+				if slices.Equal(w.Stations, r.prefer) {
+					pick = w.Label()
 				}
 			}
 			f = choice("way", "way", pick, labels...)
@@ -207,9 +208,9 @@ func (r *routePicker) refresh() {
 	if !ok {
 		return
 	}
-	for i, stn := range w.stations {
+	for i, stn := range w.Stations {
 		c := r.kept[stn]
-		end := i == 0 || i == len(w.stations)-1
+		end := i == 0 || i == len(w.Stations)-1
 		stop := choice("stop:"+stn, "", "·", "·", "■")
 		if c.stops(end) {
 			stop.value = "■"
@@ -261,14 +262,14 @@ func (r *routePicker) keep() {
 }
 
 // way is the way chosen, if there is one.
-func (r *routePicker) way() (way, bool) {
+func (r *routePicker) way() (edit.Route, bool) {
 	label, _ := cellValue(r.sh.head, "way")
 	for _, w := range r.ways {
-		if w.label() == label {
+		if w.Label() == label {
 			return w, true
 		}
 	}
-	return way{}, false
+	return edit.Route{}, false
 }
 
 func (r *routePicker) cells() *sheet { return &r.sh }
@@ -343,12 +344,12 @@ func (r *routePicker) preview(w, h int) []string {
 	if ok {
 		// over the platforms picked, if the track allows
 		var pts []ops.PointSpec
-		for _, stn := range way.stations {
+		for _, stn := range way.Stations {
 			pts = append(pts, ops.PointSpec{Stn: stn, Pf: r.kept[stn].pf})
 		}
-		path, err := trainPath(s, pts)
+		path, err := edit.TrainPath(s, pts)
 		if err != nil {
-			path = way.points
+			path = way.Points
 		}
 		markWay(s, path, marks)
 	}
@@ -363,7 +364,7 @@ func (r *routePicker) preview(w, h int) []string {
 			}
 		}
 	} else if ok {
-		focus = way.stations[0]
+		focus = way.Stations[0]
 	}
 	return viewAround(d.Draw(schematic.Options{Level: schematic.Layout, Zoom: 1, Marks: marks}), focus, w, h)
 }

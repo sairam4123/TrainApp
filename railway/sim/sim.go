@@ -39,6 +39,10 @@ type Sim struct {
 	// of its own: trains are held and given platforms only as overrides say
 	// (see overrides.go), e.g. to run a timetable to its plan.
 	ManualPrecedence bool
+	// NoDeadlockAvoidance turns the safe-state check (safety.go) off: every
+	// route the interlocking allows is granted. It is there to show what the
+	// check prevents, e.g. in a demo; a run with it may end in a deadlock.
+	NoDeadlockAvoidance bool
 
 	delayBands  []DelayBand // Priorities.DelayBands, smallest OverMin first
 	log         *slog.Logger
@@ -304,6 +308,12 @@ func (s *Sim) Run() error {
 	for _, st := range s.Status() {
 		if st.Phase != phaseExited.String() {
 			s.logStuck(st)
+		}
+	}
+	if s.err == nil {
+		if dl := s.dispatcher.deadlock(); dl != nil {
+			s.logDeadlock(dl)
+			s.err = dl
 		}
 	}
 	if s.err != nil {

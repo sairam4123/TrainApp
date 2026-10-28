@@ -84,9 +84,17 @@ func (r *Recorder) AfterEvent(ev des.Event[ops.RailwayEvent]) {
 }
 
 // Close sends what is left and ends the stream, with an error message if the
-// run failed. It returns the first write error.
+// run failed, after the deadlock if that was why. It returns the first write error.
 func (r *Recorder) Close(runErr error) error {
 	r.diff(nil)
+	var dl *sim.Deadlock
+	if errors.As(runErr, &dl) {
+		m := &vizproto.DeadlockMsg{Since: round(dl.Since), Text: dl.String()}
+		for _, l := range dl.Cycle {
+			m.Cycle = append(m.Cycle, vizproto.WaitLink{Train: l.Train.Number, For: l.For.Number, Track: l.Track.Id.String()})
+		}
+		r.write(m)
+	}
 	if runErr != nil {
 		r.write(&vizproto.ErrorMsg{Message: runErr.Error()})
 	} else {

@@ -220,6 +220,9 @@ func (m *model) options() schematic.Options {
 		opt.Heat, opt.StationNotes = m.st.delayHeat()
 	case m.rep != nil:
 		opt.State, opt.Time = m.rep.state, m.rep.t
+		if d := m.rep.deadlocked(); d != nil {
+			opt.Deadlocked = d.Has
+		}
 	}
 	return opt
 }
@@ -1044,6 +1047,8 @@ func (m *model) keyLine() string {
 	own, shared := m.keys()
 	if m.note != "" {
 		own = " " + bold.Render(m.note) + "  " + dim.Render(own)
+	} else if d := m.deadlocked(); d != nil {
+		own = " " + tui.Failed.Bold(true).Render(fmt.Sprintf("DEADLOCK from t=%.2f: %s", d.Since, d.Text))
 	} else if m.rep != nil && m.rep.failure != "" && m.rep.t >= m.rep.end {
 		own = " " + bold.Render("run failed: "+m.rep.failure)
 	} else {
@@ -1052,6 +1057,14 @@ func (m *model) keyLine() string {
 	// the page's own keys give way, so the shared ones always show
 	room := max(m.width-ansi.StringWidth(shared), 0)
 	return ansi.Truncate(own, room, "…") + dim.Render(shared)
+}
+
+// deadlocked is the deadlock the replay has reached, nil if none.
+func (m *model) deadlocked() *vizproto.DeadlockMsg {
+	if m.rep == nil {
+		return nil
+	}
+	return m.rep.deadlocked()
 }
 
 // keys are the page's own keys and those every page shares, as the other

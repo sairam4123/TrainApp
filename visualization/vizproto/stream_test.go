@@ -7,7 +7,7 @@ import (
 )
 
 func TestReadsOlderVersions(t *testing.T) {
-	for _, v := range []string{"1", "2", "3", "4", "5", "6", "7"} {
+	for _, v := range []string{"1", "2", "3", "4", "5", "6", "7", "8"} {
 		rec := `{"type":"hello","t":0,"version":` + v + `,"world":{"points":[],"tracks":[],"switches":[],"signals":[],"stations":[],"trains":[]}}
 {"type":"decision","t":3,"id":"hold:A>B@X","action":"hold","train":"A","for":"B","at":"X","status":"active","source":"auto","since":3}
 {"type":"end","t":4}
@@ -80,5 +80,23 @@ func TestScheduleRoundTrips(t *testing.T) {
 	got := hello.World.Trains[0]
 	if got.Number != want.Number || got.Class != want.Class || len(got.Schedule) != 2 || got.Schedule[0] != want.Schedule[0] || got.Schedule[1] != want.Schedule[1] {
 		t.Errorf("read back %+v, want %+v", got, want)
+	}
+}
+
+func TestDeadlockReads(t *testing.T) {
+	rec := fmt.Sprintf(`{"type":"hello","t":0,"version":%d,"world":{}}
+{"type":"deadlock","t":8,"since":7.5,"cycle":[{"train":"W1","for":"E1","track":"blk"},{"train":"E1","for":"W1","track":"pf2"}],"text":"W1 waits for E1 (blk) → E1 waits for W1 (pf2)"}
+{"type":"error","t":8,"message":"deadlock"}
+`, Version)
+	_, msgs, err := ReadAll(strings.NewReader(rec))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, ok := msgs[0].(*DeadlockMsg)
+	if !ok {
+		t.Fatalf("first message %T", msgs[0])
+	}
+	if d.Since != 7.5 || !d.Has("E1") || !d.Has("W1") || d.Has("E2") {
+		t.Errorf("deadlock %+v", d)
 	}
 }

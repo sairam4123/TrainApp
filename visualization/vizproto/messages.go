@@ -16,9 +16,9 @@ import (
 // is held for, and each platform's class. Version 3 added each train's class
 // and planned schedule, version 4 its priority, version 5 its length,
 // version 6 the keys of a train that accelerates and brakes, version 7 each
-// siding's name, version 8 deferral decisions (action "defer" and its to).
-// Older recordings still read.
-const Version = 8
+// siding's name, version 8 deferral decisions (action "defer" and its to),
+// version 9 the deadlock a run ended in. Older recordings still read.
+const Version = 9
 
 const (
 	TypeHello  = "hello"
@@ -30,6 +30,8 @@ const (
 	TypeDecision = "decision"
 	TypeEnd      = "end"
 	TypeError    = "error"
+	// TypeDeadlock is the deadlock the run ended in, sent before its error.
+	TypeDeadlock = "deadlock"
 )
 
 // Message is one line of the stream.
@@ -223,6 +225,29 @@ type ErrorMsg struct {
 	Message string `json:"message"`
 }
 
+// DeadlockMsg is a cycle of trains, each waiting for track the next one
+// holds, that the run ended in. It is sent at the end, but the trains were
+// stuck from Since: when the last of them began to wait.
+type DeadlockMsg struct {
+	Header
+	Since float64    `json:"since"`
+	Cycle []WaitLink `json:"cycle"`
+	Text  string     `json:"text"` // the cycle as the sim words it
+}
+
+// WaitLink is one train in a deadlock waiting for another, For, which holds
+// the track it waits for.
+type WaitLink struct {
+	Train string `json:"train"`
+	For   string `json:"for"`
+	Track string `json:"track"`
+}
+
+// Has reports whether the train is in the cycle.
+func (m *DeadlockMsg) Has(train string) bool {
+	return slices.ContainsFunc(m.Cycle, func(l WaitLink) bool { return l.Train == train })
+}
+
 func (*HelloMsg) kind() string    { return TypeHello }
 func (*TrackMsg) kind() string    { return TypeTrack }
 func (*SwitchMsg) kind() string   { return TypeSwitch }
@@ -231,6 +256,7 @@ func (*EventMsg) kind() string    { return TypeEvent }
 func (*DecisionMsg) kind() string { return TypeDecision }
 func (*EndMsg) kind() string      { return TypeEnd }
 func (*ErrorMsg) kind() string    { return TypeError }
+func (*DeadlockMsg) kind() string { return TypeDeadlock }
 
 var eventKeys = []string{"type", "t", "event", "level", "train"}
 

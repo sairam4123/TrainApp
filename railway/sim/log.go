@@ -44,6 +44,7 @@ const (
 //	priority, delay       a waiting train's priority and minutes late (route waits, retries, stuck trains);
 //	                      on PRIORITY_CHANGE, priority is the new base priority
 //	phase, since          a train that never finished: its phase and when it started waiting
+//	cycle, trains         a DEADLOCK: who waits for whom, and on what; the trains in it
 //	kmph                  a train that accelerates or brakes: its speed as its front enters a track
 //	                      (TRACK_ENTER) or runs through a pass (TRAIN_PASS)
 //	running               a route granted to a running train, which asked for it on approach
@@ -299,6 +300,14 @@ func (s *Sim) logOverride(o Override, status, reason string) {
 		attrs = append(attrs, "reason", reason)
 	}
 	s.log.Info("PRECEDENCE_OVERRIDE", attrs...)
+}
+
+func (s *Sim) logDeadlock(d *Deadlock) {
+	names := make([]string, len(d.Cycle))
+	for i, id := range d.Trains() {
+		names[i] = id.String()
+	}
+	s.log.Error("DEADLOCK", "since", roundTime(d.Since), "trains", strings.Join(names, ","), "cycle", d.String())
 }
 
 func (s *Sim) logStuck(st TrainStatus) {

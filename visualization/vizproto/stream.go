@@ -69,6 +69,8 @@ func (r *Reader) Next() (Message, error) {
 			m = &EndMsg{}
 		case TypeError:
 			m = &ErrorMsg{}
+		case TypeDeadlock:
+			m = &DeadlockMsg{}
 		default:
 			continue
 		}

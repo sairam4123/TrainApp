@@ -4,9 +4,9 @@
     "finished": 3,
     "delay": {
       "trains": 3,
-      "total_min": 32.36319726124691,
-      "mean_min": 10.787732420415637,
-      "weighted_mean_min": 10.787732420415637,
+      "total_min": 31.87736520289627,
+      "mean_min": 10.625788400965424,
+      "weighted_mean_min": 10.625788400965424,
       "punctual": [
         {
           "within_min": 1,
@@ -25,13 +25,13 @@
         }
       ],
       "worst": "16849",
-      "worst_min": 32.36319726124691
+      "worst_min": 31.87736520289627
     },
     "lateness": {
       "trains": 3,
-      "total_min": 36.36319726124691,
-      "mean_min": 12.12106575374897,
-      "weighted_mean_min": 12.12106575374897,
+      "total_min": 35.87736520289627,
+      "mean_min": 11.959121734298757,
+      "weighted_mean_min": 11.959121734298757,
       "punctual": [
         {
           "within_min": 1,
@@ -50,68 +50,68 @@
         }
       ],
       "worst": "16849",
-      "worst_min": 36.36319726124691
+      "worst_min": 35.87736520289627
     },
     "disruption": {
       "primary_min": 40,
-      "reactionary_min": -7.63680273875309
+      "reactionary_min": -8.122634797103728
     },
     "longest_wait": {
       "train": "56804",
       "kind": "station",
       "at": "VEL",
       "from_min": 485.39735201868945,
-      "min": 12.568345477425908,
+      "min": 12.08251341907527,
       "cause": "held",
       "for": "16751"
     },
-    "wait_min": 37.21265902513943,
+    "wait_min": 38.888084225533646,
     "holds": 2,
-    "held_min": 18.97806654043518,
+    "held_min": 15.33717131653458,
     "platform_changes": 0,
     "utilization": {
       "from_min": 420.00199999999995,
       "to_min": 550.002,
       "blocks": {
         "tracks": 9,
-        "mean_occupancy": 0.1517563398079057,
+        "mean_occupancy": 0.14888523807894843,
         "min_occupancy": 0.07504117468921025,
-        "max_occupancy": 0.24770925641653496,
-        "mean_standing": 0.013466716627732855,
-        "standing_min": 15.756058454447441
+        "max_occupancy": 0.23478929863622702,
+        "mean_standing": 0.012307194450870106,
+        "standing_min": 14.399417507518024
       },
       "platforms": {
         "tracks": 35,
-        "mean_occupancy": 0.03615962467943543,
+        "mean_occupancy": 0.03637581808795877,
         "min_occupancy": 0,
-        "max_occupancy": 0.2106151403129209,
-        "mean_standing": 0.028796471162471235,
-        "standing_min": 131.02394378924413
+        "max_occupancy": 0.21435230999254118,
+        "mean_standing": 0.029330982427321548,
+        "standing_min": 133.45597004431306
       },
       "stations": [
         {
           "stn": "TPJ",
           "platforms": 9,
-          "occupancy": 0.02340168225699121,
-          "standing_min": 23.805523796235263
+          "occupancy": 0.023816923332504576,
+          "standing_min": 24.291355854585902
         },
         {
           "stn": "KRMG",
           "platforms": 3,
-          "occupancy": 0.04391737982054699,
-          "standing_min": 12.126831635835515
+          "occupancy": 0.04455564642366298,
+          "standing_min": 13.099928734194634
         },
         {
           "stn": "KRUR",
           "platforms": 3,
-          "occupancy": 0.035846481768832004,
-          "standing_min": 8.979181395666672
+          "occupancy": 0.03773047159848824,
+          "standing_min": 10.438110552376486
         },
         {
           "stn": "VEL",
           "platforms": 3,
-          "occupancy": 0.08942672955795943,
-          "standing_min": 31.10609656178866
+          "occupancy": 0.08693528310487923,
+          "standing_min": 30.134432445087384
         },
         {
           "stn": "PDKT",
@@ -146,8 +146,8 @@
         {
           "stn": "KKDI",
           "platforms": 6,
-          "occupancy": 0.027186142085572292,
-          "standing_min": 17.630746382301993
+          "occupancy": 0.027809003698842344,
+          "standing_min": 18.11657844065263
         }
       ],
       "tracks": [
@@ -265,12 +265,12 @@
           "stn": "TPJ",
           "pf": "5",
           "entries": 3,
-          "occupied_min": 27.379968240679716,
+          "occupied_min": 27.865800299030354,
           "running_min": 3.5744444444444525,
-          "standing_min": 23.805523796235263,
-          "occupancy": 0.2106151403129209,
+          "standing_min": 24.291355854585902,
+          "occupancy": 0.21435230999254118,
           "running": 0.02749572649572656,
-          "standing": 0.18311941381719432,
+          "standing": 0.18685658349681464,
           "trains_per_hour": 1.3846153846153846,
           "split": [
             {
@@ -279,7 +279,7 @@
             },
             {
               "cause": "dwell",
-              "min": 22.123308824426715
+              "min": 22.609140882777353
             },
             {
               "cause": "station wait",
@@ -632,12 +632,12 @@
           "track": "slTpjKrmg0",
           "kind": "block",
           "entries": 3,
-          "occupied_min": 26.02327613361956,
-          "running_min": 23.502314549363973,
-          "standing_min": 2.5209615842555877,
-          "occupancy": 0.20017904718168894,
-          "running": 0.18078703499510748,
-          "standing": 0.019392012186581445,
+          "occupied_min": 25.075595390794547,
+          "running_min": 23.232954280003696,
+          "standing_min": 1.8426411107908507,
+          "occupancy": 0.19288919531380422,
+          "running": 0.17871503292310537,
+          "standing": 0.014174162390698852,
           "trains_per_hour": 1.3846153846153846,
           "section": "TPJ–KRMG",
           "split": [
@@ -647,7 +647,7 @@
             },
             {
               "cause": "slower running",
-              "min": 0.9825420875420718
+              "min": 0.03486134471705782
             }
           ]
         },
@@ -695,18 +695,18 @@
           "track": "krmgPf2S-krmgThW1",
           "kind": "throat",
           "stn": "KRMG",
-          "entries": 3,
-          "occupied_min": 3.9896059197677687,
-          "running_min": 0.9916795888099159,
-          "standing_min": 2.9979263309578528,
-          "occupancy": 0.030689276305905913,
-          "running": 0.007628304529307045,
-          "standing": 0.023060971776598868,
-          "trains_per_hour": 1.3846153846153846,
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099273,
+          "standing_min": 2.0139263309578723,
+          "occupancy": 0.021581583998213843,
+          "running": 0.006089842990845595,
+          "standing": 0.015491741007368248,
+          "trains_per_hour": 0.9230769230769231,
           "split": [
             {
               "cause": "free running",
-              "min": 3.9896059197677687
+              "min": 2.8056059197677996
             }
           ]
         },
@@ -715,92 +715,146 @@
           "kind": "platform",
           "stn": "KRMG",
           "pf": "3",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 7.187525936241343,
+          "running_min": 0.942809041582052,
+          "standing_min": 6.244716894659291,
+          "occupancy": 0.055288661048010335,
+          "running": 0.007252377242938862,
+          "standing": 0.04803628380507147,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "dwell",
+              "min": 0.7081818181817425
+            },
+            {
+              "cause": "slower running",
+              "min": 1.5547016121547585
+            },
+            {
+              "cause": "station wait",
+              "min": 4.924642505904842
+            }
+          ]
         },
         {
           "track": "krmgPf3E-krmgThE0",
           "kind": "throat",
           "stn": "KRMG",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 1.4414021651340363,
+          "running_min": 0.5916795888099387,
+          "standing_min": 0.8497225763240976,
+          "occupancy": 0.01108770896256951,
+          "running": 0.004551381452384143,
+          "standing": 0.006536327510185367,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            },
+            {
+              "cause": "slower running",
+              "min": 1.1160385287704457
+            }
+          ]
         },
         {
           "track": "krmgPf3S-krmgThW0",
           "kind": "throat",
           "stn": "KRMG",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 0.41605347229170775,
+          "running_min": 0.05719095841794797,
+          "standing_min": 0.3588625138737598,
+          "occupancy": 0.0032004113253208287,
+          "running": 0.0004399304493688305,
+          "standing": 0.0027604808759519985,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            },
+            {
+              "cause": "slower running",
+              "min": 0.09168983592809354
+            }
+          ]
         },
         {
           "track": "krmgThE0-krmgThE1",
           "kind": "throat",
           "stn": "KRMG",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 0.9656613784627552,
+          "running_min": 0.24508171026440095,
+          "standing_min": 0.7205796681983543,
+          "occupancy": 0.007428164449713502,
+          "running": 0.0018852439251107766,
+          "standing": 0.005542920524602726,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            },
+            {
+              "cause": "slower running",
+              "min": 0.641297742099141
+            }
+          ]
         },
         {
           "track": "krmgThW0-krmgThW1",
           "kind": "throat",
           "stn": "KRMG",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 0.3835888575085278,
+          "running_min": 0.05471380471379916,
+          "standing_min": 0.3288750527947286,
+          "occupancy": 0.0029506835192963676,
+          "running": 0.0004208754208753782,
+          "standing": 0.0025298080984209894,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            },
+            {
+              "cause": "slower running",
+              "min": 0.05822522114493722
+            }
+          ]
         },
         {
           "track": "krmgPf2",
           "kind": "platform",
           "stn": "KRMG",
           "pf": "2",
-          "entries": 3,
-          "occupied_min": 17.127778130013326,
-          "running_min": 5.000946494177811,
-          "standing_min": 12.126831635835515,
-          "occupancy": 0.13175213946164097,
-          "running": 0.03846881918598316,
-          "standing": 0.0932833202756578,
-          "trains_per_hour": 1.3846153846153846,
+          "entries": 2,
+          "occupied_min": 10.189176168987217,
+          "running_min": 3.3339643294518737,
+          "standing_min": 6.855211839535343,
+          "occupancy": 0.07837827822297859,
+          "running": 0.025645879457322107,
+          "standing": 0.05273239876565649,
+          "trains_per_hour": 0.9230769230769231,
           "split": [
             {
               "cause": "free running",
-              "min": 5.000946494177811
+              "min": 3.3339643294518737
             },
             {
               "cause": "dwell",
-              "min": 6.280817759303147
+              "min": 4.8532118395353905
             },
             {
               "cause": "station wait",
-              "min": 5.846013876532368
+              "min": 2.0019999999999527
             }
           ]
         },
@@ -808,18 +862,18 @@
           "track": "krmgPf2E-krmgThE1",
           "kind": "throat",
           "stn": "KRMG",
-          "entries": 3,
-          "occupied_min": 4.42721183953563,
-          "running_min": 1.3833591776199228,
-          "standing_min": 3.0438526619157074,
-          "occupancy": 0.03405547568873562,
-          "running": 0.010641224443230176,
-          "standing": 0.023414251245505443,
-          "trains_per_hour": 1.3846153846153846,
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099841,
+          "standing_min": 2.0139263309578155,
+          "occupancy": 0.021581583998213843,
+          "running": 0.006089842990846032,
+          "standing": 0.015491741007367811,
+          "trains_per_hour": 0.9230769230769231,
           "split": [
             {
               "cause": "free running",
-              "min": 4.42721183953563
+              "min": 2.8056059197677996
             }
           ]
         },
@@ -827,12 +881,12 @@
           "track": "slKrmgKrur0",
           "kind": "block",
           "entries": 3,
-          "occupied_min": 32.202203334149544,
-          "running_min": 29.24720333414973,
-          "standing_min": 2.9549999999998136,
-          "occupancy": 0.24770925641653496,
-          "running": 0.22497848718576716,
-          "standing": 0.022730769230767795,
+          "occupied_min": 30.522608822709515,
+          "running_min": 28.245929296174438,
+          "standing_min": 2.2766795265350765,
+          "occupancy": 0.23478929863622702,
+          "running": 0.21727637920134182,
+          "standing": 0.017512919434885203,
           "trains_per_hour": 1.3846153846153846,
           "section": "KRMG–KRUR",
           "split": [
@@ -842,7 +896,7 @@
             },
             {
               "cause": "slower running",
-              "min": 2.591340505322762
+              "min": 0.9117459938827324
             }
           ]
         },
@@ -890,18 +944,18 @@
           "track": "krurPf2S-krurThW1",
           "kind": "throat",
           "stn": "KRUR",
-          "entries": 3,
-          "occupied_min": 3.9896059197677687,
-          "running_min": 0.9916795888099159,
-          "standing_min": 2.9979263309578528,
-          "occupancy": 0.030689276305905913,
-          "running": 0.007628304529307045,
-          "standing": 0.023060971776598868,
-          "trains_per_hour": 1.3846153846153846,
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099273,
+          "standing_min": 2.0139263309578723,
+          "occupancy": 0.021581583998213843,
+          "running": 0.006089842990845595,
+          "standing": 0.015491741007368248,
+          "trains_per_hour": 0.9230769230769231,
           "split": [
             {
               "cause": "free running",
-              "min": 3.9896059197677687
+              "min": 2.8056059197677996
             }
           ]
         },
@@ -910,92 +964,146 @@
           "kind": "platform",
           "stn": "KRUR",
           "pf": "3",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 4.525707754423138,
+          "running_min": 0.942809041582052,
+          "standing_min": 3.582898712841086,
+          "occupancy": 0.03481313657248568,
+          "running": 0.007252377242938862,
+          "standing": 0.027560759329546814,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "dwell",
+              "min": 0.7081818181817425
+            },
+            {
+              "cause": "slower running",
+              "min": 1.5547016121547585
+            },
+            {
+              "cause": "station wait",
+              "min": 2.262824324086637
+            }
+          ]
         },
         {
           "track": "krurPf3E-krurThE0",
           "kind": "throat",
           "stn": "KRUR",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 1.4414021651340363,
+          "running_min": 0.5916795888099387,
+          "standing_min": 0.8497225763240976,
+          "occupancy": 0.01108770896256951,
+          "running": 0.004551381452384143,
+          "standing": 0.006536327510185367,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            },
+            {
+              "cause": "slower running",
+              "min": 1.1160385287704457
+            }
+          ]
         },
         {
           "track": "krurPf3S-krurThW0",
           "kind": "throat",
           "stn": "KRUR",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 0.41605347229170775,
+          "running_min": 0.05719095841794797,
+          "standing_min": 0.3588625138737598,
+          "occupancy": 0.0032004113253208287,
+          "running": 0.0004399304493688305,
+          "standing": 0.0027604808759519985,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            },
+            {
+              "cause": "slower running",
+              "min": 0.09168983592809354
+            }
+          ]
         },
         {
           "track": "krurThE0-krurThE1",
           "kind": "throat",
           "stn": "KRUR",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 0.9656613784627552,
+          "running_min": 0.24508171026440095,
+          "standing_min": 0.7205796681983543,
+          "occupancy": 0.007428164449713502,
+          "running": 0.0018852439251107766,
+          "standing": 0.005542920524602726,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.3243636363636142
+            },
+            {
+              "cause": "slower running",
+              "min": 0.641297742099141
+            }
+          ]
         },
         {
           "track": "krurThW0-krurThW1",
           "kind": "throat",
           "stn": "KRUR",
-          "entries": 0,
-          "occupied_min": 0,
-          "running_min": 0,
-          "standing_min": 0,
-          "occupancy": 0,
-          "running": 0,
-          "standing": 0,
-          "trains_per_hour": 0
+          "entries": 1,
+          "occupied_min": 0.3835888575085278,
+          "running_min": 0.05471380471379916,
+          "standing_min": 0.3288750527947286,
+          "occupancy": 0.0029506835192963676,
+          "running": 0.0004208754208753782,
+          "standing": 0.0025298080984209894,
+          "trains_per_hour": 0.46153846153846156,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 0.32536363636359056
+            },
+            {
+              "cause": "slower running",
+              "min": 0.05822522114493722
+            }
+          ]
         },
         {
           "track": "krurPf2",
           "kind": "platform",
           "stn": "KRUR",
           "pf": "2",
-          "entries": 3,
-          "occupied_min": 13.980127889844482,
-          "running_min": 5.000946494177811,
-          "standing_min": 8.979181395666672,
-          "occupancy": 0.10753944530649602,
-          "running": 0.03846881918598316,
-          "standing": 0.06907062612051286,
-          "trains_per_hour": 1.3846153846153846,
+          "entries": 2,
+          "occupied_min": 10.189176168987274,
+          "running_min": 3.3339643294518737,
+          "standing_min": 6.8552118395354,
+          "occupancy": 0.07837827822297903,
+          "running": 0.025645879457322107,
+          "standing": 0.052732398765656927,
+          "trains_per_hour": 0.9230769230769231,
           "split": [
             {
               "cause": "free running",
-              "min": 5.000946494177811
+              "min": 3.3339643294518737
             },
             {
               "cause": "dwell",
-              "min": 6.280817759303147
+              "min": 4.853211839535447
             },
             {
               "cause": "station wait",
-              "min": 2.698363636363524
+              "min": 2.0019999999999527
             }
           ]
         },
@@ -1003,18 +1111,18 @@
           "track": "krurPf2E-krurThE1",
           "kind": "throat",
           "stn": "KRUR",
-          "entries": 3,
-          "occupied_min": 4.42721183953563,
-          "running_min": 1.383359177619866,
-          "standing_min": 3.043852661915764,
-          "occupancy": 0.03405547568873562,
-          "running": 0.010641224443229737,
-          "standing": 0.02341425124550588,
-          "trains_per_hour": 1.3846153846153846,
+          "entries": 2,
+          "occupied_min": 2.8056059197677996,
+          "running_min": 0.7916795888099273,
+          "standing_min": 2.0139263309578723,
+          "occupancy": 0.021581583998213843,
+          "running": 0.006089842990845595,
+          "standing": 0.015491741007368248,
+          "trains_per_hour": 0.9230769230769231,
           "split": [
             {
               "cause": "free running",
-              "min": 4.42721183953563
+              "min": 2.8056059197677996
             }
           ]
         },
@@ -1022,11 +1130,11 @@
           "track": "slKrurVel0",
           "kind": "block",
           "entries": 3,
-          "occupied_min": 27.118215899979248,
-          "running_min": 24.876397718161343,
+          "occupied_min": 26.386302131364232,
+          "running_min": 24.144483949546327,
           "standing_min": 2.241818181817905,
-          "occupancy": 0.20860166076907113,
-          "running": 0.19135690552431803,
+          "occupancy": 0.20297155485664795,
+          "running": 0.1857267996118948,
           "standing": 0.017244755244753114,
           "trains_per_hour": 1.3846153846153846,
           "section": "KRUR–VEL",
@@ -1037,7 +1145,7 @@
             },
             {
               "cause": "slower running",
-              "min": 1.6087984177805197
+              "min": 0.876884649165504
             }
           ]
         },
@@ -1047,12 +1155,12 @@
           "stn": "VEL",
           "pf": "1",
           "entries": 1,
-          "occupied_min": 16.662933561919544,
+          "occupied_min": 16.177101503568906,
           "running_min": 1.6669821647259369,
-          "standing_min": 14.995951397193608,
-          "occupancy": 0.12817641201476573,
+          "standing_min": 14.51011933884297,
+          "occupancy": 0.12443924233514543,
           "running": 0.012822939728661054,
-          "standing": 0.11535347228610468,
+          "standing": 0.11161630260648438,
           "trains_per_hour": 0.46153846153846156,
           "split": [
             {
@@ -1066,11 +1174,11 @@
             {
               "cause": "held",
               "kind": "cross",
-              "min": 11.567345477425931
+              "min": 8.41228231187597
             },
             {
               "cause": "station wait",
-              "min": 1.0009999999999764
+              "min": 3.6702311071992995
             }
           ]
         },
@@ -1237,12 +1345,12 @@
           "stn": "VEL",
           "pf": "2",
           "entries": 1,
-          "occupied_min": 17.505309147502885,
+          "occupied_min": 17.019477089152247,
           "running_min": 1.6669821647259369,
-          "standing_min": 15.838326982776948,
-          "occupancy": 0.13465622421156065,
+          "standing_min": 15.35249492442631,
+          "occupancy": 0.13091905453194036,
           "running": 0.012822939728661054,
-          "standing": 0.1218332844828996,
+          "standing": 0.1180961148032793,
           "trains_per_hour": 0.46153846153846156,
           "split": [
             {
@@ -1256,7 +1364,7 @@
             {
               "cause": "held",
               "kind": "overtake",
-              "min": 7.410721063009248
+              "min": 6.92488900465861
             },
             {
               "cause": "station wait",
@@ -1292,18 +1400,18 @@
           "track": "slVelPdkt0",
           "kind": "block",
           "entries": 3,
-          "occupied_min": 21.053302761587645,
+          "occupied_min": 21.0533027615877,
           "running_min": 19.453427674003535,
-          "standing_min": 1.5998750875841097,
-          "occupancy": 0.16194848278144341,
+          "standing_min": 1.5998750875841665,
+          "occupancy": 0.16194848278144386,
           "running": 0.14964175133848873,
-          "standing": 0.01230673144295469,
+          "standing": 0.012306731442955127,
           "trains_per_hour": 1.3846153846153846,
           "section": "VEL–PDKT",
           "split": [
             {
               "cause": "free running",
-              "min": 21.053302761587645
+              "min": 21.0533027615877
             }
           ]
         },
@@ -2369,21 +2477,25 @@
           "stn": "KKDI",
           "pf": "3",
           "entries": 3,
-          "occupied_min": 21.20519082674639,
+          "occupied_min": 21.691022885097027,
           "running_min": 3.5744444444443957,
-          "standing_min": 17.630746382301993,
-          "occupancy": 0.16311685251343375,
+          "standing_min": 18.11657844065263,
+          "occupancy": 0.16685402219305406,
           "running": 0.02749572649572612,
-          "standing": 0.13562112601770765,
+          "standing": 0.13935829569732794,
           "trains_per_hour": 1.3846153846153846,
           "split": [
             {
               "cause": "free running",
-              "min": 3.5744444444443957
+              "min": 3.131100719481367
             },
             {
               "cause": "dwell",
-              "min": 17.630746382301993
+              "min": 18.11657844065263
+            },
+            {
+              "cause": "slower running",
+              "min": 0.44334372496302876
             }
           ]
         }
@@ -2418,13 +2530,13 @@
         "priority": 30,
         "finished": true,
         "entry_min": 420,
-        "exit_min": 547.3641972612469,
-        "journey_min": 127.36419726124689,
+        "exit_min": 546.8783652028962,
+        "journey_min": 126.87836520289625,
         "free_run_min": 95.00099999999998,
-        "delay_min": 32.36319726124691,
-        "late_min": 36.36319726124691,
+        "delay_min": 31.87736520289627,
+        "late_min": 35.87736520289627,
         "primary_min": 35,
-        "wait_min": 12.41572106300913,
+        "wait_min": 11.929889004658492,
         "waits": [
           {
             "train": "16849",
@@ -2447,7 +2559,7 @@
             "kind": "station",
             "at": "VEL",
             "from_min": 495.69901983606917,
-            "min": 8.411721063009225,
+            "min": 7.925889004658586,
             "cause": "held",
             "for": "16751"
           },
@@ -2455,7 +2567,7 @@
             "train": "16849",
             "kind": "station",
             "at": "TYM",
-            "from_min": 526.7420901414343,
+            "from_min": 526.2562580830837,
             "min": 1.0009999999999764,
             "cause": "station wait"
           },
@@ -2463,7 +2575,7 @@
             "train": "16849",
             "kind": "station",
             "at": "KTYR",
-            "from_min": 539.380372861829,
+            "from_min": 538.8945408034783,
             "min": 1.0009999999999764,
             "cause": "station wait"
           }
@@ -2499,65 +2611,65 @@
           {
             "stn": "VEL",
             "arr_min": 489.6980198360692,
-            "dep_min": 504.1107408990784,
+            "dep_min": 503.62490884072776,
             "delay_min": 25.56819713653448,
             "approach_min": 0,
-            "station_min": 12.410721063009248,
+            "station_min": 11.92488900465861,
             "late_min": 28.698019836069193
           },
           {
             "stn": "PDKT",
-            "arr_min": 512.8547508922007,
-            "dep_min": 513.8567508922007,
-            "delay_min": 37.978918199543784,
+            "arr_min": 512.3689188338501,
+            "dep_min": 513.37091883385,
+            "delay_min": 37.493086141193146,
             "approach_min": 5.684341886080802e-14,
             "station_min": 0,
-            "late_min": 39.85475089220074
+            "late_min": 39.3689188338501
           },
           {
             "stn": "NMN",
             "pass": true,
-            "arr_min": 518.7015658891664,
-            "dep_min": 518.7015658891664,
-            "delay_min": 37.978918199543784,
+            "arr_min": 518.2157338308158,
+            "dep_min": 518.2157338308158,
+            "delay_min": 37.493086141193146,
             "approach_min": 0,
             "station_min": 0
           },
           {
             "stn": "TYM",
-            "arr_min": 525.7410901414344,
-            "dep_min": 527.7430901414343,
-            "delay_min": 37.97891819954384,
+            "arr_min": 525.2552580830837,
+            "dep_min": 527.2572580830837,
+            "delay_min": 37.4930861411932,
             "approach_min": 5.684341886080802e-14,
             "station_min": 0,
-            "late_min": 39.74109014143437
+            "late_min": 39.25525808308373
           },
           {
             "stn": "CTND",
             "pass": true,
-            "arr_min": 534.9186590571154,
-            "dep_min": 534.9186590571154,
-            "delay_min": 37.97891819954367,
+            "arr_min": 534.4328269987648,
+            "dep_min": 534.4328269987648,
+            "delay_min": 37.49308614119303,
             "approach_min": -1.7053025658242404e-13,
             "station_min": 0
           },
           {
             "stn": "KTYR",
-            "arr_min": 538.379372861829,
-            "dep_min": 540.3813728618289,
-            "delay_min": 37.97891819954356,
+            "arr_min": 537.8935408034783,
+            "dep_min": 539.8955408034783,
+            "delay_min": 37.49308614119292,
             "approach_min": -1.1368683772161603e-13,
             "station_min": 0,
-            "late_min": 39.37937286182898
+            "late_min": 38.893540803478345
           },
           {
             "stn": "KKDI",
-            "arr_min": 546.3631972612469,
-            "dep_min": 547.3641972612469,
-            "delay_min": 37.97891819954333,
+            "arr_min": 545.8773652028963,
+            "dep_min": 546.8783652028962,
+            "delay_min": 37.49308614119269,
             "approach_min": -2.2737367544323206e-13,
             "station_min": -5.61572093829642,
-            "late_min": 36.36319726124691
+            "late_min": 35.87736520289627
           }
         ],
         "losses": [
@@ -2647,7 +2759,7 @@
             "at": "VEL",
             "track": "velPf2",
             "from_min": 496.6980198360692,
-            "min": 7.410721063009248
+            "min": 6.92488900465861
           },
           {
             "cause": "station wait",
@@ -2655,7 +2767,7 @@
             "where": "station",
             "at": "VEL",
             "track": "velPf2",
-            "from_min": 504.10874089907844,
+            "from_min": 503.6229088407278,
             "min": 0.0019999999999527063
           },
           {
@@ -2664,7 +2776,7 @@
             "where": "station",
             "at": "TYM",
             "track": "tymPf2",
-            "from_min": 525.7410901414344,
+            "from_min": 525.2552580830837,
             "min": -1.0009999999999764
           },
           {
@@ -2672,7 +2784,7 @@
             "where": "station",
             "at": "TYM",
             "track": "tymPf2",
-            "from_min": 526.7420901414343,
+            "from_min": 526.2562580830837,
             "min": 1.0009999999999764
           },
           {
@@ -2681,7 +2793,7 @@
             "where": "station",
             "at": "KTYR",
             "track": "ktyrPf1",
-            "from_min": 538.379372861829,
+            "from_min": 537.8935408034783,
             "min": -1.0009999999999764
           },
           {
@@ -2689,7 +2801,7 @@
             "where": "station",
             "at": "KTYR",
             "track": "ktyrPf1",
-            "from_min": 539.380372861829,
+            "from_min": 538.8945408034783,
             "min": 1.0009999999999764
           },
           {
@@ -2698,7 +2810,7 @@
             "where": "station",
             "at": "KKDI",
             "track": "kkdiPf3",
-            "from_min": 546.3631972612469,
+            "from_min": 545.8773652028963,
             "min": -5.61572093829642
           }
         ]
@@ -2714,7 +2826,7 @@
         "free_run_min": 85.00099999999998,
         "delay_min": 0,
         "late_min": 0,
-        "wait_min": 6.222592484704535,
+        "wait_min": 8.869681801800027,
         "waits": [
           {
             "train": "16751",
@@ -2729,8 +2841,8 @@
             "train": "16751",
             "kind": "station",
             "at": "KRMG",
-            "from_min": 472.05593062686165,
-            "min": 3.844013876532415,
+            "from_min": 470.9753019974892,
+            "min": 4.924642505904842,
             "cause": "station wait",
             "for": "16849"
           },
@@ -2738,8 +2850,8 @@
             "train": "16751",
             "kind": "station",
             "at": "KRUR",
-            "from_min": 488.11667403497967,
-            "min": 0.6963636363635715,
+            "from_min": 486.5502133472566,
+            "min": 2.262824324086637,
             "cause": "station wait",
             "for": "16849"
           }
@@ -2757,82 +2869,82 @@
           {
             "stn": "KRMG",
             "pass": true,
-            "arr_min": 472.05393062686164,
+            "arr_min": 470.9733019974892,
             "dep_min": 475.89994450339407,
-            "delay_min": 3.27310286044019,
-            "approach_min": 1.591887888631618,
-            "station_min": 3.8460138765324245
+            "delay_min": 2.192474231067763,
+            "approach_min": 0.5112592592591909,
+            "station_min": 4.9266425059048515
           },
           {
             "stn": "KRUR",
             "pass": true,
-            "arr_min": 488.11467403497966,
+            "arr_min": 486.5482133472566,
             "dep_min": 488.81303767134324,
-            "delay_min": 10.802391723103767,
-            "approach_min": 3.6832749861311527,
-            "station_min": 0.698363636363581
+            "delay_min": 9.235931035380702,
+            "approach_min": 2.1168142984080873,
+            "station_min": 2.2648243240866464
           },
           {
             "stn": "VEL",
             "pass": true,
-            "arr_min": 498.13224295066084,
-            "dep_min": 498.13224295066084,
-            "delay_min": 13.592142456966883,
-            "approach_min": 2.0913870974995348,
+            "arr_min": 497.6464108923102,
+            "dep_min": 497.6464108923102,
+            "delay_min": 13.106310398616245,
+            "approach_min": 1.6055550391488964,
             "station_min": 0
           },
           {
             "stn": "PDKT",
-            "arr_min": 504.7848658462836,
-            "dep_min": 505.78686584628355,
-            "delay_min": 12.313574537127522,
+            "arr_min": 504.29903378793296,
+            "dep_min": 505.3010337879329,
+            "delay_min": 11.827742478776884,
             "approach_min": -1.278567919839361,
             "station_min": -11.528708690843928,
-            "late_min": 1.7848658462835942
+            "late_min": 1.2990337879329559
           },
           {
             "stn": "NMN",
             "pass": true,
-            "arr_min": 510.6316808432493,
-            "dep_min": 510.6316808432493,
-            "delay_min": 0.04248833338755276,
+            "arr_min": 510.14584878489865,
+            "dep_min": 510.14584878489865,
+            "delay_min": -0.4433437249630856,
             "approach_min": -0.7423775128960415,
             "station_min": 0
           },
           {
             "stn": "TYM",
             "pass": true,
-            "arr_min": 516.0793172068854,
-            "dep_min": 516.0793172068854,
-            "delay_min": 0.0424883333876096,
+            "arr_min": 515.5934851485348,
+            "dep_min": 515.5934851485348,
+            "delay_min": -0.44334372496302876,
             "approach_min": 5.684341886080802e-14,
             "station_min": 0
           },
           {
             "stn": "CTND",
             "pass": true,
-            "arr_min": 521.1634990250668,
-            "dep_min": 521.1634990250668,
-            "delay_min": 0.0424883333876096,
+            "arr_min": 520.6776669667162,
+            "dep_min": 520.6776669667162,
+            "delay_min": -0.44334372496302876,
             "approach_min": 0,
             "station_min": 0
           },
           {
             "stn": "KTYR",
             "pass": true,
-            "arr_min": 524.1255771647017,
-            "dep_min": 524.1255771647017,
-            "delay_min": 0.0424883333876096,
+            "arr_min": 523.639745106351,
+            "dep_min": 523.639745106351,
+            "delay_min": -0.44334372496302876,
             "approach_min": 0,
             "station_min": 0
           },
           {
             "stn": "KKDI",
-            "arr_min": 528.5018465249708,
+            "arr_min": 528.0160144666202,
             "dep_min": 540.001,
-            "delay_min": 0.0424883333876096,
+            "delay_min": -0.44334372496302876,
             "approach_min": 0,
-            "station_min": -0.0424883333876096,
+            "station_min": 0.44334372496302876,
             "late_min": 0
           }
         ],
@@ -2860,26 +2972,26 @@
             "kind": "section",
             "where": "section",
             "at": "TPJ–KRMG",
-            "track": "slTpjKrmg0",
-            "from_min": 462.52397627088277,
-            "min": 0.269360269360277
+            "track": "krmgThW0-krmgThW1",
+            "from_min": 469.9145881927755,
+            "min": 0.00016835016833738337
           },
           {
             "cause": "running",
             "kind": "section",
             "where": "section",
             "at": "TPJ–KRMG",
-            "track": "krmgPf2S-krmgThW1",
-            "from_min": 470.1839484621358,
-            "min": 1.3225276192713409
+            "track": "krmgPf3S-krmgThW0",
+            "from_min": 469.9703019974893,
+            "min": 0.5110909090908535
           },
           {
             "cause": "running",
             "kind": "dwell",
             "where": "station",
             "at": "KRMG",
-            "track": "krmgPf2",
-            "from_min": 472.05393062686164,
+            "track": "krmgPf3",
+            "from_min": 470.9733019974892,
             "min": 0.0020000000000095497
           },
           {
@@ -2887,18 +2999,27 @@
             "for": "16849",
             "where": "station",
             "at": "KRMG",
-            "track": "krmgPf2",
-            "from_min": 472.05593062686165,
-            "min": 3.844013876532415
+            "track": "krmgPf3",
+            "from_min": 470.9753019974892,
+            "min": 4.924642505904842
           },
           {
             "cause": "running",
             "kind": "section",
             "where": "section",
             "at": "KRMG–KRUR",
-            "track": "krmgPf2E-krmgThE1",
+            "track": "krmgPf3E-krmgThE0",
             "from_min": 475.89994450339407,
-            "min": 0.17932189563118506
+            "min": 0.5381341342644532
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRMG–KRUR",
+            "track": "krmgThE0-krmgThE1",
+            "from_min": 476.49462409220394,
+            "min": 0.19053625571893917
           },
           {
             "cause": "running",
@@ -2906,25 +3027,34 @@
             "where": "section",
             "at": "KRMG–KRUR",
             "track": "slKrmgKrur0",
-            "from_min": 476.49462409220394,
-            "min": 2.9400717115438804
+            "from_min": 476.7407058024683,
+            "min": 0.876884649165504
           },
           {
             "cause": "running",
             "kind": "section",
             "where": "section",
             "at": "KRMG–KRUR",
-            "track": "krurPf2S-krurThW1",
-            "from_min": 486.2446918702538,
-            "min": 0.5638813789560873
+            "track": "krurThW0-krurThW1",
+            "from_min": 485.4894995425429,
+            "min": 0.00016835016833738337
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRMG–KRUR",
+            "track": "krurPf3S-krurThW0",
+            "from_min": 485.54521334725666,
+            "min": 0.5110909090908535
           },
           {
             "cause": "running",
             "kind": "dwell",
             "where": "station",
             "at": "KRUR",
-            "track": "krurPf2",
-            "from_min": 488.11467403497966,
+            "track": "krurPf3",
+            "from_min": 486.5482133472566,
             "min": 0.0020000000000095497
           },
           {
@@ -2932,18 +3062,27 @@
             "for": "16849",
             "where": "station",
             "at": "KRUR",
-            "track": "krurPf2",
-            "from_min": 488.11667403497967,
-            "min": 0.6963636363635715
+            "track": "krurPf3",
+            "from_min": 486.5502133472566,
+            "min": 2.262824324086637
           },
           {
             "cause": "running",
             "kind": "section",
             "where": "section",
             "at": "KRUR–VEL",
-            "track": "krurPf2E-krurThE1",
+            "track": "krurPf3E-krurThE0",
             "from_min": 488.81303767134324,
-            "min": 0.13345614587367008
+            "min": 0.5381341342644532
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "KRUR–VEL",
+            "track": "krurThE0-krurThE1",
+            "from_min": 489.4077172601531,
+            "min": 0.19053625571893917
           },
           {
             "cause": "running",
@@ -2951,26 +3090,8 @@
             "where": "section",
             "at": "KRUR–VEL",
             "track": "slKrurVel0",
-            "from_min": 489.4077172601531,
-            "min": 1.8350729032714583
-          },
-          {
-            "cause": "running",
-            "kind": "section",
-            "where": "section",
-            "at": "KRUR–VEL",
-            "track": "velThW0-velThW1",
-            "from_min": 497.5847884052063,
-            "min": 0.012465338350136928
-          },
-          {
-            "cause": "running",
-            "kind": "section",
-            "where": "section",
-            "at": "KRUR–VEL",
-            "track": "velPf3S-velThW0",
-            "from_min": 497.64033385975176,
-            "min": 0.11039271000426963
+            "from_min": 489.6537989704175,
+            "min": 0.876884649165504
           },
           {
             "cause": "running",
@@ -2978,7 +3099,7 @@
             "where": "section",
             "at": "VEL–PDKT",
             "track": "slVelPdkt0",
-            "from_min": 498.2443338597517,
+            "from_min": 497.75850180140105,
             "min": -0.2691919191918828
           },
           {
@@ -2987,7 +3108,7 @@
             "where": "section",
             "at": "VEL–PDKT",
             "track": "pdktPf1S-pdktThW2",
-            "from_min": 503.78186584628367,
+            "from_min": 503.296033787933,
             "min": -1.0093760006474781
           },
           {
@@ -2996,7 +3117,7 @@
             "where": "station",
             "at": "PDKT",
             "track": "pdktPf1",
-            "from_min": 504.7848658462836,
+            "from_min": 504.29903378793296,
             "min": -11.528708690843928
           },
           {
@@ -3005,7 +3126,7 @@
             "where": "section",
             "at": "PDKT–NMN",
             "track": "pdktPf1E-pdktThE2",
-            "from_min": 505.78686584628355,
+            "from_min": 505.3010337879329,
             "min": -0.09112355257882973
           },
           {
@@ -3014,7 +3135,7 @@
             "where": "section",
             "at": "PDKT–NMN",
             "track": "slPdktNmn0",
-            "from_min": 506.3815454350934,
+            "from_min": 505.8957133767428,
             "min": -0.6512539603172118
           },
           {
@@ -3023,8 +3144,8 @@
             "where": "station",
             "at": "KKDI",
             "track": "kkdiPf3",
-            "from_min": 528.5018465249708,
-            "min": -0.0424883333876096
+            "from_min": 528.0160144666202,
+            "min": 0.44334372496302876
           }
         ]
       },
@@ -3040,7 +3161,7 @@
         "delay_min": 0,
         "late_min": 0,
         "primary_min": 5,
-        "wait_min": 18.574345477425766,
+        "wait_min": 18.088513419075127,
         "waits": [
           {
             "train": "56804",
@@ -3079,7 +3200,7 @@
             "kind": "station",
             "at": "VEL",
             "from_min": 485.39735201868945,
-            "min": 12.568345477425908,
+            "min": 12.08251341907527,
             "cause": "held",
             "for": "16751"
           },
@@ -3087,7 +3208,7 @@
             "train": "56804",
             "kind": "station",
             "at": "KRUR",
-            "from_min": 509.93333611861,
+            "from_min": 509.44750406025935,
             "min": 1.0009999999999764,
             "cause": "station wait"
           },
@@ -3095,7 +3216,7 @@
             "train": "56804",
             "kind": "station",
             "at": "KRMG",
-            "from_min": 524.1500656501956,
+            "from_min": 523.664233591845,
             "min": 1.0009999999999764,
             "cause": "station wait"
           }
@@ -3158,37 +3279,37 @@
           {
             "stn": "VEL",
             "arr_min": 484.39635201868947,
-            "dep_min": 497.96569749611535,
+            "dep_min": 497.4798654377647,
             "delay_min": 5.055545454545438,
             "approach_min": 0.05554545454543813,
-            "station_min": 8.908152041569963,
+            "station_min": 8.422319983219325,
             "late_min": 2.39635201868947
           },
           {
             "stn": "KRUR",
-            "arr_min": 508.93233611861,
-            "dep_min": 510.93433611860996,
-            "delay_min": 14.01924295066084,
+            "arr_min": 508.4465040602594,
+            "dep_min": 510.4485040602593,
+            "delay_min": 13.5334108923102,
             "approach_min": 0.05554545454543813,
             "station_min": 0,
-            "late_min": 14.93233611861001
+            "late_min": 14.446504060259372
           },
           {
             "stn": "KRMG",
-            "arr_min": 523.1490656501957,
-            "dep_min": 525.1510656501956,
-            "delay_min": 14.019242950660953,
+            "arr_min": 522.663233591845,
+            "dep_min": 524.665233591845,
+            "delay_min": 13.533410892310314,
             "approach_min": 1.1368683772161603e-13,
             "station_min": 0,
-            "late_min": 14.149065650195666
+            "late_min": 13.663233591845028
           },
           {
             "stn": "TPJ",
-            "arr_min": 535.3243584716006,
+            "arr_min": 534.83852641325,
             "dep_min": 550.001,
-            "delay_min": 14.019242950660896,
+            "delay_min": 13.533410892310258,
             "approach_min": -5.684341886080802e-14,
-            "station_min": -14.019242950660896,
+            "station_min": -13.533410892310258,
             "late_min": 0
           }
         ],
@@ -3313,7 +3434,7 @@
             "at": "VEL",
             "track": "velPf1",
             "from_min": 485.39735201868945,
-            "min": 0.9990000000000236
+            "min": 3.613685652653885
           },
           {
             "cause": "held",
@@ -3322,8 +3443,8 @@
             "where": "station",
             "at": "VEL",
             "track": "velPf1",
-            "from_min": 486.39635201868947,
-            "min": 11.567345477425931
+            "from_min": 489.01103767134333,
+            "min": 8.41228231187597
           },
           {
             "cause": "station wait",
@@ -3331,8 +3452,8 @@
             "where": "station",
             "at": "VEL",
             "track": "velPf1",
-            "from_min": 497.9636974961154,
-            "min": 0.0019999999999527063
+            "from_min": 497.4233199832193,
+            "min": 0.056545454545414486
           },
           {
             "cause": "running",
@@ -3340,7 +3461,7 @@
             "where": "section",
             "at": "KRUR–VEL",
             "track": "velPf1S-velThW0",
-            "from_min": 497.96569749611535,
+            "from_min": 497.4798654377647,
             "min": 0.0030120212041622276
           },
           {
@@ -3349,7 +3470,7 @@
             "where": "section",
             "at": "KRUR–VEL",
             "track": "velThW0-velThW1",
-            "from_min": 498.5603770849252,
+            "from_min": 498.0745450265746,
             "min": 0.0012463910704522084
           },
           {
@@ -3358,7 +3479,7 @@
             "where": "section",
             "at": "KRUR–VEL",
             "track": "slKrurVel0",
-            "from_min": 498.8064587951896,
+            "from_min": 498.32062673683896,
             "min": 0.04181567981355216
           },
           {
@@ -3367,7 +3488,7 @@
             "where": "section",
             "at": "KRUR–VEL",
             "track": "krurPf2E-krurThE1",
-            "from_min": 507.06235395388416,
+            "from_min": 506.5765218955335,
             "min": 0.009471362457271539
           },
           {
@@ -3376,7 +3497,7 @@
             "where": "station",
             "at": "KRUR",
             "track": "krurPf2",
-            "from_min": 508.93233611861,
+            "from_min": 508.4465040602594,
             "min": -1.0009999999999764
           },
           {
@@ -3384,7 +3505,7 @@
             "where": "station",
             "at": "KRUR",
             "track": "krurPf2",
-            "from_min": 509.93333611861,
+            "from_min": 509.44750406025935,
             "min": 1.0009999999999764
           },
           {
@@ -3393,7 +3514,7 @@
             "where": "station",
             "at": "KRMG",
             "track": "krmgPf2",
-            "from_min": 523.1490656501957,
+            "from_min": 522.663233591845,
             "min": -1.0009999999999764
           },
           {
@@ -3401,7 +3522,7 @@
             "where": "station",
             "at": "KRMG",
             "track": "krmgPf2",
-            "from_min": 524.1500656501956,
+            "from_min": 523.664233591845,
             "min": 1.0009999999999764
           },
           {
@@ -3410,8 +3531,8 @@
             "where": "station",
             "at": "TPJ",
             "track": "tpjPf5",
-            "from_min": 535.3243584716006,
-            "min": -14.019242950660896
+            "from_min": 534.83852641325,
+            "min": -13.533410892310258
           }
         ]
       }
@@ -3461,11 +3582,11 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 14.298646467983625,
+        "mean_min": 14.136702448533413,
         "worst": "16849",
         "worst_min": 27.19548148148141,
         "approach_min": 29.999999999999943,
-        "station_min": -15.142546497370915,
+        "station_min": -14.656714439020277,
         "late_calls": 3,
         "late_punctual": [
           {
@@ -3507,11 +3628,11 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 14.829275764194184,
+        "mean_min": 14.307122201619828,
         "worst": "16849",
         "worst_min": 27.19548148148141,
-        "approach_min": 1.5918878886317316,
-        "station_min": 2.2187295315854954,
+        "approach_min": 0.5112592592593046,
+        "station_min": 3.2993581609579223,
         "late_calls": 2,
         "late_punctual": [
           {
@@ -3553,11 +3674,11 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 16.796610603433027,
+        "mean_min": 16.11251302140846,
         "worst": "16849",
         "worst_min": 25.56819713653448,
-        "approach_min": 3.738820440676591,
-        "station_min": 0.698363636363581,
+        "approach_min": 2.1723597529535255,
+        "station_min": 2.2648243240866464,
         "late_calls": 2,
         "late_punctual": [
           {
@@ -3599,11 +3720,11 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 14.738628349348934,
+        "mean_min": 14.57668432989872,
         "worst": "16849",
         "worst_min": 25.56819713653448,
-        "approach_min": 2.146932552044973,
-        "station_min": 21.31887310457921,
+        "approach_min": 1.6611004936943345,
+        "station_min": 20.347208987877934,
         "late_calls": 2,
         "late_punctual": [
           {
@@ -3645,9 +3766,9 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 16.7641642455571,
+        "mean_min": 16.440276206656677,
         "worst": "16849",
-        "worst_min": 37.978918199543784,
+        "worst_min": 37.493086141193146,
         "approach_min": -1.278567919839304,
         "station_min": -6.528708690843928,
         "late_calls": 3,
@@ -3691,9 +3812,9 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 12.673802177643779,
+        "mean_min": 12.349914138743353,
         "worst": "16849",
-        "worst_min": 37.978918199543784,
+        "worst_min": 37.493086141193146,
         "approach_min": -0.7423775128960415,
         "station_min": 0,
         "late_calls": 1,
@@ -3737,9 +3858,9 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 12.673802177643816,
+        "mean_min": 12.349914138743392,
         "worst": "16849",
-        "worst_min": 37.97891819954384,
+        "worst_min": 37.4930861411932,
         "approach_min": 1.1368683772161603e-13,
         "station_min": 0,
         "late_calls": 2,
@@ -3783,9 +3904,9 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 12.67380217764376,
+        "mean_min": 12.349914138743335,
         "worst": "16849",
-        "worst_min": 37.97891819954367,
+        "worst_min": 37.49308614119303,
         "approach_min": -1.7053025658242404e-13,
         "station_min": 0,
         "late_calls": 1,
@@ -3829,9 +3950,9 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 12.673802177643722,
+        "mean_min": 12.349914138743296,
         "worst": "16849",
-        "worst_min": 37.97891819954356,
+        "worst_min": 37.49308614119292,
         "approach_min": -1.1368683772161603e-13,
         "station_min": 0,
         "late_calls": 2,
@@ -3875,11 +3996,11 @@
             "share": 0.6666666666666666
           }
         ],
-        "mean_min": 12.673802177643646,
+        "mean_min": 12.349914138743221,
         "worst": "16849",
-        "worst_min": 37.97891819954333,
+        "worst_min": 37.49308614119269,
         "approach_min": -2.2737367544323206e-13,
-        "station_min": -5.658209271684029,
+        "station_min": -5.172377213333391,
         "late_calls": 3,
         "late_punctual": [
           {
@@ -3904,28 +4025,28 @@
       {
         "track": "slTpjKrmg0",
         "trains": 3,
-        "gained_min": 0.2693602693602202,
+        "gained_min": 0.034861344717000975,
         "worst": "16751",
-        "worst_min": 0.269360269360277
+        "worst_min": 0.03486134471705782
       },
       {
         "track": "slKrmgKrur0",
         "trains": 3,
-        "gained_min": 1.8781586871408535,
+        "gained_min": 0.9117459938827324,
         "worst": "16751",
-        "worst_min": 1.8781586871407967
+        "worst_min": 0.9117459938825618
       },
       {
         "track": "slKrurVel0",
         "trains": 3,
-        "gained_min": 1.4182621620615805,
+        "gained_min": 0.6863483934465648,
         "worst": "16751",
-        "worst_min": 1.6087984177805197
+        "worst_min": 0.876884649165504
       },
       {
         "track": "slVelPdkt0",
         "trains": 3,
-        "gained_min": -0.3707714466412426,
+        "gained_min": -1.070771411851581,
         "worst_min": 0
       },
       {
@@ -3937,14 +4058,14 @@
       {
         "track": "slNmnTym0",
         "trains": 3,
-        "gained_min": 5.684341886080802e-14,
-        "worst": "16751",
-        "worst_min": 5.684341886080802e-14
+        "gained_min": 1.7053025658242404e-13,
+        "worst": "16849",
+        "worst_min": 1.1368683772161603e-13
       },
       {
         "track": "slTymCtnd0",
         "trains": 3,
-        "gained_min": 0,
+        "gained_min": -1.7053025658242404e-13,
         "worst_min": 0
       },
       {
@@ -3956,7 +4077,7 @@
       {
         "track": "slKtyrKkdi0",
         "trains": 3,
-        "gained_min": -5.684341886080802e-14,
+        "gained_min": -1.7053025658242404e-13,
         "worst_min": 0
       }
     ],

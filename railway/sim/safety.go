@@ -165,6 +165,9 @@ func (disp *Dispatcher) participants(requester *TrainController, route *interloc
 // that could not be shown to finish: the state can only improve when one of
 // them is released.
 func (disp *Dispatcher) safe(requester *TrainController, route *interlocking.Route, holds []holdConstraint) (bool, []*infra.TrackSegment) {
+	if disp.sim.NoDeadlockAvoidance {
+		return true, nil
+	}
 	parts := disp.participants(requester, route, holds)
 	index := map[ids.TrainID]int{}
 	for i, p := range parts {

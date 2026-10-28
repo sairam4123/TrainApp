@@ -1,6 +1,8 @@
 package sim_test
 
 import (
+	"cmp"
+	"errors"
 	"fmt"
 	"math/rand/v2"
 	"slices"
@@ -9,6 +11,7 @@ import (
 	"trainapp/railway/ids"
 	"trainapp/railway/infra"
 	"trainapp/railway/ops"
+	"trainapp/railway/scenario"
 	"trainapp/railway/sim"
 	"trainapp/units"
 	"trainapp/worlds"
@@ -176,5 +179,101 @@ func TestRandomTrafficNeverDeadlocks(t *testing.T) {
 				runJourneys(t, sh.build(), js)
 			})
 		}
+	}
+}
+
+// runScenario runs a scenario file as trainapp does, under the precedence
+// rule ("" for the profile's), and returns the sim and Run's error.
+func runScenario(t *testing.T, path, rule string) (*sim.Sim, error) {
+	t.Helper()
+	sc, err := scenario.Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w, err := worlds.Load(sc.WorldName())
+	if err != nil {
+		t.Fatal(err)
+	}
+	trains, err := sc.Trains()
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := &sim.Sim{OutputDir: t.TempDir()}
+	s.SetWorld(w)
+	sc.Configure(s)
+	if p := sc.ProfilePath(); p != "" {
+		if s.Priorities, err = sim.LoadPriorityConfig(p); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := scenario.ApplyRule(s.Priorities, rule); err != nil {
+		t.Fatal(err)
+	}
+	for _, tr := range trains {
+		if err := s.AddTrain(tr); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := s.Init(); err != nil {
+		t.Fatal(err)
+	}
+	return s, s.Run()
+}
+
+func TestDeadlockDemo(t *testing.T) {
+	// the demo shown in traindemo: without the safe-state check the trains
+	// lock up, with it they all finish
+	t.Run("off", func(t *testing.T) {
+		_, err := runScenario(t, "../../scenarios/deadlock-off.json", "")
+		var dl *sim.Deadlock
+		if !errors.As(err, &dl) {
+			t.Fatalf("want a deadlock, got %v", err)
+		}
+		got := fmt.Sprint(dl.Trains())
+		if got != "[W1 E1]" {
+			t.Errorf("cycle %s, want W1 and E1: %v", got, dl)
+		}
+	})
+	t.Run("on", func(t *testing.T) {
+		s, err := runScenario(t, "../../scenarios/deadlock-on.json", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertAllExitedAndClean(t, s)
+	})
+}
+
+func TestOvertakeDemo(t *testing.T) {
+	// the overtake shown in traindemo: under the profile's rule the
+	// Passenger is held in L's loop and the Superfast passes it; without
+	// precedence the Superfast trails it to B
+	arrival := func(s *sim.Sim, number string) float64 {
+		for _, st := range s.Status() {
+			if st.Train.Number == number {
+				sched := st.Train.Schedule()
+				return sched[len(sched)-1].ActArrTime
+			}
+		}
+		t.Fatalf("no train %s", number)
+		return 0
+	}
+	for _, c := range []struct {
+		rule     string
+		overtake bool
+	}{{"", true}, {scenario.RuleOff, false}} {
+		t.Run(cmp.Or(c.rule, "profile"), func(t *testing.T) {
+			s, err := runScenario(t, "../../scenarios/overtake.json", c.rule)
+			if err != nil {
+				t.Fatal(err)
+			}
+			assertAllExitedAndClean(t, s)
+			held := slices.ContainsFunc(s.Decisions(), func(d sim.Decision) bool {
+				return d.Action == sim.ActionHold && d.Train.Number == "P1" && d.For.Number == "S1" && d.At == "L"
+			})
+			first := arrival(s, "S1") < arrival(s, "P1")
+			if held != c.overtake || first != c.overtake {
+				t.Errorf("P1 held at L for S1: %v, S1 at B first: %v; want %v (decisions %+v)", held, first, c.overtake, s.Decisions())
+			}
+		})
 	}
 }

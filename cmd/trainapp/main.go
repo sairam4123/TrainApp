@@ -139,6 +139,7 @@ func main() {
 
 	var disruptions []ops.Disruption
 	var plan *timetable.Timetable // the scenario's timetable, if it runs one
+	var sc *scenario.Scenario
 	if *scenarioPath != "" {
 		var clash []string
 		flag.Visit(func(f *flag.Flag) {
@@ -149,8 +150,8 @@ func main() {
 		if len(clash) > 0 {
 			log.Fatalf("-scenario sets the world, schedule, profile and disruptions: drop %s", strings.Join(clash, ", "))
 		}
-		sc, err := scenario.Load(*scenarioPath)
-		if err != nil {
+		var err error
+		if sc, err = scenario.Load(*scenarioPath); err != nil {
 			log.Fatal(err)
 		}
 		*worldName, *schedulePath, *prioritiesPath = sc.WorldName(), sc.SchedulePath(), sc.ProfilePath()
@@ -229,6 +230,9 @@ func main() {
 
 	s := &sim.Sim{LogFormat: sim.LogFormat(*logFormat)}
 	s.SetWorld(world)
+	if sc != nil {
+		sc.Configure(s)
+	}
 	if *prioritiesPath != "" {
 		cfg, err := sim.LoadPriorityConfig(*prioritiesPath)
 		if err != nil {

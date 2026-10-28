@@ -14,6 +14,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
+	"trainapp/worlds/edit"
 )
 
 // schedTab edits the scenario's trains: a list on the left, the picked
@@ -223,7 +224,7 @@ func (t *schedTab) fromHead(r pickedRoute, self int) (ops.TrainSpec, error) {
 	if err != nil {
 		return ops.TrainSpec{}, err
 	}
-	pts, err := r.points(r.way.stations, true)
+	pts, err := r.points(r.way.Stations, true)
 	if err != nil {
 		return ops.TrainSpec{}, err
 	}
@@ -249,7 +250,7 @@ func (t *schedTab) addForm() {
 		t.m.s.sched.Trains = append(t.m.s.sched.Trains, tr)
 		t.train = len(t.m.s.sched.Trains) - 1
 		t.changed()
-		t.m.say("added %s, %s: tab goes to its points", tr.Number, strings.Join(r.way.stations, " "))
+		t.m.say("added %s, %s: tab goes to its points", tr.Number, strings.Join(r.way.Stations, " "))
 		return nil
 	})
 }
@@ -331,7 +332,7 @@ func (t *schedTab) editForm() {
 		*tr = nt
 		t.row = 0
 		t.changed()
-		t.m.say("%s runs %s: %d points", tr.Number, strings.Join(r.way.stations, " "), len(nt.Points))
+		t.m.say("%s runs %s: %d points", tr.Number, strings.Join(r.way.Stations, " "), len(nt.Points))
 		return nil
 	})
 }
@@ -380,7 +381,7 @@ func (t *schedTab) patternForm() {
 		}
 		t.m.s.sched.Trains = append(t.m.s.sched.Trains, trains...)
 		t.changed()
-		t.m.say("added %d trains, %s", len(trains), strings.Join(r.way.stations, " "))
+		t.m.say("added %d trains, %s", len(trains), strings.Join(r.way.Stations, " "))
 		return nil
 	})
 }
@@ -635,7 +636,7 @@ func (t *schedTab) wayPane(width, h int) []string {
 	}
 	marks := map[string]schematic.Mark{}
 	var note []string
-	if path, err := trainPath(s, pts); err != nil {
+	if path, err := edit.TrainPath(s, pts); err != nil {
 		note = []string{tui.Failed.Render(" ✗ " + err.Error())}
 	} else {
 		markWay(s, path, marks)

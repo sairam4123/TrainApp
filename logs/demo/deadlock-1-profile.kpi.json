@@ -1,0 +1,620 @@
+{
+  "run": {
+    "trains": 3,
+    "finished": 3,
+    "delay": {
+      "trains": 3,
+      "total_min": 18.694556189862617,
+      "mean_min": 6.231518729954206,
+      "weighted_mean_min": 6.231518729954206,
+      "punctual": [
+        {
+          "within_min": 1,
+          "trains": 1,
+          "share": 0.3333333333333333
+        },
+        {
+          "within_min": 5,
+          "trains": 1,
+          "share": 0.3333333333333333
+        },
+        {
+          "within_min": 15,
+          "trains": 3,
+          "share": 1
+        }
+      ],
+      "worst": "T003",
+      "worst_min": 12.0308444935509
+    },
+    "longest_wait": {
+      "train": "T003",
+      "kind": "station",
+      "at": "STB",
+      "from_min": 4.194481481481481,
+      "min": 12.033844493550887,
+      "cause": "station wait",
+      "for": "T002"
+    },
+    "wait_min": 16.681577983878295,
+    "holds": 1,
+    "held_min": 0.962211248140477,
+    "platform_changes": 0,
+    "utilization": {
+      "from_min": 1.0019999999999998,
+      "to_min": 24.02124128354161,
+      "blocks": {
+        "tracks": 1,
+        "mean_occupancy": 0.6565133649715,
+        "min_occupancy": 0.6565133649715,
+        "max_occupancy": 0.6565133649715,
+        "mean_standing": 0.11076453784221743,
+        "standing_min": 2.5497156222499786
+      },
+      "platforms": {
+        "tracks": 4,
+        "mean_occupancy": 0.44368559364446397,
+        "min_occupancy": 0.31894901482705534,
+        "max_occupancy": 0.7185901637693782,
+        "mean_standing": 0.35571690089296687,
+        "standing_min": 32.75333268115545
+      },
+      "stations": [
+        {
+          "stn": "STA",
+          "platforms": 2,
+          "occupancy": 0.36860159799071124,
+          "standing_min": 13.39541379884993
+        },
+        {
+          "stn": "STB",
+          "platforms": 2,
+          "occupancy": 0.5187695892982168,
+          "standing_min": 19.35791888230552
+        }
+      ],
+      "tracks": [
+        {
+          "track": "staPf1",
+          "kind": "platform",
+          "stn": "STA",
+          "pf": "1",
+          "entries": 1,
+          "occupied_min": 9.263820891576785,
+          "running_min": 1.1914814814814814,
+          "standing_min": 8.072339410095303,
+          "occupancy": 0.40243815065270067,
+          "running": 0.05176024121756661,
+          "standing": 0.350677909435134,
+          "trains_per_hour": 2.6065151001696587,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.1914814814814818
+            },
+            {
+              "cause": "dwell",
+              "min": 3.4246059197678935
+            },
+            {
+              "cause": "held",
+              "kind": "reception",
+              "min": 0.962211248140477
+            },
+            {
+              "cause": "station wait",
+              "min": 3.6855222421869316
+            }
+          ]
+        },
+        {
+          "track": "staPf1E-staThE0",
+          "kind": "throat",
+          "stn": "STA",
+          "entries": 1,
+          "occupied_min": 1.6216059197678963,
+          "running_min": 0.5916795888099546,
+          "standing_min": 1.0299263309579416,
+          "occupancy": 0.07044567193999215,
+          "running": 0.025703696378255356,
+          "standing": 0.0447419755617368,
+          "trains_per_hour": 2.6065151001696587,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.6216059197678963
+            }
+          ]
+        },
+        {
+          "track": "staPf2",
+          "kind": "platform",
+          "stn": "STA",
+          "pf": "2",
+          "entries": 2,
+          "occupied_min": 7.70603735171759,
+          "running_min": 2.382962962962963,
+          "standing_min": 5.323074388754627,
+          "occupancy": 0.33476504532872176,
+          "running": 0.10352048243513323,
+          "standing": 0.2312445628935885,
+          "trains_per_hour": 5.213030200339317,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.382962962962956
+            },
+            {
+              "cause": "dwell",
+              "min": 5.323074388754627
+            }
+          ]
+        },
+        {
+          "track": "staPf2E-staThE0",
+          "kind": "throat",
+          "stn": "STA",
+          "entries": 2,
+          "occupied_min": 2.1391177873841345,
+          "running_min": 0.6991952110599327,
+          "standing_min": 1.4399225763242018,
+          "occupancy": 0.09292738023097093,
+          "running": 0.03037438125990043,
+          "standing": 0.0625529989710705,
+          "trains_per_hour": 5.213030200339317,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.139117787384129
+            }
+          ]
+        },
+        {
+          "track": "slLnStb0",
+          "kind": "block",
+          "entries": 3,
+          "occupied_min": 15.112439554148773,
+          "running_min": 12.562723931898795,
+          "standing_min": 2.5497156222499786,
+          "occupancy": 0.6565133649715,
+          "running": 0.5457488271292825,
+          "standing": 0.11076453784221743,
+          "trains_per_hour": 7.819545300508976,
+          "section": "STA–STB",
+          "split": [
+            {
+              "cause": "free running",
+              "min": 13.41886271465337
+            },
+            {
+              "cause": "slower running",
+              "min": 1.6935768394954032
+            }
+          ]
+        },
+        {
+          "track": "stbPf1S-stbThW0",
+          "kind": "throat",
+          "stn": "STB",
+          "entries": 2,
+          "occupied_min": 2.3679999999999968,
+          "running_min": 0.3999999999999986,
+          "standing_min": 1.9679999999999982,
+          "occupancy": 0.10287046262002905,
+          "running": 0.01737676733446433,
+          "standing": 0.08549369528556472,
+          "trains_per_hour": 5.213030200339317,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 2.3679999999999968
+            }
+          ]
+        },
+        {
+          "track": "stbPf2",
+          "kind": "platform",
+          "stn": "STB",
+          "pf": "2",
+          "entries": 1,
+          "occupied_min": 16.541400363786998,
+          "running_min": 1.1914814814814814,
+          "standing_min": 15.349918882305516,
+          "occupancy": 0.7185901637693782,
+          "running": 0.05176024121756661,
+          "standing": 0.6668299225518116,
+          "trains_per_hour": 2.6065151001696587,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.1914814814814818
+            },
+            {
+              "cause": "dwell",
+              "min": 3.316074388754629
+            },
+            {
+              "cause": "station wait",
+              "min": 12.033844493550887
+            }
+          ]
+        },
+        {
+          "track": "stbPf2S-stbThW0",
+          "kind": "throat",
+          "stn": "STB",
+          "entries": 1,
+          "occupied_min": 1.4404021651341559,
+          "running_min": 0.5916795888099564,
+          "standing_min": 0.8487225763241995,
+          "occupancy": 0.06257383322898745,
+          "running": 0.025703696378255432,
+          "standing": 0.036870136850732024,
+          "trains_per_hour": 2.6065151001696587,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 1.4404021651341532
+            }
+          ]
+        },
+        {
+          "track": "stbPf1",
+          "kind": "platform",
+          "stn": "STB",
+          "pf": "1",
+          "entries": 2,
+          "occupied_min": 7.341964329451878,
+          "running_min": 3.3339643294518755,
+          "standing_min": 4.008000000000003,
+          "occupancy": 0.31894901482705534,
+          "running": 0.14483380613572205,
+          "standing": 0.17411520869133332,
+          "trains_per_hour": 5.213030200339317,
+          "split": [
+            {
+              "cause": "free running",
+              "min": 3.3339643294518755
+            },
+            {
+              "cause": "dwell",
+              "min": 4.008000000000003
+            }
+          ]
+        }
+      ],
+      "capacity_color_band": [
+        {
+          "over_pct": 0,
+          "name": "light",
+          "color": "39"
+        },
+        {
+          "over_pct": 40,
+          "name": "moderate",
+          "color": "42"
+        },
+        {
+          "over_pct": 60,
+          "name": "heavy",
+          "color": "214"
+        },
+        {
+          "over_pct": 75,
+          "name": "saturated",
+          "color": "203"
+        }
+      ]
+    },
+    "per_train": [
+      {
+        "train": "T001",
+        "class": "Mail/Express",
+        "priority": 40,
+        "finished": true,
+        "entry_min": 1,
+        "exit_min": 12.728197136534828,
+        "journey_min": 11.728197136534828,
+        "free_run_min": 10.989396789990709,
+        "delay_min": 0.7388003465441191,
+        "wait_min": 0,
+        "calls": [
+          {
+            "stn": "STA",
+            "arr_min": 1.001,
+            "dep_min": 4.197481481481482,
+            "delay_min": 0,
+            "approach_min": 0,
+            "station_min": 0
+          },
+          {
+            "stn": "STB",
+            "arr_min": 10.727197136534828,
+            "dep_min": 12.728197136534828,
+            "delay_min": 0.7388003465441191,
+            "approach_min": 0.7388003465441191,
+            "station_min": 0
+          }
+        ],
+        "losses": [
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "STA–STB",
+            "track": "slLnStb0",
+            "from_min": 4.792161070291439,
+            "min": 0.1708152855496401
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "STA–STB",
+            "track": "stbPf1S-stbThW0",
+            "from_min": 8.857214971808892,
+            "min": 0.567985060994479
+          }
+        ]
+      },
+      {
+        "train": "T002",
+        "class": "Mail/Express",
+        "priority": 40,
+        "finished": true,
+        "entry_min": 2,
+        "exit_min": 18.914308139758308,
+        "journey_min": 16.914308139758308,
+        "free_run_min": 10.989396789990709,
+        "delay_min": 5.9249113497676,
+        "wait_min": 4.647733490327409,
+        "waits": [
+          {
+            "train": "T002",
+            "kind": "station",
+            "at": "STA",
+            "from_min": 5.194481481481481,
+            "min": 4.647733490327409,
+            "cause": "station wait",
+            "for": "T003"
+          }
+        ],
+        "calls": [
+          {
+            "stn": "STA",
+            "arr_min": 2.001,
+            "dep_min": 9.84221497180889,
+            "delay_min": 4.644733490327408,
+            "approach_min": 0,
+            "station_min": 4.644733490327408
+          },
+          {
+            "stn": "STB",
+            "arr_min": 16.913308139758307,
+            "dep_min": 18.914308139758308,
+            "delay_min": 5.924911349767598,
+            "approach_min": 1.2801778594401902,
+            "station_min": 1.7763568394002505e-15
+          }
+        ],
+        "losses": [
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "STA",
+            "track": "staPf1",
+            "from_min": 2.001,
+            "min": -0.003000000000001002
+          },
+          {
+            "cause": "station wait",
+            "for": "T001",
+            "where": "station",
+            "at": "STA",
+            "track": "staPf1",
+            "from_min": 5.194481481481481,
+            "min": 0.001000000000000334
+          },
+          {
+            "cause": "held",
+            "kind": "reception",
+            "for": "T003",
+            "where": "station",
+            "at": "STA",
+            "track": "staPf1",
+            "from_min": 5.195481481481481,
+            "min": 0.962211248140477
+          },
+          {
+            "cause": "station wait",
+            "for": "T003",
+            "where": "station",
+            "at": "STA",
+            "track": "staPf1",
+            "from_min": 6.157692729621958,
+            "min": 3.6845222421869313
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "STA–STB",
+            "track": "staPf1E-staThE0",
+            "from_min": 9.84221497180889,
+            "min": 0.10766307627032302
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "STA–STB",
+            "track": "slLnStb0",
+            "from_min": 10.436894560618843,
+            "min": 0.8339660315170295
+          },
+          {
+            "cause": "running",
+            "kind": "section",
+            "where": "section",
+            "at": "STA–STB",
+            "track": "stbPf1S-stbThW0",
+            "from_min": 15.043325975032369,
+            "min": 0.3385487516528377
+          }
+        ]
+      },
+      {
+        "train": "T003",
+        "class": "Mail/Express",
+        "priority": 40,
+        "finished": true,
+        "entry_min": 1,
+        "exit_min": 24.02024128354161,
+        "journey_min": 23.02024128354161,
+        "free_run_min": 10.989396789990709,
+        "delay_min": 12.0308444935509,
+        "wait_min": 12.033844493550887,
+        "waits": [
+          {
+            "train": "T003",
+            "kind": "station",
+            "at": "STB",
+            "from_min": 4.194481481481481,
+            "min": 12.033844493550887,
+            "cause": "station wait",
+            "for": "T002"
+          }
+        ],
+        "calls": [
+          {
+            "stn": "STB",
+            "arr_min": 1.001,
+            "dep_min": 16.22832597503237,
+            "delay_min": 12.030844493550887,
+            "approach_min": 0,
+            "station_min": 12.030844493550887
+          },
+          {
+            "stn": "STA",
+            "arr_min": 22.019241283541607,
+            "dep_min": 24.02024128354161,
+            "delay_min": 12.030844493550898,
+            "approach_min": 1.0658141036401503e-14,
+            "station_min": 1.7763568394002505e-15
+          }
+        ],
+        "losses": [
+          {
+            "cause": "running",
+            "kind": "dwell",
+            "where": "station",
+            "at": "STB",
+            "track": "stbPf2",
+            "from_min": 1.001,
+            "min": -0.0030000000000001137
+          },
+          {
+            "cause": "station wait",
+            "for": "T002",
+            "where": "station",
+            "at": "STB",
+            "track": "stbPf2",
+            "from_min": 4.194481481481481,
+            "min": 12.033844493550887
+          }
+        ]
+      }
+    ],
+    "delay_color_band": [
+      {
+        "over_min": 0,
+        "name": "on time",
+        "color": "42"
+      },
+      {
+        "over_min": 5,
+        "name": "slightly late",
+        "color": "214"
+      },
+      {
+        "over_min": 15,
+        "name": "late",
+        "color": "203"
+      },
+      {
+        "over_min": 60,
+        "name": "very late",
+        "color": "196"
+      }
+    ],
+    "station_delays": [
+      {
+        "stn": "STA",
+        "calls": 3,
+        "stops": 3,
+        "passes": 0,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 2,
+            "share": 0.6666666666666666
+          },
+          {
+            "within_min": 15,
+            "trains": 3,
+            "share": 1
+          }
+        ],
+        "mean_min": 5.558525994626102,
+        "worst": "T003",
+        "worst_min": 12.030844493550898,
+        "approach_min": 1.0658141036401503e-14,
+        "station_min": 4.644733490327409
+      },
+      {
+        "stn": "STB",
+        "calls": 3,
+        "stops": 3,
+        "passes": 0,
+        "punctual": [
+          {
+            "within_min": 1,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 5,
+            "trains": 1,
+            "share": 0.3333333333333333
+          },
+          {
+            "within_min": 15,
+            "trains": 3,
+            "share": 1
+          }
+        ],
+        "mean_min": 6.2315187299542005,
+        "worst": "T003",
+        "worst_min": 12.030844493550887,
+        "approach_min": 2.0189782059843093,
+        "station_min": 12.03084449355089
+      }
+    ],
+    "block_delays": [
+      {
+        "track": "slLnStb0",
+        "trains": 3,
+        "gained_min": 1.6935768394953996,
+        "worst": "T002",
+        "worst_min": 1.1174771761957345
+      }
+    ],
+    "pareto_pct": 80
+  }
+}

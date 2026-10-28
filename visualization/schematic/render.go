@@ -47,6 +47,9 @@ type Options struct {
 	State    *vizproto.State
 	Time     float64
 	Selected string // train to highlight
+	// Deadlocked, if set, says which trains are stuck in a deadlock; they
+	// are drawn in red, marked ×.
+	Deadlocked func(train string) bool
 
 	// Marks picks out pieces of the world, by id: a point, track, signal or
 	// station (its code), e.g. an editor's selection and its problems.
@@ -400,6 +403,10 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 		if held {
 			label += "⏸"
 		}
+		stuck := opt.Deadlocked != nil && opt.Deadlocked(n)
+		if stuck {
+			label += "×"
+		}
 		if v, ok := tr.Speed(opt.Time); ok && n == opt.Selected && tr.Phase == "running" {
 			label += " " + strconv.Itoa(int(math.Round(v))) // its speed, km/h
 		}
@@ -428,6 +435,8 @@ func (d *Diagram) drawState(f *Frame, opt Options) {
 		switch {
 		case n == opt.Selected:
 			s = styleSelected
+		case stuck:
+			s = styleDeadlocked
 		case held:
 			s = styleHeld
 		}
@@ -844,8 +853,9 @@ const (
 	styleID
 	styleTrain
 	styleSelected
-	styleHeld   // a train precedence holds back, in amber
-	styleSignal // a signal drawn without state, so without an aspect
+	styleHeld       // a train precedence holds back, in amber
+	styleDeadlocked // a train stuck in a deadlock, in red
+	styleSignal     // a signal drawn without state, so without an aspect
 	styleSignalClear
 	styleSignalStop
 	styleReserved
@@ -864,6 +874,7 @@ var sgr = map[style]string{
 	styleTrain:         "1;7",
 	styleSelected:      "1;30;43",
 	styleHeld:          "1;30;48;5;214",
+	styleDeadlocked:    "1;97;41",
 	styleSignal:        "1",
 	styleSignalClear:   "1;32",
 	styleSignalStop:    "1;31",

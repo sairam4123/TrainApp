@@ -25,8 +25,10 @@ func TestRepoScenarios(t *testing.T) {
 			t.Errorf("%s: %v", sc.Name, err)
 			continue
 		}
-		if _, err := sim.LoadPriorityConfig(sc.ProfilePath()); err != nil {
-			t.Errorf("%s: %v", sc.Name, err)
+		if p := sc.ProfilePath(); p != "" {
+			if _, err := sim.LoadPriorityConfig(p); err != nil {
+				t.Errorf("%s: %v", sc.Name, err)
+			}
 		}
 		if err := ops.ApplyDisruptions(trains, sc.Disruptions); err != nil {
 			t.Errorf("%s: %v", sc.Name, err)
@@ -51,6 +53,7 @@ func TestLoad(t *testing.T) {
 	for name, body := range map[string]string{
 		"no schedule":   `{"world": "tpjkkdi"}`,
 		"unknown field": `{"world": "tpjkkdi", "schedule": "s.json", "trains": 3}`,
+		"bad safety":    `{"world": "tpjkkdi", "schedule": "s.json", "safety": "no"}`,
 	} {
 		bad := filepath.Join(dir, "bad.json")
 		if err := os.WriteFile(bad, []byte(body), 0o644); err != nil {

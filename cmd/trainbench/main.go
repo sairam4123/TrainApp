@@ -52,6 +52,7 @@ func (sc *bench) setup(rule string) (*sim.Sim, []*ops.Train, error) {
 	}
 	s := &sim.Sim{}
 	s.SetWorld(w)
+	sc.Configure(s)
 	if p := sc.ProfilePath(); p != "" {
 		if s.Priorities, err = sim.LoadPriorityConfig(p); err != nil {
 			return nil, nil, err
